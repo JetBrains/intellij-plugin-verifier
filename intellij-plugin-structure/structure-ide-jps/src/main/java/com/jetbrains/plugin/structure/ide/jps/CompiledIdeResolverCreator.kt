@@ -20,7 +20,7 @@ import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
 import java.nio.file.Path
 
-class CompiledIdeResolver {
+class CompiledIdeResolverCreator {
   fun createIdeResolver(ide: Ide, configuration: IdeResolverConfiguration): Resolver {
     return getIdeResolver(ide, configuration.readMode)
   }

@@ -12,7 +12,32 @@ import java.nio.file.Path
 
 data class CompiledIdeDirectories(val idePath: Path, val m2Path: Path)
 
-fun getCompiledIde(temporaryFolder: TemporaryFolder): CompiledIdeDirectories {
+/**
+ * .m2 (local Maven repository)
+ *   com
+ *     some
+ *       lib-plugin
+ *         1.0
+ *           lib-plugin-1.0.jar
+ *             META-INF
+ *               lib-plugin.xml
+ *
+ * idea/
+ *   build.txt (IU-163.1.2.3)
+ *   .idea/
+ *   community/.idea
+ *   out/
+ *     classes/
+ *       production/
+ *         somePlugin/
+ *           META-INF/
+ *             plugin.xml
+ *                references someTheme.theme.json
+ *                x-includes "lib-plugin.xml", which resides in Maven repository dependency (com.some:lib-plugin:1.0)
+ *         themeHolder
+ *           someTheme.theme.json
+ */
+fun createCompiledIdeDirectories(temporaryFolder: TemporaryFolder): CompiledIdeDirectories {
   val m2Directory = buildDirectory(temporaryFolder.newFolder(".m2").toPath()) {
     dir("com") {
       dir("some") {

@@ -22,7 +22,7 @@ class CompiledIdeResolverTest {
 
   @Test
   fun `compiled IDE resolvers are provided`() {
-    val (idePath, _) = getCompiledIde(temporaryFolder)
+    val (idePath, _) = createCompiledIdeDirectories(temporaryFolder)
 
     val ideVersion = IdeVersion.createIdeVersion("IU-163.1")
     val ide = MockIde(ideVersion, idePath, bundledPlugins = emptyList())
