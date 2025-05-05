@@ -13,7 +13,7 @@ import java.io.BufferedReader
 class PluginXmlDependencyFilterTest: BaseEventFilterTest() {
 
   @Test
-  fun `XML for Java plugin with XML comment embedded in DTD entity is not parsed`() {
+  fun `XML configuration file for Grazie with XML comment embedded in DTD entity is not parsed`() {
     // taken from plugins/grazie/lib/grazie.jar!org/languagetool/rules/en/grammar.xml
     @Language("XML") val pluginXml = """
       <?xml version="1.0"?>
@@ -24,7 +24,12 @@ class PluginXmlDependencyFilterTest: BaseEventFilterTest() {
       </rules>
     """.trimIndent()
 
-    val expectedXml = ""
+    val expectedXml = """
+      <!DOCTYPE rules [
+              <!ENTITY rude_sarcastic_2 "(?:are you blind\?|are you deaf\?|bite me|I hope you're happy[\.!]|oh really\!?\?|since when\?|whoosh[\.!]|you don't say\?|you think\?)"><!-- XXX should be avoided in writing: what's new\?|what else is new| -->
+      ]><rules>
+      </rules>
+    """.trimIndent()
 
     val pluginXmFilter = PluginXmlDependencyFilter()
     val filteredXml = captureToString {
