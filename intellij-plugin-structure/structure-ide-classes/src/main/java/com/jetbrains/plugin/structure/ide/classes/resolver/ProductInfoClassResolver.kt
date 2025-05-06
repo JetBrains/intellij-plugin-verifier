@@ -188,7 +188,7 @@ class ProductInfoClassResolver(
   private fun getBootJarResolver(relativeJarPath: String): NamedResolver {
     val fullyQualifiedJarFile = ide.idePath.resolve("lib/$relativeJarPath")
     return corePluginClasspathCache[fullyQualifiedJarFile]?.also {
-      statisticizeReuse(fullyQualifiedJarFile)
+      recordResolverReuse(fullyQualifiedJarFile)
     } ?: LazyJarResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide), name = relativeJarPath)
   }
 
@@ -198,7 +198,7 @@ class ProductInfoClassResolver(
     }
   }
 
-  private fun statisticizeReuse(fullyQualifiedJarFile: Path) {
+  private fun recordResolverReuse(fullyQualifiedJarFile: Path) {
     _stats?.add("Reusing $fullyQualifiedJarFile")
   }
 
