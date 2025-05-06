@@ -75,18 +75,14 @@ class ProductInfoClassResolver(
 
   private fun List<LayoutComponentResolver>.resolveCorePlugin(): Map<String, NamedResolver> {
     val corePluginResolver = find { it.name == CORE_IDE_PLUGIN_ID } ?: return emptyMap()
-    corePluginResolver.resolvers.forEach {
-      corePluginClasspathCache[it.jarPath] = it
-    }
+    cacheClasspaths(corePluginResolver)
 
     val resolvers = mutableMapOf<String, NamedResolver>()
 
     val productModuleResolvers = filter { it.kind == PRODUCT_MODULE_V2 }
     productModuleResolvers.forEach {
       resolvers.put(it.name, it)
-      it.resolvers.forEach { resolver ->
-        corePluginClasspathCache[resolver.jarPath] = it
-      }
+      cacheClasspaths(it)
     }
 
     val corePluginTreeResolver = CompositeResolver
@@ -167,8 +163,7 @@ class ProductInfoClassResolver(
   val bootClasspathResolver: NamedResolver
     get() {
       val bootJars = productInfo.launches.firstOrNull()?.bootClassPathJarNames
-      val bootResolver = bootJars?.map { getBootJarResolver(it) }.asResolver(BOOTCLASSPATH_JAR_NAMES)
-      return bootResolver
+      return bootJars?.map { getBootJarResolver(it) }.asResolver(BOOTCLASSPATH_JAR_NAMES)
     }
 
   private fun <C> C.toResolver(): LayoutComponentResolver
@@ -192,12 +187,19 @@ class ProductInfoClassResolver(
 
   private fun getBootJarResolver(relativeJarPath: String): NamedResolver {
     val fullyQualifiedJarFile = ide.idePath.resolve("lib/$relativeJarPath")
-    return if (fullyQualifiedJarFile in corePluginClasspathCache) {
-      _stats?.add("Reusing $fullyQualifiedJarFile")
-      corePluginClasspathCache[fullyQualifiedJarFile]!!
-    } else {
-      LazyJarResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide), name = relativeJarPath)
+    return corePluginClasspathCache[fullyQualifiedJarFile]?.also {
+      statisticizeReuse(fullyQualifiedJarFile)
+    } ?: LazyJarResolver(fullyQualifiedJarFile, readMode, IdeLibDirectory(ide), name = relativeJarPath)
+  }
+
+  private fun cacheClasspaths(resolver: LayoutComponentResolver) {
+    resolver.resolvers.forEach { resolver ->
+      corePluginClasspathCache[resolver.jarPath] = resolver
     }
+  }
+
+  private fun statisticizeReuse(fullyQualifiedJarFile: Path) {
+    _stats?.add("Reusing $fullyQualifiedJarFile")
   }
 
   companion object {
