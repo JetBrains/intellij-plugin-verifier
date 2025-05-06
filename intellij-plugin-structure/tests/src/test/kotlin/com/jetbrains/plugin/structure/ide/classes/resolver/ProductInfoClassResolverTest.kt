@@ -44,7 +44,7 @@ class ProductInfoClassResolverTest {
 
       ideRoot.resolve("build.txt").writeText(IDEA_ULTIMATE_2024_2)
 
-      createEmptyIdeFiles()
+      ideRoot.createEmptyIdeFiles()
       createEmptyJarClassFiles()
     }
   }
@@ -154,10 +154,10 @@ class ProductInfoClassResolverTest {
     }
   }
 
-  private fun createEmptyIdeFiles() {
+  private fun Path.createEmptyIdeFiles() {
     ideFiles.flatMap { (_, files) -> files }
       .map { file ->
-        ideRoot.resolve(file).apply {
+        resolve(file).apply {
           createParentDirs()
         }
       }.forEach {
@@ -210,6 +210,7 @@ class ProductInfoClassResolverTest {
       "lib/protobuf.jar",
       "lib/intellij-test-discovery.jar",
       "lib/forms_rt.jar",
+      "lib/kotlinx-coroutines-slf4j-1.8.0-intellij.jar",
       "lib/lib.jar",
       "lib/externalProcess-rt.jar",
       "lib/groovy.jar",
@@ -241,6 +242,7 @@ class ProductInfoClassResolverTest {
       "lib/protobuf.jar",
       "lib/intellij-test-discovery.jar",
       "lib/forms_rt.jar",
+      "lib/kotlinx-coroutines-slf4j-1.8.0-intellij.jar",
       "lib/lib.jar",
       "lib/externalProcess-rt.jar",
       "lib/groovy.jar",
@@ -304,6 +306,96 @@ class ProductInfoClassResolverTest {
         }
       ]        
     } 
+  """.trimIndent()
+
+  @Language("JSON")
+  private val productInfoJsonWithBootClassPathAndASingleLayoutComponent = """
+    {
+      "name": "IntelliJ IDEA",
+      "version": "2025.1",
+      "buildNumber": "251.23774.435",
+      "productCode": "IU",
+      "envVarBaseName": "IDEA",
+      "dataDirectoryName": "IntelliJIdea2025.1",
+      "svgIconPath": "bin/idea.svg",
+      "productVendor": "JetBrains",
+      "launch": [
+        {
+          "os": "Linux",
+          "arch": "amd64",
+          "launcherPath": "bin/idea",
+          "javaExecutablePath": "jbr/bin/java",
+          "vmOptionsFilePath": "bin/idea64.vmoptions",
+          "startupWmClass": "jetbrains-idea",
+          "bootClassPathJarNames": [
+            "platform-loader.jar",
+            "util-8.jar",
+            "util.jar",
+            "app-client.jar",
+            "util_rt.jar",
+            "product.jar",
+            "lib-client.jar",
+            "trove.jar",
+            "app.jar",
+            "opentelemetry.jar",
+            "jps-model.jar",
+            "stats.jar",
+            "rd.jar",
+            "external-system-rt.jar",
+            "protobuf.jar",
+            "bouncy-castle.jar",
+            "intellij-test-discovery.jar",
+            "forms_rt.jar",
+            "lib.jar",
+            "externalProcess-rt.jar",
+            "groovy.jar",
+            "annotations.jar",
+            "idea_rt.jar",
+            "jsch-agent.jar",
+            "kotlinx-coroutines-slf4j-1.8.0-intellij.jar",
+            "product-client.jar"
+          ]
+        }
+      ],
+      "bundledPlugins": [],
+      "modules": [],
+      "layout": [
+        {
+          "name": "com.intellij",
+          "kind": "plugin",
+          "classPath": [
+            "lib/platform-loader.jar",
+            "lib/util-8.jar",
+            "lib/util.jar",
+            "lib/app-client.jar",
+            "lib/util_rt.jar",
+            "lib/product.jar",
+            "lib/lib-client.jar",
+            "lib/trove.jar",
+            "lib/app.jar",
+            "lib/opentelemetry.jar",
+            "lib/jps-model.jar",
+            "lib/stats.jar",
+            "lib/rd.jar",
+            "lib/external-system-rt.jar",
+            "lib/protobuf.jar",
+            "lib/bouncy-castle.jar",
+            "lib/nio-fs.jar",
+            "lib/intellij-test-discovery.jar",
+            "lib/forms_rt.jar",
+            "lib/lib.jar",
+            "lib/externalProcess-rt.jar",
+            "lib/groovy.jar",
+            "lib/annotations.jar",
+            "lib/idea_rt.jar",
+            "lib/jsch-agent.jar",
+            "lib/kotlinx-coroutines-slf4j-1.8.0-intellij.jar",
+            "lib/product-client.jar",
+            "lib/testFramework.jar"
+          ]
+        }
+      ]
+    }    
   """.trimIndent()
 }
 
