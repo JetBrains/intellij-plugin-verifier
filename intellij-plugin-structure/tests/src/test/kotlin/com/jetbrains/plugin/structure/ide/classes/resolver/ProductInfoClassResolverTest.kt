@@ -5,6 +5,8 @@ import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode.FULL
+import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -145,6 +147,28 @@ class ProductInfoClassResolverTest {
     val ide = MockProductInfoAwareIde(ideRoot, productInfo, bundledPlugins)
     val resolver = ProductInfoClassResolver.of(ide)
     assertEquals(listOf("com.intellij", "com.jetbrains.sh"), resolver.layoutComponentNames)
+  }
+
+  @Test
+  fun `boot resolvers are resolved`() {
+    val ideRoot = temporaryFolder.newFolder("idea-${UUID.randomUUID()}").toPath()
+    ideRoot.createEmptyIdeFiles()
+
+    val productInfoParser = ProductInfoParser()
+    val productInfo = productInfoParser.parse(ByteArrayInputStream(productInfoJsonWithBootClassPathAndASingleLayoutComponent.toByteArray()), "Unit Test")
+    val bundledPlugins = listOf(
+      MockIdePlugin("com.intellij", pluginName = "IDEA Core")
+    )
+
+    val ide = MockProductInfoAwareIde(ideRoot, productInfo, bundledPlugins)
+
+    val resolverCfg = IdeResolverConfiguration(readMode = FULL, isCollectingStats = true)
+    val resolver = ProductInfoClassResolver.of(ide, resolverCfg)
+    assertEquals(listOf("com.intellij"), resolver.layoutComponentNames)
+
+    // Expecting all entries to be cache hits, as they are subset of "com.intellij" layout component
+    val expectedCacheHits = productInfo.launches.first().bootClassPathJarNames.size
+    assertEquals(expectedCacheHits, resolver.stats.size)
   }
 
   private fun copyResource(resource: String, targetFile: Path) {
