@@ -57,8 +57,6 @@ class ProductInfoClassResolver(
     }
   }
 
-  internal val namedResolvers: Collection<NamedResolver> = resolvers.values
-
   override fun getResolver(plugin: IdePlugin): Resolver {
     val id = plugin.pluginId?: plugin.pluginName
     return id?.let { resolvers[id] } ?: EMPTY_RESOLVER
