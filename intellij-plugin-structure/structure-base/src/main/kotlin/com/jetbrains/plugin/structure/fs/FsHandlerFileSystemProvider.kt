@@ -96,6 +96,8 @@ class FsHandlerFileSystemProvider(val delegateProvider: FileSystemProvider) : Fi
   override fun setAttribute(path: Path, attribute: String, value: Any, vararg options: LinkOption): Unit =
     delegateProvider.setAttribute(path.unwrapped, attribute, value, *options)
 
+  private fun FsHandlerPath.reopen() = fileSystem.getPath(delegatePath.toString())
+
   private val Path.unwrapped: Path
     get() = if (this is FsHandlerPath) {
       if (delegatePath.fileSystem.isClosed) {

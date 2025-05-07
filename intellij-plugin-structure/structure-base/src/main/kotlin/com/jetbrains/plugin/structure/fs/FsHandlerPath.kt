@@ -61,9 +61,5 @@ class FsHandlerPath(private val fs: FsHandleFileSystem, val delegatePath: Path) 
   private val Path.unwrapped: Path
     get() = (this as? FsHandlerPath)?.delegatePath ?: this
 
-  fun reopen(): Path {
-    return fileSystem.getPath(delegatePath.toString())
-  }
-
   override fun toString() = delegatePath.toString()
 }
