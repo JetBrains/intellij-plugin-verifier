@@ -29,15 +29,15 @@ class FsHandlerPath(private val fs: FsHandleFileSystem, val delegatePath: Path) 
 
   override fun subpath(beginIndex: Int, endIndex: Int) = delegatePath.subpath(beginIndex, endIndex).wrapNotNull()
 
-  override fun startsWith(other: Path) = delegatePath.startsWith(other.unwrap())
+  override fun startsWith(other: Path) = delegatePath.startsWith(other.unwrapped)
 
-  override fun endsWith(other: Path) = delegatePath.endsWith(other.unwrap())
+  override fun endsWith(other: Path) = delegatePath.endsWith(other.unwrapped)
 
   override fun normalize() = delegatePath.normalize().wrapNotNull()
 
-  override fun resolve(other: Path) = delegatePath.resolve(other.unwrap()).wrapNotNull()
+  override fun resolve(other: Path) = delegatePath.resolve(other.unwrapped).wrapNotNull()
 
-  override fun relativize(other: Path) = delegatePath.relativize(other.unwrap()).wrapNotNull()
+  override fun relativize(other: Path) = delegatePath.relativize(other.unwrapped).wrapNotNull()
 
   override fun toUri(): URI = delegatePath.toUri()
 
@@ -58,7 +58,8 @@ class FsHandlerPath(private val fs: FsHandleFileSystem, val delegatePath: Path) 
     FsHandlerPath(fs, this)
   }
 
-  private fun Path.unwrap() = (this as? FsHandlerPath)?.delegatePath ?: this
+  private val Path.unwrapped: Path
+    get() = (this as? FsHandlerPath)?.delegatePath ?: this
 
   fun reopen(): Path {
     return fileSystem.getPath(delegatePath.toString())
