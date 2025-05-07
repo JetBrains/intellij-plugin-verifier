@@ -50,16 +50,26 @@ class FsHandlerPath(private val fs: FsHandleFileSystem, val delegatePath: Path) 
     vararg modifiers: WatchEvent.Modifier?
   ): WatchKey = delegatePath.register(watcher, events, *modifiers)
 
-  override fun compareTo(other: Path) = delegatePath.compareTo(other)
+  override fun compareTo(other: Path) = delegatePath.compareTo(other.unwrapped)
 
   private fun Path.wrapNotNull(): FsHandlerPath = FsHandlerPath(fs, this)
 
   private fun Path?.wrap(): FsHandlerPath? = this?.let {
-    FsHandlerPath(fs, this)
+    FsHandlerPath(fs, it)
   }
 
   private val Path.unwrapped: Path
     get() = (this as? FsHandlerPath)?.delegatePath ?: this
 
   override fun toString() = delegatePath.toString()
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is Path) return false
+
+    val unwrappedOther = other.unwrapped
+    return delegatePath == unwrappedOther
+  }
+
+  override fun hashCode(): Int = delegatePath.hashCode()
 }
