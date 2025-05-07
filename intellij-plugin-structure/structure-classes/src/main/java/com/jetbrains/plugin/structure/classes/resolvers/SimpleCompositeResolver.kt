@@ -27,9 +27,14 @@ open class SimpleCompositeResolver(
     get() = resolvers.flatMapTo(hashSetOf()) { it.packages }
 
   override val allBundleNameSet: ResourceBundleNameSet
-    get() = resolvers.map {
-      it.allBundleNameSet
-    }.reduce { acc, bundleNames -> acc.merge(bundleNames) }
+    get() {
+      val bundleSets = resolvers.map { it.allBundleNameSet }
+      return if (bundleSets.isEmpty()) {
+        ResourceBundleNameSet.EMPTY
+      } else {
+        bundleSets.reduce { acc, bundleNames -> acc.merge(bundleNames) }
+      }
+    }
 
   @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
