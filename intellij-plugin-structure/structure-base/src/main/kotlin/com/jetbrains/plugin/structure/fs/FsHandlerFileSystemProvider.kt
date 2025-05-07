@@ -63,9 +63,9 @@ class FsHandlerFileSystemProvider(val delegateProvider: FileSystemProvider) : Fi
 
   override fun isSameFile(path: Path, path2: Path): Boolean {
     return if (path is FsHandlerPath && path2 is FsHandlerPath) {
-      path.delegatePath.fileSystem.provider().isSameFile(path, path2)
+      path.delegatePath.fileSystem.provider().isSameFile(path.delegatePath, path2.delegatePath)
     } else {
-      delegateProvider.isSameFile(path, path2)
+      delegateProvider.isSameFile(path.unwrapped, path2.unwrapped)
     }
   }
 
