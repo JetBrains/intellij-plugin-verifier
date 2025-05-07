@@ -1,5 +1,8 @@
 package com.jetbrains.plugin.structure.jar
 
+import com.jetbrains.plugin.structure.base.fs.isClosed
+import com.jetbrains.plugin.structure.fs.FsHandlerFileSystemProvider
+import com.jetbrains.plugin.structure.fs.FsHandlerPath
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.ClosedFileSystemException
@@ -13,11 +16,27 @@ import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG: Logger = LoggerFactory.getLogger(FsHandleFileSystem::class.java)
-class FsHandleFileSystem(val delegate: FileSystem) : FileSystem() {
+class FsHandleFileSystem(val initialDelegateFileSystem: FileSystem, private val path: Path? = null) : FileSystem() {
 
   private var isOpen = true
 
   private val referenceCount = AtomicInteger(1)
+
+  private var _delegateFileSystem = initialDelegateFileSystem
+  val delegateFileSystem: FileSystem
+    get() {
+      if (_delegateFileSystem.isClosed && path != null) {
+        val reopenedFsWrapper = SingletonCachingJarFileSystemProvider.getFileSystem(path)
+        if (reopenedFsWrapper is FsHandleFileSystem) {
+          LOG.debug("Reopening filesystem delegate for <{}>", path)
+          _delegateFileSystem = reopenedFsWrapper.initialDelegateFileSystem
+          return _delegateFileSystem
+        } else {
+          LOG.debug("Filesystem delegate cannot be reopened for <{}>: unsupported type '{}'", path, reopenedFsWrapper.javaClass.simpleName)
+        }
+      }
+      return _delegateFileSystem
+    }
 
   fun increment() {
     referenceCount.incrementAndGet()
@@ -41,42 +60,42 @@ class FsHandleFileSystem(val delegate: FileSystem) : FileSystem() {
 
   fun closeDelegate() {
     try {
-      if (delegate.isOpen) delegate.close()
+      if (delegateFileSystem.isOpen) delegateFileSystem.close()
     } catch (_: InterruptedException) {
       Thread.currentThread().interrupt()
-      LOG.info("Cannot close due to an interruption for [{}]", delegate)
+      LOG.info("Cannot close due to an interruption for [{}]", delegateFileSystem)
     } catch (_: NoSuchFileException) {
-      LOG.debug("Cannot close as the file no longer exists for [{}]", delegate)
+      LOG.debug("Cannot close as the file no longer exists for [{}]", delegateFileSystem)
     } catch (_: java.nio.file.NoSuchFileException) {
-      LOG.debug("Cannot close as the file no longer exists for [{}]", delegate)
+      LOG.debug("Cannot close as the file no longer exists for [{}]", delegateFileSystem)
     } catch (e: Exception) {
-      LOG.error("Unable to close [{}]", delegate, e)
+      LOG.error("Unable to close [{}]", delegateFileSystem, e)
     }
   }
 
-  override fun isOpen(): Boolean = isOpen && delegate.isOpen
+  override fun isOpen(): Boolean = isOpen && delegateFileSystem.isOpen
 
-  override fun isReadOnly(): Boolean = delegate.isReadOnly
+  override fun isReadOnly(): Boolean = delegateFileSystem.isReadOnly
 
-  override fun getSeparator(): String = delegate.separator
+  override fun getSeparator(): String = delegateFileSystem.separator
 
-  override fun getRootDirectories(): Iterable<Path> = delegate.rootDirectories
+  override fun getRootDirectories(): Iterable<Path> = delegateFileSystem.rootDirectories.map { FsHandlerPath(this, it) }
 
-  override fun getFileStores(): Iterable<FileStore> = delegate.fileStores
+  override fun getFileStores(): Iterable<FileStore> = delegateFileSystem.fileStores
 
-  override fun supportedFileAttributeViews(): Set<String> = delegate.supportedFileAttributeViews()
+  override fun supportedFileAttributeViews(): Set<String> = delegateFileSystem.supportedFileAttributeViews()
 
-  override fun getPath(first: String, vararg more: String?): Path = delegate.getPath(first, *more)
+  override fun getPath(first: String, vararg more: String?): Path = FsHandlerPath(this, delegateFileSystem.getPath(first, *more))
 
-  override fun getPathMatcher(syntaxAndPattern: String): PathMatcher = delegate.getPathMatcher(syntaxAndPattern)
+  override fun getPathMatcher(syntaxAndPattern: String): PathMatcher = delegateFileSystem.getPathMatcher(syntaxAndPattern)
 
-  override fun getUserPrincipalLookupService(): UserPrincipalLookupService = delegate.userPrincipalLookupService
+  override fun getUserPrincipalLookupService(): UserPrincipalLookupService = delegateFileSystem.userPrincipalLookupService
 
-  override fun newWatchService(): WatchService = delegate.newWatchService()
+  override fun newWatchService(): WatchService = delegateFileSystem.newWatchService()
 
-  override fun provider(): FileSystemProvider = delegate.provider()
+  override fun provider(): FileSystemProvider = FsHandlerFileSystemProvider(delegateFileSystem.provider())
 
   fun hasSameDelegate(fs: FileSystem): Boolean {
-    return if (fs is FsHandleFileSystem) this.delegate == fs.delegate else false
+    return if (fs is FsHandleFileSystem) this.delegateFileSystem == fs.delegateFileSystem else false
   }
 }

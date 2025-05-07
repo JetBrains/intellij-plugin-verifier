@@ -1,7 +1,6 @@
 package com.jetbrains.plugin.structure.jar
 
-import com.jetbrains.plugin.structure.base.utils.isJar
-import com.jetbrains.plugin.structure.base.utils.isZip
+import com.jetbrains.plugin.structure.base.utils.extension
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URI
@@ -17,7 +16,7 @@ class UriJarFileSystemProvider(private val pathToUri: (Path) -> URI = { it.toUri
   override fun getFileSystem(jarPath: Path): FileSystem {
     val jarUri = pathToUri(jarPath)
     return try {
-      if (!jarPath.isZip() && !jarPath.isJar()) {
+      if (!jarPath.isZipOrJar()) {
         throw JarArchiveCannotBeOpenException(jarPath, "must end with '.zip' or '.jar'")
       }
       try {
@@ -35,4 +34,6 @@ class UriJarFileSystemProvider(private val pathToUri: (Path) -> URI = { it.toUri
       throw JarArchiveCannotBeOpenException(jarUri, e)
     }
   }
+
+  private fun Path.isZipOrJar() = extension in listOf("zip", "jar")
 }
