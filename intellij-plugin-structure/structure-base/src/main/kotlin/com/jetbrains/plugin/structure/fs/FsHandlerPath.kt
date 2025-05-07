@@ -4,16 +4,16 @@
 
 package com.jetbrains.plugin.structure.fs
 
-import com.jetbrains.plugin.structure.jar.FsHandleFileSystem
 import java.net.URI
+import java.nio.file.FileSystem
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.WatchEvent
 import java.nio.file.WatchKey
 import java.nio.file.WatchService
 
-class FsHandlerPath(private val fs: FsHandleFileSystem, val delegatePath: Path) : Path {
-  override fun getFileSystem() = fs
+class FsHandlerPath(private val fileSystem: FileSystem, val delegatePath: Path) : Path {
+  override fun getFileSystem(): FileSystem = fileSystem
 
   override fun isAbsolute() = delegatePath.isAbsolute
 
@@ -52,10 +52,10 @@ class FsHandlerPath(private val fs: FsHandleFileSystem, val delegatePath: Path) 
 
   override fun compareTo(other: Path) = delegatePath.compareTo(other.unwrapped)
 
-  private fun Path.wrapNotNull(): FsHandlerPath = FsHandlerPath(fs, this)
+  private fun Path.wrapNotNull(): FsHandlerPath = FsHandlerPath(this@FsHandlerPath.fileSystem, this)
 
   private fun Path?.wrap(): FsHandlerPath? = this?.let {
-    FsHandlerPath(fs, it)
+    FsHandlerPath(this@FsHandlerPath.fileSystem, it)
   }
 
   private val Path.unwrapped: Path
