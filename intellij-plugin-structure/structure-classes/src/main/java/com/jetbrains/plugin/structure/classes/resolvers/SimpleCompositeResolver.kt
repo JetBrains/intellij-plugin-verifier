@@ -6,8 +6,8 @@ import com.jetbrains.plugin.structure.base.utils.closeAll
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 
-class SimpleCompositeResolver internal constructor(
-  private val resolvers: List<Resolver>,
+open class SimpleCompositeResolver(
+  open val resolvers: List<Resolver>,
   override val readMode: ReadMode,
   override val name: String
 ) : NamedResolver(name) {

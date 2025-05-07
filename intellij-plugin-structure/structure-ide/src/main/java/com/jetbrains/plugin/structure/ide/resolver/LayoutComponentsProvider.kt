@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.ide.resolver
 
+import com.jetbrains.plugin.structure.ide.layout.IdeRelativePath
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
 import com.jetbrains.plugin.structure.ide.layout.MissingClasspathFileInLayoutComponentException
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
@@ -24,41 +25,73 @@ class LayoutComponentsProvider(private val missingLayoutFileMode: MissingLayoutF
     return if (missingLayoutFileMode == IGNORE) {
       layoutComponents
     } else {
-      val (okComponents, failedComponents) = layoutComponents.partition { it.allClasspathsExist() }
+      val validatedComponents = layoutComponents.partitionToSuccessesAndFailures()
       val acceptedComponents = mutableListOf<ResolvedLayoutComponent>()
-      if (failedComponents.isNotEmpty()) {
-        if (missingLayoutFileMode == FAIL) throw MissingClasspathFileInLayoutComponentException.of(idePath, failedComponents)
-        if (missingLayoutFileMode == SKIP_CLASSPATH) {
-          acceptedComponents += failedComponents.map { it.skipMissingClasspathElements() }
+      if (validatedComponents.hasFailures()) {
+        if (missingLayoutFileMode == FAIL) {
+          throw MissingClasspathFileInLayoutComponentException.of(idePath, validatedComponents.failedComponents)
         }
-        logUnavailableClasspath(failedComponents)
+        if (missingLayoutFileMode == SKIP_CLASSPATH) {
+          acceptedComponents += validatedComponents.skipMissingClasspathElements()
+        }
+        logUnavailableClasspath(validatedComponents.failures)
       }
-      LayoutComponents(okComponents + acceptedComponents)
+      LayoutComponents(validatedComponents.successes + acceptedComponents)
     }
   }
 
-  private fun ResolvedLayoutComponent.skipMissingClasspathElements() = with(layoutComponent) {
-    when (this) {
-      is LayoutComponent.ModuleV2 -> copy(classPaths = existingClasspaths)
-      is LayoutComponent.Plugin -> copy(classPaths = existingClasspaths)
-      is LayoutComponent.ProductModuleV2 -> copy(classPaths = existingClasspaths)
-      is LayoutComponent.PluginAlias -> this
+  private fun LayoutComponents.partitionToSuccessesAndFailures(): ValidatedLayoutComponents {
+    val okComponents = mutableListOf<ResolvedLayoutComponent>()
+    val failedComponents = mutableListOf<InvalidLayoutComponent>()
+    forEach { component ->
+      val missingPaths = component.resolveClasspaths().filterNot { it.exists }
+      if (missingPaths.isEmpty()) {
+        okComponents += component
+      } else {
+        failedComponents += InvalidLayoutComponent(component, missingPaths)
+      }
     }
-  }.let {
-    ResolvedLayoutComponent(idePath, it)
+    return ValidatedLayoutComponents(okComponents, failedComponents)
   }
 
-  private val ResolvedLayoutComponent.existingClasspaths
-    get() = resolveClasspaths()
-      .filter { it.exists }
-      .map { it.relativePath.toString() }
-
-  private fun logUnavailableClasspath(failedComponents: List<ResolvedLayoutComponent>) {
+  private fun logUnavailableClasspath(invalidLayoutComponents: List<InvalidLayoutComponent>) {
     if (missingLayoutFileMode == SKIP_SILENTLY || !LOG.isWarnEnabled) return
-    val logMsg = failedComponents.joinToString("\n") {
-      val cp = it.getClasspaths().joinToString(", ")
-      "Layout component '${it.name}' has some nonexistent 'classPath' elements: '$cp'"
+    val logMsg = invalidLayoutComponents.joinToString("\n") { invalidComp ->
+      val cp = invalidComp.missingClasspaths.map { it.relativePath }.joinToString(", ")
+      val name = invalidComp.component.name
+      "Layout component '${name}' has some nonexistent 'classPath' elements: '$cp'"
     }
     LOG.warn(logMsg)
+  }
+
+  private data class InvalidLayoutComponent(val component: ResolvedLayoutComponent, val missingClasspaths: List<IdeRelativePath>)
+
+  private data class ValidatedLayoutComponents(
+    val successes: List<ResolvedLayoutComponent>,
+    val failures: List<InvalidLayoutComponent>,
+  ) {
+    val failedComponents: List<ResolvedLayoutComponent>
+      get() = failures.map { it.component }
+
+    fun hasFailures() = failures.isNotEmpty()
+
+    fun skipMissingClasspathElements(): List<ResolvedLayoutComponent> =
+      failedComponents.map { it.skipMissingClasspathElements() }
+
+    private fun ResolvedLayoutComponent.skipMissingClasspathElements() = with(layoutComponent) {
+      when (this) {
+        is LayoutComponent.ModuleV2 -> copy(classPaths = existingClasspaths)
+        is LayoutComponent.Plugin -> copy(classPaths = existingClasspaths)
+        is LayoutComponent.ProductModuleV2 -> copy(classPaths = existingClasspaths)
+        is LayoutComponent.PluginAlias -> this
+      }
+    }.let {
+      ResolvedLayoutComponent(idePath, it)
+    }
+
+    private val ResolvedLayoutComponent.existingClasspaths
+      get() = resolveClasspaths()
+        .filter { it.exists }
+        .map { it.relativePath.toString() }
   }
 }

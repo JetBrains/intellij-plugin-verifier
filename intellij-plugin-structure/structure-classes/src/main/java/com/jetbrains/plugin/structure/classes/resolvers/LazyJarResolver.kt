@@ -17,7 +17,7 @@ import java.util.*
 private val LOG: Logger = LoggerFactory.getLogger(LazyJarResolver::class.java)
 
 class LazyJarResolver(
-  override val jarPath: Path,
+  public override val jarPath: Path,
   override val readMode: ReadMode,
   override val fileOrigin: FileOrigin,
   override val name: String = jarPath.fileName.toString(),
