@@ -13,30 +13,18 @@ import java.nio.file.PathMatcher
 import java.nio.file.WatchService
 import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG: Logger = LoggerFactory.getLogger(FsHandleFileSystem::class.java)
 class FsHandleFileSystem(val initialDelegateFileSystem: FileSystem, private val path: Path? = null) : FileSystem() {
 
-  private var isOpen = true
+  private val isOpen = AtomicBoolean(true)
 
   private val referenceCount = AtomicInteger(1)
 
   private var _delegateFileSystem = initialDelegateFileSystem
-  val delegateFileSystem: FileSystem
-    get() {
-      if (_delegateFileSystem.isClosed && path != null) {
-        val reopenedFsWrapper = SingletonCachingJarFileSystemProvider.getFileSystem(path)
-        if (reopenedFsWrapper is FsHandleFileSystem) {
-          LOG.debug("Reopening filesystem delegate for <{}>", path)
-          _delegateFileSystem = reopenedFsWrapper.initialDelegateFileSystem
-          return _delegateFileSystem
-        } else {
-          LOG.debug("Filesystem delegate cannot be reopened for <{}>: unsupported type '{}'", path, reopenedFsWrapper.javaClass.simpleName)
-        }
-      }
-      return _delegateFileSystem
-    }
+  val delegateFileSystem: FileSystem get() = getOrReopenDelegateFileSystem()
 
   fun increment() {
     referenceCount.incrementAndGet()
@@ -47,17 +35,33 @@ class FsHandleFileSystem(val initialDelegateFileSystem: FileSystem, private val 
   }
 
   @Synchronized
+  private fun getOrReopenDelegateFileSystem(): FileSystem {
+    if (_delegateFileSystem.isClosed && path != null) {
+      val reopenedFsWrapper = SingletonCachingJarFileSystemProvider.getFileSystem(path)
+      if (reopenedFsWrapper is FsHandleFileSystem) {
+        LOG.debug("Reopening filesystem delegate for <{}>", path)
+        _delegateFileSystem = reopenedFsWrapper.initialDelegateFileSystem
+        return _delegateFileSystem
+      } else {
+        LOG.debug("Filesystem delegate cannot be reopened for <{}>: unsupported type '{}'", path, reopenedFsWrapper.javaClass.simpleName)
+      }
+    }
+    return _delegateFileSystem
+  }
+
+  @Synchronized
   override fun close() {
-    if (!isOpen) {
+    if (!isOpen.get()) {
       throw ClosedFileSystemException()
     }
 
     if (referenceCount.decrementAndGet() == 0) {
       closeDelegate()
-      isOpen = false
+      isOpen.set(false)
     }
   }
 
+  @Synchronized
   fun closeDelegate() {
     try {
       if (delegateFileSystem.isOpen) delegateFileSystem.close()
@@ -73,7 +77,7 @@ class FsHandleFileSystem(val initialDelegateFileSystem: FileSystem, private val 
     }
   }
 
-  override fun isOpen(): Boolean = isOpen && delegateFileSystem.isOpen
+  override fun isOpen(): Boolean = isOpen.get() && delegateFileSystem.isOpen
 
   override fun isReadOnly(): Boolean = delegateFileSystem.isReadOnly
 
