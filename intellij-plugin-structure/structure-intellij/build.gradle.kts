@@ -7,6 +7,5 @@ dependencies {
   implementation(libs.jaxb.runtime)
 
   testImplementation(sharedLibs.junit)
-
-  testImplementation("io.mockk:mockk:1.14.0")
+  testImplementation(sharedLibs.mockk)
 }
