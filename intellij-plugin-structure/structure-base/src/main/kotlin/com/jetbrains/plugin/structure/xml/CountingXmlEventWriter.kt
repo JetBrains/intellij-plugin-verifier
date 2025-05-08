@@ -4,10 +4,19 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import javax.xml.stream.XMLEventWriter
+import javax.xml.stream.XMLStreamConstants.*
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.events.XMLEvent
 
 private val LOG: Logger = LoggerFactory.getLogger(CountingXmlEventWriter::class.java)
+
+private val allowedPrologEventTypes = setOf(
+  COMMENT,
+  PROCESSING_INSTRUCTION,
+  DTD,
+  SPACE,
+  CHARACTERS
+)
 
 /**
  * STaX Event Writer that counts occurrences of STaX events.
@@ -26,18 +35,20 @@ class CountingXmlEventWriter(private val delegate: XMLEventWriter) : XMLEventWri
   private fun count(type: XmlEventType) = eventCounter[type] ?: 0
 
   private fun processingInstructions(): Int {
-    return count(XMLEvent.PROCESSING_INSTRUCTION)
+    return count(PROCESSING_INSTRUCTION)
   }
 
   private fun startDocuments(): Int {
-    return count(XMLEvent.START_DOCUMENT)
+    return count(START_DOCUMENT)
   }
 
   @Throws(XMLStreamException::class)
   override fun close() {
     if ((eventCounter.size == 1 && startDocuments() == 1)
       || (eventCounter.size == 1 && processingInstructions() > 0)
-      || eventCounter.isEmpty()) {
+      || eventCounter.isEmpty()
+      || hasOnlyPrologEvents()
+      ) {
       // closing without an actual document being written
       try {
         delegate.close()
@@ -55,6 +66,12 @@ class CountingXmlEventWriter(private val delegate: XMLEventWriter) : XMLEventWri
       } catch (e: Exception) {
         throw e
       }
+    }
+  }
+
+  private fun hasOnlyPrologEvents(): Boolean {
+    return eventCounter.isNotEmpty() && eventCounter.keys.all {
+      it in allowedPrologEventTypes
     }
   }
 }

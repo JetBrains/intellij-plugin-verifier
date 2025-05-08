@@ -2,7 +2,7 @@
  * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
-package com.jetbrains.plugin.structure.ide
+package com.jetbrains.plugin.structure.ide.jps
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
@@ -12,7 +12,6 @@ import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
-import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 

@@ -1,6 +1,7 @@
 [versions]
 kotlin = "1.8.21"
 
+asm = "9.8"
 byteBuddy = "1.15.10"
 caffeine = "3.1.8"
 commons-io = "2.16.1"
@@ -21,9 +22,11 @@ retrofit-gson = "2.9.0"
 shadow = "8.3.0"
 slf4j-api = "2.0.7"
 spullara-cliParser = "1.1.6"
+woodstox = "7.1.0"
 xz = "1.9"
 
 [libraries]
+asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
 byteBuddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "byteBuddy" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
@@ -43,6 +46,7 @@ retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = 
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit-gson" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api" }
 spullara-cliParser = { group = "com.github.spullara.cli-parser", name = "cli-parser", version.ref = "spullara-cliParser" }
+woodstox = { group = 'com.fasterxml.woodstox', name = 'woodstox-core', version.ref = "woodstox"}
 xz = { group = "org.tukaani", name = "xz", version.ref = "xz" }
 
 [plugins]

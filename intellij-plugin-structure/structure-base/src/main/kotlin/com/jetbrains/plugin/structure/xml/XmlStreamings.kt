@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.InputStream
 import java.io.OutputStream
+import java.util.function.Consumer
 import javax.xml.stream.EventFilter
 import javax.xml.stream.FactoryConfigurationError
 import javax.xml.stream.XMLEventReader
@@ -79,6 +80,10 @@ class CloseableXmlEventReader(private val delegate: XMLEventReader) : XMLEventRe
       XML_EVENT_READER_LOG.error("Cannot retrieve next event", e)
       false
     }
+  }
+
+  override fun forEachRemaining(action: Consumer<in Any>) {
+    delegate.forEachRemaining(action)
   }
 }
 

@@ -4,6 +4,7 @@ import org.intellij.lang.annotations.Language
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import javax.xml.stream.EventFilter
+import javax.xml.stream.XMLStreamConstants.START_DOCUMENT
 import javax.xml.stream.events.XMLEvent
 
 class DocumentTypeEventFilterTest : BaseEventFilterTest() {
@@ -37,7 +38,7 @@ class DocumentTypeEventFilterTest : BaseEventFilterTest() {
     val xmlStreamEventFilter = XmlStreamEventFilter()
     val transformationContext = XmlTransformationContext.create()
 
-    val documentTypeFilter = DocumentTypeFilter(setOf("module"), eventLog)
+    val documentTypeFilter = DocumentTypeFilter(setOf("idea-project"), eventLog)
     val filteredXml = captureToString {
       xmlStreamEventFilter.filter(documentTypeFilter, xml.toInputStream(), this, transformationContext)
     }
@@ -58,11 +59,18 @@ class DocumentTypeEventFilterTest : BaseEventFilterTest() {
     val transformationContext = XmlTransformationContext.create()
 
     val documentTypeFilter = DocumentTypeFilter(setOf("module"), eventLog)
-    val filteredXml = captureToString {
+    val actualXml = captureToString {
       xmlStreamEventFilter.filter(documentTypeFilter, xml.toInputStream(), this, transformationContext)
     }
 
-    assertEquals(5, eventLog.events.size)
+    val expectedEventTypes = listOf(START_DOCUMENT)
+    assertEquals(expectedEventTypes.size, eventLog.events.size)
+
+    val expectedXml = """
+      <?xml version='1.0' encoding='UTF-8'?><idea-plugin>
+      </idea-plugin>
+    """.trimIndent()
+    assertEquals(expectedXml, actualXml)
   }
 
   @Test

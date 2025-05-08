@@ -11,9 +11,11 @@ include("structure-fleet")
 include("structure-toolbox")
 include("structure-ide")
 include("structure-ide-classes")
+include("structure-ide-jps")
 include("structure-youtrack")
 include("structure-teamcity-recipes")
 include("tests")
+include("tests-jps")
 
 dependencyResolutionManagement {
   versionCatalogs {

@@ -22,7 +22,7 @@ class PluginXmlDependencyFilter(private val ignoreComments: Boolean = true, priv
   private val allowedElements = listOf("idea-plugin", "id", "name", "vendor", "depends", "dependencies", "plugin",
     "module", "content", "/idea-plugin/dependencies/module", "/idea-plugin/content/module")
 
-  private val passThruElements = setOf("module")
+  private val passThruElements = setOf("idea-plugin")
 
   private val xmlStreamEventFilter = XmlStreamEventFilter()
 
