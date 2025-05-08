@@ -29,18 +29,19 @@ class FsHandlerFileSystemProvider(
   override fun getScheme(): String? = delegateProvider.scheme
 
   override fun newFileSystem(uri: URI, env: Map<String, *>): FileSystem =
-    FsHandleFileSystem(delegateProvider.newFileSystem(uri, env), delegateJarFileSystemProvider)
+    FsHandleFileSystem(
+      delegateProvider.newFileSystem(uri, env),
+      delegateJarFileSystemProvider,
+      uri.toPath()
+    )
 
   override fun getFileSystem(uri: URI): FsHandleFileSystem = FsHandleFileSystem(
     delegateProvider.getFileSystem(uri),
-    delegateJarFileSystemProvider
+    delegateJarFileSystemProvider,
+    uri.toPath()
   )
 
-  override fun getPath(uri: URI): Path {
-    val fs = getFileSystem(uri)
-    val path = delegateProvider.getPath(uri)
-    return FsHandlerPath(fs, path)
-  }
+  override fun getPath(uri: URI): Path = FsHandlerPath(getFileSystem(uri), uri.toPath())
 
   override fun newByteChannel(
     path: Path,
@@ -101,6 +102,10 @@ class FsHandlerFileSystemProvider(
 
   override fun setAttribute(path: Path, attribute: String, value: Any, vararg options: LinkOption): Unit =
     delegateProvider.setAttribute(path.unwrapped, attribute, value, *options)
+
+  private fun URI.toPath(): Path {
+    return delegateProvider.getPath(this)
+  }
 
   private fun FsHandlerPath.reopen() = fileSystem.getPath(delegatePath.toString())
 

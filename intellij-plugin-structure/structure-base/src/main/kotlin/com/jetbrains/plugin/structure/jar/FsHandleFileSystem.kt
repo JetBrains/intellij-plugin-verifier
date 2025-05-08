@@ -34,7 +34,7 @@ private val LOG: Logger = LoggerFactory.getLogger(FsHandleFileSystem::class.java
  *
  * @param initialDelegateFileSystem an initial low-level Java NIO [FileSystem] to wrap
  * @param provider a [JarFileSystemProvider] that created this filesystem.
- * @param path an optional [Path] to the JAR or ZIP managed by this filesystem.
+ * @param path a [Path] to the JAR or ZIP managed by this filesystem.
  *
  * @see [FsHandlerFileSystemProvider]
  * @see [FsHandlerPath]
@@ -42,7 +42,7 @@ private val LOG: Logger = LoggerFactory.getLogger(FsHandleFileSystem::class.java
 class FsHandleFileSystem(
   val initialDelegateFileSystem: FileSystem,
   private val provider: JarFileSystemProvider,
-  private val path: Path? = null
+  private val path: Path
 ) : FileSystem() {
 
   private val isOpen = AtomicBoolean(true)
@@ -62,7 +62,7 @@ class FsHandleFileSystem(
 
   @Synchronized
   private fun getOrReopenDelegateFileSystem(): FileSystem {
-    if (_delegateFileSystem.isClosed && path != null) {
+    if (_delegateFileSystem.isClosed) {
       val reopenedFS = provider.getFileSystem(path)
       LOG.debug("Reopening filesystem delegate for <{}>", path)
       _delegateFileSystem = reopenedFS
