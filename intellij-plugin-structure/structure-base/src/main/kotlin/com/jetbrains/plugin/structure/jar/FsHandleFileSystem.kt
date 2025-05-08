@@ -63,10 +63,8 @@ class FsHandleFileSystem(
   @Synchronized
   private fun getOrReopenDelegateFileSystem(): FileSystem {
     if (_delegateFileSystem.isClosed) {
-      val reopenedFS = provider.getFileSystem(path)
       LOG.debug("Reopening filesystem delegate for <{}>", path)
-      _delegateFileSystem = reopenedFS
-      return _delegateFileSystem
+      _delegateFileSystem = provider.getFileSystem(path)
     }
     return _delegateFileSystem
   }
