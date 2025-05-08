@@ -38,11 +38,11 @@ class CachingJarFileSystemProvider(
 
   val eventLog = EventLog()
 
-  private fun createFsHandle(jarPath: Path, jarUri: URI): FsHandleFileSystem {
+  private fun createFileSystem(jarPath: Path, jarUri: URI): FsHandleFileSystem {
     val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
       LOG.debug("Creating a filesystem handler via delegate for <{}> (Cache size: {})", jarUri, fsCache.estimatedSize())
     }
-    return FsHandleFileSystem(jarFs)
+    return FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath)
   }
 
   @Synchronized
@@ -69,12 +69,12 @@ class CachingJarFileSystemProvider(
         val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
           LOG.debug("Recreating an already closed a filesystem handler for <{}> (Cache size: {})", key, fsCache.estimatedSize())
         }
-        fs = FsHandleFileSystem(jarFs)
+        fs = FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath)
         fsCache.put(key, fs)
         logRecreatedFs(key)
       }
     } else {
-      fs = createFsHandle(jarPath, jarUri)
+      fs = createFileSystem(jarPath, jarUri)
       fsCache.put(key, fs)
       logCreatedFs(key)
     }

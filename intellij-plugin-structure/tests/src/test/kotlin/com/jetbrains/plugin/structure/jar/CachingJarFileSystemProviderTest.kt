@@ -31,7 +31,7 @@ class CachingJarFileSystemProviderTest {
   }
 
   @Test
-  fun `path is retrieved`() {
+  fun `retrieve path even if the underlying filesystem is closed`() {
     val fileSystemProvider = CachingJarFileSystemProvider()
     val fs = fileSystemProvider.getFileSystem(jarPath)
     val helloTxtPath: Path = fs.getPath("hello.txt")
@@ -41,10 +41,9 @@ class CachingJarFileSystemProviderTest {
 
     assertFalse(fs.isOpen)
 
+    // under the cover, the filesystem has been reopened
     val anotherHelloWorldPath: Path = fs.getPath("hello.txt")
-    assertThrows(ClosedFileSystemException::class.java) {
-      assertFalse(anotherHelloWorldPath.exists())
-    }
+    assertTrue(anotherHelloWorldPath.exists())
   }
 
   @Test
@@ -59,10 +58,8 @@ class CachingJarFileSystemProviderTest {
     assertFalse(fs.isOpen)
 
     val anotherHelloTxtPath: Path = fs.getPath("hello.txt")
-    assertThrows(ClosedFileSystemException::class.java) {
-      assertFalse(anotherHelloTxtPath.exists())
-    }
-    // At this point, cache probably still contains an instance of the closed filesystem.
+    assertTrue(anotherHelloTxtPath.exists())
+
     val anotherFs = fileSystemProvider.getFileSystem(jarPath)
     val helloTxtFromAnotherFs: Path = anotherFs.getPath("hello.txt")
     assertTrue(helloTxtFromAnotherFs.exists())
@@ -86,8 +83,10 @@ class CachingJarFileSystemProviderTest {
     assertFalse(anotherFs.isOpen)
 
     val yetAnotherFs = fileSystemProvider.getFileSystem(jarPath)
-    // since two of two cached instances are closed, the 3rd attempt will create a new delegate
-    assertFalse((yetAnotherFs as? FsHandleFileSystem)?.hasSameDelegate(fs) == true)
+    assertTrue(yetAnotherFs !== fs)
+    assertTrue(yetAnotherFs !== anotherFs)
+    assertTrue(yetAnotherFs.isOpen)
+    assertTrue((yetAnotherFs as? FsHandleFileSystem)?.delegateFileSystem?.isOpen == true)
   }
 
   @Test
@@ -114,14 +113,14 @@ class CachingJarFileSystemProviderTest {
     val fs = fileSystemProvider.getFileSystem(jarPath)
     fs as FsHandleFileSystem
     assertTrue(fs.isOpen)
-    fs.delegate.close()
-    // delegate is closed, wrapper is supposed to be closed as well
-    assertFalse(fs.isOpen)
+    fs.initialDelegateFileSystem.close()
+    // delegate is closed, but the wrapper will reopen it
+    assertTrue(fs.isOpen)
 
     val fs1 = fileSystemProvider.getFileSystem(jarPath)
-    assertNotSame(fs, fs1)
+    assertSame(fs, fs1)
     assertTrue(fs1.isOpen)
-    assertFalse(fs.hasSameDelegate(fs1))
+    assertTrue(fs.hasSameDelegate(fs1))
   }
 
   @Test

@@ -18,4 +18,8 @@ data class ResourceBundleNameSet(internal val bundleNames: Map<String, Set<Strin
   val isEmpty: Boolean get() = bundleNames.isEmpty()
 
   operator fun get(baseName: String): Set<String> = bundleNames.getOrElse(baseName) { emptySet() }
+
+  companion object {
+    val EMPTY = ResourceBundleNameSet(emptyMap())
+  }
 }

@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.jar.PluginDescriptorResult
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
 import com.jetbrains.plugin.structure.jar.PluginJar
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
+import org.hamcrest.CoreMatchers.allOf
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.*
@@ -75,7 +76,12 @@ class PluginJarTest(private val fileSystemProvider: JarFileSystemProvider) {
     val jarArchiveException = assertThrows(JarArchiveException::class.java) {
       PluginJar(nonexistentPath, fileSystemProvider)
     }
-    assertThat(jarArchiveException.message, containsString("JAR file cannot be open at [!n0n3xist3nt.jar]"))
+    assertThat(
+      jarArchiveException.message, allOf(
+        containsString("JAR file cannot be open at"),
+        containsString("!n0n3xist3nt.jar")
+      )
+    )
   }
 
   @Test

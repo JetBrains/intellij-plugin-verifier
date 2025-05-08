@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.classes.resolvers.jar
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.emptyClass
+import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.jar.CachingJarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.DefaultJarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.FsHandleFileSystem
@@ -250,7 +251,7 @@ class JarTest {
           assertTrue(fs is FsHandleFileSystem)
           fs as FsHandleFileSystem
           uniqueFileSystems[fs] = Unit
-          fs.delegate.close()
+          fs.delegateFileSystem.close()
         }
         iteration++
         true
@@ -266,6 +267,27 @@ class JarTest {
       assertEquals(1, filterIsInstance<CachingJarFileSystemProvider.EventLog.Event.Recreated>().size)
       // reuse filesystem for 3 classes
       assertEquals(3, filterIsInstance<CachingJarFileSystemProvider.EventLog.Event.Reused>().size)
+    }
+  }
+
+  @Test
+  fun `accessing path that refers to an already closed filesystem`() {
+    val fsProvider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE, enableEventLogging = true)
+    val jarPath = temporaryFolder.newFile("plugin-class-processing.jar").toPath()
+    createJar(jarPath, fsProvider).use { jar ->
+      var iteration = 0
+      jar.processAllClasses { name, path ->
+        if (iteration == 1) {
+          val fs = fsProvider.getFileSystem(jarPath)
+          assertTrue(fs is FsHandleFileSystem)
+          fs as FsHandleFileSystem
+          fs.initialDelegateFileSystem.close()
+
+          assertTrue(path.isFile)
+        }
+        iteration++
+        true
+      }
     }
   }
 }
