@@ -17,7 +17,12 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG: Logger = LoggerFactory.getLogger(FsHandleFileSystem::class.java)
-class FsHandleFileSystem(val initialDelegateFileSystem: FileSystem, private val path: Path? = null) : FileSystem() {
+
+class FsHandleFileSystem(
+  val initialDelegateFileSystem: FileSystem,
+  private val provider: JarFileSystemProvider,
+  private val path: Path? = null
+) : FileSystem() {
 
   private val isOpen = AtomicBoolean(true)
 
@@ -37,14 +42,10 @@ class FsHandleFileSystem(val initialDelegateFileSystem: FileSystem, private val 
   @Synchronized
   private fun getOrReopenDelegateFileSystem(): FileSystem {
     if (_delegateFileSystem.isClosed && path != null) {
-      val reopenedFsWrapper = SingletonCachingJarFileSystemProvider.getFileSystem(path)
-      if (reopenedFsWrapper is FsHandleFileSystem) {
-        LOG.debug("Reopening filesystem delegate for <{}>", path)
-        _delegateFileSystem = reopenedFsWrapper.initialDelegateFileSystem
-        return _delegateFileSystem
-      } else {
-        LOG.debug("Filesystem delegate cannot be reopened for <{}>: unsupported type '{}'", path, reopenedFsWrapper.javaClass.simpleName)
-      }
+      val reopenedFS = provider.getFileSystem(path)
+      LOG.debug("Reopening filesystem delegate for <{}>", path)
+      _delegateFileSystem = reopenedFS
+      return _delegateFileSystem
     }
     return _delegateFileSystem
   }
@@ -97,7 +98,7 @@ class FsHandleFileSystem(val initialDelegateFileSystem: FileSystem, private val 
 
   override fun newWatchService(): WatchService = delegateFileSystem.newWatchService()
 
-  override fun provider(): FileSystemProvider = FsHandlerFileSystemProvider(delegateFileSystem.provider())
+  override fun provider(): FileSystemProvider = FsHandlerFileSystemProvider(delegateFileSystem.provider(), provider)
 
   fun hasSameDelegate(fs: FileSystem): Boolean {
     return if (fs is FsHandleFileSystem) this.delegateFileSystem == fs.delegateFileSystem else false

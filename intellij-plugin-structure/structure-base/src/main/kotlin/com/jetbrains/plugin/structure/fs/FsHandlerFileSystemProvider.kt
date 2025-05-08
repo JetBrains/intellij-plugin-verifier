@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.fs
 
 import com.jetbrains.plugin.structure.base.fs.isClosed
 import com.jetbrains.plugin.structure.jar.FsHandleFileSystem
+import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import java.net.URI
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.AccessMode
@@ -21,14 +22,19 @@ import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
 
-class FsHandlerFileSystemProvider(val delegateProvider: FileSystemProvider) : FileSystemProvider() {
+class FsHandlerFileSystemProvider(
+  val delegateProvider: FileSystemProvider,
+  private val delegateJarFileSystemProvider: JarFileSystemProvider
+) : FileSystemProvider() {
   override fun getScheme(): String? = delegateProvider.scheme
 
   override fun newFileSystem(uri: URI, env: Map<String, *>): FileSystem =
-    FsHandleFileSystem(delegateProvider.newFileSystem(uri, env))
+    FsHandleFileSystem(delegateProvider.newFileSystem(uri, env), delegateJarFileSystemProvider)
 
   override fun getFileSystem(uri: URI): FsHandleFileSystem = FsHandleFileSystem(
-    delegateProvider.getFileSystem(uri))
+    delegateProvider.getFileSystem(uri),
+    delegateJarFileSystemProvider
+  )
 
   override fun getPath(uri: URI): Path {
     val fs = getFileSystem(uri)
