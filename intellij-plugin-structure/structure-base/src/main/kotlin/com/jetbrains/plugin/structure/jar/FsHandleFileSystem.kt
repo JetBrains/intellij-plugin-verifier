@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.plugin.structure.jar
 
 import com.jetbrains.plugin.structure.base.fs.isClosed
@@ -18,6 +22,23 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private val LOG: Logger = LoggerFactory.getLogger(FsHandleFileSystem::class.java)
 
+/**
+ * Reference counting [FileSystem] wrapper that can reopen closed filesystem.
+ *
+ * When the reference counter reaches zero, the [FsHandleFileSystem.closeDelegate] is called.
+ *
+ * The instance is first initialized with an `initialDelegateFileSystem` as an underlying delegate
+ * for Java NIO [FileSystem] operations.
+ * However, when the underlying [FileSystem] is closed, the [FsHandleFileSystem] will
+ * reopen the instance via `provider` and replace its delegate.
+ *
+ * @param initialDelegateFileSystem an initial low-level Java NIO [FileSystem] to wrap
+ * @param provider a [JarFileSystemProvider] that created this filesystem.
+ * @param path an optional [Path] to the JAR or ZIP managed by this filesystem.
+ *
+ * @see [FsHandlerFileSystemProvider]
+ * @see [FsHandlerPath]
+ */
 class FsHandleFileSystem(
   val initialDelegateFileSystem: FileSystem,
   private val provider: JarFileSystemProvider,
