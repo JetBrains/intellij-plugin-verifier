@@ -9,7 +9,6 @@ import com.jetbrains.plugin.structure.fs.FsHandlerFileSystemProvider
 import com.jetbrains.plugin.structure.fs.FsHandlerPath
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.nio.file.ClosedFileSystemException
 import java.nio.file.FileStore
 import java.nio.file.FileSystem
 import java.nio.file.Path
@@ -72,9 +71,8 @@ class FsHandleFileSystem(
   @Synchronized
   override fun close() {
     if (!isOpen.get()) {
-      throw ClosedFileSystemException()
+      return
     }
-
     if (referenceCount.decrementAndGet() == 0) {
       closeDelegate()
       isOpen.set(false)

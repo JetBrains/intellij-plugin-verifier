@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.jar
 
+import com.jetbrains.plugin.structure.base.fs.isClosed
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.base.utils.writeText
@@ -9,7 +10,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.net.URI
-import java.nio.file.ClosedFileSystemException
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -124,6 +124,21 @@ class CachingJarFileSystemProviderTest {
   }
 
   @Test
+  fun `closing of filesystem is idempotent`() {
+    val fileSystemProvider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE)
+    val fs = fileSystemProvider.getFileSystem(jarPath)
+    fs as FsHandleFileSystem
+    assertTrue(fs.isOpen)
+
+    // standard close
+    fs.close()
+    assertTrue(fs.isClosed)
+    // second close is expected to be idempotent
+    fs.close()
+    assertTrue(fs.isClosed)
+  }
+
+  @Test
   fun `JAR URIs are normalized`() {
     val jarPath = tempFolder.root.toPath().resolve("test.jar")
     FileSystems.newFileSystem(URI.create("jar:${jarPath.toUri()}"), mapOf<String, Any>("create" to true)).use {
@@ -151,10 +166,9 @@ class CachingJarFileSystemProviderTest {
     assertFalse(fs1.isOpen)
     assertFalse(fs2.isOpen)
 
-    // let's close the 2nd filesystem as well, but since there are no references left, this is a double close
-    assertThrows(ClosedFileSystemException::class.java) {
-      fs2.close()
-    }
+    // let's close the 2nd filesystem as well, but since there are no references left, this is a double close.
+    // double close is an idempotent operation.
+    fs2.close()
 
     assertFalse(fs1.isOpen)
     assertFalse(fs2.isOpen)
