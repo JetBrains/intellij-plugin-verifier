@@ -23,12 +23,12 @@ fun Path.newZipHandler(): ZipHandler<out ZipResource> {
   }
 }
 
-class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile> {
-  override fun <T> iterate(handler: (ZipEntry, ZipResource.ZipFile) -> T?): List<T> {
+class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFileResource> {
+  override fun <T> iterate(handler: (ZipEntry, ZipResource.ZipFileResource) -> T?): List<T> {
     val results = mutableListOf<T>()
     ZipFile(zipFile).use { zip ->
       val entries = zip.entries()
-      val zipResource = ZipResource.ZipFile(zip)
+      val zipResource = ZipResource.ZipFileResource(zip)
       while (entries.hasMoreElements()) {
         val entry = entries.nextElement()
         handler(entry, zipResource)?.let { results += it }
@@ -37,11 +37,11 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
     return results
   }
 
-  override fun <T> handleEntry(entryName: CharSequence, handler: (ZipResource.ZipFile, ZipEntry) -> T?): T? {
+  override fun <T> handleEntry(entryName: CharSequence, handler: (ZipResource.ZipFileResource, ZipEntry) -> T?): T? {
     return ZipFile(zipFile).use { zip ->
       val entry: ZipEntry? = zip.getEntry(entryName.toString())
       if (entry != null) {
-        val zipResource = ZipResource.ZipFile(zip)
+        val zipResource = ZipResource.ZipFileResource(zip)
         handler(zipResource, entry)
       } else {
         null
@@ -50,14 +50,14 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
   }
 }
 
-class ZipInputStreamHandler(private val zipPath: Path) : ZipHandler<ZipResource.ZipStream> {
-  override fun <T> iterate(handler: (ZipEntry, ZipResource.ZipStream) -> T?): List<T> {
+class ZipInputStreamHandler(private val zipPath: Path) : ZipHandler<ZipResource.ZipStreamResource> {
+  override fun <T> iterate(handler: (ZipEntry, ZipResource.ZipStreamResource) -> T?): List<T> {
     val results = mutableListOf<T>()
     Files.newInputStream(zipPath).use {
       ZipInputStream(it).use { zip ->
         var entry = zip.nextEntry
         while (entry != null) {
-          val resource = ZipResource.ZipStream(zip)
+          val resource = ZipResource.ZipStreamResource(zip)
           handler(entry, resource)?.let { results += it }
 
           zip.closeEntry()
@@ -68,12 +68,12 @@ class ZipInputStreamHandler(private val zipPath: Path) : ZipHandler<ZipResource.
     return results
   }
 
-  override fun <T> handleEntry(entryName: CharSequence, handler: (ZipResource.ZipStream, ZipEntry) -> T?): T? {
+  override fun <T> handleEntry(entryName: CharSequence, handler: (ZipResource.ZipStreamResource, ZipEntry) -> T?): T? {
     return Files.newInputStream(zipPath).use {
       ZipInputStream(it).use { zip ->
         var entry: ZipEntry? = zip.nextEntry
         while (entry != null) {
-          val resource = ZipResource.ZipStream(zip)
+          val resource = ZipResource.ZipStreamResource(zip)
           try {
             if (entry.name.contentEquals(entryName)) {
               return handler(resource, entry)
@@ -92,13 +92,13 @@ class ZipInputStreamHandler(private val zipPath: Path) : ZipHandler<ZipResource.
 sealed class ZipResource {
   abstract fun getInputStream(zipEntry: ZipEntry): InputStream
 
-  data class ZipFile(val zipFile: java.util.zip.ZipFile) : ZipResource() {
+  data class ZipFileResource(val zipFile: ZipFile) : ZipResource() {
     override fun getInputStream(zipEntry: ZipEntry): InputStream {
       return zipFile.getInputStream(zipEntry)
     }
   }
 
-  data class ZipStream(val zipStream: ZipInputStream) : ZipResource() {
+  data class ZipStreamResource(val zipStream: ZipInputStream) : ZipResource() {
     override fun getInputStream(zipEntry: ZipEntry): InputStream {
       return zipStream
     }
