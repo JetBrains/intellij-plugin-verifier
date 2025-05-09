@@ -2,9 +2,9 @@ package com.jetbrains.plugin.structure.classes.resolvers.jar
 
 import com.jetbrains.plugin.structure.base.utils.componentAt
 import com.jetbrains.plugin.structure.base.utils.occurrences
+import com.jetbrains.plugin.structure.base.utils.replaceCharacter
 import com.jetbrains.plugin.structure.jar.JarEntryResolver
 import com.jetbrains.plugin.structure.jar.PathInJar
-import com.jetbrains.plugin.structure.jar.replaceCharacter
 import java.io.File
 import java.nio.CharBuffer
 import java.util.zip.ZipEntry

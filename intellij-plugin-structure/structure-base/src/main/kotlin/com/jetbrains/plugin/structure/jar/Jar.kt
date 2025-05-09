@@ -1,6 +1,8 @@
 package com.jetbrains.plugin.structure.jar
 
-import com.jetbrains.plugin.structure.base.utils.CharReplacingCharSequence
+import com.jetbrains.plugin.structure.base.utils.CharSequenceComparator
+import com.jetbrains.plugin.structure.base.utils.charseq.CharBufferCharSequence
+import com.jetbrains.plugin.structure.base.utils.charseq.CharReplacingCharSequence
 import com.jetbrains.plugin.structure.base.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.jar.Jar.DescriptorType.*
@@ -21,7 +23,6 @@ import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 import java.util.zip.ZipInputStream
-import kotlin.math.min
 import kotlin.streams.asSequence
 
 
@@ -299,59 +300,6 @@ class Jar(
     }
 
     override fun toString(): String = path.toString()
-  }
-
-  private object CharSequenceComparator : Comparator<CharSequence> {
-    override fun compare(cs1: CharSequence, cs2: CharSequence): Int {
-      if (cs1 === cs2) return 0
-
-      if (cs1 is CharBuffer && cs2 is CharBuffer) {
-        return cs1.compareTo(cs2)
-      }
-
-      val len1 = cs1.length
-      val len2 = cs2.length
-      val shorterLen = min(len1, len2)
-
-      for (i in 0..shorterLen - 1) {
-        val c1 = cs1[i]
-        val c2 = cs2[i]
-        if (c1 != c2) {
-          return c1.compareTo(c2)
-        }
-      }
-      return len1 - len2
-    }
-  }
-
-  class CharBufferCharSequence(private val buffer: CharBuffer, private val startIndex: Int, private val endIndex: Int) : CharSequence {
-
-    init {
-      if (startIndex < 0 || endIndex > buffer.length || startIndex > endIndex) {
-        throw IndexOutOfBoundsException("Invalid start or end index")
-      }
-    }
-
-    override val length: Int
-      get() = endIndex - startIndex
-
-    override fun get(index: Int): Char {
-      if (index < 0 || index >= length) {
-        throw IndexOutOfBoundsException("Index out of bounds: " + index)
-      }
-      return buffer.get(startIndex + index)
-    }
-
-    override fun subSequence(subStart: Int, subEnd: Int): CharSequence {
-      if (subStart < 0 || subEnd > length || subStart > subEnd) {
-        throw IndexOutOfBoundsException("Invalid subSequence range")
-      }
-      return CharBufferCharSequence(buffer, startIndex + subStart, startIndex + subEnd)
-    }
-
-    override fun toString(): String {
-      return buffer.subSequence(startIndex, endIndex).toString()
-    }
   }
 
   sealed class ZipResource {
