@@ -4,46 +4,6 @@
 
 package com.jetbrains.plugin.structure.base.utils
 
-
-class ConcatenatedCharSequence(
-  private val first: CharSequence,
-  private val second: CharSequence
-) : CharSequence {
-
-  override val length: Int
-    get() = first.length + second.length
-
-  override fun get(index: Int): Char {
-    return when {
-      index < 0 || index >= length -> throw IndexOutOfBoundsException("Index: $index, Length: $length")
-      index < first.length -> first[index]
-      else -> second[index - first.length]
-    }
-  }
-
-  override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
-    if (startIndex < 0 || endIndex > length || startIndex > endIndex) {
-      throw IndexOutOfBoundsException("startIndex: $startIndex, endIndex: $endIndex, Length: $length")
-    }
-
-    val firstLen = first.length
-
-    return when {
-      endIndex <= firstLen -> first.subSequence(startIndex, endIndex)
-      startIndex >= firstLen -> second.subSequence(startIndex - firstLen, endIndex - firstLen)
-      else -> {
-        val firstPart = first.subSequence(startIndex, firstLen)
-        val secondPart = second.subSequence(0, endIndex - firstLen)
-        ConcatenatedCharSequence(firstPart, secondPart)
-      }
-    }
-  }
-
-  override fun toString(): String {
-    return first.toString() + second.toString()
-  }
-}
-
 fun CharSequence.occurrences(c: Char): Int {
   var count = 0
   for (i in 0..length - 1) {
