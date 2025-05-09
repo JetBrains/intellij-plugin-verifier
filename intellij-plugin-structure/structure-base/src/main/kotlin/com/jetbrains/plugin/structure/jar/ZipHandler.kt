@@ -28,7 +28,7 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
     val results = mutableListOf<T>()
     ZipFile(zipFile).use { zip ->
       val entries = zip.entries()
-      val zipResource = ZipResource.ZipFile(zipFile, zip)
+      val zipResource = ZipResource.ZipFile(zip)
       while (entries.hasMoreElements()) {
         val entry = entries.nextElement()
         handler(entry, zipResource)?.let { results += it }
@@ -41,7 +41,7 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
     return ZipFile(zipFile).use { zip ->
       val entry: ZipEntry? = zip.getEntry(entryName.toString())
       if (entry != null) {
-        val zipResource = ZipResource.ZipFile(zipFile, zip)
+        val zipResource = ZipResource.ZipFile(zip)
         handler(zipResource, entry)
       } else {
         null
@@ -92,7 +92,7 @@ class ZipInputStreamHandler(private val zipPath: Path) : ZipHandler<ZipResource.
 sealed class ZipResource {
   abstract fun getInputStream(zipEntry: ZipEntry): InputStream
 
-  data class ZipFile(val file: File, val zipFile: java.util.zip.ZipFile) : ZipResource() {
+  data class ZipFile(val zipFile: java.util.zip.ZipFile) : ZipResource() {
     override fun getInputStream(zipEntry: ZipEntry): InputStream {
       return zipFile.getInputStream(zipEntry)
     }
