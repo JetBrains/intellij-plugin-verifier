@@ -4,6 +4,8 @@
 
 package com.jetbrains.plugin.structure.base.utils
 
+import com.jetbrains.plugin.structure.base.utils.charseq.CharReplacingCharSequence
+
 fun CharSequence.occurrences(c: Char): Int {
   var count = 0
   for (i in 0..length - 1) {
@@ -33,5 +35,23 @@ fun CharSequence.componentAt(index: Int, separator: Char): String? {
     subSequence(start, length).toString()
   } else {
     null
+  }
+}
+
+fun CharSequence.replaceCharacter(character: Char, replacement: Char, suffixToRemove: CharSequence): CharSequence {
+  val noPrefix = if (get(0) == replacement) {
+    subSequence(1, length)
+  } else {
+    this
+  }
+  val neitherPrefixNoSuffix = if (suffixToRemove.isNotEmpty() && noPrefix.endsWith(suffixToRemove)) {
+    noPrefix.subSequence(0, noPrefix.length - suffixToRemove.length)
+  } else {
+    noPrefix
+  }
+  return if (character == replacement) {
+    neitherPrefixNoSuffix
+  } else {
+    CharReplacingCharSequence(neitherPrefixNoSuffix, character, replacement)
   }
 }
