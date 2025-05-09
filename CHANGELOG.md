@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.385 - 2025-05-09
+
+### Added
+
 - Check that plugin description starts with Latin Symbols ([MP-7339](https://youtrack.jetbrains.com/issue/MP-7339))
 
 ### Changed
