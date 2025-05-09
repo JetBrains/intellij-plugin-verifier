@@ -24,7 +24,7 @@ interface ZipHandler<Z: ZipResource> {
    * @param entryName the name of the ZIP entry, usually a filename, to find in the ZIP
    * @param handler a handler to invoke on the encountered entry
    */
-  fun <T> handleEntry(entryName: CharSequence, handler: (Z, ZipEntry) -> T?): T?
+  fun <T> handleEntry(entryName: CharSequence, handler: (ZipEntry, Z) -> T?): T?
 }
 
 fun Path.newZipHandler(): ZipHandler<out ZipResource> {

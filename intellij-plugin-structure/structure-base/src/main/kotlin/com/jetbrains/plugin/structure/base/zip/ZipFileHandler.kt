@@ -22,12 +22,12 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
     return results
   }
 
-  override fun <T> handleEntry(entryName: CharSequence, handler: (ZipResource.ZipFileResource, ZipEntry) -> T?): T? {
+  override fun <T> handleEntry(entryName: CharSequence, handler: (ZipEntry, ZipResource.ZipFileResource) -> T?): T? {
     return ZipFile(zipFile).use { zip ->
       val zipResource = ZipResource.ZipFileResource(zip)
       val entry: ZipEntry? = zip.getEntry(entryName.toString())
       entry?.let  {
-        handler(zipResource, entry)
+        handler(entry, zipResource)
       }
     }
   }

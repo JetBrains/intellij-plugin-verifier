@@ -27,7 +27,7 @@ class ZipInputStreamHandler(private val zipPath: Path) : ZipHandler<ZipResource.
     return results
   }
 
-  override fun <T> handleEntry(entryName: CharSequence, handler: (ZipResource.ZipStreamResource, ZipEntry) -> T?): T? {
+  override fun <T> handleEntry(entryName: CharSequence, handler: (ZipEntry, ZipResource.ZipStreamResource) -> T?): T? {
     return Files.newInputStream(zipPath).use {
       ZipInputStream(it).use { zip ->
         var entry: ZipEntry? = zip.nextEntry
@@ -35,7 +35,7 @@ class ZipInputStreamHandler(private val zipPath: Path) : ZipHandler<ZipResource.
           val resource = ZipResource.ZipStreamResource(zip)
           try {
             if (entry.name.contentEquals(entryName)) {
-              return handler(resource, entry)
+              return handler(entry, resource)
             }
           } finally {
             zip.closeEntry()
