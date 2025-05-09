@@ -10,15 +10,35 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 
-- Address memory management issues causing `OutOfMemoryError`s ([#1239](https://github.com/JetBrains/intellij-plugin-verifier/pull/1239), [MP-7366](https://youtrack.jetbrains.com/issue/MP-7366))
+- Extract away support for verification and resolution of IDEs that are compiled from the source project ([#1273](https://github.com/JetBrains/intellij-plugin-verifier/pull/1273))
+- Structure: Improve caching in singleton JAR filesystem provider ([#1243](https://github.com/JetBrains/intellij-plugin-verifier/pull/1243))
+- Structure: Optimize memory usage in JAR handling ([#1251](https://github.com/JetBrains/intellij-plugin-verifier/pull/1251))
+- Structure: Optimize memory consumption of transitive dependency resolvers ([#1264](https://github.com/JetBrains/intellij-plugin-verifier/pull/1264))
+- Structure: Optimize JAR handling with `CharSequence`s and improved ZIP handling ([#1257](https://github.com/JetBrains/intellij-plugin-verifier/pull/1257), [#1262](https://github.com/JetBrains/intellij-plugin-verifier/pull/1262))
+- Structure: Cache JAR filesystems with Caffeine ([#1260](https://github.com/JetBrains/intellij-plugin-verifier/pull/1260))
+- Structure: Lazy JAR resolver uses `ZipFile` to resolve resource bundles ([#1271](https://github.com/JetBrains/intellij-plugin-verifier/pull/1271))
+- Structure: Product Info `bootClassPathJarNames` share resolvers with core plugin layout components ([#1274](https://github.com/JetBrains/intellij-plugin-verifier/pull/1274))
+- Structure: Simplify bundled plugin dependency finder ([#1261](https://github.com/JetBrains/intellij-plugin-verifier/pull/1261))
+- Structure: Introduce reopenable filesystems ([#1275](https://github.com/JetBrains/intellij-plugin-verifier/pull/1275))
+- Structure: Deprecate `JarFilesResourceResolver`. The use of `JarsResourceResolver` is now recommended ([#1242](https://github.com/JetBrains/intellij-plugin-verifier/pull/1242))
+- Structure: Deprecate `allPackages` property on `Resolver` and refactor `Packages` to use more efficient prefix tree ([#1247](https://github.com/JetBrains/intellij-plugin-verifier/pull/1247))
+- Remove duplicate classpath entries when creating classpath for plugins and modules ([#1252](https://github.com/JetBrains/intellij-plugin-verifier/pull/1252))
+- Structure: Refactor and consolidate class hierarchy of `Resolver`s and `NamedResolver`s ([#1241](https://github.com/JetBrains/intellij-plugin-verifier/pull/1241))
 - Improve API integration with JetBrains Marketplace on Edu plugins ([#1234](https://github.com/JetBrains/intellij-plugin-verifier/pull/1234), [#1240](https://github.com/JetBrains/intellij-plugin-verifier/pull/1240))
+- Update Apache Commons Text to 1.13.1
 - Update ASM to 9.8
 - Update ByteBuddy to 1.17.5
 - Update JetBrains Plugin Repository REST Client to 2.0.46
+- Update Gradle Wrapper Validation Action
+- Update Gradle to 8.14
 
 ### Fixed
+
+- Address memory management issues causing `OutOfMemoryError`s ([#1239](https://github.com/JetBrains/intellij-plugin-verifier/pull/1239), [MP-7366](https://youtrack.jetbrains.com/issue/MP-7366))
 - Don't report a problem if a plugin with content modules declares no dependencies ([MP-7413](https://youtrack.jetbrains.com/issue/MP-7413))
 - Don't report a warning if a plugin has 'dependencies' tag with a plugin dependency ([MP-7414](https://youtrack.jetbrains.com/issue/MP-7414)) 
+- Broken ZIP doesn't fail verification when scanning for content modules ([#1249](https://github.com/JetBrains/intellij-plugin-verifier/pull/1249))
+- Remove duplicate 'file' subschema from URIs ([#1254](https://github.com/JetBrains/intellij-plugin-verifier/pull/1254))
 
 ## 1.384 - 2025-03-19
 
