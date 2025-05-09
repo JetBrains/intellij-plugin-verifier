@@ -17,6 +17,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Update JetBrains Plugin Repository REST Client to 2.0.46
 
 ### Fixed
+- Don't report a problem if a plugin with content modules declares no dependencies ([MP-7413](https://youtrack.jetbrains.com/issue/MP-7413))
+- Don't report a warning if a plugin has 'dependencies' tag with a plugin dependency ([MP-7414](https://youtrack.jetbrains.com/issue/MP-7414)) 
 
 ## 1.384 - 2025-03-19
 
