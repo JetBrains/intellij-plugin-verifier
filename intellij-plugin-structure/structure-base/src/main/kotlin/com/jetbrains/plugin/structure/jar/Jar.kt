@@ -1,8 +1,8 @@
 package com.jetbrains.plugin.structure.jar
 
-import com.jetbrains.plugin.structure.base.utils.CharReplacingCharSequence
 import com.jetbrains.plugin.structure.base.utils.CharSequenceComparator
 import com.jetbrains.plugin.structure.base.utils.charseq.CharBufferCharSequence
+import com.jetbrains.plugin.structure.base.utils.charseq.CharReplacingCharSequence
 import com.jetbrains.plugin.structure.base.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.jar.Jar.DescriptorType.*

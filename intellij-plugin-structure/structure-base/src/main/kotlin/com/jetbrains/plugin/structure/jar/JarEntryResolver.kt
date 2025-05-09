@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.jar
 
-import com.jetbrains.plugin.structure.base.utils.CharReplacingCharSequence
+import com.jetbrains.plugin.structure.base.utils.charseq.CharReplacingCharSequence
 import java.util.zip.ZipEntry
 
 interface JarEntryResolver<T> {
