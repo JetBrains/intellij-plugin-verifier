@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.utils.charseq.CharBufferCharSequence
 import com.jetbrains.plugin.structure.base.utils.charseq.CharReplacingCharSequence
 import com.jetbrains.plugin.structure.base.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.base.utils.isFile
+import com.jetbrains.plugin.structure.base.utils.occurrences
 import com.jetbrains.plugin.structure.jar.Jar.DescriptorType.*
 import com.jetbrains.plugin.structure.jar.JarEntryResolver.Key
 import com.jetbrains.plugin.structure.jar.descriptors.Descriptor
@@ -256,16 +257,6 @@ class Jar(
     if (descriptorPath.startsWith("META-INF/") && descriptorPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 1) return PLUGIN
     if (descriptorPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 0) return MODULE
     return NO_MATCH
-  }
-
-  private fun CharSequence.occurrences(c: Char): Int {
-    var count = 0
-    for (i in 0..length - 1) {
-      if (this[i] == c) {
-        count++
-      }
-    }
-    return count
   }
 
   private fun Path.isParsableServiceImplementation(): Boolean {
