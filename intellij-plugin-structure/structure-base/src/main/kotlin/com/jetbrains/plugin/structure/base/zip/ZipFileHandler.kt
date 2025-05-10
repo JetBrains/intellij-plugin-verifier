@@ -18,8 +18,9 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
       val entries = zip.entries()
       val zipResource = ZipResource.ZipFileResource(zip)
       while (entries.hasMoreElements()) {
-        val entry = entries.nextElement()
-        handler(entry, zipResource)?.let { results += it }
+        val entry: ZipEntry? = entries.nextElement()
+        entry?.let { handler(entry, zipResource) }
+          ?.let { results += it }
       }
     }
     return results
@@ -29,9 +30,7 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
     return ZipFile(zipFile).use { zip ->
       val zipResource = ZipResource.ZipFileResource(zip)
       val entry: ZipEntry? = zip.getEntry(entryName.toString())
-      entry?.let  {
-        handler(entry, zipResource)
-      }
+      entry?.let { handler(entry, zipResource) }
     }
   }
 }
