@@ -132,7 +132,7 @@ class Jar(
     ZipFile(zipFile.file).use { zip ->
       zip.entries().asIterator().forEach {
         if (!it.isDirectory) {
-          scan(it, zipFile)
+          scan(it)
         }
       }
     }
@@ -146,7 +146,7 @@ class Jar(
         var zipEntry = jar.nextEntry
         while (zipEntry != null) {
           if (!zipEntry.isDirectory) {
-            scan(zipEntry, ZipResource.ZipStream(zipPath.path, jar))
+            scan(zipEntry)
           }
           jar.closeEntry()
           zipEntry = jar.nextEntry
@@ -155,7 +155,7 @@ class Jar(
     }
   }
 
-  private fun scan(zipEntry: ZipEntry, zipPath: ZipResource) {
+  private fun scan(zipEntry: ZipEntry) {
     val path = PathWithinJar.of(zipEntry)
     if (path.isClass()) {
       handleClass(resolveClass(path), path.path)
@@ -308,8 +308,6 @@ class Jar(
     }
 
     data class ZipPath(val path: Path) : ZipResource()
-
-    data class ZipStream(val path: Path, val inputStream: ZipInputStream) : ZipResource()
   }
 
   enum class DescriptorType {
