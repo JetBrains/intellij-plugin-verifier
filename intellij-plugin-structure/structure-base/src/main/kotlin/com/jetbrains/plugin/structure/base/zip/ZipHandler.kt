@@ -29,7 +29,7 @@ interface ZipHandler<Z: ZipResource> {
 
 fun Path.newZipHandler(): ZipHandler<out ZipResource> {
   return if (supportsFile()) {
-    ZipFileHandler(toFile())
+    ZipFileHandler(this)
   } else {
     ZipInputStreamHandler(this)
   }
