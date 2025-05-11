@@ -11,39 +11,45 @@ import java.util.zip.ZipInputStream
 
 class ZipInputStreamHandler(private val zipPath: Path) : ZipHandler<ZipResource.ZipStreamResource> {
   override fun <T> iterate(handler: (ZipEntry, ZipResource.ZipStreamResource) -> T?): List<T> {
-    val results = mutableListOf<T>()
-    Files.newInputStream(zipPath).use {
-      ZipInputStream(it).use { zip ->
-        var entry = zip.nextEntry
-        while (entry != null) {
-          val resource = ZipResource.ZipStreamResource(zip)
-          handler(entry, resource)?.let { results += it }
-
-          zip.closeEntry()
-          entry = zip.nextEntry
+    return zipPath.useZipInputStream { zipInputStream ->
+      zipInputStream
+        .asSequence()
+        .mapNotNull { (zipEntry, zipInputStream) ->
+          val resource = ZipResource.ZipStreamResource(zipInputStream)
+          handler(zipEntry, resource)
         }
-      }
+        .toList()
     }
-    return results
   }
 
   override fun <T> handleEntry(entryName: CharSequence, handler: (ZipEntry, ZipResource.ZipStreamResource) -> T?): T? {
-    return Files.newInputStream(zipPath).use {
-      ZipInputStream(it).use { zip ->
-        var entry: ZipEntry? = zip.nextEntry
-        while (entry != null) {
-          val resource = ZipResource.ZipStreamResource(zip)
-          try {
-            if (entry.name.contentEquals(entryName)) {
-              return handler(entry, resource)
-            }
-          } finally {
-            zip.closeEntry()
-          }
-          entry = zip.nextEntry
+    return zipPath.useZipInputStream { zipInputStream ->
+      zipInputStream
+        .asSequence()
+        .firstOrNull { (zipEntry, _) ->
+          zipEntry.name.contentEquals(entryName)
+        }?.let { (zipEntry, zipInputStream) ->
+          val resource = ZipResource.ZipStreamResource(zipInputStream)
+          return handler(zipEntry, resource)
         }
-        null
+    }
+  }
+
+  private fun ZipInputStream.asSequence() = sequence<Pair<ZipEntry, ZipInputStream>> {
+    val zip = this@asSequence
+    while (true) {
+      try {
+        val entry = zip.nextEntry ?: break
+        yield(entry to zip)
+      } finally {
+        zip.closeEntry()
       }
+    }
+  }
+
+  private inline fun <T> Path.useZipInputStream(block: (ZipInputStream) -> T): T {
+    return Files.newInputStream(this).use {
+      ZipInputStream(it).use(block)
     }
   }
 }
