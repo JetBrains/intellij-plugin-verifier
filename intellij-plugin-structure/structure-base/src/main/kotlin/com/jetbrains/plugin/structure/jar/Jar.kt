@@ -6,6 +6,7 @@ import com.jetbrains.plugin.structure.base.utils.charseq.CharReplacingCharSequen
 import com.jetbrains.plugin.structure.base.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.base.utils.occurrences
+import com.jetbrains.plugin.structure.base.zip.newZipHandler
 import com.jetbrains.plugin.structure.jar.Jar.DescriptorType.*
 import com.jetbrains.plugin.structure.jar.JarEntryResolver.Key
 import com.jetbrains.plugin.structure.jar.descriptors.Descriptor
@@ -17,13 +18,10 @@ import java.io.File
 import java.io.IOException
 import java.nio.CharBuffer
 import java.nio.file.FileSystem
-import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
 import java.util.zip.ZipEntry
-import java.util.zip.ZipFile
-import java.util.zip.ZipInputStream
 import kotlin.streams.asSequence
 
 
@@ -87,10 +85,16 @@ class Jar(
 
   @Throws(JarArchiveException::class)
   fun init(): Jar = apply {
-    if (jarPath.supportsFile()) {
-      init(ZipResource.ZipFile(jarPath))
-    } else {
-      init(ZipResource.ZipPath(jarPath))
+    try {
+      jarPath
+        .newZipHandler()
+        .iterate { zipEntry, zipResource ->
+          if (!zipEntry.isDirectory) {
+            scan(zipEntry)
+          }
+        }
+    } catch (e: IOException) {
+      throw JarArchiveException("JAR archive could not be opened at [$jarPath]: ${e.message} ", e)
     }
   }
 
@@ -124,36 +128,6 @@ class Jar(
 
   override fun close() {
     // NO-OP
-  }
-
-  private fun Path.supportsFile() = fileSystem == FileSystems.getDefault()
-
-  @Throws(JarArchiveException::class)
-  private fun init(zipFile: ZipResource.ZipFile) = try {
-    ZipFile(zipFile.file).use { zip ->
-      zip.entries().asIterator().forEach {
-        if (!it.isDirectory) {
-          scan(it)
-        }
-      }
-    }
-  } catch (e: IOException) {
-    throw JarArchiveException("JAR archive could not be opened at [$jarPath]: ${e.message} ", e)
-  }
-
-  private fun init(zipPath: ZipResource.ZipPath) {
-    Files.newInputStream(zipPath.path).use { it ->
-      ZipInputStream(it).use { jar ->
-        var zipEntry = jar.nextEntry
-        while (zipEntry != null) {
-          if (!zipEntry.isDirectory) {
-            scan(zipEntry)
-          }
-          jar.closeEntry()
-          zipEntry = jar.nextEntry
-        }
-      }
-    }
   }
 
   private fun scan(zipEntry: ZipEntry) {
@@ -291,14 +265,6 @@ class Jar(
     }
 
     override fun toString(): String = path.toString()
-  }
-
-  sealed class ZipResource {
-    data class ZipFile(val path: Path) : ZipResource() {
-      val file: File = path.toFile()
-    }
-
-    data class ZipPath(val path: Path) : ZipResource()
   }
 
   enum class DescriptorType {
