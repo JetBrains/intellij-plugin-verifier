@@ -2,12 +2,12 @@ package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.base.zip.newZipHandler
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.jar.Jar
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.PathInJar
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
-import com.jetbrains.plugin.structure.jar.newZipHandler
 import org.objectweb.asm.tree.ClassNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -22,7 +22,7 @@ class LazyJarResolver(
   override val fileOrigin: FileOrigin,
   override val name: String = jarPath.fileName.toString(),
   private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
-) : AbstractJarResolver(jarPath, readMode, fileOrigin), AutoCloseable  {
+) : AbstractJarResolver(jarPath, readMode, fileOrigin), AutoCloseable {
 
   private val jar: Jar by lazy {
     Jar(jarPath, fileSystemProvider).init()
@@ -34,7 +34,7 @@ class LazyJarResolver(
     get() = jar.bundleNames.mapValues { it.value.toMutableSet() }.toMutableMap()
 
   @Deprecated("Use 'allClassNames' property instead which is more efficient")
-  override val allClasses: Set<String> by lazy  {
+  override val allClasses: Set<String> by lazy {
     jar.classes.mapTo(hashSetOf()) { it.toString() }
   }
 
@@ -68,7 +68,8 @@ class LazyJarResolver(
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {
     return jar.processAllClasses { className, classFilePath ->
-      processor(readClass(className, classFilePath)) }
+      processor(readClass(className, classFilePath))
+    }
   }
 
   @Deprecated("Use 'containsClass(BinaryClassName)' instead")
@@ -82,7 +83,7 @@ class LazyJarResolver(
 
   fun readClass(className: CharSequence, classPath: PathInJar): ResolutionResult<ClassNode> {
     return try {
-      zipHandler.handleEntry(classPath) { entryResource, entry ->
+      zipHandler.handleEntry(classPath) { entry, entryResource ->
         val inputStream = entryResource.getInputStream(entry)
         val classNode = AsmUtil.readClassNode(className, inputStream, readMode == ReadMode.FULL)
         ResolutionResult.Found(classNode, fileOrigin)
@@ -96,7 +97,7 @@ class LazyJarResolver(
   }
 
   override fun readPropertyResourceBundle(bundleResourceName: String): PropertyResourceBundle? {
-    return zipHandler.handleEntry(bundleResourceName) { bundleResourceName, entry ->
+    return zipHandler.handleEntry(bundleResourceName) { entry, bundleResourceName ->
       val inputStream = bundleResourceName.getInputStream(entry)
       PropertyResourceBundle(inputStream)
     }
