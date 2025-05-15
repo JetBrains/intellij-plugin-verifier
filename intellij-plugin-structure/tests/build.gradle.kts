@@ -14,6 +14,7 @@ dependencies {
   testImplementation(project(":structure-teamcity-recipes"))
   testImplementation(sharedLibs.junit)
   testImplementation(sharedLibs.jackson.module.kotlin)
+  testImplementation(libs.commons.compress)
   testImplementation(libs.jimfs)
   testImplementation(libs.jackson.yaml)
   testImplementation(libs.semver4j)

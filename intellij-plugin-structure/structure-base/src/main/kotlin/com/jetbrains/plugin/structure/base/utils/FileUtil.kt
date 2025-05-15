@@ -51,6 +51,8 @@ fun String.replaceInvalidFileNameCharacters(): String = replace(Regex("[^a-zA-Z0
 
 fun Path.inputStream(): InputStream = Files.newInputStream(this)
 
+fun Path.bufferedInputStream() = Files.newInputStream(this).buffered()
+
 fun Path.outputStream(): OutputStream = Files.newOutputStream(this)
 
 fun Path.writeText(text: String, charset: Charset = Charsets.UTF_8) = this.writeBytes(text.toByteArray(charset))

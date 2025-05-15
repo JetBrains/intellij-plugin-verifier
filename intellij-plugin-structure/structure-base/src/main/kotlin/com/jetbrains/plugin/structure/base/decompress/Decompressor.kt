@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.base.decompress
 
+import com.jetbrains.plugin.structure.base.utils.bufferedInputStream
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import com.jetbrains.plugin.structure.base.utils.inputStream
@@ -122,7 +123,7 @@ internal class TarDecompressor(private val tarFile: Path, sizeLimit: Long?) : De
 
   override fun openStream() {
     stream = try {
-      val compressorStream = CompressorStreamFactory().createCompressorInputStream(tarFile.inputStream())
+      val compressorStream = CompressorStreamFactory().createCompressorInputStream(tarFile.bufferedInputStream())
       TarArchiveInputStream(compressorStream)
     } catch (e: CompressorException) {
       val cause = e.cause
