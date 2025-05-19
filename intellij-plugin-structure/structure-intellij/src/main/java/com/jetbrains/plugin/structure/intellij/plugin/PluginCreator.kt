@@ -36,6 +36,7 @@ import com.jetbrains.plugin.structure.intellij.problems.UnableToFindTheme
 import com.jetbrains.plugin.structure.intellij.problems.UnableToReadTheme
 import com.jetbrains.plugin.structure.intellij.problems.UnknownServiceClientValue
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.verifiers.ExposedModulesVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.K2IdeModeCompatibilityVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.StatusBarWidgetFactoryExtensionPointVerifier
@@ -648,6 +649,7 @@ internal class PluginCreator private constructor(
     ServiceExtensionPointPreloadVerifier().verify(plugin, ::registerProblem)
     StatusBarWidgetFactoryExtensionPointVerifier().verify(plugin, ::registerProblem)
     K2IdeModeCompatibilityVerifier().verify(plugin, ::registerProblem, descriptorPath)
+    ExposedModulesVerifier().verify(plugin, ::registerProblem, descriptorPath)
   }
 
   private fun resolveDocumentAndValidateBean(

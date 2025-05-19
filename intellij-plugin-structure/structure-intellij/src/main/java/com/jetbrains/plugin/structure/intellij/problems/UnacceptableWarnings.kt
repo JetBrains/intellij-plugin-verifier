@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.ProblemSolutionHint
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
+import com.jetbrains.plugin.structure.intellij.verifiers.ExposedModulesVerifier
 
 const val MIN_DESCRIPTION_LENGTH = 40
 
@@ -62,4 +63,29 @@ class NoDependencies(descriptorPath: String) : InvalidDescriptorProblem(
 ) {
   override val level
     get() = Level.UNACCEPTABLE_WARNING
+}
+
+class ProhibitedModuleExposed(
+  descriptorPath: String?,
+  prohibitedModuleNames: List<ExposedModulesVerifier.ProhibitedModuleName>
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "Plugin declares "
+    + pluralize(prohibitedModuleNames) + ": "
+    + getProhibitedModuleNamesMessage(prohibitedModuleNames)
+    + ". Such modules cannot be declared by third party plugins."
+) {
+  override val level
+    get() = Level.UNACCEPTABLE_WARNING
+
+  companion object {
+    private fun pluralize(prohibitedModuleNames: List<ExposedModulesVerifier.ProhibitedModuleName>) =
+      when (val size= prohibitedModuleNames.size) {
+        1 -> "a module with prohibited name"
+        else -> "$size modules with prohibited names"
+      }
+
+    private fun getProhibitedModuleNamesMessage(prohibitedModuleNames: List<ExposedModulesVerifier.ProhibitedModuleName>) =
+      prohibitedModuleNames.joinToString { (moduleName, prefix) -> "'$moduleName' has prefix '$prefix'" }
+  }
 }

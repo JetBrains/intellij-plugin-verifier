@@ -14,8 +14,27 @@ abstract class PluginProblem {
   open val hint: ProblemSolutionHint? = null
 
   enum class Level {
+    /**
+     * Represents a severe problem that prevents the plugin model from being properly constructed.
+     *
+     * This maps to invalid value data type, missing required fields,
+     * syntax errors or low-level plugin artifact errors.
+     */
     ERROR,
+    /**
+     * Represents a minor issue in the plugin model, data or metadata.
+     * Plugin was successfully parsed, its model was properly constructed.
+     *
+     * Usually, this maps to default or suspicious values in the plugin descriptor.
+     */
     WARNING,
+
+    /**
+     * Represents a plugin problem resulting from a failed validation rule.
+     * Despite the failure, the plugin was successfully parsed and its model was properly constructed.
+     *
+     * It is up to downstream clients to determine how to handle such problem.
+     */
     UNACCEPTABLE_WARNING
   }
 

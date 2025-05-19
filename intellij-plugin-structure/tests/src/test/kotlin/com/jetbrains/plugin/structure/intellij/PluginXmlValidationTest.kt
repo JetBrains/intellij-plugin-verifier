@@ -17,6 +17,7 @@ import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileIsEmpty
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileNotSpecified
+import com.jetbrains.plugin.structure.intellij.problems.ProhibitedModuleExposed
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat
 import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
@@ -48,6 +49,17 @@ private const val HEADER_WITHOUT_VERSION = """
       <description>this description is looooooooooong enough</description>
       <change-notes>these change-notes are looooooooooong enough</change-notes>
       <idea-version since-build="131.1"/>
+    """
+
+private const val JETBRAINS_PLUGIN_HEADER = """
+      <id>com.jetbrains.SomePlugin</id>
+      <name>someName</name>
+      <version>someVersion</version>
+      <vendor email="example@jetbrains.com" url="https://www.jetbrains.com/">"JetBrains s.r.o."</vendor>
+      <description>this description is looooooooooong enough</description>
+      <change-notes>these change-notes are looooooooooong enough</change-notes>
+      <idea-version since-build="131.1"/>
+      <depends>com.intellij.modules.platform</depends>
     """
 
 private const val PLUGIN_JAR_NAME = "plugin.jar"
@@ -497,6 +509,85 @@ class PluginXmlValidationTest {
     }
   }
 
+  @Test
+  fun `JetBrains plugin exposes com_intellij module`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $JETBRAINS_PLUGIN_HEADER
+              <module value="com.intellij.modules.json"/>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    with(pluginCreationSuccess) {
+      pluginCreationSuccess.assertNoWarnings()
+      assertContains<ProhibitedModuleExposed>("Invalid plugin descriptor 'plugin.xml'. " +
+        "Plugin declares a module with prohibited name: 'com.intellij.modules.json' has prefix 'com.intellij'. " +
+        "Such modules cannot be declared by third party plugins.")
+    }
+
+    with(pluginCreationSuccess.plugin) {
+      assertEquals(setOf("com.intellij.modules.json"), definedModules)
+    }
+  }
+
+  @Test
+  fun `non-JetBrains plugin exposes com_intellij module`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <depends>com.intellij.modules.platform</depends>              
+              <module value="com.intellij.modules.json"/>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    with(pluginCreationSuccess) {
+      assertTrue(warnings.isEmpty())
+      assertContains<ProhibitedModuleExposed>("Invalid plugin descriptor 'plugin.xml'. " +
+        "Plugin declares a module with prohibited name: 'com.intellij.modules.json' has prefix 'com.intellij'. " +
+        "Such modules cannot be declared by third party plugins.")
+    }
+  }
+
+  @Test
+  fun `non-JetBrains plugin exposes multiple internal modules`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <depends>com.intellij.modules.platform</depends>              
+              <module value="com.intellij.modules.json"/>
+              <module value="org.jetbrains.plugins.vue"/>
+              <module value="intellij.fullLine.java"/>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    with(pluginCreationSuccess) {
+      assertTrue(warnings.isEmpty())
+      assertContains<ProhibitedModuleExposed>(
+        "Invalid plugin descriptor 'plugin.xml'. " +
+          "Plugin declares 3 modules with prohibited names: " +
+          "'intellij.fullLine.java' has prefix 'intellij', " +
+          "'com.intellij.modules.json' has prefix 'com.intellij', " +
+          "'org.jetbrains.plugins.vue' has prefix 'org.jetbrains'. " +
+          "Such modules cannot be declared by third party plugins."
+      )
+    }
+  }
+
   private fun buildMalformedPlugin(pluginJarName: String = PLUGIN_JAR_NAME, pluginContentBuilder: ContentBuilder.() -> Unit): PluginCreationFail<IdePlugin> {
     val pluginCreationResult = buildIdePlugin(pluginJarName, pluginContentBuilder)
     if (pluginCreationResult !is PluginCreationFail) {
@@ -559,6 +650,24 @@ class PluginXmlValidationTest {
         "Found [" + problems.joinToString { it.message } + "]"
       )
       return
+    }
+  }
+
+  private fun PluginCreationSuccess<IdePlugin>.assertNoWarnings() {
+    if(warnings.isEmpty()) return
+    fail("Plugin creation success is not expected to have warnings, " +
+      "but ${warnings.size} warning(s) were found: " +
+      "[" + warnings.joinToString { it.message } + "]"
+    )
+  }
+
+  private fun PluginCreationSuccess<IdePlugin>.assertNoUnacceptableWarnings() {
+    with(unacceptableWarnings) {
+      if(isEmpty()) return
+      fail("Plugin creation success is not expected to have unacceptable warnings, " +
+        "but $size were found: " +
+        "[" + joinToString { it.message } + "]"
+      )
     }
   }
 
