@@ -59,6 +59,7 @@ private const val JETBRAINS_PLUGIN_HEADER = """
       <description>this description is looooooooooong enough</description>
       <change-notes>these change-notes are looooooooooong enough</change-notes>
       <idea-version since-build="131.1"/>
+      <depends>com.intellij.modules.platform</depends>
     """
 
 private const val PLUGIN_JAR_NAME = "plugin.jar"
@@ -522,6 +523,13 @@ class PluginXmlValidationTest {
         }
       }
     }
+    with(pluginCreationSuccess) {
+      pluginCreationSuccess.assertNoWarnings()
+      assertContains<ProhibitedModuleExposed>("Invalid plugin descriptor 'plugin.xml'. " +
+        "Plugin declares a module with prohibited name: 'com.intellij.modules.json' has prefix 'com.intellij'. " +
+        "Such modules cannot be declared by third party plugins.")
+    }
+
     with(pluginCreationSuccess.plugin) {
       assertEquals(setOf("com.intellij.modules.json"), definedModules)
     }
@@ -642,6 +650,24 @@ class PluginXmlValidationTest {
         "Found [" + problems.joinToString { it.message } + "]"
       )
       return
+    }
+  }
+
+  private fun PluginCreationSuccess<IdePlugin>.assertNoWarnings() {
+    if(warnings.isEmpty()) return
+    fail("Plugin creation success is not expected to have warnings, " +
+      "but ${warnings.size} warning(s) were found: " +
+      "[" + warnings.joinToString { it.message } + "]"
+    )
+  }
+
+  private fun PluginCreationSuccess<IdePlugin>.assertNoUnacceptableWarnings() {
+    with(unacceptableWarnings) {
+      if(isEmpty()) return
+      fail("Plugin creation success is not expected to have unacceptable warnings, " +
+        "but $size were found: " +
+        "[" + joinToString { it.message } + "]"
+      )
     }
   }
 

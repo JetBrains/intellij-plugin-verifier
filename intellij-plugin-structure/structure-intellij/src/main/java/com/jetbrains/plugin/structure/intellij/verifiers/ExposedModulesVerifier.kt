@@ -5,16 +5,12 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PluginVendors
 import com.jetbrains.plugin.structure.intellij.problems.ProhibitedModuleExposed
 
 private val jetBrainsModuleCommonPrefixes = setOf("com.intellij", "org.jetbrains", "intellij")
 
 class ExposedModulesVerifier {
   fun verify(plugin: IdePlugin, problemRegistrar: ProblemRegistrar, descriptorPath: String? = null) {
-    if (PluginVendors.isDevelopedByJetBrains(plugin)) {
-      return
-    }
     val prohibitedModules = plugin.definedModules.mapNotNull { moduleName ->
       jetBrainsModuleCommonPrefixes
         .firstOrNull { moduleName.startsWith(it) }
