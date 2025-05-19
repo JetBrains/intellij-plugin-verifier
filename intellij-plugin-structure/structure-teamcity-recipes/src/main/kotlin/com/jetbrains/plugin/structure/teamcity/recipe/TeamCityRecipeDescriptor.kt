@@ -16,11 +16,12 @@ import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeI
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputType
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputs
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepCommandLineScript
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepInputs
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepKotlinScript
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepName
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepInputs
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepReference
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeSteps
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeTitle
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeVersion
 
 data class TeamCityRecipeDescriptor(
@@ -28,6 +29,8 @@ data class TeamCityRecipeDescriptor(
   val name: String? = null,
   @JsonProperty(RecipeVersion.NAME)
   val version: String? = null,
+  @JsonProperty(RecipeTitle.NAME)
+  val title: String? = null,
   @JsonProperty(RecipeDescription.NAME)
   val description: String? = null,
   @JsonProperty(RecipeContainer.NAME)

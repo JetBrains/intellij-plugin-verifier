@@ -16,11 +16,12 @@ import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeI
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputType
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeInputs
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepCommandLineScript
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepInputs
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepKotlinScript
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepName
-import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepInputs
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepReference
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeSteps
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeTitle
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeVersion
 import java.nio.file.Path
 
@@ -30,6 +31,7 @@ object Recipes {
   val someRecipe = TeamCityRecipeBuilder(
     name = "recipe_namespace/recipe_name",
     version = "1.2.3",
+    title = "some title",
     description = "some description",
     steps = listOf(
       RecipeStepBuilder(
@@ -77,6 +79,8 @@ data class TeamCityRecipeBuilder(
   var name: String? = null,
   @JsonProperty(RecipeVersion.NAME)
   var version: String? = null,
+  @JsonProperty(RecipeTitle.NAME)
+  var title: String? = null,
   @JsonProperty(RecipeDescription.NAME)
   var description: String? = null,
   @JsonProperty(RecipeInputs.NAME)

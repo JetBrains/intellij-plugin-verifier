@@ -17,6 +17,7 @@ import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeS
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepName
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeStepReference
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeSteps
+import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeTitle
 import com.jetbrains.plugin.structure.teamcity.recipe.TeamCityRecipeSpec.RecipeVersion
 
 internal fun validateTeamCityRecipe(descriptor: TeamCityRecipeDescriptor) = sequence {
@@ -24,6 +25,14 @@ internal fun validateTeamCityRecipe(descriptor: TeamCityRecipeDescriptor) = sequ
 
   validateExistsAndNotEmpty(descriptor.version, RecipeVersion.NAME, RecipeVersion.DESCRIPTION)
   validateVersion(descriptor.version)
+
+  validateExistsAndNotEmpty(descriptor.title, RecipeTitle.NAME, RecipeTitle.DESCRIPTION)
+  validateMaxLength(
+    descriptor.title,
+    RecipeTitle.NAME,
+    RecipeTitle.DESCRIPTION,
+    RecipeTitle.MAX_LENGTH,
+  )
 
   validateExistsAndNotEmpty(descriptor.description, RecipeDescription.NAME, RecipeDescription.DESCRIPTION)
   validateMaxLength(

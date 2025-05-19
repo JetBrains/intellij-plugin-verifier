@@ -18,6 +18,7 @@ class RecipeContainerDeserializerTests(
         val recipeYaml = """
             name: namespace/recipe-name
             version: 1.0.0
+            title: title
             description: recipe-description
             container: alpine
             steps:
@@ -37,6 +38,7 @@ class RecipeContainerDeserializerTests(
         val recipeYaml = """
             name: namespace/recipe-name
             version: 1.0.0
+            title: title
             description: recipe-description
             container:
               image: alpine
@@ -59,6 +61,7 @@ class RecipeContainerDeserializerTests(
         val recipeYaml = """
             name: namespace/recipe-name
             version: 1.0.0
+            title: title
             description: recipe-description
             steps:
               - name: step
@@ -78,6 +81,7 @@ class RecipeContainerDeserializerTests(
         val recipeYaml = """
             name: namespace/recipe-name
             version: 1.0.0
+            title: title
             description: recipe-description
             steps:
               - name: step

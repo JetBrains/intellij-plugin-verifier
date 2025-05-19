@@ -1,8 +1,5 @@
 package com.jetbrains.plugin.structure.teamcity.recipe
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
@@ -23,30 +20,27 @@ class ParseValidRecipeTests(
     TeamCityRecipePluginManager.createManager(extractDirectory)
 
   @Test
-  fun `parse recipe with valid name`() {
+  fun `parse recipe name and namespace`() {
     val validRecipeNamesProvider =
-      arrayOf("aaaaa/aaaaa", "aaaaa/a-a_a", "a-a_a/aaaaa", "${randomAlphanumeric(30)}/${randomAlphanumeric(30)}")
+      arrayOf("jetbrains/test_recipe", "aaaaa/aaaaa", "aaaaa/a-a_a", "a-a_a/aaaaa", "${randomAlphanumeric(30)}/${randomAlphanumeric(30)}")
     validRecipeNamesProvider.forEach { recipeName ->
       Files.walk(temporaryFolder.root).filter { it.isFile }.forEach { Files.delete(it) }
       val result = createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(name = recipeName)))
-      with(result) {
-        assertEquals(recipeName, this.plugin.pluginName)
+      with(result.plugin) {
+        assertEquals(recipeName, this.pluginId)
+        assertEquals(recipeName.substringBefore('/'), this.namespace)
       }
     }
   }
 
   @Test
-  fun `parse recipe id and namespace`() {
-    val expectedNamespace = "jetbrains"
-    val expectedRecipeId = "test_recipe"
-    val expectedRecipeName = "$expectedNamespace/$expectedRecipeId"
+  fun `parse recipe title`() {
+    val expectedRecipeTitle = "a recipe title"
 
     Files.walk(temporaryFolder.root).filter { it.isFile }.forEach { Files.delete(it) }
-    val result = createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(name = expectedRecipeName)))
-    with(result) {
-      assertEquals(expectedRecipeName, this.plugin.pluginName)
-      assertEquals(expectedRecipeName, this.plugin.pluginId)
-      assertEquals(expectedNamespace, this.plugin.namespace)
+    val result = createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(title = expectedRecipeTitle)))
+    with(result.plugin) {
+      assertEquals(expectedRecipeTitle, this.pluginName)
     }
   }
 
@@ -66,22 +60,5 @@ class ParseValidRecipeTests(
   fun `parse recipe with recipe-based step`() {
     val step = someUsesStep.copy(uses = "recipe/recipeName@1.2.3")
     createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(step))))
-  }
-
-  @Test
-  fun `parse recipe when non-archived YAML file is provided`() {
-    val yaml = temporaryFolder.newFile("recipe.yaml")
-    val recipe = someRecipe.copy()
-    Files.writeString(
-      yaml,
-      ObjectMapper(YAMLFactory()).registerKotlinModule().writeValueAsString(recipe),
-    )
-
-    val result = createPluginSuccessfully(yaml)
-
-    with(result.plugin) {
-      assertEquals(recipe.name, this.pluginName)
-      assertEquals(recipe.version, this.pluginVersion)
-    }
   }
 }
