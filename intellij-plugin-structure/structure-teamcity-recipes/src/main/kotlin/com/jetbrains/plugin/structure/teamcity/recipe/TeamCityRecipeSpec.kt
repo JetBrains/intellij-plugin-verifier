@@ -49,6 +49,12 @@ object TeamCityRecipeSpec {
     const val DESCRIPTION = "recipe version"
   }
 
+  object RecipeTitle {
+    const val NAME = "title"
+    const val DESCRIPTION = "recipe title"
+    const val MAX_LENGTH = 50
+  }
+
   object RecipeDescription {
     const val NAME = "description"
     const val DESCRIPTION = "recipe description"

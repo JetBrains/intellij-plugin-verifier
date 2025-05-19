@@ -19,6 +19,7 @@ class ParseValidFullRecipeTest(
     ---
     name: namespace/simple-recipe
     version: 1.2.3
+    title: Simple recipe
     description: this is a simple recipe
     container:
       image: alpine
@@ -76,7 +77,7 @@ class ParseValidFullRecipeTest(
       assertEquals("recipe.yaml", this.yamlFile.fileName)
       assertArrayEquals(recipeYaml.toByteArray(), this.yamlFile.content)
       assertEquals("1.0.0", this.specVersion)
-      assertEquals("namespace/simple-recipe", this.pluginName)
+      assertEquals("Simple recipe", this.pluginName)
       assertEquals("namespace", this.namespace)
       assertEquals("1.2.3", this.pluginVersion)
       assertEquals("this is a simple recipe", this.description)

@@ -184,7 +184,7 @@ class RecipeContainerDeserializerNegativeTests(
         val recipeHeader = """
         name: namespace/recipe-name
         version: 1.0.0
-        version: 1.2.3
+        title: title
         description: abc
         
         """.trimIndent()

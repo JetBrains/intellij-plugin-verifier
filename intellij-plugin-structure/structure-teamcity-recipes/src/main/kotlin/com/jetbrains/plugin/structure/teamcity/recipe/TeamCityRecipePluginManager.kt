@@ -85,7 +85,7 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
       TeamCityRecipePlugin(
         // All the fields are expected to be non-null due to the validations above
         pluginId = this.name!!, // composite id
-        pluginName = this.name,
+        pluginName = this.title!!,
         description = this.description!!,
         pluginVersion = this.version!!,
         specVersion = getSpecVersion(),

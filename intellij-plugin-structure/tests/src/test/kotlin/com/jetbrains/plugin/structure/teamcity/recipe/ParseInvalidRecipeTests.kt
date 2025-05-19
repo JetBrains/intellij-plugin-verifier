@@ -271,6 +271,30 @@ class ParseInvalidRecipeTests(
   }
 
   @Test
+  fun `recipe without title`() {
+    assertProblematicPlugin(
+      temporaryFolder.prepareRecipeYaml(someRecipe.copy(title = null)),
+      listOf(MissingValueProblem("title", "recipe title")),
+    )
+  }
+
+  @Test
+  fun `recipe with non-null but empty title`() {
+    assertProblematicPlugin(
+      temporaryFolder.prepareRecipeYaml(someRecipe.copy(title = "")),
+      listOf(EmptyValueProblem("title", "recipe title")),
+    )
+  }
+
+  @Test
+  fun `recipe with too long title`() {
+    assertProblematicPlugin(
+      temporaryFolder.prepareRecipeYaml(someRecipe.copy(title = randomAlphanumeric(51))),
+      listOf(TooLongValueProblem("title", "recipe title", 51, 50)),
+    )
+  }
+
+  @Test
   fun `recipe without description`() {
     assertProblematicPlugin(
       temporaryFolder.prepareRecipeYaml(someRecipe.copy(description = null)),
