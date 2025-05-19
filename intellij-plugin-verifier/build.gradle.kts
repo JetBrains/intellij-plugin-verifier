@@ -164,9 +164,6 @@ signing {
 }
 
 tasks {
-  test<Test> {
-    dependsOn(":verifier-test:test")
-  }
   publishToMavenLocal {
     dependsOn(test)
   }
