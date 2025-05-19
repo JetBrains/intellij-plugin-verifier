@@ -10,6 +10,10 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
+## 1.386 - 2025-05-19
+
+### Fixed
+
 - Allow to decompress tar.gz IDE distributions ([#1278](https://github.com/JetBrains/intellij-plugin-verifier/pull/1278), [MP-7489](https://youtrack.jetbrains.com/issue/MP-7489))
 
 ## 1.385 - 2025-05-09
