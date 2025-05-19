@@ -16,7 +16,7 @@ import org.junit.Test
 
 class ExposedModulesTest  : BasePluginTest() {
   @Test
-  fun `plugin is a third-parts vendor and exposes JetBrains modules`() {
+  fun `plugin is a third-party vendor and exposes JetBrains modules`() {
     val ide = buildIde("IU-242.21829.142")
 
     val pluginId = "SomePlugin"
