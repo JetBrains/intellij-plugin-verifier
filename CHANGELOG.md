@@ -15,6 +15,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Fixed
 
 - Allow to decompress tar.gz IDE distributions ([#1278](https://github.com/JetBrains/intellij-plugin-verifier/pull/1278), [MP-7489](https://youtrack.jetbrains.com/issue/MP-7489))
+- Allow only JetBrains plugins to declare `com.intellij.*` modules ([#1280](https://github.com/JetBrains/intellij-plugin-verifier/pull/1280), [MP-7447](https://youtrack.jetbrains.com/issue/MP-7447))
 
 ## 1.385 - 2025-05-09
 
