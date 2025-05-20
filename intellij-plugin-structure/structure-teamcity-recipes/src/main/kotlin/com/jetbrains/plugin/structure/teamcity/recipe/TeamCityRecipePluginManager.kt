@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.teamcity.recipe
 
+import com.fasterxml.jackson.core.JsonParser.Feature.STRICT_DUPLICATE_DETECTION
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException
@@ -20,7 +21,10 @@ import java.nio.file.Paths
 class TeamCityRecipePluginManager
 private constructor(private val extractDirectory: Path) : PluginManager<TeamCityRecipePlugin> {
 
-  private val objectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule().apply {
+  private val objectMapper = ObjectMapper(
+    YAMLFactory()
+      .enable(STRICT_DUPLICATE_DETECTION)
+  ).registerKotlinModule().apply {
     // We fail on unknown properties to minimize the chance that we improperly calculate the specification version of an uploaded recipe.
     // Since the recipe's properties are used to calculate its specification version,
     // omitting any of the recipe's properties from calculation can lead to an error in calculation.
@@ -74,6 +78,11 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
       return PluginCreationFail(UnknownPropertyProblem(e.propertyName))
     } catch (e: Exception) {
       LOG.warn("Failed to parse TeamCity Recipe", e)
+
+      if (e.message?.startsWith("Duplicate field") == true) {
+        return PluginCreationFail(DuplicatePropertiesProblem)
+      }
+
       return PluginCreationFail(ParseYamlProblem)
     }
 
