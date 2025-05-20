@@ -17,7 +17,7 @@ object TeamCityRecipeSpec {
      * - cannot start or end with a dash or underscore.
      * - cannot contain several consecutive dashes or underscores.
      */
-    val meaningfulPartRegex: Regex = Regex("^[a-zA-Z0-9]+([_-][a-zA-Z0-9]+)*\$")
+    val meaningfulPartRegex: Regex = Regex("^[a-zA-Z0-9]+([_-][a-zA-Z0-9]+)*$")
 
     object Namespace {
       const val NAME = "namespace"
