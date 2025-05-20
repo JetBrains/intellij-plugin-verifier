@@ -30,6 +30,19 @@ class ParseInvalidRecipeTests(
   }
 
   @Test
+  fun `recipe YAML with duplicate properties`() {
+    val recipeYaml = """
+            name: aaa
+            name: bbb
+        """.trimIndent()
+
+    assertProblematicPlugin(
+      temporaryFolder.prepareRecipeYaml(recipeYaml),
+      listOf(DuplicatePropertiesProblem),
+    )
+  }
+
+  @Test
   fun `recipe with unknown property in YAML`() {
     val recipeYaml = """
         name: namespace/recipe_name

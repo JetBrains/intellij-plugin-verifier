@@ -15,6 +15,10 @@ object ParseYamlProblem : InvalidPropertyProblem() {
   override val message = "The recipe specification should follow valid YAML syntax."
 }
 
+object DuplicatePropertiesProblem : InvalidPropertyProblem() {
+  override val message = "The recipe YAML has duplicate properties."
+}
+
 data class UnknownPropertyProblem(val propertyName: String) : InvalidPropertyProblem() {
   override val message = "Unknown property <$propertyName>."
 }
