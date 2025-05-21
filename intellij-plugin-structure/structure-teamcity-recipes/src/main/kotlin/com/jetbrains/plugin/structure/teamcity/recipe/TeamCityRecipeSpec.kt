@@ -117,7 +117,7 @@ object TeamCityRecipeSpec {
   object RecipeStepReference {
     const val NAME = "uses"
     const val DESCRIPTION = "recipe reference"
-    const val MAX_LENGTH = 100
+    const val NAME_VERSION_DELIMITER = "@"
   }
 
   object RecipeStepCommandLineScript {

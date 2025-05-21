@@ -86,7 +86,7 @@ data class TeamCityRecipeBuilder(
   @JsonProperty(RecipeInputs.NAME)
   var inputs: List<Map<String, RecipeInputBuilder>> = emptyList(),
   @JsonProperty(RecipeSteps.NAME)
-  var steps: List<RecipeStepBuilder> = emptyList(),
+  var steps: List<RecipeStepBuilder>? = emptyList(),
 )
 
 data class RecipeInputBuilder(
@@ -101,7 +101,7 @@ data class RecipeInputBuilder(
   @JsonProperty(RecipeInputDefault.NAME)
   var defaultValue: String? = null,
   @JsonProperty(RecipeInputOptions.NAME)
-  var selectOptions: List<String> = emptyList(),
+  var selectOptions: List<String>? = emptyList(),
 )
 
 data class RecipeStepBuilder(

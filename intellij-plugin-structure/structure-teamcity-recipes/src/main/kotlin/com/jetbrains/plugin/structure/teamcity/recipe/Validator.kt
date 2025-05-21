@@ -43,9 +43,9 @@ internal fun validateTeamCityRecipe(descriptor: TeamCityRecipeDescriptor) = sequ
   )
 
   validateContainer(descriptor.container)
-  validateNotEmptyIfExists(descriptor.steps, RecipeSteps.NAME, RecipeSteps.DESCRIPTION)
+  validateExistsAndNotEmpty(descriptor.steps, RecipeSteps.NAME, RecipeSteps.DESCRIPTION)
   for (input in descriptor.inputs) validateRecipeInput(input)
-  for (step in descriptor.steps) validateRecipeStep(step)
+  descriptor.steps?.let { for (step in it) validateRecipeStep(step) }
 }.toList()
 
 private suspend fun SequenceScope<PluginProblem>.validateName(name: String?) {
@@ -148,7 +148,7 @@ private suspend fun SequenceScope<PluginProblem>.validateRecipeInput(input: Map<
       RecipeInputDefault.DESCRIPTION,
     )
 
-    RecipeInputTypeDescriptor.select.name -> validateNotEmptyIfExists(
+    RecipeInputTypeDescriptor.select.name -> validateExistsAndNotEmpty(
       value.selectOptions,
       RecipeInputOptions.NAME,
       RecipeInputOptions.DESCRIPTION,
@@ -203,10 +203,7 @@ private suspend fun SequenceScope<PluginProblem>.validateRecipeStep(step: Recipe
 }
 
 private suspend fun SequenceScope<PluginProblem>.validateStepReference(reference: String) {
-  validateMaxLength(reference, RecipeStepReference.NAME, RecipeStepReference.DESCRIPTION, RecipeStepReference.MAX_LENGTH)
-
-  // TODO
-  val recipeIdParts = reference.split("@")
+  val recipeIdParts = reference.split(RecipeStepReference.NAME_VERSION_DELIMITER)
   if (recipeIdParts.size != 2) {
     yield(
       InvalidPropertyValueProblem(
@@ -283,16 +280,6 @@ private suspend fun SequenceScope<PluginProblem>.validateNotEmptyIfExists(
   }
 }
 
-private suspend fun <T> SequenceScope<PluginProblem>.validateNotEmptyIfExists(
-  propertyValue: Iterable<T>,
-  propertyName: String,
-  propertyDescription: String,
-) {
-  if (!propertyValue.iterator().hasNext()) {
-    yield(EmptyCollectionProblem(propertyName, propertyDescription))
-  }
-}
-
 private suspend fun SequenceScope<PluginProblem>.validateExistsAndNotEmpty(
   propertyValue: String?,
   propertyName: String,
@@ -301,6 +288,18 @@ private suspend fun SequenceScope<PluginProblem>.validateExistsAndNotEmpty(
   validateExists(propertyValue, propertyName, propertyDescription)
   if (propertyValue != null) {
     validateNotEmptyIfExists(propertyValue, propertyName, propertyDescription)
+  }
+}
+
+private suspend fun <T> SequenceScope<PluginProblem>.validateExistsAndNotEmpty(
+  propertyValue: Iterable<T>?,
+  propertyName: String,
+  propertyDescription: String,
+) {
+  if (propertyValue == null) {
+    yield(MissingValueProblem(propertyName, propertyDescription))
+  } else if (!propertyValue.iterator().hasNext()) {
+    yield(EmptyCollectionProblem(propertyName, propertyDescription))
   }
 }
 

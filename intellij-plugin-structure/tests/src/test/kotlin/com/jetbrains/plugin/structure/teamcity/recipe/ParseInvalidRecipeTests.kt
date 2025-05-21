@@ -333,6 +333,28 @@ class ParseInvalidRecipeTests(
 
   @Test
   fun `recipe without steps`() {
+    val missingSteps = arrayOf(
+      "",
+      "steps: null",
+    )
+    missingSteps.forEach { steps ->
+      val recipeYaml = """
+            ---
+            name: "recipe_namespace/recipe_name"
+            version: "1.2.3"
+            title: "title"
+            description: "description"
+            $steps
+        """.trimIndent()
+      assertProblematicPlugin(
+        temporaryFolder.prepareRecipeYaml(recipeYaml),
+        listOf(MissingValueProblem("steps", "recipe steps"))
+      )
+    }
+  }
+
+  @Test
+  fun `recipe with empty step collection`() {
     assertProblematicPlugin(
       temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf())),
       listOf(EmptyCollectionProblem("steps", "recipe steps"))
@@ -418,6 +440,34 @@ class ParseInvalidRecipeTests(
       temporaryFolder.prepareRecipeYaml(someRecipe.copy(inputs = listOf(mapOf("input_name" to input)))),
       listOf(InvalidBooleanProblem("default", "recipe input default value"))
     )
+  }
+
+  @Test
+  fun `recipe with select input and missing select options`() {
+    val missingOptions = arrayOf(
+      "",
+      "options: null",
+    )
+    missingOptions.forEach { options ->
+      val recipeYaml = """
+            ---
+            name: "recipe_namespace/recipe_name"
+            version: "1.2.3"
+            title: "title"
+            description: "description"
+            inputs:
+            - input_name:
+                type: "select"
+                $options
+            steps:
+            - name: "step name"
+              script: "exit 0"
+        """.trimIndent()
+      assertProblematicPlugin(
+        temporaryFolder.prepareRecipeYaml(recipeYaml),
+        listOf(MissingValueProblem("options", "recipe input options"))
+      )
+    }
   }
 
   @Test

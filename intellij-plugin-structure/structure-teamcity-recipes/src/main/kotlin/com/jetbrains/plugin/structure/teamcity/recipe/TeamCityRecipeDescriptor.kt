@@ -39,7 +39,7 @@ data class TeamCityRecipeDescriptor(
   @JsonProperty(RecipeInputs.NAME)
   val inputs: List<Map<String, RecipeInputDescriptor>> = emptyList(),
   @JsonProperty(RecipeSteps.NAME)
-  val steps: List<RecipeStepDescriptor> = emptyList(),
+  val steps: List<RecipeStepDescriptor>? = null,
 )
 
 data class RecipeInputDescriptor(
@@ -54,7 +54,7 @@ data class RecipeInputDescriptor(
   @JsonProperty(RecipeInputDefault.NAME)
   val defaultValue: String? = null,
   @JsonProperty(RecipeInputOptions.NAME)
-  val selectOptions: List<String> = emptyList(),
+  val selectOptions: List<String>? = null,
 )
 
 @Suppress("EnumEntryName")
