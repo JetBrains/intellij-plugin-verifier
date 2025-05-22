@@ -19,5 +19,6 @@ data class TeamCityRecipePlugin(
   override val changeNotes: String? = null,
   val namespace: String,
   val specVersion: String,
-  val yamlFile: PluginFile
+  val dependencies: List<TeamCityRecipeDependency>,
+  val yamlFile: PluginFile,
 ) : Plugin

@@ -56,7 +56,9 @@ class ParseValidFullRecipeTest(
       - name: step 2
         kotlin-script: print("hi")
       - name: step 3
-        uses: recipe/name@1.2.3
+        uses: jetbrains/recipe@1.2.3
+      - name: step 4
+        uses: namespace/name@1.0.0
         inputs:
           text-input: passed text parameter value
           boolean-input: true
@@ -81,6 +83,13 @@ class ParseValidFullRecipeTest(
       assertEquals("namespace", this.namespace)
       assertEquals("1.2.3", this.pluginVersion)
       assertEquals("this is a simple recipe", this.description)
+      assertEquals(2, this.dependencies.size)
+      assertEquals("jetbrains", this.dependencies[0].recipeNamespace)
+      assertEquals("recipe", this.dependencies[0].recipeName)
+      assertEquals("1.2.3", this.dependencies[0].recipeVersion)
+      assertEquals("namespace", this.dependencies[1].recipeNamespace)
+      assertEquals("name", this.dependencies[1].recipeName)
+      assertEquals("1.0.0", this.dependencies[1].recipeVersion)
     }
   }
 }

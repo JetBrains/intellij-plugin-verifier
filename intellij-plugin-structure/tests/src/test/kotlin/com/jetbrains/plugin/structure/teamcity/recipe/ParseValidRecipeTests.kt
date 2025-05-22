@@ -61,4 +61,30 @@ class ParseValidRecipeTests(
     val step = someUsesStep.copy(uses = "recipe/recipeName@1.2.3")
     createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(step))))
   }
+
+  @Test
+  fun `parse recipe dependencies`() {
+    val step1 = someUsesStep.copy(uses = "jetbrains/recipe@1.2.3")
+    val step2 = someUsesStep.copy(uses = "namespace/name@1.0.0")
+    val result = createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(step1, step2))))
+    with(result.plugin) {
+      assertEquals(2, this.dependencies.size)
+      assertEquals("jetbrains", this.dependencies[0].recipeNamespace)
+      assertEquals("recipe", this.dependencies[0].recipeName)
+      assertEquals("1.2.3", this.dependencies[0].recipeVersion)
+      assertEquals("namespace", this.dependencies[1].recipeNamespace)
+      assertEquals("name", this.dependencies[1].recipeName)
+      assertEquals("1.0.0", this.dependencies[1].recipeVersion)
+    }
+  }
+
+  @Test
+  fun `only distinct recipe dependencies are returned`() {
+    val step1 = someUsesStep.copy(uses = "jetbrains/recipe@1.2.3")
+    val step2 = someUsesStep.copy(uses = "jetbrains/recipe@1.2.3")
+    val result = createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(step1, step2))))
+    with(result.plugin) {
+      assertEquals(1, this.dependencies.size)
+    }
+  }
 }
