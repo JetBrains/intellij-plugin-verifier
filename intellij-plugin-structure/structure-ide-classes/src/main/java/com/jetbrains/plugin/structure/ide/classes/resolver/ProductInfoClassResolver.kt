@@ -43,7 +43,7 @@ private const val CORE_IDE_PLUGIN_ID = "com.intellij"
 private const val PRODUCT_MODULE_V2 = "productModuleV2"
 private const val BOOTCLASSPATH_JAR_NAMES = "bootClassPathJarNames"
 
-class ProductInfoClassResolver(
+class ProductInfoClassResolver private constructor(
   private val productInfo: ProductInfo,
   val ide: Ide,
   private val resolverConfiguration: IdeResolverConfiguration
