@@ -74,7 +74,7 @@ class ProductInfoBasedPluginCollectionProvider(
   ): List<IdePlugin> {
     val layoutComponents = layoutComponentProvider.resolveLayoutComponents(productInfo, idePath)
 
-    val platformResourceResolver = ProductInfoResourceResolver(productInfo, idePath, layoutComponentProvider, jarFileSystemProvider)
+    val platformResourceResolver = ProductInfoResourceResolver(layoutComponents, jarFileSystemProvider)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath, jarFileSystemProvider))
 
     val moduleV2Factory = ModuleFactory(::createModule, ProductInfoClasspathProvider(productInfo))
