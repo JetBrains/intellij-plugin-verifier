@@ -3,6 +3,7 @@
  */
 package com.jetbrains.plugin.structure.ide
 
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.nio.file.Path
@@ -12,5 +13,9 @@ interface PluginCollectionSource<S> {
 }
 
 data class ProductInfoPluginCollectionSource(val idePath: Path, val ideVersion: IdeVersion, val productInfo: ProductInfo): PluginCollectionSource<Path> {
+  override val source: Path = idePath
+}
+
+data class ProductInfoLayoutComponentsPluginCollectionSource(val idePath: Path, val ideVersion: IdeVersion, val layoutComponents: LayoutComponents): PluginCollectionSource<Path> {
   override val source: Path = idePath
 }
