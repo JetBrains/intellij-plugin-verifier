@@ -20,6 +20,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
+import com.jetbrains.plugin.structure.mocks.MockProductInfoBasedIde
 import net.bytebuddy.ByteBuddy
 import org.junit.Assert.*
 import org.junit.Before
@@ -314,9 +315,9 @@ class DependencyFilteringResolutionTest {
 
     productInfo.createEmptyLayoutComponentPaths(ideRoot)
 
-    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, jsonPlugin))
+    val ide = MockProductInfoBasedIde(ideRoot, productInfo, bundledPlugins = listOf(ideaCorePlugin, jsonPlugin))
 
-    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, resolverConfiguration)
+    val productInfoClassResolver = ProductInfoClassResolver.of(ide, resolverConfiguration)
 
     val resolverProvider = CachingPluginDependencyResolverProvider(ide)
     val pluginResolver = resolverProvider.getResolver(plugin)
