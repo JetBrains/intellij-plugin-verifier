@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.SKIP_AND_WARN
+import com.jetbrains.plugin.structure.ide.resolver.ValidatingLayoutComponentsProvider
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParseException
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
@@ -28,9 +29,12 @@ class ProductInfoBasedIdeManager(
 
   private val productInfoParser = ProductInfoParser()
 
+  private val layoutComponentsProvider = ValidatingLayoutComponentsProvider(missingLayoutFileMode)
+
   private val pluginCollectionProvider = ProductInfoBasedPluginCollectionProvider(
-    missingLayoutFileMode, additionalPluginReader,
-    SingletonCachingJarFileSystemProvider
+    additionalPluginReader,
+    SingletonCachingJarFileSystemProvider,
+    layoutComponentsProvider
   )
 
   @Throws(InvalidIdeException::class)

@@ -8,9 +8,8 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.ide.layout.CorePluginManager
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponentsProvider
 import com.jetbrains.plugin.structure.ide.layout.LoadingResults
-import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
-import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.SKIP_AND_WARN
 import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
 import com.jetbrains.plugin.structure.ide.layout.PluginFactory
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult
@@ -19,7 +18,6 @@ import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Fa
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
 import com.jetbrains.plugin.structure.ide.resolver.ProductInfoResourceResolver
-import com.jetbrains.plugin.structure.ide.resolver.ValidatingLayoutComponentsProvider
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
@@ -41,12 +39,10 @@ import java.nio.file.Path
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoBasedPluginCollectionProvider::class.java)
 
 class ProductInfoBasedPluginCollectionProvider(
-  missingLayoutFileMode: MissingLayoutFileMode = SKIP_AND_WARN,
   private val additionalPluginReader: ProductInfoBasedIdeManager.PluginReader,
   private val jarFileSystemProvider: JarFileSystemProvider,
+  private val layoutComponentsProvider: LayoutComponentsProvider
 ) : PluginCollectionProvider<Path> {
-
-  private val layoutComponentProvider = ValidatingLayoutComponentsProvider(missingLayoutFileMode)
 
   /**
    * Problem level remapping used for bundled plugins.
@@ -72,7 +68,7 @@ class ProductInfoBasedPluginCollectionProvider(
     productInfo: ProductInfo,
     ideVersion: IdeVersion
   ): List<IdePlugin> {
-    val layoutComponents = layoutComponentProvider.resolveLayoutComponents(productInfo, idePath)
+    val layoutComponents = layoutComponentsProvider.resolveLayoutComponents(productInfo, idePath)
 
     val platformResourceResolver = ProductInfoResourceResolver(layoutComponents, jarFileSystemProvider)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath, jarFileSystemProvider))
