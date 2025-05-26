@@ -18,8 +18,8 @@ import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Co
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Failure
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
-import com.jetbrains.plugin.structure.ide.resolver.LayoutComponentsProvider
 import com.jetbrains.plugin.structure.ide.resolver.ProductInfoResourceResolver
+import com.jetbrains.plugin.structure.ide.resolver.ValidatingLayoutComponentsProvider
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
@@ -46,7 +46,7 @@ class ProductInfoBasedPluginCollectionProvider(
   private val jarFileSystemProvider: JarFileSystemProvider,
 ) : PluginCollectionProvider<Path> {
 
-  private val layoutComponentProvider = LayoutComponentsProvider(missingLayoutFileMode)
+  private val layoutComponentProvider = ValidatingLayoutComponentsProvider(missingLayoutFileMode)
 
   /**
    * Problem level remapping used for bundled plugins.

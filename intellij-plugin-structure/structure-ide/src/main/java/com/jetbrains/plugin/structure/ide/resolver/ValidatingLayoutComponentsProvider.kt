@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.ide.resolver
 
 import com.jetbrains.plugin.structure.ide.layout.IdeRelativePath
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponentsProvider
 import com.jetbrains.plugin.structure.ide.layout.MissingClasspathFileInLayoutComponentException
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.*
@@ -18,11 +19,12 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
-private val LOG: Logger = LoggerFactory.getLogger(LayoutComponentsProvider::class.java)
+private val LOG: Logger = LoggerFactory.getLogger(ValidatingLayoutComponentsProvider::class.java)
 
-class LayoutComponentsProvider(private val missingLayoutFileMode: MissingLayoutFileMode) {
+class ValidatingLayoutComponentsProvider(private val missingLayoutFileMode: MissingLayoutFileMode) :
+  LayoutComponentsProvider {
   @Throws(MissingClasspathFileInLayoutComponentException::class)
-  fun resolveLayoutComponents(productInfo: ProductInfo, idePath: Path): LayoutComponents {
+  override fun resolveLayoutComponents(productInfo: ProductInfo, idePath: Path): LayoutComponents {
     val layoutComponents = LayoutComponents.of(idePath, productInfo)
     return if (missingLayoutFileMode == IGNORE) {
       layoutComponents

@@ -21,7 +21,7 @@ class LayoutComponentsProviderTest {
     val productInfo = ProductInfoParser()
       .parse(productInfoJson.byteInputStream(), "Unit Test Constant String")
 
-    val provider = LayoutComponentsProvider(MissingLayoutFileMode.FAIL)
+    val provider = ValidatingLayoutComponentsProvider(MissingLayoutFileMode.FAIL)
     val layoutComponents = provider.resolveLayoutComponents(productInfo, idePath)
 
     assertEquals(1, layoutComponents.toList().size)
@@ -40,7 +40,7 @@ class LayoutComponentsProviderTest {
   fun `product info with a single layout component that has one valid and two missing classpath elements will fail`() {
     assertThrows(MissingClasspathFileInLayoutComponentException::class.java) {
       val (idePath, productInfo) = parseProductInfo(productInfoJsonWithMissingJarInClasspath)
-      val provider = LayoutComponentsProvider(MissingLayoutFileMode.FAIL)
+      val provider = ValidatingLayoutComponentsProvider(MissingLayoutFileMode.FAIL)
       provider.resolveLayoutComponents(productInfo, idePath)
     }
   }
@@ -48,7 +48,7 @@ class LayoutComponentsProviderTest {
   @Test
   fun `product info with a single layout component that has one valid and two missing classpath elements will ignore errors`() {
     val (idePath, productInfo) = parseProductInfo(productInfoJsonWithMissingJarInClasspath)
-    val provider = LayoutComponentsProvider(MissingLayoutFileMode.IGNORE)
+    val provider = ValidatingLayoutComponentsProvider(MissingLayoutFileMode.IGNORE)
     val layoutComponents = provider.resolveLayoutComponents(productInfo, idePath)
 
     assertEquals(1, layoutComponents.toList().size)
@@ -67,7 +67,7 @@ class LayoutComponentsProviderTest {
   @Test
   fun `product info with a single layout component that has one valid and two missing classpath elements will skip missing classpath elements`() {
     val (idePath, productInfo) = parseProductInfo(productInfoJsonWithMissingJarInClasspath)
-    val provider = LayoutComponentsProvider(MissingLayoutFileMode.SKIP_CLASSPATH)
+    val provider = ValidatingLayoutComponentsProvider(MissingLayoutFileMode.SKIP_CLASSPATH)
     val layoutComponents = provider.resolveLayoutComponents(productInfo, idePath)
 
     assertEquals(1, layoutComponents.toList().size)

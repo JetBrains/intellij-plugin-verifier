@@ -22,7 +22,7 @@ import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.ide.ProductInfoAware
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin.IdeLibDirectory
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
-import com.jetbrains.plugin.structure.ide.resolver.LayoutComponentsProvider
+import com.jetbrains.plugin.structure.ide.resolver.ValidatingLayoutComponentsProvider
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParseException
@@ -49,7 +49,7 @@ class ProductInfoClassResolver private constructor(
   private val resolverConfiguration: IdeResolverConfiguration
 ) : NamedResolver("$PRODUCT_INFO_JSON Resolver"), PluginResolverProvider {
 
-  private val layoutComponentsProvider = LayoutComponentsProvider(resolverConfiguration.missingLayoutFileMode)
+  private val layoutComponentsProvider = ValidatingLayoutComponentsProvider(resolverConfiguration.missingLayoutFileMode)
 
   private val corePluginClasspathCache: MutableMap<Path, NamedResolver> = HashMap()
 
