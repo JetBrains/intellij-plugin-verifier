@@ -1,7 +1,9 @@
 package com.jetbrains.plugin.structure.ide.resolver
 
+import com.jetbrains.plugin.structure.ide.layout.IdeRelativePath
 import com.jetbrains.plugin.structure.ide.layout.MissingClasspathFileInLayoutComponentException
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
+import com.jetbrains.plugin.structure.ide.problem.LayoutComponentHasNonExistentClasspath
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
@@ -31,6 +33,7 @@ class LayoutComponentsProviderTest {
       assertEquals(1, classPaths.size)
       assertEquals("somePlugin.jar", classPaths[0])
     }
+    assertEquals(0, layoutComponents.problems.size)
   }
 
   @Test
@@ -57,6 +60,8 @@ class LayoutComponentsProviderTest {
       assertEquals(3, classPaths.size)
       assertEquals(listOf("somePlugin.jar", "missingComponentOne.jar", "missingComponentTwo.jar"), classPaths)
     }
+    //FIXME should not be ignored
+    assertEquals(0, layoutComponents.problems.size)
   }
 
   @Test
@@ -73,6 +78,17 @@ class LayoutComponentsProviderTest {
       this as LayoutComponent.Plugin
       assertEquals(1, classPaths.size)
       assertEquals(listOf("somePlugin.jar"), classPaths)
+    }
+    with(layoutComponents.problems) {
+      assertEquals(1, size)
+      val ideProblem = first()
+      assertTrue(ideProblem is LayoutComponentHasNonExistentClasspath)
+      ideProblem as LayoutComponentHasNonExistentClasspath
+      ideProblem.layoutComponentName == "com.jetbrains.somePlugin"
+      val expectedMissingClasspathElements = listOf("missingComponentOne.jar", "missingComponentTwo.jar").map {
+        IdeRelativePath(idePath, Path.of(it))
+      }
+      assertEquals(expectedMissingClasspathElements, ideProblem.offendingClasspathElements)
     }
   }
   private fun parseProductInfo(jsonSource: String): Pair<Path, ProductInfo> {
