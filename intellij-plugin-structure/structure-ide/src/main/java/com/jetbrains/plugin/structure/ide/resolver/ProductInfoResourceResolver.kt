@@ -2,7 +2,6 @@ package com.jetbrains.plugin.structure.ide.resolver
 
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
 import com.jetbrains.plugin.structure.ide.layout.ResolvedLayoutComponent
-import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.JarsResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.NamedResourceResolver
@@ -15,13 +14,11 @@ import java.nio.file.Path
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoResourceResolver::class.java)
 
 class ProductInfoResourceResolver(
-  productInfo: ProductInfo,
-  idePath: Path,
-  layoutComponentsProvider: LayoutComponentsProvider,
+  layoutComponents: LayoutComponents,
   private val jarFileSystemProvider: JarFileSystemProvider
 ) : ResourceResolver {
 
-  private val delegateResolver = getPlatformResourceResolver(layoutComponentsProvider.resolveLayoutComponents(productInfo, idePath))
+  private val delegateResolver = getPlatformResourceResolver(layoutComponents)
 
   private fun getPlatformResourceResolver(layoutComponents: LayoutComponents): CompositeResourceResolver {
     val resourceResolvers = layoutComponents.mapNotNull {
