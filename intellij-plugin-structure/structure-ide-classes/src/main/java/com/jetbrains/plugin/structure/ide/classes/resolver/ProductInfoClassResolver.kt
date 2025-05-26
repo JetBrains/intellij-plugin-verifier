@@ -44,7 +44,8 @@ private const val PRODUCT_MODULE_V2 = "productModuleV2"
 private const val BOOTCLASSPATH_JAR_NAMES = "bootClassPathJarNames"
 
 class ProductInfoClassResolver(
-  private val productInfo: ProductInfo, val ide: Ide,
+  private val productInfo: ProductInfo,
+  val ide: Ide,
   private val resolverConfiguration: IdeResolverConfiguration
 ) : NamedResolver("$PRODUCT_INFO_JSON Resolver"), PluginResolverProvider {
 
