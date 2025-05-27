@@ -32,9 +32,9 @@ import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor.extract
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.ContentModuleLoader
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarLoadingContext
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarPluginLoader
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginIconLoader
-import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginLoadingContext
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.ThirdPartyDependencyLoader
 import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleScanner
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
@@ -192,7 +192,7 @@ class IdePluginManager private constructor(
       val innerCreator: PluginCreator = if (file.isJar() || file.isZip()) {
         //Use the composite resource resolver, which can resolve resources in lib's jar files.
         jarLoader.loadPlugin(
-          PluginLoadingContext(
+          JarLoadingContext(
             file,
             descriptorPath,
             validateDescriptor,
@@ -258,14 +258,15 @@ class IdePluginManager private constructor(
       }
 
       pluginFile.isJar() -> jarLoader.loadPlugin(
-        PluginLoadingContext(
+        JarLoadingContext(
           pluginFile,
           systemIndependentDescriptorPath,
           validateDescriptor,
           resourceResolver,
           parentPlugin,
           problemResolver
-      ))
+        )
+      )
 
       else -> throw IllegalArgumentException()
     }
