@@ -5,19 +5,18 @@
 package com.jetbrains.plugin.structure.ide
 
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager.PluginReader
-import com.jetbrains.plugin.structure.ide.layout.PluginMetadataSource.ProductInfoSource
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoLayoutComponentNameSource
+import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.nio.file.Path
 
-class ProductInfoPluginReaderPluginCollectionProvider(private val pluginReader: PluginReader<ProductInfoSource>) : PluginCollectionProvider<Path> {
+class ProductInfoPluginReaderPluginCollectionProvider(private val pluginReader: PluginReader<ProductInfo>) : PluginCollectionProvider<Path> {
   override fun getPlugins(source: PluginCollectionSource<Path, *>): Collection<IdePlugin> {
     if (source !is ProductInfoPluginCollectionSource) {
       return emptySet()
     }
     val (idePath, ideVersion, productInfo) = source
     val layoutComponentNameSource = ProductInfoLayoutComponentNameSource(productInfo)
-    val pluginMetadataSource = ProductInfoSource(productInfo)
-    return pluginReader.readPlugins(idePath, pluginMetadataSource, layoutComponentNameSource, ideVersion)
+    return pluginReader.readPlugins(idePath, productInfo, layoutComponentNameSource, ideVersion)
   }
 }

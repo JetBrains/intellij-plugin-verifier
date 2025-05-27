@@ -10,7 +10,6 @@ import com.jetbrains.plugin.structure.ide.layout.LayoutComponentNameSource
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.SKIP_AND_WARN
-import com.jetbrains.plugin.structure.ide.layout.PluginMetadataSource
 import com.jetbrains.plugin.structure.ide.resolver.ValidatingLayoutComponentsProvider
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParseException
@@ -27,8 +26,8 @@ internal val VERSION_FROM_PRODUCT_INFO: IdeVersion? = null
 
 class ProductInfoBasedIdeManager(
   missingLayoutFileMode: MissingLayoutFileMode = SKIP_AND_WARN,
-  private val additionalProductInfoPluginReader: PluginReader<PluginMetadataSource.ProductInfoSource> = NoOpProductInfoPluginReader,
-  private val additionalLayoutComponentsPluginReader: PluginReader<PluginMetadataSource.LayoutComponentsSource> = NoOpLayoutComponentsPluginReader
+  private val additionalProductInfoPluginReader: PluginReader<ProductInfo> = NoOpProductInfoPluginReader,
+  private val additionalLayoutComponentsPluginReader: PluginReader<LayoutComponents> = NoOpLayoutComponentsPluginReader
 ) : IdeManager() {
 
   private val productInfoParser = ProductInfoParser()
@@ -118,7 +117,7 @@ class ProductInfoBasedIdeManager(
     }
   }
 
-  interface PluginReader<S : PluginMetadataSource> {
+  interface PluginReader<S> {
     fun readPlugins(
       idePath: Path,
       pluginMetadataSource: S,
@@ -126,32 +125,28 @@ class ProductInfoBasedIdeManager(
       ideVersion: IdeVersion
     ): List<IdePlugin>
 
-    fun supports(pluginMetadataSource: PluginMetadataSource): Boolean
+    fun supports(pluginMetadataSource: Any): Boolean
   }
 
-  private object NoOpProductInfoPluginReader : PluginReader<PluginMetadataSource.ProductInfoSource> {
+  private object NoOpProductInfoPluginReader : PluginReader<ProductInfo> {
     override fun readPlugins(
       idePath: Path,
-      pluginMetadataSource: PluginMetadataSource.ProductInfoSource,
-      layoutComponentNameSource: LayoutComponentNameSource<PluginMetadataSource.ProductInfoSource>,
+      pluginMetadataSource: ProductInfo,
+      layoutComponentNameSource: LayoutComponentNameSource<ProductInfo>,
       ideVersion: IdeVersion
     ): List<IdePlugin> = emptyList()
 
-    override fun supports(pluginMetadataSource: PluginMetadataSource): Boolean {
-      return true
-    }
+    override fun supports(pluginMetadataSource: Any): Boolean = true
   }
 
-  private object NoOpLayoutComponentsPluginReader : PluginReader<PluginMetadataSource.LayoutComponentsSource> {
+  private object NoOpLayoutComponentsPluginReader : PluginReader<LayoutComponents> {
     override fun readPlugins(
       idePath: Path,
-      pluginMetadataSource: PluginMetadataSource.LayoutComponentsSource,
-      layoutComponentNameSource: LayoutComponentNameSource<PluginMetadataSource.LayoutComponentsSource>,
+      pluginMetadataSource: LayoutComponents,
+      layoutComponentNameSource: LayoutComponentNameSource<LayoutComponents>,
       ideVersion: IdeVersion
     ): List<IdePlugin> = emptyList()
 
-    override fun supports(pluginMetadataSource: PluginMetadataSource): Boolean {
-      return true
-    }
+    override fun supports(pluginMetadataSource: Any): Boolean = true
   }
 }
