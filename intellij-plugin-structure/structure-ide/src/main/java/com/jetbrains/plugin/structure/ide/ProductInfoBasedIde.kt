@@ -5,6 +5,7 @@
 package com.jetbrains.plugin.structure.ide
 
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponentsAware
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -17,7 +18,7 @@ class ProductInfoBasedIde private constructor(
   override val productInfo: ProductInfo,
   val pluginCollectionProvider: PluginCollectionProvider<Path>,
   private val pluginCollectionSources: List<PluginCollectionSource<Path, *>>
-) : Ide(), ProductInfoAware {
+) : Ide(), ProductInfoAware, LayoutComponentsAware {
 
   private val _plugins = lazy {
     pluginCollectionSources.flatMap { source ->
@@ -26,6 +27,10 @@ class ProductInfoBasedIde private constructor(
   }
 
   private val plugins by _plugins
+
+  override val layoutComponents: LayoutComponents
+    get() = getPluginCollectionSource(LayoutComponents::class.java)?.resource
+      ?: LayoutComponents.of(idePath, productInfo)
 
   override fun getVersion() = version
 

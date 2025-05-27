@@ -20,10 +20,10 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeVersionResolution
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.ide.ProductInfoAware
-import com.jetbrains.plugin.structure.ide.ProductInfoBasedIde
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin.IdeLibDirectory
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponentsAware
 import com.jetbrains.plugin.structure.ide.resolver.ValidatingLayoutComponentsProvider
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
@@ -124,10 +124,10 @@ class ProductInfoClassResolver private constructor(
       LOG.debug("Explicitly reparsing '$PRODUCT_INFO_JSON' for layout components")
       return resolveLayoutComponents()
     } else {
-      if (ide is ProductInfoBasedIde) {
-        ide.getPluginCollectionSource(LayoutComponents::class.java)
-          ?.resource
-          ?.let { return it }
+      if (ide is LayoutComponentsAware) {
+        return ide.layoutComponents.also {
+          if (it.layoutComponents.isNotEmpty()) LOG.warn("IDE has no layout components declared.")
+        }
       }
       LOG.debug("Unable to obtain layout components from IDE. Reparsing '$PRODUCT_INFO_JSON'")
       return resolveLayoutComponents()
