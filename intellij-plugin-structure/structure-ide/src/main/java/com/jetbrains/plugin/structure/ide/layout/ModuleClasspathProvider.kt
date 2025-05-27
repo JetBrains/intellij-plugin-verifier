@@ -17,3 +17,10 @@ class ProductInfoClasspathProvider(private val productInfo: ProductInfo) : Modul
       ?: emptyList()
   }
 }
+
+class LayoutComponentsClasspathProvider(private val layoutComponents: LayoutComponents) : ModuleClasspathProvider {
+  override fun getClasspath(moduleName: String): List<Path> {
+    return layoutComponents.find { it.name == moduleName && it.isClasspathable }?.getClasspaths()
+      ?: emptyList()
+  }
+}
