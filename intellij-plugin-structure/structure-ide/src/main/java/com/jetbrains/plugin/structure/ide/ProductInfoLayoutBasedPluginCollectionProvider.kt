@@ -42,8 +42,7 @@ private val LOG: Logger = LoggerFactory.getLogger(ProductInfoBasedPluginCollecti
 class ProductInfoLayoutBasedPluginCollectionProvider(
   private val additionalPluginReader: ProductInfoBasedIdeManager.PluginReader<LayoutComponents>,
   private val jarFileSystemProvider: JarFileSystemProvider,
-  private val productInfo: ProductInfo,
-  private val layoutComponents: LayoutComponents
+  private val productInfo: ProductInfo
 ) : PluginCollectionProvider<Path> {
 
   /**
