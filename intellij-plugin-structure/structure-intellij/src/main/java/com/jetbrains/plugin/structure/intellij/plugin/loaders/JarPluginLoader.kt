@@ -24,8 +24,8 @@ import org.slf4j.LoggerFactory
 
 private val LOG: Logger = LoggerFactory.getLogger(JarPluginLoader::class.java)
 
-internal class JarPluginLoader(private val fileSystemProvider: JarFileSystemProvider) {
-  fun loadPlugin(pluginLoadingContext: PluginLoadingContext): PluginCreator = with(pluginLoadingContext) {
+internal class JarPluginLoader(private val fileSystemProvider: JarFileSystemProvider) : PluginLoader {
+  override fun loadPlugin(pluginLoadingContext: PluginLoadingContext): PluginCreator = with(pluginLoadingContext) {
     val jarFile = artifactPath
     return try {
       PluginJar(jarFile, fileSystemProvider).use { jar ->
