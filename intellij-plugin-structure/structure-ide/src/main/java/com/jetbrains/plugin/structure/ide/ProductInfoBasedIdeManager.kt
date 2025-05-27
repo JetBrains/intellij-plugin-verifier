@@ -53,30 +53,10 @@ class ProductInfoBasedIdeManager(
     if (!idePath.isDirectory) {
       throw IOException("Specified path does not exist or is not a directory: $idePath")
     }
-    val layoutComponents = layoutComponentsProvider.resolveLayoutComponents(productInfo, idePath)
 
-    val layoutComponentsSource = layoutComponents.asSource(idePath, ideVersion)
-
-    val pluginCollectionProviders = mutableMapOf<PluginCollectionSource<Path, *>, PluginCollectionProvider<Path>>()
-    pluginCollectionProviders[layoutComponentsSource] = ProductInfoLayoutBasedPluginCollectionProvider(
-      additionalLayoutComponentsPluginReader,
-      SingletonCachingJarFileSystemProvider,
-    )
-
-    if (additionalProductInfoPluginReader !is NoOpProductInfoPluginReader) {
-      val productInfoSource = productInfo.asSource(idePath, ideVersion)
-      pluginCollectionProviders[productInfoSource] =
-        ProductInfoPluginReaderPluginCollectionProvider(additionalProductInfoPluginReader)
-    }
-
-    return ProductInfoBasedIde.of(idePath, ideVersion, productInfo, layoutComponents, pluginCollectionProviders)
+    val pluginCollectionProviders = createPluginCollectionProviders(idePath, ideVersion, productInfo)
+    return ProductInfoBasedIde.of(idePath, ideVersion, productInfo, pluginCollectionProviders)
   }
-
-  private fun ProductInfo.asSource(idePath: Path, ideVersion: IdeVersion) =
-    ProductInfoPluginCollectionSource(idePath, ideVersion, this)
-
-  private fun LayoutComponents.asSource(idePath: Path, ideVersion: IdeVersion) =
-    ProductInfoLayoutComponentsPluginCollectionSource(idePath, ideVersion, this)
 
   private fun createIdeVersion(productInfo: ProductInfo): IdeVersion {
     val versionString = buildString {
@@ -87,6 +67,31 @@ class ProductInfoBasedIdeManager(
     }
     return IdeVersion.createIdeVersion(versionString)
   }
+
+  private fun createPluginCollectionProviders(idePath: Path, ideVersion: IdeVersion, productInfo: ProductInfo): Map<PluginCollectionSource<Path, *>, PluginCollectionProvider<Path>> {
+    return mutableMapOf<PluginCollectionSource<Path, *>, PluginCollectionProvider<Path>>().apply {
+      val layoutComponentsSource = createLayoutComponentsSource(idePath, ideVersion, productInfo)
+      this[layoutComponentsSource] = ProductInfoLayoutBasedPluginCollectionProvider(
+        additionalLayoutComponentsPluginReader,
+        SingletonCachingJarFileSystemProvider,
+      )
+
+      if (additionalProductInfoPluginReader !is NoOpProductInfoPluginReader) {
+        val productInfoSource = productInfo.asSource(idePath, ideVersion)
+        this[productInfoSource] = ProductInfoPluginReaderPluginCollectionProvider(additionalProductInfoPluginReader)
+      }
+    }
+  }
+
+  private fun createLayoutComponentsSource(idePath: Path, ideVersion: IdeVersion, productInfo: ProductInfo) =
+    layoutComponentsProvider.resolveLayoutComponents(productInfo, idePath)
+      .asSource(idePath, ideVersion)
+
+  private fun ProductInfo.asSource(idePath: Path, ideVersion: IdeVersion) =
+    ProductInfoPluginCollectionSource(idePath, ideVersion, this)
+
+  private fun LayoutComponents.asSource(idePath: Path, ideVersion: IdeVersion) =
+    ProductInfoLayoutComponentsPluginCollectionSource(idePath, ideVersion, this)
 
   private val Path.productInfoJson: Path?
     get() {
