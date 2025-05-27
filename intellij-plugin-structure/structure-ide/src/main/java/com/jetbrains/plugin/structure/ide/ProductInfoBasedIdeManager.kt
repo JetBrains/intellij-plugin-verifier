@@ -57,7 +57,7 @@ class ProductInfoBasedIdeManager(
       throw IOException("Specified path does not exist or is not a directory: $idePath")
     }
     val layoutComponents = layoutComponentsProvider.resolveLayoutComponents(productInfo, idePath)
-    return ProductInfoBasedIde(idePath, ideVersion, productInfo, pluginCollectionProvider)
+    return ProductInfoBasedIde.of(idePath, ideVersion, productInfo, pluginCollectionProvider)
   }
 
   private fun createIdeVersion(productInfo: ProductInfo): IdeVersion {

@@ -10,15 +10,16 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-class ProductInfoBasedIde(
+class ProductInfoBasedIde private constructor(
   private val idePath: Path,
   private val version: IdeVersion,
   override val productInfo: ProductInfo,
-  val pluginCollectionProvider: PluginCollectionProvider<Path>
+  val pluginCollectionProvider: PluginCollectionProvider<Path>,
+  private val pluginCollectionSource: ProductInfoPluginCollectionSource
 ) : Ide(), ProductInfoAware {
 
   private val _plugins = lazy {
-    pluginCollectionProvider.getPlugins(ProductInfoPluginCollectionSource(idePath, version, productInfo))
+    pluginCollectionProvider.getPlugins(pluginCollectionSource)
   }
 
   private val plugins by _plugins
@@ -36,5 +37,17 @@ class ProductInfoBasedIde(
   @ApiStatus.Internal
   fun isPluginCollectionLoaded(): Boolean {
     return _plugins.isInitialized()
+  }
+
+  companion object {
+    fun of(
+      idePath: Path,
+      version: IdeVersion,
+      productInfo: ProductInfo,
+      pluginCollectionProvider: PluginCollectionProvider<Path>
+    ): ProductInfoBasedIde {
+      val pluginCollectionSource = ProductInfoPluginCollectionSource(idePath, version, productInfo)
+      return ProductInfoBasedIde(idePath, version, productInfo, pluginCollectionProvider, pluginCollectionSource)
+    }
   }
 }
