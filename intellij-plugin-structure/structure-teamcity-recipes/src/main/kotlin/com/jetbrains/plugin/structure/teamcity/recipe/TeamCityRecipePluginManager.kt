@@ -106,7 +106,7 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
     return PluginCreationSuccess(plugin, validationResult)
   }
 
-  private fun getDependencies(descriptor: TeamCityRecipeDescriptor): List<TeamCityRecipeDependency> {
+  private fun getDependencies(descriptor: TeamCityRecipeDescriptor): Set<TeamCityRecipeDependency> {
     val referencedRecipes = descriptor.steps!!.mapNotNull { it.uses }
     return referencedRecipes
       .map {
@@ -117,7 +117,7 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
           recipeVersion = nameAndVersionParts[1]
         )
       }
-      .distinct()
+      .toHashSet()
   }
 }
 
