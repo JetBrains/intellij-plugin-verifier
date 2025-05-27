@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.Path
 
-private val LOG: Logger = LoggerFactory.getLogger(ProductInfoBasedPluginCollectionProvider::class.java)
+private val LOG: Logger = LoggerFactory.getLogger(ProductInfoLayoutBasedPluginCollectionProvider::class.java)
 
 class ProductInfoLayoutBasedPluginCollectionProvider(
   private val additionalPluginReader: ProductInfoBasedIdeManager.PluginReader<LayoutComponents>,
