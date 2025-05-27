@@ -17,6 +17,7 @@ import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Co
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Failure
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Success
 import com.jetbrains.plugin.structure.ide.layout.ProductInfoClasspathProvider
+import com.jetbrains.plugin.structure.ide.layout.ProductInfoLayoutComponentNameSource
 import com.jetbrains.plugin.structure.ide.resolver.ProductInfoResourceResolver
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
@@ -39,7 +40,7 @@ import java.nio.file.Path
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoBasedPluginCollectionProvider::class.java)
 
 class ProductInfoBasedPluginCollectionProvider(
-  private val additionalPluginReader: ProductInfoBasedIdeManager.PluginReader,
+  private val additionalPluginReader: ProductInfoBasedIdeManager.PluginReader<ProductInfo>,
   private val jarFileSystemProvider: JarFileSystemProvider,
   private val layoutComponentsProvider: LayoutComponentsProvider
 ) : PluginCollectionProvider<Path> {
@@ -109,7 +110,8 @@ class ProductInfoBasedPluginCollectionProvider(
     productInfo: ProductInfo,
     ideVersion: IdeVersion
   ): List<IdePlugin> {
-    return additionalPluginReader.readPlugins(idePath, productInfo, ideVersion)
+    val layoutComponentNameSource = ProductInfoLayoutComponentNameSource(productInfo)
+    return additionalPluginReader.readPlugins(idePath, productInfo, layoutComponentNameSource, ideVersion)
   }
 
   private fun createModule(

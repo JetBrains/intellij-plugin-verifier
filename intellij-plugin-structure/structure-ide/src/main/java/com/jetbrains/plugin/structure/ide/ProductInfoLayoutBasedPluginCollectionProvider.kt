@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.ide.layout.CorePluginManager
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponentsNames
 import com.jetbrains.plugin.structure.ide.layout.LoadingResults
 import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
 import com.jetbrains.plugin.structure.ide.layout.PluginFactory
@@ -39,7 +40,7 @@ import java.nio.file.Path
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoBasedPluginCollectionProvider::class.java)
 
 class ProductInfoLayoutBasedPluginCollectionProvider(
-  private val additionalPluginReader: ProductInfoBasedIdeManager.PluginReader,
+  private val additionalPluginReader: ProductInfoBasedIdeManager.PluginReader<LayoutComponents>,
   private val jarFileSystemProvider: JarFileSystemProvider,
   private val productInfo: ProductInfo,
   private val layoutComponents: LayoutComponents
@@ -59,7 +60,7 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
     val (idePath, ideVersion, layoutComponents) = source
     val corePlugin = readCorePlugin(idePath, ideVersion)
     val plugins = readPlugins(idePath, layoutComponents, ideVersion)
-    val additionalPlugins = readAdditionalPlugins(idePath, productInfo, ideVersion)
+    val additionalPlugins = readAdditionalPlugins(idePath, layoutComponents, ideVersion)
 
     return corePlugin + plugins + additionalPlugins
   }
@@ -105,10 +106,11 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
 
   private fun readAdditionalPlugins(
     idePath: Path,
-    productInfo: ProductInfo,
+    layoutComponents: LayoutComponents,
     ideVersion: IdeVersion
   ): List<IdePlugin> {
-    return additionalPluginReader.readPlugins(idePath, productInfo, ideVersion)
+    val layoutComponentNames = LayoutComponentsNames(layoutComponents)
+    return additionalPluginReader.readPlugins(idePath, layoutComponents, layoutComponentNames, ideVersion)
   }
 
   private fun createModule(
