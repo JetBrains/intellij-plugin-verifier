@@ -3,6 +3,8 @@ package com.jetbrains.plugin.structure.ide
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import ch.qos.logback.core.spi.AppenderAttachable
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
+import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import org.junit.Assert.*
@@ -225,6 +227,22 @@ class ProductInfoBasedIdeManagerTest {
       assertEquals("242.10180.25", pluginVersion)
     }
   }
+
+  @Test
+  fun `ide has proper plugin collection sources discovered`() {
+    val ideManager = ProductInfoBasedIdeManager()
+    val ide = ideManager.createIde(ideRoot)
+    assertIdeAndPluginsIsCreated(ide)
+
+    assertTrue(ide is ProductInfoBasedIde)
+    ide as ProductInfoBasedIde
+    val productInfoSource = ide.getPluginCollectionSource(ProductInfo::class.java)
+    val layoutComponentsSource = ide.getPluginCollectionSource(LayoutComponents::class.java)
+
+    assertNotNull(productInfoSource)
+    assertNotNull(layoutComponentsSource)
+  }
+
 
   private fun assertIdeAndPluginsIsCreated(ide: Ide) {
     assertEquals(5, ide.bundledPlugins.size)

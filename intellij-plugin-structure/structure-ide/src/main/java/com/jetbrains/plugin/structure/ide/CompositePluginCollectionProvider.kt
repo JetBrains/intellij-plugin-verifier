@@ -8,7 +8,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 
 class CompositePluginCollectionProvider<S> private constructor(private val providers: List<PluginCollectionProvider<S>>) :
   PluginCollectionProvider<S> {
-  override fun getPlugins(source: PluginCollectionSource<S>): List<IdePlugin> = providers.flatMap { it.getPlugins(source) }
+  override fun getPlugins(source: PluginCollectionSource<S, *>): List<IdePlugin> = providers.flatMap { it.getPlugins(source) }
 
   companion object {
     fun <S> of(providers: List<PluginCollectionProvider<S>>) =

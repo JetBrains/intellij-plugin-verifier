@@ -53,7 +53,7 @@ class ProductInfoBasedPluginCollectionProvider(
     get() = JetBrainsPluginCreationResultResolver.fromClassPathJson(IntelliJPluginCreationResultResolver())
 
   @Throws(IOException::class)
-  override fun getPlugins(source: PluginCollectionSource<Path>): Collection<IdePlugin> {
+  override fun getPlugins(source: PluginCollectionSource<Path, *>): Collection<IdePlugin> {
     if (source !is ProductInfoPluginCollectionSource) {
       return emptySet()
     }

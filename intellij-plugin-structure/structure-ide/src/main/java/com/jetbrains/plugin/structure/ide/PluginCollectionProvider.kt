@@ -7,5 +7,5 @@ package com.jetbrains.plugin.structure.ide
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 
 interface PluginCollectionProvider<S> {
-  fun getPlugins(source: PluginCollectionSource<S>): Collection<IdePlugin>
+  fun getPlugins(source: PluginCollectionSource<S, *>): Collection<IdePlugin>
 }
