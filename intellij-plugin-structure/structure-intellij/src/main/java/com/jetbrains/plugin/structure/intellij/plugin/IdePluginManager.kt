@@ -32,7 +32,9 @@ import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor.extract
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.ContentModuleLoader
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarPluginLoader
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginIconLoader
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginLoadingContext
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.ThirdPartyDependencyLoader
 import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleScanner
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
@@ -69,6 +71,8 @@ class IdePluginManager private constructor(
   private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
 ) : PluginManager<IdePlugin> {
 
+  private val jarLoader = JarPluginLoader(fileSystemProvider)
+
   private val optionalDependencyResolver = OptionalDependencyResolver(this::loadPluginInfoFromJarOrDirectory)
 
   private val contentModuleLoader = ContentModuleLoader(this::loadPluginInfoFromJarOrDirectory)
@@ -78,44 +82,6 @@ class IdePluginManager private constructor(
   private val pluginIconLoader = PluginIconLoader()
 
   private val thirdPartyDependencyLoader = ThirdPartyDependencyLoader()
-
-  private fun loadPluginInfoFromJarFile(
-    jarFile: Path,
-    descriptorPath: String,
-    validateDescriptor: Boolean,
-    resourceResolver: ResourceResolver,
-    parentPlugin: PluginCreator?,
-    problemResolver: PluginCreationResultResolver,
-    hasDotNetDirectory: Boolean = false
-  ): PluginCreator {
-
-    return try {
-      PluginJar(jarFile, fileSystemProvider).use { jar ->
-        when (val descriptor = jar.getPluginDescriptor("$META_INF/$descriptorPath")) {
-          is Found -> {
-            try {
-              val descriptorXml = descriptor.loadXml()
-              createPlugin(jarFile.simpleName, descriptorPath, parentPlugin, validateDescriptor, descriptorXml, descriptor.path, resourceResolver, problemResolver).apply {
-                setIcons(jar.getIcons())
-                setThirdPartyDependencies(jar.getThirdPartyDependencies())
-                setHasDotNetPart(hasDotNetDirectory)
-              }
-            } catch (e: Exception) {
-              LOG.warn("Unable to read descriptor [$descriptorPath] from [$jarFile]", e)
-              val message = e.localizedMessage
-              createInvalidPlugin(jarFile, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
-            }
-          }
-          else -> createInvalidPlugin(jarFile, descriptorPath, PluginDescriptorIsNotFound(descriptorPath)).also {
-            LOG.debug("Unable to resolve descriptor [{}] from [{}] ({})", descriptorPath, jarFile, descriptor)
-          }
-        }
-      }
-    } catch (e: JarArchiveCannotBeOpenException) {
-      LOG.warn("Unable to extract {} (searching for {}): {}", jarFile, descriptorPath, e.getShortExceptionMessage())
-      createInvalidPlugin(jarFile, descriptorPath, UnableToExtractZip())
-    }
-  }
 
   private fun loadModuleInfoFromJarFile(
     jarFile: Path,
@@ -225,14 +191,16 @@ class IdePluginManager private constructor(
     for (file in files) {
       val innerCreator: PluginCreator = if (file.isJar() || file.isZip()) {
         //Use the composite resource resolver, which can resolve resources in lib's jar files.
-        loadPluginInfoFromJarFile(
-            jarFile = file,
-            descriptorPath = descriptorPath,
-            validateDescriptor = validateDescriptor,
-            resourceResolver = compositeResolver,
-            parentPlugin = parentPlugin,
-            problemResolver = problemResolver,
-            hasDotNetDirectory = hasDotNetDirectory
+        jarLoader.loadPlugin(
+          PluginLoadingContext(
+            file,
+            descriptorPath,
+            validateDescriptor,
+            compositeResolver,
+            parentPlugin,
+            problemResolver,
+            hasDotNetDirectory
+          )
         )
       } else if (file.isDirectory) {
         //Use the common resource resolver, which is unaware of lib's jar files.
@@ -289,14 +257,15 @@ class IdePluginManager private constructor(
           problemResolver)
       }
 
-      pluginFile.isJar() -> {
-        loadPluginInfoFromJarFile(pluginFile,
+      pluginFile.isJar() -> jarLoader.loadPlugin(
+        PluginLoadingContext(
+          pluginFile,
           systemIndependentDescriptorPath,
           validateDescriptor,
           resourceResolver,
           parentPlugin,
-          problemResolver)
-      }
+          problemResolver
+      ))
 
       else -> throw IllegalArgumentException()
     }
