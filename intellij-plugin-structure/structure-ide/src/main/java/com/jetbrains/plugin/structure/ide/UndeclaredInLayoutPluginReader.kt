@@ -9,7 +9,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.PlatformResourceResolver
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponentNameSource
-import com.jetbrains.plugin.structure.ide.layout.PluginMetadataSource
 import com.jetbrains.plugin.structure.ide.plugin.DefaultPluginIdProvider
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.BundledPluginManager
@@ -26,15 +25,15 @@ import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(UndeclaredInLayoutPluginReader::class.java)
 
-class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<String>) : ProductInfoBasedIdeManager.PluginReader<PluginMetadataSource.ProductInfoSource> {
+class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<String>) : ProductInfoBasedIdeManager.PluginReader<ProductInfo> {
   private val pluginIdProvider = DefaultPluginIdProvider()
 
   private val bundledPluginManager = BundledPluginManager(pluginIdProvider)
 
   override fun readPlugins(
     idePath: Path,
-    pluginMetadataSource: PluginMetadataSource.ProductInfoSource,
-    layoutComponentNameSource: LayoutComponentNameSource<PluginMetadataSource.ProductInfoSource>,
+    pluginMetadataSource: ProductInfo,
+    layoutComponentNameSource: LayoutComponentNameSource<ProductInfo>,
     ideVersion: IdeVersion
   ): List<IdePlugin> {
     if (!supports(pluginMetadataSource)) return emptyList()
@@ -57,11 +56,9 @@ class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<Stri
       }
   }
 
-  override fun supports(pluginMetadataSource: PluginMetadataSource): Boolean {
-    return pluginMetadataSource is PluginMetadataSource.ProductInfoSource && supports(pluginMetadataSource.productInfo)
+  override fun supports(pluginMetadataSource: Any): Boolean {
+    return pluginMetadataSource is ProductInfo && pluginMetadataSource.productCode in supportedProductCodes
   }
-
-  private fun supports(productInfo: ProductInfo): Boolean = productInfo.productCode in supportedProductCodes
 
   private fun Set<PluginArtifactPath>.filterNotIn(layoutIdentifiers: List<String>): List<PluginArtifactPath> {
     return filterNot { it.pluginId in layoutIdentifiers }

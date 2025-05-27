@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
  * of the Product Info JSON (`product-info.json`).
  */
 class ProductInfoLayoutComponentNameSource(private val productInfo: ProductInfo) :
-  LayoutComponentNameSource<PluginMetadataSource.ProductInfoSource> {
+  LayoutComponentNameSource<ProductInfo> {
 
   override fun getNames(): List<String> {
     return productInfo.layout.map { it.name }
