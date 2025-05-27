@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.ide
 
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -15,7 +16,7 @@ class ProductInfoBasedIde private constructor(
   private val version: IdeVersion,
   override val productInfo: ProductInfo,
   val pluginCollectionProvider: PluginCollectionProvider<Path>,
-  private val pluginCollectionSource: ProductInfoPluginCollectionSource
+  private val pluginCollectionSource: PluginCollectionSource<Path>
 ) : Ide(), ProductInfoAware {
 
   private val _plugins = lazy {
@@ -47,6 +48,17 @@ class ProductInfoBasedIde private constructor(
       pluginCollectionProvider: PluginCollectionProvider<Path>
     ): ProductInfoBasedIde {
       val pluginCollectionSource = ProductInfoPluginCollectionSource(idePath, version, productInfo)
+      return ProductInfoBasedIde(idePath, version, productInfo, pluginCollectionProvider, pluginCollectionSource)
+    }
+
+    fun of(
+      idePath: Path,
+      version: IdeVersion,
+      productInfo: ProductInfo,
+      layoutComponents: LayoutComponents,
+      pluginCollectionProvider: PluginCollectionProvider<Path>
+    ): ProductInfoBasedIde {
+      val pluginCollectionSource = ProductInfoLayoutComponentsPluginCollectionSource(idePath, version, layoutComponents)
       return ProductInfoBasedIde(idePath, version, productInfo, pluginCollectionProvider, pluginCollectionSource)
     }
   }
