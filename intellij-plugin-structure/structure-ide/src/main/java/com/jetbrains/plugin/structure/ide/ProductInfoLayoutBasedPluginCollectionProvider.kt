@@ -54,19 +54,14 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
     if (source !is ProductInfoLayoutComponentsPluginCollectionSource) {
       return emptySet()
     }
-    val (idePath, ideVersion, layoutComponents) = source
-    val corePlugin = readCorePlugin(idePath, ideVersion)
-    val plugins = readPlugins(idePath, layoutComponents, ideVersion)
-    val additionalPlugins = readAdditionalPlugins(idePath, layoutComponents, ideVersion)
+    val corePlugin = source.readCorePlugin()
+    val plugins = source.readPlugins()
+    val additionalPlugins = source.readAdditionalPlugins()
 
     return corePlugin + plugins + additionalPlugins
   }
 
-  private fun readPlugins(
-    idePath: Path,
-    layoutComponents: LayoutComponents,
-    ideVersion: IdeVersion
-  ): List<IdePlugin> {
+  private fun ProductInfoLayoutComponentsPluginCollectionSource.readPlugins(): List<IdePlugin> {
     val platformResourceResolver = ProductInfoResourceResolver(layoutComponents, jarFileSystemProvider)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath, jarFileSystemProvider))
 
@@ -95,17 +90,13 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
     return moduleLoadingResults.successfulPlugins
   }
 
-  private fun readCorePlugin(idePath: Path, ideVersion: IdeVersion): List<IdePlugin> {
+  private fun ProductInfoLayoutComponentsPluginCollectionSource.readCorePlugin(): List<IdePlugin> {
     val corePluginManager =
       CorePluginManager(::createPlugin, jarFileSystemProvider)
     return corePluginManager.loadCorePlugins(idePath, ideVersion)
   }
 
-  private fun readAdditionalPlugins(
-    idePath: Path,
-    layoutComponents: LayoutComponents,
-    ideVersion: IdeVersion
-  ): List<IdePlugin> {
+  private fun ProductInfoLayoutComponentsPluginCollectionSource.readAdditionalPlugins(): List<IdePlugin> {
     val layoutComponentNames = LayoutComponentsNames(layoutComponents)
     return additionalPluginReader.readPlugins(idePath, layoutComponents, layoutComponentNames, ideVersion)
   }
