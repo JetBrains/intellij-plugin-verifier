@@ -100,9 +100,24 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
         specVersion = getSpecVersion(),
         yamlFile = PluginFile(yamlPath.fileName.toString(), yamlPath.readBytes()),
         namespace = TeamCityRecipeSpec.RecipeCompositeName.getNamespace(this.name)!!,
+        dependencies = getDependencies(this),
       )
     }
     return PluginCreationSuccess(plugin, validationResult)
+  }
+
+  private fun getDependencies(descriptor: TeamCityRecipeDescriptor): Set<TeamCityRecipeDependency> {
+    val referencedRecipes = descriptor.steps!!.mapNotNull { it.uses }
+    return referencedRecipes
+      .map {
+        val nameAndVersionParts = it.split(TeamCityRecipeSpec.RecipeStepReference.NAME_VERSION_DELIMITER)
+        TeamCityRecipeDependency(
+          recipeNamespace = TeamCityRecipeSpec.RecipeCompositeName.getNamespace(nameAndVersionParts[0])!!,
+          recipeName = TeamCityRecipeSpec.RecipeCompositeName.getNameInNamespace(nameAndVersionParts[0])!!,
+          recipeVersion = nameAndVersionParts[1]
+        )
+      }
+      .toHashSet()
   }
 }
 

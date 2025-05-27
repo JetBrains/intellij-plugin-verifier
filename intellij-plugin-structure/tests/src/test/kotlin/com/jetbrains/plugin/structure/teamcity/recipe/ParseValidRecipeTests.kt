@@ -61,4 +61,16 @@ class ParseValidRecipeTests(
     val step = someUsesStep.copy(uses = "recipe/recipeName@1.2.3")
     createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(step))))
   }
+
+  @Test
+  fun `parse recipe dependencies`() {
+    val step1 = someUsesStep.copy(uses = "jetbrains/recipe@1.2.3")
+    val step2 = someUsesStep.copy(uses = "namespace/name@1.0.0")
+    val result = createPluginSuccessfully(temporaryFolder.prepareRecipeYaml(someRecipe.copy(steps = listOf(step1, step2))))
+    with(result.plugin) {
+      assertEquals(2, this.dependencies.size)
+      assertEquals(true, this.dependencies.contains(TeamCityRecipeDependency("jetbrains", "recipe", "1.2.3")))
+      assertEquals(true, this.dependencies.contains(TeamCityRecipeDependency("namespace", "name", "1.0.0")))
+    }
+  }
 }

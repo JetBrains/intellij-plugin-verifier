@@ -56,7 +56,9 @@ class ParseValidFullRecipeTest(
       - name: step 2
         kotlin-script: print("hi")
       - name: step 3
-        uses: recipe/name@1.2.3
+        uses: jetbrains/recipe@1.2.3
+      - name: step 4
+        uses: namespace/name@1.0.0
         inputs:
           text-input: passed text parameter value
           boolean-input: true
@@ -81,6 +83,9 @@ class ParseValidFullRecipeTest(
       assertEquals("namespace", this.namespace)
       assertEquals("1.2.3", this.pluginVersion)
       assertEquals("this is a simple recipe", this.description)
+      assertEquals(2, this.dependencies.size)
+      assertEquals(true, this.dependencies.contains(TeamCityRecipeDependency("jetbrains", "recipe", "1.2.3")))
+      assertEquals(true, this.dependencies.contains(TeamCityRecipeDependency("namespace", "name", "1.0.0")))
     }
   }
 }
