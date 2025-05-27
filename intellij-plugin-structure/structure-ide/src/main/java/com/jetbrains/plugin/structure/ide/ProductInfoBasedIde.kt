@@ -56,7 +56,6 @@ class ProductInfoBasedIde private constructor(
       idePath: Path,
       version: IdeVersion,
       productInfo: ProductInfo,
-      layoutComponents: LayoutComponents,
       pluginCollectionProviders: Map<PluginCollectionSource<Path, *>, PluginCollectionProvider<Path>>
     ): ProductInfoBasedIde {
       return ProductInfoBasedIde(idePath, version, productInfo, pluginCollectionProviders)
