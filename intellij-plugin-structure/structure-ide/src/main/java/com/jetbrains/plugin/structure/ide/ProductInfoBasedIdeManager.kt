@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.ide
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponentNameSource
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.SKIP_AND_WARN
 import com.jetbrains.plugin.structure.ide.layout.PluginMetadataSource
@@ -54,19 +55,28 @@ class ProductInfoBasedIdeManager(
     }
     val layoutComponents = layoutComponentsProvider.resolveLayoutComponents(productInfo, idePath)
 
-    val pluginCollectionProviders = mutableListOf<PluginCollectionProvider<Path>>()
-    pluginCollectionProviders += ProductInfoLayoutBasedPluginCollectionProvider(
+    val layoutComponentsSource = layoutComponents.asSource(idePath, ideVersion)
+
+    val pluginCollectionProviders = mutableMapOf<PluginCollectionSource<Path, *>, PluginCollectionProvider<Path>>()
+    pluginCollectionProviders[layoutComponentsSource] = ProductInfoLayoutBasedPluginCollectionProvider(
       additionalLayoutComponentsPluginReader,
       SingletonCachingJarFileSystemProvider,
     )
+
     if (additionalProductInfoPluginReader !is NoOpProductInfoPluginReader) {
-      pluginCollectionProviders += ProductInfoPluginReaderPluginCollectionProvider(
-        additionalProductInfoPluginReader)
+      val productInfoSource = productInfo.asSource(idePath, ideVersion)
+      pluginCollectionProviders[productInfoSource] =
+        ProductInfoPluginReaderPluginCollectionProvider(additionalProductInfoPluginReader)
     }
 
-    val pluginCollectionProvider = CompositePluginCollectionProvider.of(pluginCollectionProviders)
-    return ProductInfoBasedIde.of(idePath, ideVersion, productInfo, layoutComponents, pluginCollectionProvider)
+    return ProductInfoBasedIde.of(idePath, ideVersion, productInfo, layoutComponents, pluginCollectionProviders)
   }
+
+  private fun ProductInfo.asSource(idePath: Path, ideVersion: IdeVersion) =
+    ProductInfoPluginCollectionSource(idePath, ideVersion, this)
+
+  private fun LayoutComponents.asSource(idePath: Path, ideVersion: IdeVersion) =
+    ProductInfoLayoutComponentsPluginCollectionSource(idePath, ideVersion, this)
 
   private fun createIdeVersion(productInfo: ProductInfo): IdeVersion {
     val versionString = buildString {

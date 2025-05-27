@@ -239,7 +239,8 @@ class ProductInfoBasedIdeManagerTest {
     val productInfoSource = ide.getPluginCollectionSource(ProductInfo::class.java)
     val layoutComponentsSource = ide.getPluginCollectionSource(LayoutComponents::class.java)
 
-    assertNotNull(productInfoSource)
+    assertNull("Product Info plugin collection source should not be present. " +
+      "Plugin collection is sourced from 'layout' key in product-info.json", productInfoSource)
     assertNotNull(layoutComponentsSource)
   }
 

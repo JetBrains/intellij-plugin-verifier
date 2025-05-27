@@ -16,13 +16,12 @@ class ProductInfoBasedIde private constructor(
   private val idePath: Path,
   private val version: IdeVersion,
   override val productInfo: ProductInfo,
-  val pluginCollectionProvider: PluginCollectionProvider<Path>,
-  private val pluginCollectionSources: List<PluginCollectionSource<Path, *>>
+  private val pluginCollectionProviders: Map<PluginCollectionSource<Path, *>, PluginCollectionProvider<Path>>
 ) : Ide(), ProductInfoAware, LayoutComponentsAware {
 
   private val _plugins = lazy {
-    pluginCollectionSources.flatMap { source ->
-      pluginCollectionProvider.getPlugins(source)
+    pluginCollectionProviders.flatMap { (source, provider) ->
+      provider.getPlugins(source)
     }
   }
 
@@ -49,7 +48,7 @@ class ProductInfoBasedIde private constructor(
 
   fun <T> getPluginCollectionSource(resourceType: Class<T>): PluginCollectionSource<Path, T>? {
     @Suppress("UNCHECKED_CAST")
-    return pluginCollectionSources.find { resourceType.isInstance(it.resource) } as PluginCollectionSource<Path, T>?
+    return pluginCollectionProviders.keys.find { resourceType.isInstance(it.resource) } as PluginCollectionSource<Path, T>?
   }
 
   companion object {
@@ -57,24 +56,10 @@ class ProductInfoBasedIde private constructor(
       idePath: Path,
       version: IdeVersion,
       productInfo: ProductInfo,
-      pluginCollectionProvider: PluginCollectionProvider<Path>
-    ): ProductInfoBasedIde {
-      val pluginCollectionSource = ProductInfoPluginCollectionSource(idePath, version, productInfo)
-      return ProductInfoBasedIde(idePath, version, productInfo, pluginCollectionProvider, listOf(pluginCollectionSource))
-    }
-
-    fun of(
-      idePath: Path,
-      version: IdeVersion,
-      productInfo: ProductInfo,
       layoutComponents: LayoutComponents,
-      pluginCollectionProvider: PluginCollectionProvider<Path>
+      pluginCollectionProviders: Map<PluginCollectionSource<Path, *>, PluginCollectionProvider<Path>>
     ): ProductInfoBasedIde {
-      val pluginCollectionSource = listOf(
-        ProductInfoLayoutComponentsPluginCollectionSource(idePath, version, layoutComponents),
-        ProductInfoPluginCollectionSource(idePath, version, productInfo)
-      )
-      return ProductInfoBasedIde(idePath, version, productInfo, pluginCollectionProvider, pluginCollectionSource)
+      return ProductInfoBasedIde(idePath, version, productInfo, pluginCollectionProviders)
     }
   }
 }
