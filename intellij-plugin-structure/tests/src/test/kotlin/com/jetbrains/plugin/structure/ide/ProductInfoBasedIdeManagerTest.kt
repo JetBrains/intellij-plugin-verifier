@@ -151,7 +151,7 @@ class ProductInfoBasedIdeManagerTest {
       layout = ""
     }
 
-    val ideManager = ProductInfoBasedIdeManager(additionalPluginReader = UndeclaredInLayoutPluginReader(supportedProductCodes = setOf("IU", "IC")))
+    val ideManager = ProductInfoBasedIdeManager(additionalProductInfoPluginReader = UndeclaredInLayoutPluginReader(supportedProductCodes = setOf("IU", "IC")))
 
     val ide = ideManager.createIde(ideRoot)
     assertEquals(3, ide.bundledPlugins.size)
