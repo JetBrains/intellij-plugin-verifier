@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.ide
 
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponentNameSource
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.SKIP_AND_WARN
 import com.jetbrains.plugin.structure.ide.resolver.ValidatingLayoutComponentsProvider
@@ -24,7 +25,7 @@ internal val VERSION_FROM_PRODUCT_INFO: IdeVersion? = null
 
 class ProductInfoBasedIdeManager(
   missingLayoutFileMode: MissingLayoutFileMode = SKIP_AND_WARN,
-  additionalPluginReader: PluginReader = NoopPluginReader
+  additionalPluginReader: PluginReader<ProductInfo> = NoopPluginReader
 ) : IdeManager() {
 
   private val productInfoParser = ProductInfoParser()
@@ -55,6 +56,7 @@ class ProductInfoBasedIdeManager(
     if (!idePath.isDirectory) {
       throw IOException("Specified path does not exist or is not a directory: $idePath")
     }
+    val layoutComponents = layoutComponentsProvider.resolveLayoutComponents(productInfo, idePath)
     return ProductInfoBasedIde(idePath, ideVersion, productInfo, pluginCollectionProvider)
   }
 
@@ -93,12 +95,22 @@ class ProductInfoBasedIdeManager(
     }
   }
 
-  fun interface PluginReader {
-    fun readPlugins(idePath: Path, productInfo: ProductInfo, ideVersion: IdeVersion): List<IdePlugin>
+  fun interface PluginReader<R> {
+    fun readPlugins(
+      idePath: Path,
+      pluginMetadataResource: R,
+      layoutComponentNameSource: LayoutComponentNameSource<R>,
+      ideVersion: IdeVersion
+    ): List<IdePlugin>
   }
 
-  private object NoopPluginReader : PluginReader {
-    override fun readPlugins(idePath: Path, productInfo: ProductInfo, ideVersion: IdeVersion): List<IdePlugin> =
+  private object NoopPluginReader : PluginReader<ProductInfo> {
+    override fun readPlugins(
+      idePath: Path,
+      pluginMetadataResource: ProductInfo,
+      layoutComponentNameSource: LayoutComponentNameSource<ProductInfo>,
+      ideVersion: IdeVersion
+    ): List<IdePlugin> =
       emptyList()
   }
 }
