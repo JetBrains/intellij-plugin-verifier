@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.vdurmont.semver4j.Semver
 import com.vdurmont.semver4j.SemverException
 
@@ -166,7 +167,9 @@ data class FleetMeta(
   @JsonProperty("frontend-only")
   val frontendOnly: Boolean? = null,
   @JsonProperty("visible")
-  val humanVisible: Boolean?
+  val humanVisible: Boolean?,
+  @JsonProperty("supportedProducts")
+  val supportedProducts: Set<String>? = emptySet(),
 )
 
 data class FleetShipVersionRange(
@@ -184,10 +187,31 @@ data class FleetShipVersionRange(
     const val VERSION_MINOR_PART_MAX_VALUE = 1.shl(VERSION_MINOR_LENGTH) - 1 // 8191
     const val VERSION_PATCH_PART_MAX_VALUE = 1.shl(VERSION_PATCH_LENGTH) - 1 // 16383
 
-    fun fromStringToLong(version: String?): Long {
-      return Semver(version).run {
-        major.toLong().shl(VERSION_PATCH_LENGTH + VERSION_MINOR_LENGTH) + minor.toLong().shl(VERSION_PATCH_LENGTH) + patch
+    // For binary backward compatibility
+    fun fromStringToLong(version: String?): Long = fromStringToLong(version, setOf(FleetProduct.FL.productCode))
+
+    fun fromStringToLong(version: String?, supportedProducts: Set<String>): Long {
+      require(supportedProducts.isNotEmpty()) { "supportedProducts must not be empty" }
+      val products = supportedProducts.mapNotNull { FleetProduct.fromProductCode(it) }.toSet()
+      require(products.size == supportedProducts.size) {
+        "supportedProducts must contain only product codes from ${FleetProduct.values().map { it.productCode }}, got: $supportedProducts"
       }
+      val (legacyVersioning, unifiedVersioning) = products.partition { it.legacyVersioning }
+      require(legacyVersioning.isEmpty() || unifiedVersioning.isEmpty()) {
+        "supportedProducts must contain either only legacy or only unified versioning products"
+      }
+
+      return when {
+        version == null -> error("version must not be null")
+        legacyVersioning.isNotEmpty() -> resolveLegacyVersion(version) // legacy FL versioning number
+        unifiedVersioning.isNotEmpty() -> IdeVersion.createIdeVersion(version).asLong() // unified version format for IntelliJ Products https://youtrack.jetbrains.com/articles/IJPL-A-109
+        else -> error("impossible case")
+      }
+    }
+
+    private fun resolveLegacyVersion(version: String): Long {
+      val v = Semver(version)
+      return v.major.toLong().shl(VERSION_PATCH_LENGTH + VERSION_MINOR_LENGTH) + v.minor.toLong().shl(VERSION_PATCH_LENGTH) + v.patch
     }
   }
 
@@ -196,5 +220,18 @@ data class FleetShipVersionRange(
     val fromLong = fromStringToLong(from)
     val toLong = fromStringToLong(to)
     return fromLong..toLong
+  }
+}
+
+enum class FleetProduct(
+  val productCode: String,
+  val legacyVersioning: Boolean = false,
+) {
+  FL("FL", legacyVersioning = true),
+  AIR("AIR"),
+  AIR_NEXT("AINEXT"); // TODO: product code is susceptible to change
+
+  companion object {
+    fun fromProductCode(productCode: String): FleetProduct? = values().toList().find { it.productCode == productCode }
   }
 }
