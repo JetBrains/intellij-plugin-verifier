@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.nio.file.Path
 
 class ProductInfoPluginReaderPluginCollectionProvider(private val pluginReader: PluginReader<ProductInfoSource>) : PluginCollectionProvider<Path> {
-  override fun getPlugins(source: PluginCollectionSource<Path>): Collection<IdePlugin> {
+  override fun getPlugins(source: PluginCollectionSource<Path, *>): Collection<IdePlugin> {
     if (source !is ProductInfoPluginCollectionSource) {
       return emptySet()
     }

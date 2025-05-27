@@ -16,7 +16,7 @@ class ProductInfoBasedIde private constructor(
   private val version: IdeVersion,
   override val productInfo: ProductInfo,
   val pluginCollectionProvider: PluginCollectionProvider<Path>,
-  private val pluginCollectionSources: List<PluginCollectionSource<Path>>
+  private val pluginCollectionSources: List<PluginCollectionSource<Path, *>>
 ) : Ide(), ProductInfoAware {
 
   private val _plugins = lazy {
@@ -40,6 +40,11 @@ class ProductInfoBasedIde private constructor(
   @ApiStatus.Internal
   fun isPluginCollectionLoaded(): Boolean {
     return _plugins.isInitialized()
+  }
+
+  fun <T> getPluginCollectionSource(resourceType: Class<T>): PluginCollectionSource<Path, T>? {
+    @Suppress("UNCHECKED_CAST")
+    return pluginCollectionSources.find { resourceType.isInstance(it.resource) } as PluginCollectionSource<Path, T>?
   }
 
   companion object {
