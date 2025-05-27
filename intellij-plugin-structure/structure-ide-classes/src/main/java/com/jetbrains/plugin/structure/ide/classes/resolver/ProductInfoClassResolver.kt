@@ -126,7 +126,7 @@ class ProductInfoClassResolver private constructor(
     } else {
       if (ide is LayoutComponentsAware) {
         return ide.layoutComponents.also {
-          if (it.layoutComponents.isNotEmpty()) LOG.warn("IDE has no layout components declared.")
+          if (it.layoutComponents.isEmpty()) LOG.warn("IDE has no layout components declared.")
         }
       }
       LOG.debug("Unable to obtain layout components from IDE. Reparsing '$PRODUCT_INFO_JSON'")
