@@ -20,8 +20,10 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeVersionResolution
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.ide.ProductInfoAware
+import com.jetbrains.plugin.structure.ide.ProductInfoBasedIde
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin.IdeLibDirectory
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
 import com.jetbrains.plugin.structure.ide.resolver.ValidatingLayoutComponentsProvider
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
@@ -106,7 +108,7 @@ class ProductInfoClassResolver private constructor(
   }.asResolver("$name delegate")
 
   private fun resolveLayout(): List<LayoutComponentResolver> =
-    layoutComponentsProvider.resolveLayoutComponents(productInfo, ide.idePath)
+    getLayoutComponents()
       .map { it.layoutComponent }
       .map { layoutComponent ->
         if (layoutComponent is LayoutComponent.Classpathable) {
@@ -116,6 +118,25 @@ class ProductInfoClassResolver private constructor(
           layoutComponent.toEmptyResolver()
         }
       }
+
+  private fun getLayoutComponents(): LayoutComponents {
+    if (resolverConfiguration.forceProductInfoValidation) {
+      LOG.debug("Explicitly reparsing '$PRODUCT_INFO_JSON' for layout components")
+      return resolveLayoutComponents()
+    } else {
+      if (ide is ProductInfoBasedIde) {
+        ide.getPluginCollectionSource(LayoutComponents::class.java)
+          ?.resource
+          ?.let { return it }
+      }
+      LOG.debug("Unable to obtain layout components from IDE. Reparsing '$PRODUCT_INFO_JSON'")
+      return resolveLayoutComponents()
+    }
+  }
+
+  private fun resolveLayoutComponents(): LayoutComponents {
+    return layoutComponentsProvider.resolveLayoutComponents(productInfo, ide.idePath)
+  }
 
   val layoutComponentNames: List<String> = resolvers.keys.toList()
 
