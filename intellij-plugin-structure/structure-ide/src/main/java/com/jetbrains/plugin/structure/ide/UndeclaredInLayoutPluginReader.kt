@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.PlatformResourceResolver
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponentNameSource
+import com.jetbrains.plugin.structure.ide.layout.PluginMetadataSource
 import com.jetbrains.plugin.structure.ide.plugin.DefaultPluginIdProvider
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.BundledPluginManager
@@ -25,18 +26,18 @@ import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(UndeclaredInLayoutPluginReader::class.java)
 
-class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<String>) : ProductInfoBasedIdeManager.PluginReader<ProductInfo> {
+class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<String>) : ProductInfoBasedIdeManager.PluginReader<PluginMetadataSource.ProductInfoSource> {
   private val pluginIdProvider = DefaultPluginIdProvider()
 
   private val bundledPluginManager = BundledPluginManager(pluginIdProvider)
 
   override fun readPlugins(
     idePath: Path,
-    pluginMetadataResource: ProductInfo,
-    layoutComponentNameSource: LayoutComponentNameSource<ProductInfo>,
+    pluginMetadataSource: PluginMetadataSource.ProductInfoSource,
+    layoutComponentNameSource: LayoutComponentNameSource<PluginMetadataSource.ProductInfoSource>,
     ideVersion: IdeVersion
   ): List<IdePlugin> {
-    if (!supports(pluginMetadataResource)) return emptyList()
+    if (!supports(pluginMetadataSource)) return emptyList()
 
     val resourceResolver = PlatformResourceResolver.of(idePath)
 
@@ -54,6 +55,10 @@ class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<Stri
           null
         }
       }
+  }
+
+  override fun supports(pluginMetadataSource: PluginMetadataSource): Boolean {
+    return pluginMetadataSource is PluginMetadataSource.ProductInfoSource && supports(pluginMetadataSource.productInfo)
   }
 
   private fun supports(productInfo: ProductInfo): Boolean = productInfo.productCode in supportedProductCodes

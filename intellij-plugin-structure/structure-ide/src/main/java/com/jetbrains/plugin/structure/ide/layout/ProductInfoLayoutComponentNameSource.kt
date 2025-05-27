@@ -10,7 +10,9 @@ import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
  * Provide layout component names from the `name` key in the `layout` section
  * of the Product Info JSON (`product-info.json`).
  */
-class ProductInfoLayoutComponentNameSource(private val productInfo: ProductInfo) : LayoutComponentNameSource<ProductInfo> {
+class ProductInfoLayoutComponentNameSource(private val productInfo: ProductInfo) :
+  LayoutComponentNameSource<PluginMetadataSource.ProductInfoSource> {
+
   override fun getNames(): List<String> {
     return productInfo.layout.map { it.name }
   }

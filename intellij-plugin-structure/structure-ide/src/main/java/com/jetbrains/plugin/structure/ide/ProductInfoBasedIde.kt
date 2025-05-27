@@ -16,11 +16,13 @@ class ProductInfoBasedIde private constructor(
   private val version: IdeVersion,
   override val productInfo: ProductInfo,
   val pluginCollectionProvider: PluginCollectionProvider<Path>,
-  private val pluginCollectionSource: PluginCollectionSource<Path>
+  private val pluginCollectionSources: List<PluginCollectionSource<Path>>
 ) : Ide(), ProductInfoAware {
 
   private val _plugins = lazy {
-    pluginCollectionProvider.getPlugins(pluginCollectionSource)
+    pluginCollectionSources.flatMap { source ->
+      pluginCollectionProvider.getPlugins(source)
+    }
   }
 
   private val plugins by _plugins
@@ -48,7 +50,7 @@ class ProductInfoBasedIde private constructor(
       pluginCollectionProvider: PluginCollectionProvider<Path>
     ): ProductInfoBasedIde {
       val pluginCollectionSource = ProductInfoPluginCollectionSource(idePath, version, productInfo)
-      return ProductInfoBasedIde(idePath, version, productInfo, pluginCollectionProvider, pluginCollectionSource)
+      return ProductInfoBasedIde(idePath, version, productInfo, pluginCollectionProvider, listOf(pluginCollectionSource))
     }
 
     fun of(
@@ -58,7 +60,10 @@ class ProductInfoBasedIde private constructor(
       layoutComponents: LayoutComponents,
       pluginCollectionProvider: PluginCollectionProvider<Path>
     ): ProductInfoBasedIde {
-      val pluginCollectionSource = ProductInfoLayoutComponentsPluginCollectionSource(idePath, version, layoutComponents)
+      val pluginCollectionSource = listOf(
+        ProductInfoLayoutComponentsPluginCollectionSource(idePath, version, layoutComponents),
+        ProductInfoPluginCollectionSource(idePath, version, productInfo)
+      )
       return ProductInfoBasedIde(idePath, version, productInfo, pluginCollectionProvider, pluginCollectionSource)
     }
   }

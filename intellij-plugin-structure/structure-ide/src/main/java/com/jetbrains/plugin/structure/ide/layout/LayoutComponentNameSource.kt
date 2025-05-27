@@ -12,6 +12,6 @@ package com.jetbrains.plugin.structure.ide.layout
  * * `product-info.json` and its layout components. Component names are provided in the `name` attribute.
  * * set of plugin descriptors (`plugin.xml` etc.) and its `id` or `name` element.
  */
-interface LayoutComponentNameSource<R> {
+interface LayoutComponentNameSource<R : PluginMetadataSource> {
   fun getNames(): List<String>
 }
