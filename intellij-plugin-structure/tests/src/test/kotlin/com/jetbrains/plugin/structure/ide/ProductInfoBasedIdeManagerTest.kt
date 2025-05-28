@@ -3,6 +3,8 @@ package com.jetbrains.plugin.structure.ide
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import ch.qos.logback.core.spi.AppenderAttachable
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
+import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import org.junit.Assert.*
@@ -151,7 +153,7 @@ class ProductInfoBasedIdeManagerTest {
       layout = ""
     }
 
-    val ideManager = ProductInfoBasedIdeManager(additionalPluginReader = UndeclaredInLayoutPluginReader(supportedProductCodes = setOf("IU", "IC")))
+    val ideManager = ProductInfoBasedIdeManager(additionalProductInfoPluginReader = UndeclaredInLayoutPluginReader(supportedProductCodes = setOf("IU", "IC")))
 
     val ide = ideManager.createIde(ideRoot)
     assertEquals(3, ide.bundledPlugins.size)
@@ -225,6 +227,23 @@ class ProductInfoBasedIdeManagerTest {
       assertEquals("242.10180.25", pluginVersion)
     }
   }
+
+  @Test
+  fun `ide has proper plugin collection sources discovered`() {
+    val ideManager = ProductInfoBasedIdeManager()
+    val ide = ideManager.createIde(ideRoot)
+    assertIdeAndPluginsIsCreated(ide)
+
+    assertTrue(ide is ProductInfoBasedIde)
+    ide as ProductInfoBasedIde
+    val productInfoSource = ide.getPluginCollectionSource(ProductInfo::class.java)
+    val layoutComponentsSource = ide.getPluginCollectionSource(LayoutComponents::class.java)
+
+    assertNull("Product Info plugin collection source should not be present. " +
+      "Plugin collection is sourced from 'layout' key in product-info.json", productInfoSource)
+    assertNotNull(layoutComponentsSource)
+  }
+
 
   private fun assertIdeAndPluginsIsCreated(ide: Ide) {
     assertEquals(5, ide.bundledPlugins.size)

@@ -6,28 +6,34 @@ package com.jetbrains.plugin.structure.ide.resolver
 
 import com.jetbrains.plugin.structure.ide.layout.IdeRelativePath
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponentsProvider
 import com.jetbrains.plugin.structure.ide.layout.MissingClasspathFileInLayoutComponentException
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.*
 import com.jetbrains.plugin.structure.ide.layout.ResolvedLayoutComponent
+import com.jetbrains.plugin.structure.ide.problem.IdeProblem
+import com.jetbrains.plugin.structure.ide.problem.LayoutComponentHasNonExistentClasspath
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
-private val LOG: Logger = LoggerFactory.getLogger(LayoutComponentsProvider::class.java)
+private val LOG: Logger = LoggerFactory.getLogger(ValidatingLayoutComponentsProvider::class.java)
 
-class LayoutComponentsProvider(private val missingLayoutFileMode: MissingLayoutFileMode) {
+class ValidatingLayoutComponentsProvider(private val missingLayoutFileMode: MissingLayoutFileMode) :
+  LayoutComponentsProvider {
   @Throws(MissingClasspathFileInLayoutComponentException::class)
-  fun resolveLayoutComponents(productInfo: ProductInfo, idePath: Path): LayoutComponents {
+  override fun resolveLayoutComponents(productInfo: ProductInfo, idePath: Path): LayoutComponents {
     val layoutComponents = LayoutComponents.of(idePath, productInfo)
     return if (missingLayoutFileMode == IGNORE) {
       layoutComponents
     } else {
       val validatedComponents = layoutComponents.partitionToSuccessesAndFailures()
       val acceptedComponents = mutableListOf<ResolvedLayoutComponent>()
+      val ideProblems = mutableListOf<IdeProblem>()
       if (validatedComponents.hasFailures()) {
+        ideProblems += validatedComponents.getIdeProblems()
         if (missingLayoutFileMode == FAIL) {
           throw MissingClasspathFileInLayoutComponentException.of(idePath, validatedComponents.failedComponents)
         }
@@ -36,7 +42,7 @@ class LayoutComponentsProvider(private val missingLayoutFileMode: MissingLayoutF
         }
         logUnavailableClasspath(validatedComponents.failures)
       }
-      LayoutComponents(validatedComponents.successes + acceptedComponents)
+      LayoutComponents(validatedComponents.successes + acceptedComponents, ideProblems)
     }
   }
 
@@ -52,6 +58,12 @@ class LayoutComponentsProvider(private val missingLayoutFileMode: MissingLayoutF
       }
     }
     return ValidatedLayoutComponents(okComponents, failedComponents)
+  }
+
+  private fun ValidatedLayoutComponents.getIdeProblems(): List<IdeProblem> {
+    return failures.map {
+      LayoutComponentHasNonExistentClasspath(it.component.name, it.missingClasspaths)
+    }
   }
 
   private fun logUnavailableClasspath(invalidLayoutComponents: List<InvalidLayoutComponent>) {

@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.ide.IdeManagerImpl.PlatformResourceResolver
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponentNameSource
 import com.jetbrains.plugin.structure.ide.plugin.DefaultPluginIdProvider
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.BundledPluginManager
@@ -24,18 +25,23 @@ import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(UndeclaredInLayoutPluginReader::class.java)
 
-class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<String>) : ProductInfoBasedIdeManager.PluginReader {
+class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<String>) : ProductInfoBasedIdeManager.PluginReader<ProductInfo> {
   private val pluginIdProvider = DefaultPluginIdProvider()
 
   private val bundledPluginManager = BundledPluginManager(pluginIdProvider)
 
-  override fun readPlugins(idePath: Path, productInfo: ProductInfo, ideVersion: IdeVersion): List<IdePlugin> {
-    if (!supports(productInfo)) return emptyList()
+  override fun readPlugins(
+    idePath: Path,
+    pluginMetadataSource: ProductInfo,
+    layoutComponentNameSource: LayoutComponentNameSource<ProductInfo>,
+    ideVersion: IdeVersion
+  ): List<IdePlugin> {
+    if (!supports(pluginMetadataSource)) return emptyList()
 
     val resourceResolver = PlatformResourceResolver.of(idePath)
 
     val identifiersInPluginsDir = bundledPluginManager.getBundledPluginIds(idePath)
-    val identifiersInLayout = productInfo.layout.map { it.name }
+    val identifiersInLayout = layoutComponentNameSource.getNames()
 
     return identifiersInPluginsDir
       .filterNotIn(identifiersInLayout)
@@ -50,7 +56,9 @@ class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<Stri
       }
   }
 
-  private fun supports(product: ProductInfo): Boolean = product.productCode in supportedProductCodes
+  override fun supports(pluginMetadataSource: Any): Boolean {
+    return pluginMetadataSource is ProductInfo && pluginMetadataSource.productCode in supportedProductCodes
+  }
 
   private fun Set<PluginArtifactPath>.filterNotIn(layoutIdentifiers: List<String>): List<PluginArtifactPath> {
     return filterNot { it.pluginId in layoutIdentifiers }
@@ -79,4 +87,5 @@ class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<Stri
         creationResult.errorsAndWarnings.filter { it.level == PluginProblem.Level.ERROR }.joinToString { it.message }
     )
   }
+
 }
