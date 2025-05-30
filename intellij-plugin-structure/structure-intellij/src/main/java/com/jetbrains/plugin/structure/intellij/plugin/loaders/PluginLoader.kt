@@ -6,6 +6,6 @@ package com.jetbrains.plugin.structure.intellij.plugin.loaders
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 
-internal interface PluginLoader {
-  fun loadPlugin(pluginLoadingContext: PluginLoadingContext): PluginCreator
+internal interface PluginLoader<C : PluginLoadingContext> {
+  fun loadPlugin(pluginLoadingContext: C): PluginCreator
 }

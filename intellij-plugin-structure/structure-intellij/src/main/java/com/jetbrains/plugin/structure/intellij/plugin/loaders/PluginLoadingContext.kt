@@ -4,36 +4,11 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.loaders
 
-import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
-import java.nio.file.Path
 
-internal sealed class PluginLoadingContext(
-  open val artifactPath: Path,
-  open val descriptorPath: String,
-  open val validateDescriptor: Boolean,
+internal open class PluginLoadingContext(
   open val resourceResolver: ResourceResolver,
-  open val parentPlugin: PluginCreator?,
   open val problemResolver: PluginCreationResultResolver,
-  open val hasDotNetDirectory: Boolean = false
-)
-
-internal data class JarLoadingContext(
-  val jarPath: Path,
-  override val descriptorPath: String,
-  override val validateDescriptor: Boolean,
-  override val resourceResolver: ResourceResolver,
-  override val parentPlugin: PluginCreator?,
-  override val problemResolver: PluginCreationResultResolver,
-  override val hasDotNetDirectory: Boolean = false
-) : PluginLoadingContext(
-  jarPath,
-  descriptorPath,
-  validateDescriptor,
-  resourceResolver,
-  parentPlugin,
-  problemResolver,
-  hasDotNetDirectory
 )
 

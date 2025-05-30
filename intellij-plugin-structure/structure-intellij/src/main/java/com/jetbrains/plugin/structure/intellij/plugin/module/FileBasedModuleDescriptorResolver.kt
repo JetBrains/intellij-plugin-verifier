@@ -11,13 +11,13 @@ import com.jetbrains.plugin.structure.intellij.plugin.Module.FileBasedModule
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginLoader
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarOrDirectoryPluginLoader
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.Path
 
-internal class FileBasedModuleDescriptorResolver(private val pluginLoader: PluginLoader) :
+internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOrDirectoryPluginLoader) :
   ModuleDescriptorResolver<FileBasedModule>() {
 
   override fun getModuleDescriptor(
@@ -44,14 +44,14 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: Plugi
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
-    return pluginLoader.load(
+    return pluginLoader.loadPlugin(JarOrDirectoryPluginLoader.Context(
       pluginArtifactPath,
       moduleReference.configFile,
       false,
       resourceResolver,
       pluginCreator,
       problemResolver
-    )
+    ))
   }
 
   override fun getProblem(moduleReference: FileBasedModule, errors: List<PluginProblem>): PluginProblem {

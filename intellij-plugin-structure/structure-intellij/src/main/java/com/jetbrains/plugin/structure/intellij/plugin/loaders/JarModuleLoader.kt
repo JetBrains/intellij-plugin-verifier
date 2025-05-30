@@ -9,7 +9,6 @@ import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.getShortExceptionMessage
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.Companion.META_INF
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
@@ -23,27 +22,31 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
-private val LOG: Logger = LoggerFactory.getLogger(JarPluginLoader::class.java)
+private val LOG: Logger = LoggerFactory.getLogger(JarModuleLoader::class.java)
 
-internal class JarPluginLoader(private val fileSystemProvider: JarFileSystemProvider) : PluginLoader<JarPluginLoader.Context> {
+internal class JarModuleLoader(private val fileSystemProvider: JarFileSystemProvider) : PluginLoader<JarModuleLoader.Context> {
   override fun loadPlugin(pluginLoadingContext: Context): PluginCreator = with(pluginLoadingContext) {
     return try {
       PluginJar(jarPath, fileSystemProvider).use { jar ->
-        when (val descriptor = jar.getPluginDescriptor("$META_INF/$descriptorPath")) {
+        when (val descriptor = jar.getPluginDescriptor(descriptorPath)) {
           is Found -> {
             try {
               val descriptorXml = descriptor.loadXml()
-              createPlugin(jarPath.simpleName, descriptorPath, parentPlugin, validateDescriptor, descriptorXml, descriptor.path, resourceResolver, problemResolver).apply {
-                setIcons(jar.getIcons())
-                setThirdPartyDependencies(jar.getThirdPartyDependencies())
-                setHasDotNetPart(hasDotNetDirectory)
-              }
+              createPlugin(
+                jarPath.simpleName,
+                descriptorPath,
+                parentPlugin = null,
+                validateDescriptor = false,
+                descriptorXml,
+                descriptor.path, resourceResolver, problemResolver
+              )
             } catch (e: Exception) {
               LOG.warn("Unable to read descriptor [$descriptorPath] from [$jarPath]", e)
               val message = e.localizedMessage
               createInvalidPlugin(jarPath, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
             }
           }
+
           else -> createInvalidPlugin(jarPath, descriptorPath, PluginDescriptorIsNotFound(descriptorPath)).also {
             LOG.debug("Unable to resolve descriptor [{}] from [{}] ({})", descriptorPath, jarPath, descriptor)
           }
@@ -58,14 +61,10 @@ internal class JarPluginLoader(private val fileSystemProvider: JarFileSystemProv
   internal data class Context(
     val jarPath: Path,
     val descriptorPath: String,
-    val validateDescriptor: Boolean,
     override val resourceResolver: ResourceResolver,
-    val parentPlugin: PluginCreator?,
     override val problemResolver: PluginCreationResultResolver,
-    val hasDotNetDirectory: Boolean = false
   ) : PluginLoadingContext(
     resourceResolver,
     problemResolver,
   )
-
 }
