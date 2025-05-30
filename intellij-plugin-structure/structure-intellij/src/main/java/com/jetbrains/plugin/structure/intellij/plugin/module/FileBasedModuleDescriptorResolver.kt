@@ -15,7 +15,8 @@ import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultReso
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.Path
 
-internal class FileBasedModuleDescriptorResolver(private val pluginLoader: PluginLoader) : AbstractModuleDescriptorResolver<FileBasedModule>() {
+internal class FileBasedModuleDescriptorResolver(private val pluginLoader: PluginLoader) :
+  AbstractModuleDescriptorResolver<FileBasedModule>() {
 
   override fun getModuleDescriptor(
     pluginArtifactPath: Path,
@@ -34,7 +35,13 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: Plugi
     )
   }
 
-  override fun getModuleCreator(moduleReference: FileBasedModule, pluginArtifactPath: Path, pluginCreator: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver): PluginCreator {
+  override fun getModuleCreator(
+    moduleReference: FileBasedModule,
+    pluginArtifactPath: Path,
+    pluginCreator: PluginCreator,
+    resourceResolver: ResourceResolver,
+    problemResolver: PluginCreationResultResolver
+  ): PluginCreator {
     return pluginLoader.load(
       pluginArtifactPath,
       moduleReference.configFile,

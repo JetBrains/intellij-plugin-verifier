@@ -29,7 +29,7 @@ import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(InlineModuleDescriptorResolver::class.java)
 
-internal class InlineModuleDescriptorResolver  : AbstractModuleDescriptorResolver<InlineModule>() {
+internal class InlineModuleDescriptorResolver : AbstractModuleDescriptorResolver<InlineModule>() {
 
   override fun getModuleDescriptor(
     pluginArtifactPath: Path,
@@ -38,14 +38,13 @@ internal class InlineModuleDescriptorResolver  : AbstractModuleDescriptorResolve
     moduleCreator: PluginCreator,
     moduleReference: InlineModule
   ): ModuleDescriptor {
-    val moduleName = moduleReference.name
-    val inlineModule = module
-    pluginCreator.plugin.addInlineModuleDependencies(moduleReference, inlineModule, moduleReference.loadingRule)
-    val moduleDescriptorResource = getModuleDescriptorResource(moduleReference, pluginArtifactPath, pluginCreator.descriptorPath)
+    pluginCreator.plugin.addInlineModuleDependencies(moduleReference, module)
+    val moduleDescriptorResource =
+      getModuleDescriptorResource(moduleReference, pluginArtifactPath, pluginCreator.descriptorPath)
     return ModuleDescriptor.of(
-      moduleName,
+      moduleReference.name,
       moduleReference.loadingRule,
-      inlineModule,
+      module,
       moduleDescriptorResource
     )
   }
@@ -57,8 +56,14 @@ internal class InlineModuleDescriptorResolver  : AbstractModuleDescriptorResolve
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
-    val moduleDescriptorResource = getModuleDescriptorResource(moduleReference, pluginArtifactPath, pluginCreator.descriptorPath)
-    return loadModuleFromDescriptorResource(moduleReference.name, moduleDescriptorResource, pluginCreator, resourceResolver)
+    val moduleDescriptorResource =
+      getModuleDescriptorResource(moduleReference, pluginArtifactPath, pluginCreator.descriptorPath)
+    return loadModuleFromDescriptorResource(
+      moduleReference.name,
+      moduleDescriptorResource,
+      pluginCreator,
+      resourceResolver
+    )
   }
 
   override fun getProblem(
@@ -68,12 +73,16 @@ internal class InlineModuleDescriptorResolver  : AbstractModuleDescriptorResolve
     return ModuleDescriptorProblem(moduleReference, errors)
   }
 
-  private fun getModuleDescriptorResource(module: InlineModule, pluginFile: Path, descriptorPath: String): DescriptorResource {
+  private fun getModuleDescriptorResource(
+    module: InlineModule,
+    moduleOwnerPath: Path,
+    descriptorPath: String
+  ): DescriptorResource {
     // TODO descriptor path is not relative to the pluginFile JAR. See MP-7224
-    val parentUriStr = if (pluginFile.isJar()) {
-      "jar:" + pluginFile.toUri().toString() + "!" + descriptorPath.toSystemIndependentName()
+    val parentUriStr = if (moduleOwnerPath.isJar()) {
+      "jar:" + moduleOwnerPath.toUri().toString() + "!" + descriptorPath.toSystemIndependentName()
     } else {
-      pluginFile.toUri().toString() + "/" + descriptorPath.toSystemIndependentName()
+      moduleOwnerPath.toUri().toString() + "/" + descriptorPath.toSystemIndependentName()
     }
     val uriStr = parentUriStr + "#modules/" + module.name
     return DescriptorResource(module.textContent.byteInputStream(), URI(uriStr), URI(parentUriStr))
@@ -82,7 +91,7 @@ internal class InlineModuleDescriptorResolver  : AbstractModuleDescriptorResolve
   private fun loadModuleFromDescriptorResource(
     moduleId: String,
     descriptorResource: DescriptorResource,
-    parentPlugin: PluginCreator? = null,
+    moduleOwner: PluginCreator? = null,
     resourceResolver: ResourceResolver
   ): PluginCreator {
     return descriptorResource.inputStream.use {
@@ -91,7 +100,7 @@ internal class InlineModuleDescriptorResolver  : AbstractModuleDescriptorResolve
         val descriptorXml = JDOMUtil.loadDocument(it)
         createPlugin(
           descriptorResource,
-          parentPlugin,
+          moduleOwner,
           descriptorXml,
           resourceResolver,
           problemResolver
@@ -107,7 +116,6 @@ internal class InlineModuleDescriptorResolver  : AbstractModuleDescriptorResolve
       }
     }
   }
-
 
   private fun logPluginCreationWarnings(pluginId: String, pluginCreator: PluginCreator) {
     val pluginCreationResult = pluginCreator.pluginCreationResult

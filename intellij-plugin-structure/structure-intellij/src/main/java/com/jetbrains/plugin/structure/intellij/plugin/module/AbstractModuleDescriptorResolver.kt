@@ -77,11 +77,9 @@ internal abstract class AbstractModuleDescriptorResolver<M : Module> {
 
   protected fun IdePluginImpl.addInlineModuleDependencies(
     inlineModuleReference: InlineModule,
-    module: IdePlugin,
-    loadingRule: ModuleLoadingRule
-  ) {
+    module: IdePlugin) {
     module.forEachDependencyNotIn(this) {
-      dependencies += InlineDeclaredModuleV2Dependency.of(it.id, loadingRule, contentModuleOwner = this, inlineModuleReference)
+      dependencies += InlineDeclaredModuleV2Dependency.of(it.id, inlineModuleReference.loadingRule, contentModuleOwner = this, inlineModuleReference)
     }
   }
 
