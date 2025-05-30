@@ -4,30 +4,20 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.loaders
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
-import com.jetbrains.plugin.structure.intellij.plugin.InlineDeclaredModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.Module.FileBasedModule
 import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleLoadingRule
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginLoader
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
+import com.jetbrains.plugin.structure.intellij.plugin.module.FileBasedModuleDescriptorResolver
+import com.jetbrains.plugin.structure.intellij.plugin.module.InlineModuleDescriptorResolver
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorProblem
-import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
@@ -40,6 +30,9 @@ import java.nio.file.Path
 private val LOG: Logger = LoggerFactory.getLogger(ContentModuleLoader::class.java)
 
 class ContentModuleLoader internal constructor(private val pluginLoader: PluginLoader) {
+  private val fileBasedModuleDescriptorResolver = FileBasedModuleDescriptorResolver()
+  private val inlineModuleDescriptorResolver = InlineModuleDescriptorResolver()
+
   internal fun resolveContentModules(pluginFile: Path, currentPlugin: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver) {
     if (currentPlugin.isSuccess) {
       val contentModules = currentPlugin.plugin.contentModules
@@ -69,87 +62,14 @@ class ContentModuleLoader internal constructor(private val pluginLoader: PluginL
       currentPlugin,
       problemResolver
     )
-    currentPlugin.addModuleDescriptor(module.name, module.loadingRule, configFile, moduleCreator)
+    fileBasedModuleDescriptorResolver.add(pluginFile, currentPlugin, module, moduleCreator)
   }
 
   private fun resolveInlineModule(module: InlineModule, pluginFile: Path, currentPlugin: PluginCreator, resourceResolver: ResourceResolver) {
     val moduleDescriptorResource = getDescriptorResource(module, pluginFile, currentPlugin.descriptorPath)
     val moduleCreator =
       loadModuleFromDescriptorResource(module.name, moduleDescriptorResource, currentPlugin, resourceResolver)
-    currentPlugin.addModuleDescriptor(module, module.loadingRule, moduleDescriptorResource, moduleCreator)
-  }
-
-  internal fun PluginCreator.addModuleDescriptor(
-    moduleName: String,
-    loadingRule: ModuleLoadingRule,
-    configurationFile: String,
-    moduleCreator: PluginCreator
-  ) {
-    val pluginCreationResult = moduleCreator.pluginCreationResult
-    if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
-      val module = pluginCreationResult.plugin
-
-      plugin.addDependencies(module, loadingRule)
-      val moduleDescriptor = ModuleDescriptor(moduleName, loadingRule, module.dependencies, module, configurationFile)
-      addModuleDescriptor(module, moduleDescriptor)
-    } else {
-      registerProblem(ModuleDescriptorResolutionProblem(moduleName, configurationFile, pluginCreationResult.errors))
-    }
-  }
-
-  internal fun PluginCreator.addModuleDescriptor(
-    inlineModuleReference: InlineModule,
-    loadingRule: ModuleLoadingRule,
-    moduleDescriptorResource: DescriptorResource,
-    moduleCreator: PluginCreator
-  ) {
-    val pluginCreationResult = moduleCreator.pluginCreationResult
-    if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
-      val moduleName = inlineModuleReference.name
-      val inlineModule = pluginCreationResult.plugin
-
-      plugin.addInlineModuleDependencies(inlineModuleReference, inlineModule, loadingRule)
-      val moduleDescriptor = ModuleDescriptor.of(
-        moduleName,
-        loadingRule,
-        inlineModule,
-        moduleDescriptorResource
-      )
-      addModuleDescriptor(inlineModule, moduleDescriptor)
-    } else {
-      registerProblem(ModuleDescriptorProblem(inlineModuleReference, pluginCreationResult.errors))
-    }
-  }
-
-  private fun IdePluginImpl.addDependencies(module: IdePlugin, loadingRule: ModuleLoadingRule) {
-    module.forEachDependencyNotIn(this) {
-      val dependency = if (loadingRule.required) it else it.asOptional()
-      dependencies += dependency
-    }
-  }
-
-  private fun IdePluginImpl.addInlineModuleDependencies(
-    inlineModuleReference: InlineModule,
-    module: IdePlugin,
-    loadingRule: ModuleLoadingRule
-  ) {
-    module.forEachDependencyNotIn(this) {
-      dependencies += InlineDeclaredModuleV2Dependency.of(it.id, loadingRule, contentModuleOwner = this, inlineModuleReference)
-    }
-  }
-
-
-  private fun IdePlugin.forEachDependencyNotIn(plugin: IdePlugin, dependencyHandler: (PluginDependency) -> Unit) {
-    return dependencies
-      .filter { dependency -> plugin.dependencies.none { it.id == dependency.id } }
-      .forEach { dependencyHandler(it) }
-  }
-
-  private fun PluginCreator.addModuleDescriptor(resolvedContentModule: IdePlugin, moduleDescriptor: ModuleDescriptor) {
-    plugin.modulesDescriptors.add(moduleDescriptor)
-    plugin.definedModules.add(moduleDescriptor.name)
-
-    mergeContent(resolvedContentModule)
+    inlineModuleDescriptorResolver.add(pluginFile, currentPlugin, module, moduleCreator)
   }
 
   private fun getDescriptorResource(module: InlineModule, pluginFile: Path, descriptorPath: String): DescriptorResource {
@@ -201,10 +121,4 @@ class ContentModuleLoader internal constructor(private val pluginLoader: PluginL
       LOG.debug("Plugin or module '$pluginId' has plugin problems: $warningMessage")
     }
   }
-
-  private val PluginCreationResult<IdePlugin>.errors: List<PluginProblem>
-    get() = when (this) {
-      is PluginCreationSuccess -> emptyList()
-      is PluginCreationFail -> this.errorsAndWarnings.filter { it.level === ERROR }
-    }
 }
