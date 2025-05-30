@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.intellij.plugin.module
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.Module.FileBasedModule
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
@@ -25,7 +26,7 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: Plugi
     moduleCreator: PluginCreator,
     moduleReference: FileBasedModule
   ): ModuleDescriptor {
-    pluginCreator.plugin.addDependencies(module, moduleReference.loadingRule)
+    addDependencies(pluginCreator.plugin, module, moduleReference)
     return ModuleDescriptor(
       moduleReference.name,
       moduleReference.loadingRule,
@@ -55,5 +56,16 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: Plugi
   override fun getProblem(moduleReference: FileBasedModule, errors: List<PluginProblem>): PluginProblem {
     val (name, _, configFile) = moduleReference
     return ModuleDescriptorResolutionProblem(name, configFile, errors)
+  }
+
+  override fun addDependencies(
+    moduleOwner: IdePluginImpl,
+    module: IdePlugin,
+    moduleReference: FileBasedModule
+  ) {
+    module.forEachDependencyNotIn(moduleOwner) {
+      val dependency = if (moduleReference.loadingRule.required) it else it.asOptional()
+      moduleOwner.dependencies += dependency
+    }
   }
 }

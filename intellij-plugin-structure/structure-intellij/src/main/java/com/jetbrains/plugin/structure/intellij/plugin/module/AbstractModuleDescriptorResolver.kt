@@ -11,11 +11,8 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
-import com.jetbrains.plugin.structure.intellij.plugin.InlineDeclaredModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.Module
-import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleLoadingRule
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
@@ -65,20 +62,7 @@ internal abstract class AbstractModuleDescriptorResolver<M : Module> {
     moduleReference: M
   ): ModuleDescriptor
 
-  protected fun IdePluginImpl.addDependencies(module: IdePlugin, loadingRule: ModuleLoadingRule) {
-    module.forEachDependencyNotIn(this) {
-      val dependency = if (loadingRule.required) it else it.asOptional()
-      dependencies += dependency
-    }
-  }
-
-  protected fun IdePluginImpl.addInlineModuleDependencies(
-    inlineModuleReference: InlineModule,
-    module: IdePlugin) {
-    module.forEachDependencyNotIn(this) {
-      dependencies += InlineDeclaredModuleV2Dependency.of(it.id, inlineModuleReference.loadingRule, contentModuleOwner = this, inlineModuleReference)
-    }
-  }
+  abstract fun addDependencies(moduleOwner: IdePluginImpl, module: IdePlugin, moduleReference: M)
 
   protected fun IdePlugin.forEachDependencyNotIn(plugin: IdePlugin, dependencyHandler: (PluginDependency) -> Unit) {
     return dependencies

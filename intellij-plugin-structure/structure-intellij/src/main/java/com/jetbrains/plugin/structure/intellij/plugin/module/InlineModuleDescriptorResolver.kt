@@ -10,6 +10,8 @@ import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
+import com.jetbrains.plugin.structure.intellij.plugin.InlineDeclaredModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
@@ -38,7 +40,7 @@ internal class InlineModuleDescriptorResolver : AbstractModuleDescriptorResolver
     moduleCreator: PluginCreator,
     moduleReference: InlineModule
   ): ModuleDescriptor {
-    pluginCreator.plugin.addInlineModuleDependencies(moduleReference, module)
+    addDependencies(pluginCreator.plugin, module, moduleReference)
     val moduleDescriptorResource =
       getModuleDescriptorResource(moduleReference, pluginArtifactPath, pluginCreator.descriptorPath)
     return ModuleDescriptor.of(
@@ -114,6 +116,16 @@ internal class InlineModuleDescriptorResolver : AbstractModuleDescriptorResolver
           createInvalidPlugin(artifactFileName, fileName, problem)
         }
       }
+    }
+  }
+
+  override fun addDependencies(
+    moduleOwner: IdePluginImpl,
+    module: IdePlugin,
+    moduleReference: InlineModule
+  ) {
+    module.forEachDependencyNotIn(moduleOwner) {
+      moduleOwner.dependencies += InlineDeclaredModuleV2Dependency.of(it.id, moduleReference.loadingRule, moduleOwner, moduleReference)
     }
   }
 
