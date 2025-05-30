@@ -151,7 +151,6 @@ internal class PluginCreator private constructor(
   }
 
   val optionalDependenciesConfigFiles: MutableMap<PluginDependency, String> = linkedMapOf()
-  val contentModules = arrayListOf<Module>()
 
   internal val plugin = IdePluginImpl()
 
@@ -601,7 +600,7 @@ internal class PluginCreator private constructor(
 
   private fun validatePlugin(plugin: IdePluginImpl) {
     val dependencies = plugin.dependencies
-    if (!plugin.hasPackagePrefix && contentModules.isEmpty()) {
+    if (!plugin.hasPackagePrefix && plugin.contentModules.isEmpty()) {
       if (dependencies.isEmpty()) {
         registerProblem(NoDependencies(descriptorPath))
       }

@@ -46,6 +46,8 @@ interface IdePlugin : Plugin {
 
   val modulesDescriptors: List<ModuleDescriptor>
 
+  val contentModules: List<Module>
+
   /**
    * Underlying plugin descriptor file parsed and resolved as XML Document.
    */

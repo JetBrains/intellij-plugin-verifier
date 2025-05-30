@@ -85,6 +85,8 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   override val modulesDescriptors: MutableList<ModuleDescriptor> = arrayListOf()
 
+  override val contentModules: MutableList<Module> = arrayListOf()
+
   override var thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
@@ -142,6 +144,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         icons = old.icons.toMutableList()
         optionalDescriptors.addAll(old.optionalDescriptors)
         modulesDescriptors.addAll(old.modulesDescriptors)
+        contentModules.addAll(old.contentModules)
         thirdPartyDependencies = old.thirdPartyDependencies.toMutableList()
         if (old is StructurallyValidated) {
           problems.addAll(overriddenProblems)

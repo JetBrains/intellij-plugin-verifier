@@ -360,7 +360,7 @@ class IdePluginManager private constructor(
 
   private fun resolveContentModules(pluginFile: Path, currentPlugin: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver) {
     if (currentPlugin.isSuccess) {
-      val contentModules = currentPlugin.contentModules
+      val contentModules = currentPlugin.plugin.contentModules
       for (module in contentModules) {
         when (module) {
           is FileBasedModule -> {
