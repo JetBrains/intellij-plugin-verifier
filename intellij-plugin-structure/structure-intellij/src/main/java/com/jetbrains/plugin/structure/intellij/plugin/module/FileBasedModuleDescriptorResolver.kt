@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.Module.FileBasedModule
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginLoader
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
@@ -26,7 +27,7 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: Plugi
     moduleCreator: PluginCreator,
     moduleReference: FileBasedModule
   ): ModuleDescriptor {
-    addDependencies(pluginCreator.plugin, module, moduleReference)
+    pluginCreator.plugin.dependencies += getDependencies(pluginCreator.plugin, module, moduleReference)
     return ModuleDescriptor(
       moduleReference.name,
       moduleReference.loadingRule,
@@ -58,14 +59,15 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: Plugi
     return ModuleDescriptorResolutionProblem(name, configFile, errors)
   }
 
-  override fun addDependencies(
+  override fun getDependencies(
     moduleOwner: IdePluginImpl,
     module: IdePlugin,
     moduleReference: FileBasedModule
-  ) {
-    module.forEachDependencyNotIn(moduleOwner) {
-      val dependency = if (moduleReference.loadingRule.required) it else it.asOptional()
-      moduleOwner.dependencies += dependency
+  ): List<PluginDependency> {
+    return mutableListOf<PluginDependency>().also { dependencies ->
+      module.forEachDependencyNotIn(moduleOwner) {
+        dependencies += if (moduleReference.loadingRule.required) it else it.asOptional()
+      }
     }
   }
 }

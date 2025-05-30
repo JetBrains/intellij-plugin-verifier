@@ -17,6 +17,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorProblem
@@ -40,7 +41,7 @@ internal class InlineModuleDescriptorResolver : ModuleDescriptorResolver<InlineM
     moduleCreator: PluginCreator,
     moduleReference: InlineModule
   ): ModuleDescriptor {
-    addDependencies(pluginCreator.plugin, module, moduleReference)
+    pluginCreator.plugin.dependencies += getDependencies(pluginCreator.plugin, module, moduleReference)
     val moduleDescriptorResource =
       getModuleDescriptorResource(moduleReference, pluginArtifactPath, pluginCreator.descriptorPath)
     return ModuleDescriptor.of(
@@ -119,13 +120,20 @@ internal class InlineModuleDescriptorResolver : ModuleDescriptorResolver<InlineM
     }
   }
 
-  override fun addDependencies(
+  override fun getDependencies(
     moduleOwner: IdePluginImpl,
     module: IdePlugin,
     moduleReference: InlineModule
-  ) {
-    module.forEachDependencyNotIn(moduleOwner) {
-      moduleOwner.dependencies += InlineDeclaredModuleV2Dependency.of(it.id, moduleReference.loadingRule, moduleOwner, moduleReference)
+  ): MutableList<PluginDependency> {
+    return mutableListOf<PluginDependency>().also { dependencies ->
+      module.forEachDependencyNotIn(moduleOwner) {
+        dependencies += InlineDeclaredModuleV2Dependency.of(
+          it.id,
+          moduleReference.loadingRule,
+          moduleOwner,
+          moduleReference
+        )
+      }
     }
   }
 
