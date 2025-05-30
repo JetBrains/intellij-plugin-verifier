@@ -17,7 +17,6 @@ import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
-import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDescriptorParser.ParseResult.Parsed
 import com.jetbrains.plugin.structure.intellij.plugin.ValidationContext.ValidationResult
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
@@ -25,8 +24,6 @@ import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarn
 import com.jetbrains.plugin.structure.intellij.problems.ElementAvailableOnlySinceNewerVersion
 import com.jetbrains.plugin.structure.intellij.problems.ElementMissingAttribute
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorProblem
-import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorCycleProblem
@@ -195,62 +192,6 @@ internal class PluginCreator private constructor(
 
   private fun resolvePlugin(): IdePlugin {
     return invalidPlugin ?: plugin
-  }
-
-  fun addModuleDescriptor(
-    moduleName: String,
-    loadingRule: ModuleLoadingRule,
-    configurationFile: String,
-    moduleCreator: PluginCreator
-  ) {
-    val pluginCreationResult = moduleCreator.pluginCreationResult
-    if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
-      val module = pluginCreationResult.plugin
-
-      plugin.addDependencies(module, loadingRule)
-      plugin.modulesDescriptors.add(
-        ModuleDescriptor(
-          moduleName,
-          loadingRule,
-          module.dependencies,
-          module,
-          configurationFile
-        )
-      )
-      plugin.definedModules.add(moduleName)
-
-      mergeContent(module)
-    } else {
-      registerProblem(ModuleDescriptorResolutionProblem(moduleName, configurationFile, pluginCreationResult.errors))
-    }
-  }
-
-  internal fun addModuleDescriptor(
-    inlineModuleReference: InlineModule,
-    loadingRule: ModuleLoadingRule,
-    moduleDescriptorResource: DescriptorResource,
-    moduleCreator: PluginCreator
-  ) {
-    val pluginCreationResult = moduleCreator.pluginCreationResult
-    if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
-      val moduleName = inlineModuleReference.name
-      val inlineModule = pluginCreationResult.plugin
-
-      plugin.addInlineModuleDependencies(inlineModuleReference, inlineModule, loadingRule)
-      plugin.modulesDescriptors.add(
-        ModuleDescriptor.of(
-          moduleName,
-          loadingRule,
-          inlineModule,
-          moduleDescriptorResource
-        )
-      )
-      plugin.definedModules.add(moduleName)
-
-      mergeContent(inlineModule)
-    } else {
-      registerProblem(ModuleDescriptorProblem(inlineModuleReference, pluginCreationResult.errors))
-    }
   }
 
   internal fun mergeContent(pluginToMerge: IdePlugin) {
@@ -737,35 +678,6 @@ internal class PluginCreator private constructor(
   internal fun registerProblem(problem: PluginProblem) {
     problems += problem
   }
-
-  private fun IdePluginImpl.addInlineModuleDependencies(
-    inlineModuleReference: InlineModule,
-    module: IdePlugin,
-    loadingRule: ModuleLoadingRule
-  ) {
-    module.forEachDependencyNotIn(this) {
-      dependencies += InlineDeclaredModuleV2Dependency.of(it.id, loadingRule, contentModuleOwner = this, inlineModuleReference)
-    }
-  }
-
-  private fun IdePluginImpl.addDependencies(module: IdePlugin, loadingRule: ModuleLoadingRule) {
-    module.forEachDependencyNotIn(this) {
-      val dependency = if (loadingRule.required) it else it.asOptional()
-      dependencies += dependency
-    }
-  }
-
-  private fun IdePlugin.forEachDependencyNotIn(plugin: IdePlugin, dependencyHandler: (PluginDependency) -> Unit) {
-    return dependencies
-      .filter { dependency -> plugin.dependencies.none { it.id == dependency.id } }
-      .forEach { dependencyHandler(it) }
-  }
-
-  private val PluginCreationResult<IdePlugin>.errors: List<PluginProblem>
-    get() = when (this) {
-      is PluginCreationSuccess -> emptyList()
-      is PluginCreationFail -> this.errorsAndWarnings.filter { it.level === ERROR }
-    }
 
   private fun PluginCreationResult<IdePlugin>.reassignStructureProblems() =
     when (this) {
