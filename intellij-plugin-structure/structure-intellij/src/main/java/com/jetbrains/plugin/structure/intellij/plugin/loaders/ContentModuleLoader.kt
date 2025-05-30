@@ -90,18 +90,8 @@ class ContentModuleLoader internal constructor(private val pluginLoader: PluginL
       val module = pluginCreationResult.plugin
 
       plugin.addDependencies(module, loadingRule)
-      plugin.modulesDescriptors.add(
-        ModuleDescriptor(
-          moduleName,
-          loadingRule,
-          module.dependencies,
-          module,
-          configurationFile
-        )
-      )
-      plugin.definedModules.add(moduleName)
-
-      mergeContent(module)
+      val moduleDescriptor = ModuleDescriptor(moduleName, loadingRule, module.dependencies, module, configurationFile)
+      addModuleDescriptor(module, moduleDescriptor)
     } else {
       registerProblem(ModuleDescriptorResolutionProblem(moduleName, configurationFile, pluginCreationResult.errors))
     }
@@ -119,17 +109,13 @@ class ContentModuleLoader internal constructor(private val pluginLoader: PluginL
       val inlineModule = pluginCreationResult.plugin
 
       plugin.addInlineModuleDependencies(inlineModuleReference, inlineModule, loadingRule)
-      plugin.modulesDescriptors.add(
-        ModuleDescriptor.of(
-          moduleName,
-          loadingRule,
-          inlineModule,
-          moduleDescriptorResource
-        )
+      val moduleDescriptor = ModuleDescriptor.of(
+        moduleName,
+        loadingRule,
+        inlineModule,
+        moduleDescriptorResource
       )
-      plugin.definedModules.add(moduleName)
-
-      mergeContent(inlineModule)
+      addModuleDescriptor(inlineModule, moduleDescriptor)
     } else {
       registerProblem(ModuleDescriptorProblem(inlineModuleReference, pluginCreationResult.errors))
     }
@@ -159,6 +145,12 @@ class ContentModuleLoader internal constructor(private val pluginLoader: PluginL
       .forEach { dependencyHandler(it) }
   }
 
+  private fun PluginCreator.addModuleDescriptor(resolvedContentModule: IdePlugin, moduleDescriptor: ModuleDescriptor) {
+    plugin.modulesDescriptors.add(moduleDescriptor)
+    plugin.definedModules.add(moduleDescriptor.name)
+
+    mergeContent(resolvedContentModule)
+  }
 
   private fun getDescriptorResource(module: InlineModule, pluginFile: Path, descriptorPath: String): DescriptorResource {
     // TODO descriptor path is not relative to the pluginFile JAR. See MP-7224
