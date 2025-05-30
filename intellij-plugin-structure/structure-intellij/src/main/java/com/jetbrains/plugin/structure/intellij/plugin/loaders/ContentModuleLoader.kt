@@ -43,10 +43,10 @@ class ContentModuleLoader internal constructor(pluginLoader: PluginLoader) {
   }
 
   private fun resolveFileBasedModule(module: FileBasedModule, pluginFile: Path, currentPlugin: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver) {
-    fileBasedModuleDescriptorResolver.resolve(pluginFile, currentPlugin, module, resourceResolver, problemResolver)
+    fileBasedModuleDescriptorResolver.resolveDescriptor(pluginFile, currentPlugin, module, resourceResolver, problemResolver)
   }
 
   private fun resolveInlineModule(module: InlineModule, pluginFile: Path, currentPlugin: PluginCreator, resourceResolver: ResourceResolver) {
-    inlineModuleDescriptorResolver.resolve(pluginFile, currentPlugin, module, resourceResolver, AnyProblemToWarningPluginCreationResultResolver)
+    inlineModuleDescriptorResolver.resolveDescriptor(pluginFile, currentPlugin, module, resourceResolver, AnyProblemToWarningPluginCreationResultResolver)
   }
 }

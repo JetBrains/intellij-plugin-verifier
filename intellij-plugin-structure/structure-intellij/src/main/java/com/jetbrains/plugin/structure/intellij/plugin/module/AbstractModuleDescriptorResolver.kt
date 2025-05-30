@@ -32,7 +32,7 @@ internal abstract class AbstractModuleDescriptorResolver<M : Module> {
     problemResolver: PluginCreationResultResolver
   ): PluginCreator
 
-  internal fun resolve(
+  internal fun resolveDescriptor(
     pluginArtifactPath: Path,
     pluginCreator: PluginCreator,
     moduleReference: M,
