@@ -55,8 +55,7 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: Plugi
   }
 
   override fun getProblem(moduleReference: FileBasedModule, errors: List<PluginProblem>): PluginProblem {
-    val (name, _, configFile) = moduleReference
-    return ModuleDescriptorResolutionProblem(name, configFile, errors)
+    return ModuleDescriptorResolutionProblem(moduleReference.name, moduleReference.configFile, errors)
   }
 
   override fun getDependencies(
