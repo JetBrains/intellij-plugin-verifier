@@ -19,7 +19,7 @@ import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultReso
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.Path
 
-internal abstract class AbstractModuleDescriptorResolver<M : Module> {
+internal abstract class ModuleDescriptorResolver<M : Module> {
 
   sealed class ResolutionResult {
     data class Found(val resolvedContentModule: IdePlugin, val moduleDescriptor: ModuleDescriptor) : ResolutionResult()

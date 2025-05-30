@@ -31,7 +31,7 @@ import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(InlineModuleDescriptorResolver::class.java)
 
-internal class InlineModuleDescriptorResolver : AbstractModuleDescriptorResolver<InlineModule>() {
+internal class InlineModuleDescriptorResolver : ModuleDescriptorResolver<InlineModule>() {
 
   override fun getModuleDescriptor(
     pluginArtifactPath: Path,

@@ -11,11 +11,11 @@ import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginLoader
-import com.jetbrains.plugin.structure.intellij.plugin.module.AbstractModuleDescriptorResolver.ResolutionResult
-import com.jetbrains.plugin.structure.intellij.plugin.module.AbstractModuleDescriptorResolver.ResolutionResult.Failed
-import com.jetbrains.plugin.structure.intellij.plugin.module.AbstractModuleDescriptorResolver.ResolutionResult.Found
 import com.jetbrains.plugin.structure.intellij.plugin.module.FileBasedModuleDescriptorResolver
 import com.jetbrains.plugin.structure.intellij.plugin.module.InlineModuleDescriptorResolver
+import com.jetbrains.plugin.structure.intellij.plugin.module.ModuleDescriptorResolver.ResolutionResult
+import com.jetbrains.plugin.structure.intellij.plugin.module.ModuleDescriptorResolver.ResolutionResult.Failed
+import com.jetbrains.plugin.structure.intellij.plugin.module.ModuleDescriptorResolver.ResolutionResult.Found
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver

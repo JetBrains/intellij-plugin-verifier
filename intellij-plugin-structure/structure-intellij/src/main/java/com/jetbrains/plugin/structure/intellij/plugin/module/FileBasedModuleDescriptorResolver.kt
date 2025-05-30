@@ -17,7 +17,7 @@ import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.Path
 
 internal class FileBasedModuleDescriptorResolver(private val pluginLoader: PluginLoader) :
-  AbstractModuleDescriptorResolver<FileBasedModule>() {
+  ModuleDescriptorResolver<FileBasedModule>() {
 
   override fun getModuleDescriptor(
     pluginArtifactPath: Path,
