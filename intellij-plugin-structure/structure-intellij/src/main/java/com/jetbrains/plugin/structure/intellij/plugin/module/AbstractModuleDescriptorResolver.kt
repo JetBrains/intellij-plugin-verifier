@@ -24,6 +24,11 @@ import java.nio.file.Path
 
 internal abstract class AbstractModuleDescriptorResolver<M : Module> {
 
+  sealed class ResolutionResult {
+    data class Found(val resolvedContentModule: IdePlugin, val moduleDescriptor: ModuleDescriptor) : ResolutionResult()
+    data class Failed(val error: PluginProblem) : ResolutionResult()
+  }
+
   protected abstract fun getModuleCreator(
     moduleReference: M,
     pluginArtifactPath: Path,
@@ -38,25 +43,18 @@ internal abstract class AbstractModuleDescriptorResolver<M : Module> {
     moduleReference: M,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
-  ) {
+  ): ResolutionResult {
     val moduleCreator = getModuleCreator(moduleReference, pluginArtifactPath, pluginCreator, resourceResolver, problemResolver)
     val pluginCreationResult = moduleCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
-      val module = pluginCreationResult.plugin
-
-      val moduleDescriptor = getModuleDescriptor(pluginArtifactPath, pluginCreator, module, moduleCreator, moduleReference)
-      pluginCreator.addModuleDescriptor(module, moduleDescriptor)
+      val resolvedContentModule = pluginCreationResult.plugin
+      val moduleDescriptor = getModuleDescriptor(pluginArtifactPath, pluginCreator, resolvedContentModule, moduleCreator, moduleReference)
+      return ResolutionResult.Found(resolvedContentModule, moduleDescriptor)
     } else {
-      pluginCreator.registerProblem(getProblem(moduleReference, pluginCreationResult.errors))
+      return ResolutionResult.Failed(getProblem(moduleReference, pluginCreationResult.errors))
     }
   }
 
-  private fun PluginCreator.addModuleDescriptor(resolvedContentModule: IdePlugin, moduleDescriptor: ModuleDescriptor) {
-    plugin.modulesDescriptors.add(moduleDescriptor)
-    plugin.definedModules.add(moduleDescriptor.name)
-
-    mergeContent(resolvedContentModule)
-  }
 
   abstract fun getProblem(moduleReference: M, errors: List<PluginProblem>): PluginProblem
 
