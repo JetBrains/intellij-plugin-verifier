@@ -18,15 +18,28 @@ import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleLoadingRule
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.Path
 
 internal abstract class AbstractModuleDescriptorResolver<M : Module> {
-  internal fun add(
+
+  protected abstract fun getModuleCreator(
+    moduleReference: M,
+    pluginArtifactPath: Path,
+    pluginCreator: PluginCreator,
+    resourceResolver: ResourceResolver,
+    problemResolver: PluginCreationResultResolver
+  ): PluginCreator
+
+  internal fun resolve(
     pluginArtifactPath: Path,
     pluginCreator: PluginCreator,
     moduleReference: M,
-    moduleCreator: PluginCreator
+    resourceResolver: ResourceResolver,
+    problemResolver: PluginCreationResultResolver
   ) {
+    val moduleCreator = getModuleCreator(moduleReference, pluginArtifactPath, pluginCreator, resourceResolver, problemResolver)
     val pluginCreationResult = moduleCreator.pluginCreationResult
     if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       val module = pluginCreationResult.plugin
@@ -52,7 +65,7 @@ internal abstract class AbstractModuleDescriptorResolver<M : Module> {
     pluginCreator: PluginCreator,
     module: IdePlugin,
     moduleCreator: PluginCreator,
-    moduleDeclaration: M
+    moduleReference: M
   ): ModuleDescriptor
 
   protected fun IdePluginImpl.addDependencies(module: IdePlugin, loadingRule: ModuleLoadingRule) {
@@ -83,4 +96,5 @@ internal abstract class AbstractModuleDescriptorResolver<M : Module> {
       is PluginCreationSuccess -> emptyList()
       is PluginCreationFail -> this.errorsAndWarnings.filter { it.level === ERROR }
     }
+
 }

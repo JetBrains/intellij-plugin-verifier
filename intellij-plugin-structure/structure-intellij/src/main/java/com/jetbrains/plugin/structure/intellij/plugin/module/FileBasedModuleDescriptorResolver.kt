@@ -9,24 +9,39 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.Module.FileBasedModule
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
+import com.jetbrains.plugin.structure.intellij.plugin.PluginLoader
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
+import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.Path
 
-internal class FileBasedModuleDescriptorResolver : AbstractModuleDescriptorResolver<FileBasedModule>() {
+internal class FileBasedModuleDescriptorResolver(private val pluginLoader: PluginLoader) : AbstractModuleDescriptorResolver<FileBasedModule>() {
+
   override fun getModuleDescriptor(
     pluginArtifactPath: Path,
     pluginCreator: PluginCreator,
     module: IdePlugin,
     moduleCreator: PluginCreator,
-    moduleDeclaration: FileBasedModule
+    moduleReference: FileBasedModule
   ): ModuleDescriptor {
-    pluginCreator.plugin.addDependencies(module, moduleDeclaration.loadingRule)
+    pluginCreator.plugin.addDependencies(module, moduleReference.loadingRule)
     return ModuleDescriptor(
-      moduleDeclaration.name,
-      moduleDeclaration.loadingRule,
+      moduleReference.name,
+      moduleReference.loadingRule,
       module.dependencies,
       module,
-      moduleDeclaration.configFile
+      moduleReference.configFile
+    )
+  }
+
+  override fun getModuleCreator(moduleReference: FileBasedModule, pluginArtifactPath: Path, pluginCreator: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver): PluginCreator {
+    return pluginLoader.load(
+      pluginArtifactPath,
+      moduleReference.configFile,
+      false,
+      resourceResolver,
+      pluginCreator,
+      problemResolver
     )
   }
 
