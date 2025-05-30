@@ -46,15 +46,14 @@ internal abstract class AbstractModuleDescriptorResolver<M : Module> {
   ): ResolutionResult {
     val moduleCreator = getModuleCreator(moduleReference, pluginArtifactPath, pluginCreator, resourceResolver, problemResolver)
     val pluginCreationResult = moduleCreator.pluginCreationResult
-    if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
+    return if (pluginCreationResult is PluginCreationSuccess<IdePlugin>) {
       val resolvedContentModule = pluginCreationResult.plugin
       val moduleDescriptor = getModuleDescriptor(pluginArtifactPath, pluginCreator, resolvedContentModule, moduleCreator, moduleReference)
-      return ResolutionResult.Found(resolvedContentModule, moduleDescriptor)
+      ResolutionResult.Found(resolvedContentModule, moduleDescriptor)
     } else {
-      return ResolutionResult.Failed(getProblem(moduleReference, pluginCreationResult.errors))
+      ResolutionResult.Failed(getProblem(moduleReference, pluginCreationResult.errors))
     }
   }
-
 
   abstract fun getProblem(moduleReference: M, errors: List<PluginProblem>): PluginProblem
 

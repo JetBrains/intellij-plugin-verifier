@@ -27,18 +27,18 @@ class ContentModuleLoader internal constructor(pluginLoader: PluginLoader) {
 
   internal fun resolveContentModules(
     pluginFile: Path,
-    currentPlugin: PluginCreator,
+    contentModulesOwner: PluginCreator,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ) {
-    if (currentPlugin.isSuccess) {
-      val contentModules = currentPlugin.plugin.contentModules
+    if (contentModulesOwner.isSuccess) {
+      val contentModules = contentModulesOwner.plugin.contentModules
       contentModules
-        .map { resolveContentModule(it, pluginFile, currentPlugin, resourceResolver, problemResolver) }
+        .map { resolveContentModule(it, pluginFile, contentModulesOwner, resourceResolver, problemResolver) }
         .map {
           when (it) {
-            is Found -> currentPlugin.addModuleDescriptor(it.resolvedContentModule, it.moduleDescriptor)
-            is Failed -> currentPlugin.registerProblem(it.error)
+            is Found -> contentModulesOwner.addModuleDescriptor(it.resolvedContentModule, it.moduleDescriptor)
+            is Failed -> contentModulesOwner.registerProblem(it.error)
           }
         }
     }
@@ -47,14 +47,14 @@ class ContentModuleLoader internal constructor(pluginLoader: PluginLoader) {
   private fun resolveContentModule(
     moduleReference: Module,
     pluginFile: Path,
-    currentPlugin: PluginCreator,
+    contentModulesOwner: PluginCreator,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ): ResolutionResult {
     return when (moduleReference) {
       is FileBasedModule -> fileBasedModuleDescriptorResolver.resolveDescriptor(
         pluginFile,
-        currentPlugin,
+        contentModulesOwner,
         moduleReference,
         resourceResolver,
         problemResolver
@@ -62,7 +62,7 @@ class ContentModuleLoader internal constructor(pluginLoader: PluginLoader) {
 
       is InlineModule -> inlineModuleDescriptorResolver.resolveDescriptor(
         pluginFile,
-        currentPlugin,
+        contentModulesOwner,
         moduleReference,
         resourceResolver,
         AnyProblemToWarningPluginCreationResultResolver
