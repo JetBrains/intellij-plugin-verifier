@@ -40,6 +40,7 @@ class InvalidPlugin(override val underlyingDocument: Document) : IdePlugin, Stru
   override val definedModules: Set<String> = emptySet()
   override val optionalDescriptors: List<OptionalPluginDescriptor> = emptyList()
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList()
+  override val contentModules: List<Module> = emptyList()
   override val originalFile: Path? = null
   override val productDescriptor: ProductDescriptor? = null
   override val declaredThemes: List<IdeTheme> = emptyList()

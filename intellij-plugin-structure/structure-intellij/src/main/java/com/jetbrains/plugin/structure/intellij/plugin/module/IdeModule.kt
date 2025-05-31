@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
 import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
+import com.jetbrains.plugin.structure.intellij.plugin.Module
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.MutableIdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
@@ -30,6 +31,7 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
   override val appContainerDescriptor = MutableIdePluginContentDescriptor()
   override val projectContainerDescriptor = MutableIdePluginContentDescriptor()
   override val moduleContainerDescriptor = MutableIdePluginContentDescriptor()
+  override val contentModules: List<Module> = emptyList()
   override val dependencies = mutableListOf<PluginDependency>()
   override val definedModules = mutableSetOf<String>()
   override val optionalDescriptors = emptyList<OptionalPluginDescriptor>()
