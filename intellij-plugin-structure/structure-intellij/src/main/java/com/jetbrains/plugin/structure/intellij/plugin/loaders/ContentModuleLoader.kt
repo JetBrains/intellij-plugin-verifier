@@ -34,7 +34,7 @@ class ContentModuleLoader internal constructor(pluginLoader: PluginLoader) {
     if (contentModulesOwner.isSuccess) {
       contentModulesOwner.plugin.contentModules
         .map { resolveContentModule(it, pluginFile, contentModulesOwner, resourceResolver, problemResolver) }
-        .map { loadingResults += it }
+        .forEach { loadingResults += it }
     }
     return loadingResults
   }
