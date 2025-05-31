@@ -29,18 +29,30 @@ class PluginCreatorTest {
     val pluginCreator = createPlugin(PLUGIN_XML_WITH_CONTENT_MODULES)
     with(pluginCreator.plugin.contentModules) {
       assertEquals(6,  size)
-      assertEquals(this[0].name, "my.optional.module")
-      assertEquals(this[0].loadingRule, ModuleLoadingRule.OPTIONAL)
-      assertEquals(this[1].name, "my.required.module")
-      assertEquals(this[1].loadingRule, ModuleLoadingRule.REQUIRED)
-      assertEquals(this[2].name, "my.embedded.module")
-      assertEquals(this[2].loadingRule, ModuleLoadingRule.EMBEDDED)
-      assertEquals(this[3].name, "my.explicit.optional.module")
-      assertEquals(this[3].loadingRule, ModuleLoadingRule.OPTIONAL)
-      assertEquals(this[4].name, "my.on.demand.module")
-      assertEquals(this[4].loadingRule, ModuleLoadingRule.ON_DEMAND)
-      assertEquals(this[5].name, "my.unknown.module")
-      assertEquals(this[5].loadingRule.id, "unknown")
+      with(this[0]) {
+        assertEquals("my.optional.module", name, )
+        assertEquals(ModuleLoadingRule.OPTIONAL, loadingRule)
+      }
+      with(this[1]) {
+        assertEquals("my.required.module", name)
+        assertEquals(ModuleLoadingRule.REQUIRED, loadingRule)
+      }
+      with(this[2]) {
+        assertEquals("my.embedded.module", name)
+        assertEquals(ModuleLoadingRule.EMBEDDED, loadingRule)
+      }
+      with(this[3]) {
+        assertEquals("my.explicit.optional.module", name)
+        assertEquals(ModuleLoadingRule.OPTIONAL, loadingRule)
+      }
+      with(this[4]) {
+        assertEquals("my.on.demand.module", name)
+        assertEquals(ModuleLoadingRule.ON_DEMAND, loadingRule)
+      }
+      with(this[5]) {
+        assertEquals("my.unknown.module", name)
+        assertEquals("unknown", loadingRule.id)
+      }
     }
   }
 
