@@ -34,12 +34,7 @@ class ContentModuleLoader internal constructor(pluginLoader: PluginLoader) {
     if (contentModulesOwner.isSuccess) {
       contentModulesOwner.plugin.contentModules
         .map { resolveContentModule(it, pluginFile, contentModulesOwner, resourceResolver, problemResolver) }
-        .map {
-          when (it) {
-            is Found -> loadingResults.add(it.resolvedContentModule, it.moduleDescriptor)
-            is Failed -> loadingResults.registerProblem(it.error)
-          }
-        }
+        .map { loadingResults += it }
     }
     return loadingResults
   }
@@ -67,6 +62,13 @@ class ContentModuleLoader internal constructor(pluginLoader: PluginLoader) {
         resourceResolver,
         AnyProblemToWarningPluginCreationResultResolver
       )
+    }
+  }
+
+  private operator fun ContentModuleLoadingResults.plusAssign(resolutionResult: ResolutionResult) {
+    when (resolutionResult) {
+      is Found -> add(resolutionResult.resolvedContentModule, resolutionResult.moduleDescriptor)
+      is Failed -> registerProblem(resolutionResult.error)
     }
   }
 }
