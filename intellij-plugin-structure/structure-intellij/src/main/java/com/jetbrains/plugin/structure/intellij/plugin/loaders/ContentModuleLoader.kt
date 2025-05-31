@@ -37,7 +37,7 @@ class ContentModuleLoader internal constructor(pluginLoader: PluginLoader) {
         .map { resolveContentModule(it, pluginFile, contentModulesOwner, resourceResolver, problemResolver) }
         .map {
           when (it) {
-            is Found -> contentModulesOwner.addModuleDescriptor(it.resolvedContentModule, it.moduleDescriptor)
+            is Found -> contentModulesOwner.addContentModule(it.resolvedContentModule, it.moduleDescriptor)
             is Failed -> contentModulesOwner.registerProblem(it.error)
           }
         }
@@ -70,7 +70,7 @@ class ContentModuleLoader internal constructor(pluginLoader: PluginLoader) {
     }
   }
 
-  private fun PluginCreator.addModuleDescriptor(resolvedContentModule: IdePlugin, moduleDescriptor: ModuleDescriptor) {
+  private fun PluginCreator.addContentModule(resolvedContentModule: IdePlugin, moduleDescriptor: ModuleDescriptor) {
     plugin.modulesDescriptors.add(moduleDescriptor)
     plugin.definedModules.add(moduleDescriptor.name)
 
