@@ -4,13 +4,12 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.loaders
 
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.Module
 import com.jetbrains.plugin.structure.intellij.plugin.Module.FileBasedModule
 import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginLoader
+import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleLoadingResults
 import com.jetbrains.plugin.structure.intellij.plugin.module.FileBasedModuleDescriptorResolver
 import com.jetbrains.plugin.structure.intellij.plugin.module.InlineModuleDescriptorResolver
 import com.jetbrains.plugin.structure.intellij.plugin.module.ModuleDescriptorResolver.ResolutionResult
@@ -30,18 +29,19 @@ class ContentModuleLoader internal constructor(pluginLoader: PluginLoader) {
     contentModulesOwner: PluginCreator,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
-  ) {
+  ): ContentModuleLoadingResults {
+    val loadingResults = ContentModuleLoadingResults()
     if (contentModulesOwner.isSuccess) {
-      val contentModules = contentModulesOwner.plugin.contentModules
-      contentModules
+      contentModulesOwner.plugin.contentModules
         .map { resolveContentModule(it, pluginFile, contentModulesOwner, resourceResolver, problemResolver) }
         .map {
           when (it) {
-            is Found -> contentModulesOwner.addContentModule(it.resolvedContentModule, it.moduleDescriptor)
-            is Failed -> contentModulesOwner.registerProblem(it.error)
+            is Found -> loadingResults.add(it.resolvedContentModule, it.moduleDescriptor)
+            is Failed -> loadingResults.registerProblem(it.error)
           }
         }
     }
+    return loadingResults
   }
 
   private fun resolveContentModule(
@@ -68,12 +68,5 @@ class ContentModuleLoader internal constructor(pluginLoader: PluginLoader) {
         AnyProblemToWarningPluginCreationResultResolver
       )
     }
-  }
-
-  private fun PluginCreator.addContentModule(resolvedContentModule: IdePlugin, moduleDescriptor: ModuleDescriptor) {
-    plugin.modulesDescriptors.add(moduleDescriptor)
-    plugin.definedModules.add(moduleDescriptor.name)
-
-    mergeContent(resolvedContentModule)
   }
 }

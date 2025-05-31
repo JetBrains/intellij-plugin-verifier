@@ -327,8 +327,27 @@ class IdePluginManager private constructor(
     }
   }
 
-  private fun resolveContentModules(pluginFile: Path, currentPlugin: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver) {
-    contentModuleLoader.resolveContentModules(pluginFile, currentPlugin, resourceResolver, problemResolver)
+  private fun resolveContentModules(
+    pluginFile: Path,
+    contentModulesOwner: PluginCreator,
+    resourceResolver: ResourceResolver,
+    problemResolver: PluginCreationResultResolver
+  ) {
+    with(contentModuleLoader.resolveContentModules(pluginFile, contentModulesOwner, resourceResolver, problemResolver)) {
+      contentModules.forEach {
+        contentModulesOwner.addContentModule(it.contentModule, it.descriptor)
+      }
+      problems.forEach {
+        contentModulesOwner.registerProblem(it)
+      }
+    }
+  }
+
+  private fun PluginCreator.addContentModule(resolvedContentModule: IdePlugin, moduleDescriptor: ModuleDescriptor) {
+    plugin.modulesDescriptors.add(moduleDescriptor)
+    plugin.definedModules.add(moduleDescriptor.name)
+
+    mergeContent(resolvedContentModule)
   }
 
   private fun extractZipAndCreatePlugin(
