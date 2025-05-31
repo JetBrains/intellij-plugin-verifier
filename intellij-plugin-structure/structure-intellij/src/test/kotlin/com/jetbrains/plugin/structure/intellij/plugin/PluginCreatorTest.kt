@@ -26,20 +26,22 @@ class PluginCreatorTest {
 
   @Test
   fun `content modules`() {
-    val plugin = createPlugin(PLUGIN_XML_WITH_CONTENT_MODULES)
-    assertEquals(6, plugin.contentModules.size)
-    assertEquals(plugin.contentModules[0].name, "my.optional.module")
-    assertEquals(plugin.contentModules[0].loadingRule, ModuleLoadingRule.OPTIONAL)
-    assertEquals(plugin.contentModules[1].name, "my.required.module")
-    assertEquals(plugin.contentModules[1].loadingRule, ModuleLoadingRule.REQUIRED)
-    assertEquals(plugin.contentModules[2].name, "my.embedded.module")
-    assertEquals(plugin.contentModules[2].loadingRule, ModuleLoadingRule.EMBEDDED)
-    assertEquals(plugin.contentModules[3].name, "my.explicit.optional.module")
-    assertEquals(plugin.contentModules[3].loadingRule, ModuleLoadingRule.OPTIONAL)
-    assertEquals(plugin.contentModules[4].name, "my.on.demand.module")
-    assertEquals(plugin.contentModules[4].loadingRule, ModuleLoadingRule.ON_DEMAND)
-    assertEquals(plugin.contentModules[5].name, "my.unknown.module")
-    assertEquals(plugin.contentModules[5].loadingRule.id, "unknown")
+    val pluginCreator = createPlugin(PLUGIN_XML_WITH_CONTENT_MODULES)
+    with(pluginCreator.plugin.contentModules) {
+      assertEquals(6,  size)
+      assertEquals(this[0].name, "my.optional.module")
+      assertEquals(this[0].loadingRule, ModuleLoadingRule.OPTIONAL)
+      assertEquals(this[1].name, "my.required.module")
+      assertEquals(this[1].loadingRule, ModuleLoadingRule.REQUIRED)
+      assertEquals(this[2].name, "my.embedded.module")
+      assertEquals(this[2].loadingRule, ModuleLoadingRule.EMBEDDED)
+      assertEquals(this[3].name, "my.explicit.optional.module")
+      assertEquals(this[3].loadingRule, ModuleLoadingRule.OPTIONAL)
+      assertEquals(this[4].name, "my.on.demand.module")
+      assertEquals(this[4].loadingRule, ModuleLoadingRule.ON_DEMAND)
+      assertEquals(this[5].name, "my.unknown.module")
+      assertEquals(this[5].loadingRule.id, "unknown")
+    }
   }
 
   private fun createPlugin(pluginXml: String): PluginCreator {
