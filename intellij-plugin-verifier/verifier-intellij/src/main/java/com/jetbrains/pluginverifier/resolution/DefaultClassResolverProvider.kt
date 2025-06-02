@@ -45,7 +45,7 @@ class DefaultClassResolverProvider(
   private val downloadUnavailableBundledPlugins: Boolean = false
 ) : ClassResolverProvider {
 
-  private val secondaryResolver = if (ideDescriptor.ideResolver is ProductInfoClassResolver) ideDescriptor.ideResolver else null
+  private val secondaryResolver = ideDescriptor.ideResolver as? ProductInfoClassResolver
 
   private val pluginResolverProvider = CachingPluginDependencyResolverProvider(ideDescriptor.ide, secondaryResolver)
 
