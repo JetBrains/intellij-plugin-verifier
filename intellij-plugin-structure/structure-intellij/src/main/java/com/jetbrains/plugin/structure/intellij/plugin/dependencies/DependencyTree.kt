@@ -29,14 +29,10 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
   fun getDependencyTreeResolution(plugin: IdePlugin, dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier): DependencyTreeResolution {
     requireNotNull(plugin.pluginId) { missingId(plugin) }
     val missingDependencies = mutableMapOf<IdePlugin, Set<PluginDependency>>()
-    val missingDependencyListener = object : MissingDependencyListener {
-      override fun invoke(idePlugin: IdePlugin, missingDependency: PluginDependency) {
-        missingDependencies.merge(
-          idePlugin,
-          setOf(missingDependency)
-        ) { existingMissingDependencies, newMissingDependencies -> existingMissingDependencies + newMissingDependencies }
-      }
+    val missingDependencyListener: MissingDependencyListener = { idePlugin: IdePlugin, missingDependency: PluginDependency ->
+      missingDependencies.merge(idePlugin, setOf(missingDependency), Set<PluginDependency>::plus)
     }
+
     val dependencyResolutionContext = ResolutionContext(missingDependencyListener, dependenciesModifier)
     val dependencyGraph = getDependencyGraph(plugin, dependencyResolutionContext)
 
