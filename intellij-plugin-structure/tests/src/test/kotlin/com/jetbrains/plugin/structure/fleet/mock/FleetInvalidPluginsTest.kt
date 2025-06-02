@@ -27,13 +27,13 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `name is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("name")) { it.copy(meta = it.meta?.copy(name = null)) }
-    checkInvalidPlugin(PropertyNotSpecified("name")) { it.copy(meta = it.meta?.copy(name = "")) }
-    checkInvalidPlugin(PropertyNotSpecified("name")) { it.copy(meta = it.meta?.copy(name = "\n")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.readableName")) { it.copy(meta = it.meta?.copy(name = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.readableName")) { it.copy(meta = it.meta?.copy(name = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.readableName")) { it.copy(meta = it.meta?.copy(name = "\n")) }
     checkInvalidPlugin(
       TooLongPropertyValue(
-        FleetPluginManager.DESCRIPTOR_NAME,
-        "name",
+        FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+        "compatibleShipVersionRange.readableName",
         65,
         64
       )
@@ -60,16 +60,16 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `vendor is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("vendor")) { it.copy(meta = it.meta?.copy(vendor = null)) }
-    checkInvalidPlugin(PropertyNotSpecified("vendor")) { it.copy(meta = it.meta?.copy(vendor = "")) }
-    checkInvalidPlugin(PropertyNotSpecified("vendor")) { it.copy(meta = it.meta?.copy(vendor = "\n")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.vendor")) { it.copy(meta = it.meta?.copy(vendor = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.vendor")) { it.copy(meta = it.meta?.copy(vendor = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.vendor")) { it.copy(meta = it.meta?.copy(vendor = "\n")) }
   }
 
   @Test
   fun `description is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("description")) { it.copy(meta = it.meta?.copy(description = null)) }
-    checkInvalidPlugin(PropertyNotSpecified("description")) { it.copy(meta = it.meta?.copy(description = "")) }
-    checkInvalidPlugin(PropertyNotSpecified("description")) { it.copy(meta = it.meta?.copy(description = "\n")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.description")) { it.copy(meta = it.meta?.copy(description = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.description")) { it.copy(meta = it.meta?.copy(description = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.description")) { it.copy(meta = it.meta?.copy(description = "\n")) }
   }
 
   @Test
@@ -93,55 +93,55 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
   @Test
   fun `compatibility range is valid`() {
     checkInvalidPlugin(InvalidSemverFormat(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       versionName = "compatibleShipVersionRange.from",
       version = "123"
     )) {
       it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "123"))
     }
     checkInvalidPlugin(InvalidSemverFormat(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       versionName = "compatibleShipVersionRange.to",
       version = "123"
     )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "123")) }
 
     checkInvalidPlugin(SemverComponentLimitExceeded(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "major",
       versionName = "compatibleShipVersionRange.from",
       version = "7450.1.2",
       limit = FleetShipVersionRange.VERSION_MAJOR_PART_MAX_VALUE
     )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "7450.1.2", to = "7450.1.2")) }
     checkInvalidPlugin(SemverComponentLimitExceeded(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "major",
       versionName = "compatibleShipVersionRange.to",
       version = "7450.1.2",
       limit = FleetShipVersionRange.VERSION_MAJOR_PART_MAX_VALUE
     )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "7450.1.2")) }
     checkInvalidPlugin(SemverComponentLimitExceeded(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "minor",
       versionName = "compatibleShipVersionRange.from",
       version = "0.8192.2",
       limit = FleetShipVersionRange.VERSION_MINOR_PART_MAX_VALUE
     )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "0.8192.2")) }
     checkInvalidPlugin(SemverComponentLimitExceeded(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "minor",
       versionName = "compatibleShipVersionRange.to",
       version = "1.8192.2",
       limit = FleetShipVersionRange.VERSION_MINOR_PART_MAX_VALUE
     )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.8192.2")) }
     checkInvalidPlugin(SemverComponentLimitExceeded(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "patch",
       versionName = "compatibleShipVersionRange.from",
       version = "1.2.16384",
       limit = FleetShipVersionRange.VERSION_PATCH_PART_MAX_VALUE
     )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.2.16384")) }
     checkInvalidPlugin(SemverComponentLimitExceeded(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "patch",
       versionName = "compatibleShipVersionRange.to",
       version = "1.1000.16384",
@@ -149,7 +149,7 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
     )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.1000.16384")) }
 
     checkInvalidPlugin(InvalidVersionRange(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       since = "1.1000.1",
       until = "1.1000.0"
     )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0")) }
