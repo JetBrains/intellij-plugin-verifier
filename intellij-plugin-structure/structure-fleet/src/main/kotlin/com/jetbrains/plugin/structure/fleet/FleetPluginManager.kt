@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.streams.toList
 
 class FleetPluginManager private constructor(private val extractDirectory: Path) : PluginManager<FleetPlugin> {
   companion object {
