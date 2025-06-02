@@ -27,7 +27,7 @@ private val EMPTY_MISSING_DEPENDENCY_LISTENER: MissingDependencyListener = { _, 
 class DependencyTree(private val pluginProvider: PluginProvider) {
 
   fun getDependencyTreeResolution(plugin: IdePlugin, dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier): DependencyTreeResolution {
-    val pluginId: PluginId = requireNotNull(plugin.pluginId) { missingId(plugin) }
+    requireNotNull(plugin.pluginId) { missingId(plugin) }
     val missingDependencies = mutableMapOf<IdePlugin, Set<PluginDependency>>()
     val missingDependencyListener = object : MissingDependencyListener {
       override fun invoke(idePlugin: IdePlugin, missingDependency: PluginDependency) {
