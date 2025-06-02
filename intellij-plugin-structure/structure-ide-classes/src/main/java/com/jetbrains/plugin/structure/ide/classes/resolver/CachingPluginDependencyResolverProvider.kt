@@ -6,17 +6,15 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.stats.CacheStats
-import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.classes.resolvers.DelegatingNamedResolver
 import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
 import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.NamedResolver
-import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
-import com.jetbrains.plugin.structure.classes.resolvers.ResourceBundleNameSet
 import com.jetbrains.plugin.structure.classes.resolvers.UNNAMED_RESOLVER
 import com.jetbrains.plugin.structure.classes.resolvers.asResolver
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
@@ -28,7 +26,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTre
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginId
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
-import org.objectweb.asm.tree.ClassNode
 import java.util.*
 
 /**
@@ -93,7 +90,7 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
           id to dep.createResolverTree()
         }
       }
-    return DependencyTreeAwareResolver(plugin.id ?: UNNAMED_RESOLVER, resolvers, dependencyTreeResolution)
+    return DependencyTreeAwareResolver.of(plugin.id ?: UNNAMED_RESOLVER, resolvers, dependencyTreeResolution)
   }
 
   private fun Dependency.createResolverTree(): NamedResolver {
@@ -202,58 +199,28 @@ class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, pr
     return CompositeResolver.create(result.keys, resolverName)
   }
 
-  class DependencyTreeAwareResolver(
-    private val name: String,
-    resolvers: Map<String, Resolver>,
-    val dependencyTreeResolution: DependencyTreeResolution
-  ) : Resolver() {
-    private val resolverNames = resolvers.keys
-
-    private val delegateResolver = LazyCompositeResolver.create(resolvers.values, name)
-
-    internal val components = resolvers.values
-
-    override val readMode: ReadMode
-      get() = delegateResolver.readMode
-    @Deprecated("Use 'allClassNames' property instead which is more efficient")
-    override val allClasses: Set<String>
-      get() = delegateResolver.allClasses
-    override val allClassNames: Set<BinaryClassName>
-      get() = delegateResolver.allClassNames
-    @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
-    override val allPackages: Set<String>
-      get() = delegateResolver.allPackages
-    override val packages: Set<String>
-      get() = delegateResolver.packages
-    override val allBundleNameSet: ResourceBundleNameSet
-      get() = delegateResolver.allBundleNameSet
-
-    @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
-    override fun resolveClass(className: String) = delegateResolver.resolveClass(className)
-
-    override fun resolveClass(className: BinaryClassName) = delegateResolver.resolveClass(className)
-
-    override fun resolveExactPropertyResourceBundle(
-      baseName: String,
-      locale: Locale
-    ) = delegateResolver.resolveExactPropertyResourceBundle(baseName, locale)
-
-    @Deprecated("Use 'containsClass(BinaryClassName)' instead")
-    override fun containsClass(className: String) = delegateResolver.containsClass(className)
-
-    override fun containsClass(className: BinaryClassName) = delegateResolver.containsClass(className)
-
-    override fun containsPackage(packageName: String) = delegateResolver.containsPackage(packageName)
-
-    override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean) =
-      delegateResolver.processAllClasses(processor)
-
-    override fun close() = delegateResolver.close()
+  class DependencyTreeAwareResolver private constructor(
+    name: String,
+    private val resolverNames: Set<String>,
+    internal val components: Collection<Resolver>,
+    val dependencyTreeResolution: DependencyTreeResolution,
+    delegateProvider: () -> Resolver
+  ) : DelegatingNamedResolver(name, delegateProvider) {
 
     fun containsResolverName(resolverName: String): Boolean = resolverName in resolverNames
 
     override fun toString(): String {
       return "$name with ${resolverNames.size} resolvers: " + resolverNames.joinToString(",")
+    }
+
+    companion object {
+      fun of(
+        name: String, resolvers: Map<String, Resolver>, dependencyTreeResolution: DependencyTreeResolution
+      ): DependencyTreeAwareResolver {
+        return DependencyTreeAwareResolver(name, resolvers.keys, resolvers.values, dependencyTreeResolution) {
+          LazyCompositeResolver.create(resolvers.values, name)
+        }
+      }
     }
   }
 }
