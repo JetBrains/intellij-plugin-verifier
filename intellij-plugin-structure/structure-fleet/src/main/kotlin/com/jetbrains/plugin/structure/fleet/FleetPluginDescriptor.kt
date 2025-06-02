@@ -54,6 +54,27 @@ data class FleetPluginDescriptor(
       problems.add(PropertyNotSpecified(metaSpec.relativeFieldPath(metaSpec.VENDOR_FIELD_NAME)))
     }
 
+    val supportedProducts = meta?.supportedProducts ?: emptySet()
+    val products = meta
+      ?.supportedProducts
+      ?.mapNotNull { FleetProduct.fromProductCode(it) }
+      ?.toSet() ?: emptySet()
+
+    if (products.size != supportedProducts.size) {
+      problems.add(InvalidSupportedProductsListProblem(
+        constraint = "must contain only product codes from ${FleetProduct.values().map { it.productCode }}, got: $supportedProducts"
+      ))
+    }
+    val (isLegacyVersioning, isUnifiedVersioning) = products.partition { it.legacyVersioning }.let { (legacy, unified) ->
+      Pair(legacy.isNotEmpty(), unified.isNotEmpty())
+    }
+    if (isLegacyVersioning && isUnifiedVersioning) {
+      problems.add(InvalidSupportedProductsListProblem(
+        constraint = "must contain either only legacy or only unified versioning products"
+      ))
+    }
+
+    val shipVersionSpec = FleetDescriptorSpec.CompatibleShipVersion
     if (id != SHIP_PLUGIN_ID) {
       when {
         compatibleShipVersionRange == null -> {
@@ -97,10 +118,18 @@ data class FleetPluginDescriptor(
             }
 
             else -> {
-              val fromVersionProblems = validateVersion("from", fromSemver)
+              val fromVersionProblems = validateVersion(
+                fieldName = shipVersionSpec.relativeFieldPath(shipVersionSpec.FROM_FIELD_NAME),
+                semver = fromSemver,
+                isLegacy = isLegacyVersioning
+              )
               problems.addAll(fromVersionProblems)
               if (fromVersionProblems.isEmpty()) {
-                problems.addAll(validateVersion("to", toSemver))
+                problems.addAll(validateVersion(
+                  fieldName = shipVersionSpec.relativeFieldPath(shipVersionSpec.TO_FIELD_NAME),
+                  semver = toSemver,
+                  isLegacy = isLegacyVersioning
+                ))
               }
             }
           }
@@ -135,29 +164,31 @@ data class FleetPluginDescriptor(
     }
   }
 
-  private fun validateVersion(versionName: String, semver: Semver): Collection<PluginProblem> {
+  private fun validateVersion(fieldName: String, semver: Semver, isLegacy: Boolean): Collection<PluginProblem> {
     val problems = mutableListOf<PluginProblem>()
+    val (majorPartMaxValue, minorPartMaxValue, patchPartMaxValue) = FleetDescriptorSpec.CompatibleShipVersion.getVersionConstraints(isLegacy)
+
     when {
-      semver.major > FleetShipVersionRange.VERSION_MAJOR_PART_MAX_VALUE -> problems.add(SemverComponentLimitExceeded(
-        descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      semver.major > majorPartMaxValue -> problems.add(SemverComponentLimitExceeded(
+        descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
         componentName = "major",
-        versionName = "compatibleShipVersionRange.$versionName",
+        versionName = fieldName,
         version = semver.originalValue,
-        limit = FleetShipVersionRange.VERSION_MAJOR_PART_MAX_VALUE
+        limit = majorPartMaxValue
       ))
-      semver.minor > FleetShipVersionRange.VERSION_MINOR_PART_MAX_VALUE -> problems.add(SemverComponentLimitExceeded(
-        descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      semver.minor > minorPartMaxValue -> problems.add(SemverComponentLimitExceeded(
+        descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
         componentName = "minor",
-        versionName = "compatibleShipVersionRange.$versionName",
+        versionName = fieldName,
         version = semver.originalValue,
-        limit = FleetShipVersionRange.VERSION_MINOR_PART_MAX_VALUE
+        limit = minorPartMaxValue
       ))
-      semver.patch > FleetShipVersionRange.VERSION_PATCH_PART_MAX_VALUE -> problems.add(SemverComponentLimitExceeded(
-        descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      semver.patch > patchPartMaxValue -> problems.add(SemverComponentLimitExceeded(
+        descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
         componentName = "patch",
-        versionName = "compatibleShipVersionRange.$versionName",
+        versionName = fieldName,
         version = semver.originalValue,
-        limit = FleetShipVersionRange.VERSION_PATCH_PART_MAX_VALUE
+        limit = patchPartMaxValue
       ))
     }
     return problems
@@ -188,38 +219,23 @@ data class FleetShipVersionRange(
 ) {
 
   companion object {
-    private const val VERSION_PATCH_LENGTH = 14
-    private const val VERSION_MINOR_LENGTH = 13
-
-    const val VERSION_MAJOR_PART_MAX_VALUE = 7449 // 1110100011001
-    const val VERSION_MINOR_PART_MAX_VALUE = 1.shl(VERSION_MINOR_LENGTH) - 1 // 8191
-    const val VERSION_PATCH_PART_MAX_VALUE = 1.shl(VERSION_PATCH_LENGTH) - 1 // 16383
-
     // For binary backward compatibility
-    fun fromStringToLong(version: String?): Long = fromStringToLong(version, setOf(FleetProduct.FL.productCode))
+    fun fromStringToLong(version: String): Long = fromStringToLong(version, setOf(FleetProduct.FL.productCode))
 
-    fun fromStringToLong(version: String?, supportedProducts: Set<String>): Long {
-      require(supportedProducts.isNotEmpty()) { "supportedProducts must not be empty" }
+    fun fromStringToLong(version: String, supportedProducts: Set<String>): Long {
       val products = supportedProducts.mapNotNull { FleetProduct.fromProductCode(it) }.toSet()
-      require(products.size == supportedProducts.size) {
-        "supportedProducts must contain only product codes from ${FleetProduct.values().map { it.productCode }}, got: $supportedProducts"
-      }
-      val (legacyVersioning, unifiedVersioning) = products.partition { it.legacyVersioning }
-      require(legacyVersioning.isEmpty() || unifiedVersioning.isEmpty()) {
-        "supportedProducts must contain either only legacy or only unified versioning products"
-      }
 
       return when {
-        version == null -> error("version must not be null")
-        legacyVersioning.isNotEmpty() -> resolveLegacyVersion(version) // legacy FL versioning number
-        unifiedVersioning.isNotEmpty() -> IdeVersion.createIdeVersion(version).asLong() // unified version format for IntelliJ Products https://youtrack.jetbrains.com/articles/IJPL-A-109
-        else -> error("impossible case")
+        products.any { it.legacyVersioning.not() } -> IdeVersion.createIdeVersion(version).asLong() // unified version format for IntelliJ Products https://youtrack.jetbrains.com/articles/IJPL-A-109
+        else -> resolveLegacyVersion(version) // legacy FL versioning number
       }
     }
 
     private fun resolveLegacyVersion(version: String): Long {
       val v = Semver(version)
-      return v.major.toLong().shl(VERSION_PATCH_LENGTH + VERSION_MINOR_LENGTH) + v.minor.toLong().shl(VERSION_PATCH_LENGTH) + v.patch
+      val versionSpec = FleetDescriptorSpec.CompatibleShipVersion.LegacyVersioningSpec
+      return v.major.toLong().shl(versionSpec.VERSION_PATCH_LENGTH + versionSpec.VERSION_MINOR_LENGTH) +
+        v.minor.toLong().shl(versionSpec.VERSION_PATCH_LENGTH) + v.patch
     }
   }
 }
