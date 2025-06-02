@@ -47,6 +47,14 @@ class InlineModuleTest {
         }
     }.plugin
 
+    with(plugin.contentModules) {
+      assertEquals(1, size)
+      with(this[0]) {
+        assertEquals("intellij.java.structuralSearch", name)
+        assertEquals(ModuleLoadingRule.OPTIONAL, this.loadingRule)
+      }
+    }
+
     val modules = plugin.modulesDescriptors
     assertEquals(1, modules.size)
     val structureSearchModule = modules.first().module

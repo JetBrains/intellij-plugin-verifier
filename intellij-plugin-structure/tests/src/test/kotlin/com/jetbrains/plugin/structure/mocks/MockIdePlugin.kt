@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
 import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
+import com.jetbrains.plugin.structure.intellij.plugin.Module
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.MutableIdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
@@ -43,6 +44,7 @@ data class MockIdePlugin(
   override val moduleContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
+
   @Deprecated("See IdePlugin::isV2")
   override val isV2: Boolean = false,
   override val hasPackagePrefix: Boolean = false,
@@ -53,6 +55,7 @@ data class MockIdePlugin(
   override val useIdeClassLoader = false
   override val isImplementationDetail = false
   override val hasDotNetPart: Boolean = false
+  override val contentModules: List<Module> = emptyList()
 
   override val declaredThemes = emptyList<IdeTheme>()
 
