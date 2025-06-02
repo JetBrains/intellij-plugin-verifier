@@ -85,7 +85,7 @@ class DefaultClassResolverProvider(
         }
         dependenciesGraph = depGraph
       } else {
-        val dependencyTreeResolution = (ideResolver as DependencyTreeAwareResolver).dependencyTreeResolution
+        val dependencyTreeResolution = ideResolver.dependencyTreeResolution
         dependenciesGraph = dependenciesGraphProvider.getDependenciesGraph(dependencyTreeResolution)
       }
 
