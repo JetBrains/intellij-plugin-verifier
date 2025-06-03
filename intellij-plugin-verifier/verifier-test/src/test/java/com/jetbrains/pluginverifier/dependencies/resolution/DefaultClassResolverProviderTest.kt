@@ -6,7 +6,6 @@ package com.jetbrains.pluginverifier.dependencies.resolution
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
@@ -14,7 +13,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.jdk.DefaultJdkDescriptorProvider
 import com.jetbrains.pluginverifier.jdk.JdkDescriptorProvider
-import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.resolution.DefaultPluginDetailsBasedResolverProvider
 import com.jetbrains.pluginverifier.resolution.PluginDetailsBasedResolverProvider
@@ -97,17 +95,15 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
     )
 
     val defaultPluginDetailsBasedResolverProvider = DefaultPluginDetailsBasedResolverProvider()
-    val pluginDetailsResolverProvider = object : PluginDetailsBasedResolverProvider {
-      override fun getPluginResolver(pluginDependency: PluginDetails): Resolver {
-        return if (pluginDependency.idePlugin.pluginId == "com.intellij") {
-          with(pluginDependency.pluginClassesLocations) {
-            locationKeys
-              .flatMap { getResolvers(it) }
-              .let { resolvers -> CompositeResolver.create(resolvers) }
-          }
-        } else {
-          defaultPluginDetailsBasedResolverProvider.getPluginResolver(pluginDependency)
+    val pluginDetailsResolverProvider = PluginDetailsBasedResolverProvider { pluginDependency ->
+      if (pluginDependency.idePlugin.pluginId == "com.intellij") {
+        with(pluginDependency.pluginClassesLocations) {
+          locationKeys
+            .flatMap { getResolvers(it) }
+            .let { resolvers -> CompositeResolver.create(resolvers) }
         }
+      } else {
+        defaultPluginDetailsBasedResolverProvider.getPluginResolver(pluginDependency)
       }
     }
 
