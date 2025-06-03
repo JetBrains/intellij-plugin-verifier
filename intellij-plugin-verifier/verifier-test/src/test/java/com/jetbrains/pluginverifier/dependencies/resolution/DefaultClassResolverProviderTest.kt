@@ -76,7 +76,7 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
   }
 
   @Test
-  fun `plugin with a bundled dependency unavailable in the Platform 243, but downloaded by custom details resolver provider`() {
+  fun `plugin declaring a dependency that is unavailable in the Platform 243, but downloaded by custom details resolver provider`() {
     val ide = buildIdeWithBundledPlugins(
       version = "IU-243.21565.193",
       productInfo = productInfoJsonIU243,
@@ -123,7 +123,7 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
   }
 
   @Test
-  fun `plugin with a bundled dependency unavailable in the Platform 243, but downloaded`() {
+  fun `plugin has a dependency that is unavailable in the Platform 243, but downloaded via legacy dependency tree resolution`() {
     val ide = buildIdeWithBundledPlugins(
       version = "IU-243.21565.193",
       productInfo = productInfoJsonIU243,
@@ -156,7 +156,7 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
   }
 
   @Test
-  fun `plugin with a bundled dependency unavailable in the Platform 223, but downloaded`() {
+  fun `plugin has a dependency that is unavailable in the Platform 223, but downloaded`() {
     val ide = buildIdeWithBundledPlugins(version = "223.8836.41")
     val ideDescriptor = IdeDescriptor.create(ide.idePath, defaultJdkPath = null, ideFileLock = null)
 
