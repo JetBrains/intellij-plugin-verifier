@@ -646,7 +646,7 @@ class DependenciesTest {
 
     val dependencyTree = DependencyTree(ide)
     with(dependencyTree.getTransitiveDependencies(git4Idea)) {
-      assertEquals(42, size)
+      assertEquals(38, size)
       listOf(
         "com.jetbrains.performancePlugin",
         "com.intellij.modules.lang",
@@ -714,7 +714,7 @@ class DependenciesTest {
 
     val dependencyTree = DependencyTree(ide)
     with(dependencyTree.getTransitiveDependencies(git4Idea)) {
-      assertEquals(46, size)
+      assertEquals(39, size)
       listOf(
         "XPathView",
         "com.intellij.copyright",
@@ -756,16 +756,11 @@ class DependenciesTest {
           * Plugin dependency: 'com.intellij.java'
             * Plugin dependency: 'com.intellij.copyright'
               * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
-              * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
-              * Module 'intellij.platform.vcs.impl' provided by plugin 'intellij.platform.vcs.impl'
-                * Module 'intellij.libraries.microba' provided by plugin 'intellij.libraries.microba'
             * Plugin dependency: 'com.intellij.platform.images'
               * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
             * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
-            * Module 'com.intellij.modules.vcs' provided by plugin 'intellij.platform.vcs.impl' (already visited)
-            * Module 'com.intellij.modules.xdebugger' provided by plugin 'com.intellij' (already visited)
-            * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
-            * Module 'com.intellij.modules.java-capable' provided by plugin 'com.intellij' (already visited)
+            * Module 'com.intellij.modules.vcs' provided by plugin 'intellij.platform.vcs.impl'
+              * Module 'intellij.libraries.microba' provided by plugin 'intellij.libraries.microba'
             * Plugin dependency: 'training'
               * Module 'intellij.platform.lvcs.impl' provided by plugin 'intellij.platform.lvcs.impl'
                 * Module 'intellij.platform.vcs.impl' provided by plugin 'intellij.platform.vcs.impl' (already visited)
@@ -810,22 +805,12 @@ class DependenciesTest {
                           * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
                           * Plugin dependency: 'org.jetbrains.plugins.yaml' (already visited)
                       * Plugin dependency: 'com.intellij.platform.images' (already visited)
-                      * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
-                      * Module 'intellij.platform.compose' provided by plugin 'intellij.platform.compose'
-                        * Module 'intellij.libraries.compose.desktop' provided by plugin 'intellij.libraries.compose.desktop'
-                          * Module 'intellij.libraries.skiko' provided by plugin 'intellij.libraries.skiko'
-                        * Module 'intellij.libraries.skiko' provided by plugin 'intellij.libraries.skiko' (already visited)
                 * Module 'intellij.platform.coverage' provided by plugin 'intellij.platform.coverage'
                   * Module 'intellij.platform.coverage.agent' provided by plugin 'intellij.platform.coverage.agent'
-              * Module 'intellij.platform.ide.newUiOnboarding' provided by plugin 'intellij.platform.ide.newUiOnboarding' (already visited)
-              * Module 'intellij.platform.ide.newUsersOnboarding' provided by plugin 'intellij.platform.ide.newUsersOnboarding'
-                * Module 'intellij.platform.ide.newUiOnboarding' provided by plugin 'intellij.platform.ide.newUiOnboarding' (already visited)
-                * Module 'intellij.platform.experiment' provided by plugin 'intellij.platform.experiment'
             * Module 'intellij.performanceTesting.vcs' provided by plugin 'intellij.performanceTesting.vcs'
               * Module 'intellij.platform.vcs.impl' provided by plugin 'intellij.platform.vcs.impl' (already visited)
               * Module 'intellij.platform.vcs.log.impl' provided by plugin 'intellij.platform.vcs.log.impl' (already visited)
             * Plugin dependency: 'com.jetbrains.performancePlugin' (already visited)
-            * Module 'intellij.platform.vcs.impl' provided by plugin 'intellij.platform.vcs.impl' (already visited)
           * Module 'kotlin.features-trainer' provided by plugin 'kotlin.features-trainer'
             * Module 'intellij.java.featuresTrainer' provided by plugin 'intellij.java.featuresTrainer'
               * Plugin dependency: 'training' (already visited)
@@ -836,8 +821,6 @@ class DependenciesTest {
             * Plugin dependency: 'com.intellij.java' (already visited)
           * Plugin dependency: 'com.intellij.platform.images' (already visited)
           * Plugin dependency: 'com.intellij.copyright' (already visited)
-        * Module 'intellij.platform.vcs.impl' provided by plugin 'intellij.platform.vcs.impl' (already visited)
-        * Module 'intellij.platform.vcs.log.impl' provided by plugin 'intellij.platform.vcs.log.impl' (already visited)
       * Module 'intellij.platform.collaborationTools' provided by plugin 'intellij.platform.collaborationTools' (already visited)
       * Module 'com.intellij.modules.vcs' provided by plugin 'intellij.platform.vcs.impl' (already visited)
       * Module 'intellij.platform.ide.newUiOnboarding' provided by plugin 'intellij.platform.ide.newUiOnboarding' (already visited)
@@ -866,8 +849,10 @@ class DependenciesTest {
 
     val dependencyTree = DependencyTree(ide)
     with(dependencyTree.getTransitiveDependencies(coveragePlugin)) {
-      assertEquals(44, size)
-      assertContains("intellij.platform.coverage.agent")
+      assertEquals(37, size)
+      assertEquals(37, expectedCoveragePluginDependencies.size)
+
+      expectedCoveragePluginDependencies.forEach(::assertContains)
     }
   }
 
@@ -985,6 +970,47 @@ class DependenciesTest {
 
     assertEquals(expectedClassPath, relativeClasspaths.map { it.toString() }.toSet())
   }
+
+  private val expectedCoveragePluginDependencies = listOf(
+    "Git4Idea",
+    "JUnit",
+    "TestNG-J",
+    "XPathView",
+    "com.intellij.copyright",
+    "com.intellij.java",
+    "com.intellij.java", // transitive duplicate
+    "com.intellij.modules.java",
+    "com.intellij.modules.json",
+    "com.intellij.modules.lang provided by plugin com.intellij",
+    "com.intellij.modules.vcs provided by plugin intellij.platform.vcs.impl",
+    "com.intellij.modules.xml provided by plugin com.intellij",
+    "com.intellij.platform.images",
+    "com.intellij.properties",
+    "com.jetbrains.performancePlugin",
+    "com.jetbrains.sh",
+    "intellij.java.featuresTrainer provided by plugin intellij.java.featuresTrainer",
+    "intellij.libraries.microba provided by plugin intellij.libraries.microba",
+    "intellij.performanceTesting.vcs provided by plugin intellij.performanceTesting.vcs",
+    "intellij.platform.collaborationTools provided by plugin intellij.platform.collaborationTools",
+    "intellij.platform.coverage provided by plugin intellij.platform.coverage",
+    "intellij.platform.coverage provided by plugin intellij.platform.coverage", // transitive duplicate
+    "intellij.platform.coverage.agent provided by plugin intellij.platform.coverage.agent",
+    "intellij.platform.ide.newUiOnboarding provided by plugin intellij.platform.ide.newUiOnboarding",
+    "intellij.platform.lvcs.impl provided by plugin intellij.platform.lvcs.impl",
+    "intellij.platform.vcs.dvcs.impl provided by plugin intellij.platform.vcs.dvcs.impl",
+    "intellij.platform.vcs.impl provided by plugin intellij.platform.vcs.impl",
+    "intellij.platform.vcs.log.impl provided by plugin intellij.platform.vcs.log.impl",
+    "kotlin.features-trainer provided by plugin kotlin.features-trainer",
+    "org.intellij.intelliLang",
+    "org.intellij.plugins.markdown",
+    "org.jetbrains.kotlin",
+    "org.jetbrains.plugins.terminal",
+    "org.jetbrains.plugins.yaml",
+    "org.toml.lang",
+    "tanvd.grazi",
+    "training",
+  )
+
 }
 
 

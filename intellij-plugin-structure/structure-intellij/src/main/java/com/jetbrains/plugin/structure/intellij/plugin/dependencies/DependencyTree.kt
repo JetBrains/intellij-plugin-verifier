@@ -99,13 +99,12 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
 
         val nestedIndent = getNestedDependencyIndent(indent, number)
         dependencies.forEachIndexed { i, dep ->
-          val dependencyPlugin = pluginProvider.getPluginOrModule(dep.id)
           if (ignore(plugin, dep)) {
             debugLog(nestedIndent, i + 1, "Ignoring '{}'", dep)
-          } else if (graph.contains(pluginId, dependencyPlugin)) {
+          } else if (graph.contains(pluginId, hasId(dep))) {
             debugLog(nestedIndent, i + 1, "Resolved cached dependency '{}'", dep.id)
           } else {
-            when (dependencyPlugin) {
+            when (val dependencyPlugin = pluginProvider.getPluginOrModule(dep.id)) {
               is Module,
               is Plugin -> {
                 if (dependencyPlugin is PluginAware && !dependencyPlugin.matches(pluginId)) {
@@ -222,6 +221,8 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     }
   }
 
+  private fun hasId(dependency: PluginDependency) = { dep: Dependency -> dep.matches(dependency.id) }
+
   fun toDebugString(pluginId: String): CharSequence {
     val resolutionContext = ResolutionContext(EMPTY_MISSING_DEPENDENCY_LISTENER)
     return StringBuilder().apply {
@@ -261,6 +262,12 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     }
 
     fun contains(from: I, to: O): Boolean = adjacency[from]?.contains(to) == true
+
+    fun contains(from: I, toIdPredicate: (O) -> Boolean): Boolean {
+      return adjacency[from]?.let { adj ->
+        adj.any { toIdPredicate(it) }
+      } ?: false
+    }
 
     internal fun forEachAdjacency(action: (I, List<O>) -> Unit) {
       adjacency.forEach(action)
