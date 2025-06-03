@@ -192,6 +192,19 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     }
   }
 
+  /*
+  private fun PluginProvider.getPluginOrModule(id: String): Dependency {
+    return findPluginByIdOrModuleId(id)
+      ?.let {
+        when (it) {
+          is IdeModule -> Module(it, id)
+          else -> Plugin(it)
+        }
+      } ?: None
+  }
+
+   */
+
   private fun DiGraph<PluginId, Dependency>.toDebugString(
     id: PluginId,
     indentSize: Int,

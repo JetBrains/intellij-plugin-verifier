@@ -9,22 +9,43 @@ import org.jetbrains.annotations.Nullable;
 
 public interface PluginProvider {
     /**
-     * Finds bundled plugin with specified plugin ID.
+     * Finds a plugin with specified plugin ID.
      *
      * @param pluginId plugin ID
-     * @return bundled plugin with the specified ID or {@code null}, if such a plugin is not found
+     * @return plugin with the specified ID or {@code null}, if such a plugin is not found
      */
     @Nullable
     IdePlugin findPluginById(@NotNull String pluginId);
 
     /**
-     * Finds bundled plugin containing the definition of the given module.
+     * Finds a plugin containing the definition of the given module.
      *
      * @param moduleId module ID
-     * @return bundled plugin with a definition of the module or {@code null}, if such a plugin is not found
+     * @return plugin with a definition of the module or {@code null}, if such a plugin is not found
      */
     @Nullable
     IdePlugin findPluginByModule(@NotNull String moduleId);
+
+    /**
+     * Finds a plugin with a specified ID or a plugin containing the definition of the given module.
+     * This plugin is wrapped with a result object indicating the resolution type (either a plugin or a module).
+     * @param pluginIdOrModuleId plugin ID or module ID that is exposed by the plugin.
+     * @return plugin or a plugin with a definition of the module or {@code null}, if such a plugin is not found
+     */
+    @Nullable
+    default PluginProviderResult findPluginByIdOrModuleId(@NotNull String pluginIdOrModuleId) {
+        IdePlugin plugin = findPluginById(pluginIdOrModuleId);
+        if (plugin != null) {
+            return new PluginProviderResult(PLUGIN, plugin);
+        } else {
+            plugin = findPluginByModule(pluginIdOrModuleId);
+            if (plugin != null) {
+                return new PluginProviderResult(MODULE, plugin);
+            } else {
+                return null;
+            }
+        }
+    }
 
     @NotNull
     PluginProvision query(@NotNull PluginQuery query);
