@@ -14,6 +14,9 @@ private const val UNKNOWN_VERSION = "unknown version"
 
 private const val DEFAULT_MISSING_DEPENDENCY_REASON = "Unavailable"
 
+/**
+ * An adapter between the dependency tree provided by _IntelliJ Structure Library_ and Plugin Verifier dependency tree.
+ */
 class DependenciesGraphProvider {
   fun getDependenciesGraph(dependencyTreeResolution: DependencyTreeResolution): DependenciesGraph {
     val verifiedPlugin = DependencyNode(dependencyTreeResolution.dependencyRoot.id, version = UNKNOWN_VERSION)
