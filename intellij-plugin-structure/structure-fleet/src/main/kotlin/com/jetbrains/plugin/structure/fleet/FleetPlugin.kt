@@ -19,6 +19,7 @@ data class FleetPlugin(
   override val thirdPartyDependencies: List<ThirdPartyDependency>,
   val frontendOnly: Boolean? = null,
   val humanVisible: Boolean,
+  val supportedProducts: Set<String>,
   val compatibleShipVersionRange: FleetShipVersionRange,
   val descriptorFileName: String,
   val files: List<PluginFile>

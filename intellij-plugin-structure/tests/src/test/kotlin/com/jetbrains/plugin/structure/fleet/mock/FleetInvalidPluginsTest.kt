@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.fleet.mock
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.fleet.*
+import com.jetbrains.plugin.structure.fleet.problems.InvalidSupportedProductsListProblem
 import com.jetbrains.plugin.structure.fleet.problems.createIncorrectFleetPluginFile
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
@@ -27,13 +28,13 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `name is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("name")) { it.copy(meta = it.meta?.copy(name = null)) }
-    checkInvalidPlugin(PropertyNotSpecified("name")) { it.copy(meta = it.meta?.copy(name = "")) }
-    checkInvalidPlugin(PropertyNotSpecified("name")) { it.copy(meta = it.meta?.copy(name = "\n")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.readableName")) { it.copy(meta = it.meta?.copy(name = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.readableName")) { it.copy(meta = it.meta?.copy(name = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.readableName")) { it.copy(meta = it.meta?.copy(name = "\n")) }
     checkInvalidPlugin(
       TooLongPropertyValue(
-        FleetPluginManager.DESCRIPTOR_NAME,
-        "name",
+        FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+        "compatibleShipVersionRange.readableName",
         65,
         64
       )
@@ -60,21 +61,46 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `vendor is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("vendor")) { it.copy(meta = it.meta?.copy(vendor = null)) }
-    checkInvalidPlugin(PropertyNotSpecified("vendor")) { it.copy(meta = it.meta?.copy(vendor = "")) }
-    checkInvalidPlugin(PropertyNotSpecified("vendor")) { it.copy(meta = it.meta?.copy(vendor = "\n")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.vendor")) { it.copy(meta = it.meta?.copy(vendor = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.vendor")) { it.copy(meta = it.meta?.copy(vendor = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.vendor")) { it.copy(meta = it.meta?.copy(vendor = "\n")) }
   }
 
   @Test
   fun `description is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("description")) { it.copy(meta = it.meta?.copy(description = null)) }
-    checkInvalidPlugin(PropertyNotSpecified("description")) { it.copy(meta = it.meta?.copy(description = "")) }
-    checkInvalidPlugin(PropertyNotSpecified("description")) { it.copy(meta = it.meta?.copy(description = "\n")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.description")) { it.copy(meta = it.meta?.copy(description = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.description")) { it.copy(meta = it.meta?.copy(description = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.description")) { it.copy(meta = it.meta?.copy(description = "\n")) }
   }
 
   @Test
   fun `do not validate compatibility range for ship`() {
     checkValidPlugin { it.copy(id = SHIP_PLUGIN_ID, compatibleShipVersionRange = null) }
+  }
+
+  @Test
+  fun `invalid supported product`() {
+    val supportedProducts = setOf("LOL")
+    checkInvalidPlugin(
+      InvalidSupportedProductsListProblem("must contain only product codes from ${FleetProduct.values().map { it.productCode }}, got: $supportedProducts")
+    ) { it.copy(meta = it.meta?.copy(supportedProducts = supportedProducts)) }
+  }
+
+  @Test
+  fun `mix of legacy and unified versioning in supported product`() {
+    checkInvalidPlugin(InvalidSupportedProductsListProblem("must contain either only legacy or only unified versioning products")) {
+      it.copy(meta = it.meta?.copy(supportedProducts = setOf("FL", "AIR")))
+    }
+  }
+
+  @Test
+  fun `legacy versioning product`() {
+    checkValidPlugin { it.copy(meta = it.meta?.copy(supportedProducts = setOf("FL"))) }
+  }
+
+  @Test
+  fun `unified versioning product`() {
+    checkValidPlugin { it.copy(meta = it.meta?.copy(supportedProducts = setOf("AIR"))) }
   }
 
   @Test
@@ -91,70 +117,239 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
   }
 
   @Test
-  fun `compatibility range is valid`() {
+  fun `legacy compatibility range is valid`() {
+    val supportedProducts = setOf("FL")
+    val legacyVersioningSpec = FleetDescriptorSpec.CompatibleShipVersion.LegacyVersioningSpec
+
     checkInvalidPlugin(InvalidSemverFormat(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       versionName = "compatibleShipVersionRange.from",
       version = "123"
     )) {
-      it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "123"))
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "123"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
     }
     checkInvalidPlugin(InvalidSemverFormat(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       versionName = "compatibleShipVersionRange.to",
       version = "123"
-    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "123")) }
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "123"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
 
     checkInvalidPlugin(SemverComponentLimitExceeded(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "major",
       versionName = "compatibleShipVersionRange.from",
       version = "7450.1.2",
-      limit = FleetShipVersionRange.VERSION_MAJOR_PART_MAX_VALUE
-    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "7450.1.2", to = "7450.1.2")) }
+      limit = legacyVersioningSpec.MAJOR_PART_MAX_VALUE
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "7450.1.2", to = "7450.1.2"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
     checkInvalidPlugin(SemverComponentLimitExceeded(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "major",
       versionName = "compatibleShipVersionRange.to",
       version = "7450.1.2",
-      limit = FleetShipVersionRange.VERSION_MAJOR_PART_MAX_VALUE
-    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "7450.1.2")) }
+      limit = legacyVersioningSpec.MAJOR_PART_MAX_VALUE
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "7450.1.2"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
     checkInvalidPlugin(SemverComponentLimitExceeded(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "minor",
       versionName = "compatibleShipVersionRange.from",
       version = "0.8192.2",
-      limit = FleetShipVersionRange.VERSION_MINOR_PART_MAX_VALUE
-    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "0.8192.2")) }
+      limit = legacyVersioningSpec.MINOR_PART_MAX_VALUE
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "0.8192.2"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
     checkInvalidPlugin(SemverComponentLimitExceeded(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "minor",
       versionName = "compatibleShipVersionRange.to",
       version = "1.8192.2",
-      limit = FleetShipVersionRange.VERSION_MINOR_PART_MAX_VALUE
-    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.8192.2")) }
+      limit = legacyVersioningSpec.MINOR_PART_MAX_VALUE
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.8192.2"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
     checkInvalidPlugin(SemverComponentLimitExceeded(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "patch",
       versionName = "compatibleShipVersionRange.from",
       version = "1.2.16384",
-      limit = FleetShipVersionRange.VERSION_PATCH_PART_MAX_VALUE
-    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.2.16384")) }
+      limit = legacyVersioningSpec.PATCH_PART_MAX_VALUE
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.2.16384"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
     checkInvalidPlugin(SemverComponentLimitExceeded(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "patch",
       versionName = "compatibleShipVersionRange.to",
       version = "1.1000.16384",
-      limit = FleetShipVersionRange.VERSION_PATCH_PART_MAX_VALUE
-    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.1000.16384")) }
+      limit = legacyVersioningSpec.PATCH_PART_MAX_VALUE
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "1.1000.16384"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
 
     checkInvalidPlugin(InvalidVersionRange(
-      descriptorPath = FleetPluginManager.DESCRIPTOR_NAME,
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       since = "1.1000.1",
       until = "1.1000.0"
-    )) { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0")) }
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
 
-    checkValidPlugin { it.copy(compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "7449.8191.16383", to = "7449.8191.16383")) }
+    checkValidPlugin {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "7449.8191.16383", to = "7449.8191.16383"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
+  }
+
+  @Test
+  fun `unified compatibility range is valid`() {
+    val supportedProducts = setOf("AIR")
+    val legacyVersioningSpec = FleetDescriptorSpec.CompatibleShipVersion.UnifiedVersioningSpec
+
+    checkInvalidPlugin(InvalidSemverFormat(
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+      versionName = "compatibleShipVersionRange.from",
+      version = "123"
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "123"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
+    checkInvalidPlugin(InvalidSemverFormat(
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+      versionName = "compatibleShipVersionRange.to",
+      version = "123"
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(to = "123"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
+
+    checkInvalidPlugin(SemverComponentLimitExceeded(
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+      componentName = "major",
+      versionName = "compatibleShipVersionRange.from",
+      version = "1001.99999.9999",
+      limit = legacyVersioningSpec.MAJOR_PART_MAX_VALUE
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1001.99999.9999", to = "1002.1.1"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
+    checkInvalidPlugin(SemverComponentLimitExceeded(
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+      componentName = "major",
+      versionName = "compatibleShipVersionRange.to",
+      version = "1001.99999.9999",
+      limit = legacyVersioningSpec.MAJOR_PART_MAX_VALUE
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "123.1.1", to = "1001.99999.9999"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
+    checkInvalidPlugin(SemverComponentLimitExceeded(
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+      componentName = "minor",
+      versionName = "compatibleShipVersionRange.from",
+      version = "1.100001.9999",
+      limit = legacyVersioningSpec.MINOR_PART_MAX_VALUE
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.100001.9999", to = "202.123.123"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
+    checkInvalidPlugin(SemverComponentLimitExceeded(
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+      componentName = "minor",
+      versionName = "compatibleShipVersionRange.to",
+      version = "1.100001.9999",
+      limit = legacyVersioningSpec.MINOR_PART_MAX_VALUE
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1.1", to = "1.100001.9999"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
+    checkInvalidPlugin(SemverComponentLimitExceeded(
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+      componentName = "patch",
+      versionName = "compatibleShipVersionRange.from",
+      version = "1.2.10001",
+      limit = legacyVersioningSpec.PATCH_PART_MAX_VALUE
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.2.10001"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
+    checkInvalidPlugin(SemverComponentLimitExceeded(
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+      componentName = "patch",
+      versionName = "compatibleShipVersionRange.to",
+      version = "1.2.10001",
+      limit = legacyVersioningSpec.PATCH_PART_MAX_VALUE
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1.1", to = "1.2.10001"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
+
+    checkInvalidPlugin(InvalidVersionRange(
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+      since = "1.1000.1",
+      until = "1.1000.0"
+    )) {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1000.1", to = "1.1000.0"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
+
+    checkValidPlugin {
+      it.copy(
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "252.8191.212", to = "253.8191.212"),
+        meta = it.meta?.copy(supportedProducts = supportedProducts)
+      )
+    }
   }
 
 

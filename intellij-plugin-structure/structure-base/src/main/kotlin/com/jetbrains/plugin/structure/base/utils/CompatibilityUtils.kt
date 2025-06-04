@@ -7,7 +7,7 @@ class CompatibilityUtils {
   companion object {
     const val MAX_BRANCH_VALUE = 1000
     const val MAX_BUILD_VALUE = 100000
-    private const val MAX_COMPONENT_VALUE = 10000
+    const val MAX_COMPONENT_VALUE = 10000
     private val NUMBERS_OF_NINES by lazy { initNumberOfNines() }
 
     fun versionAsLong(vararg components: Int): Long {

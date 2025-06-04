@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.fleet.FleetDescriptorSpec
 import com.jetbrains.plugin.structure.fleet.FleetPlugin
 import com.jetbrains.plugin.structure.fleet.FleetPluginManager
 import com.jetbrains.plugin.structure.fleet.FleetShipVersionRange
@@ -20,7 +21,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
   @Test
   fun `parse base fields fleet plugin`() {
     val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
-      file(FleetPluginManager.DESCRIPTOR_NAME) {
+      file(FleetDescriptorSpec.DESCRIPTOR_FILE_NAME) {
         getMockPluginJsonContent("extension")
       }
     }
@@ -31,7 +32,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
   fun `parse fleet icons`() {
     val content = "<svg></svg>"
     val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
-      file(FleetPluginManager.DESCRIPTOR_NAME) {
+      file(FleetDescriptorSpec.DESCRIPTOR_FILE_NAME) {
         getMockPluginJsonContent("extension")
       }
       file("pluginIcon.svg", content)
@@ -48,7 +49,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
   fun `parse fleet incorrect icons`() {
     val content = "<svg></svg>"
     val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
-      file(FleetPluginManager.DESCRIPTOR_NAME) {
+      file(FleetDescriptorSpec.DESCRIPTOR_FILE_NAME) {
         getMockPluginJsonContent("extension")
       }
       file("pluginIcon.svg", content)
@@ -63,10 +64,10 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
   @Test
   fun `parse licenses`() {
     val pluginFile = buildZipFile(temporaryFolder.newFile("fleet.language.css-1.0.0-SNAPSHOT.zip")) {
-      file(FleetPluginManager.DESCRIPTOR_NAME) {
+      file(FleetDescriptorSpec.DESCRIPTOR_FILE_NAME) {
         getMockPluginJsonContent("extension")
       }
-      file(FleetPluginManager.THIRD_PARTY_LIBRARIES_FILE_NAME) {
+      file(FleetDescriptorSpec.THIRD_PARTY_LIBRARIES_FILE_NAME) {
         """
           [ {
             "name" : "OkHttp",

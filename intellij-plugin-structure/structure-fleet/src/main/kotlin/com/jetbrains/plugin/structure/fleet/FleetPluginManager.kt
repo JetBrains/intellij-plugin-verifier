@@ -23,9 +23,6 @@ import kotlin.streams.toList
 
 class FleetPluginManager private constructor(private val extractDirectory: Path) : PluginManager<FleetPlugin> {
   companion object {
-    const val DESCRIPTOR_NAME = "extension.json"
-    const val THIRD_PARTY_LIBRARIES_FILE_NAME = "dependencies.json"
-
     private val LOG: Logger = LoggerFactory.getLogger(FleetPluginManager::class.java)
 
     fun createManager(
@@ -61,9 +58,9 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
   }
 
   private fun loadPluginInfoFromDirectory(pluginDirectory: Path): PluginCreationResult<FleetPlugin> {
-    val descriptorFile = pluginDirectory.resolve(DESCRIPTOR_NAME)
+    val descriptorFile = pluginDirectory.resolve(FleetDescriptorSpec.DESCRIPTOR_FILE_NAME)
     if (!descriptorFile.exists()) {
-      return PluginCreationFail(PluginDescriptorIsNotFound(DESCRIPTOR_NAME))
+      return PluginCreationFail(PluginDescriptorIsNotFound(FleetDescriptorSpec.DESCRIPTOR_FILE_NAME))
     }
     return createPlugin(descriptorFile.readText(), pluginDirectory)
   }
@@ -110,17 +107,23 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
         description = descriptor.meta?.description,
         vendor = descriptor.meta?.vendor,
         humanVisible = descriptor.meta?.humanVisible ?: true,
+        supportedProducts = descriptor.meta?.supportedProducts ?: emptySet(),
         icons = icons,
-        descriptorFileName = DESCRIPTOR_NAME,
+        descriptorFileName = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
         frontendOnly = descriptor.meta?.frontendOnly,
-        thirdPartyDependencies = parseThirdPartyDependenciesByPath(pluginDir.resolve(THIRD_PARTY_LIBRARIES_FILE_NAME)),
+        thirdPartyDependencies = parseThirdPartyDependenciesByPath(
+          pluginDir.resolve(FleetDescriptorSpec.THIRD_PARTY_LIBRARIES_FILE_NAME)
+        ),
         files = files
       )
       return PluginCreationSuccess(plugin, problems)
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      LOG.info("Unable to read plugin descriptor $DESCRIPTOR_NAME", e)
-      return PluginCreationFail(UnableToReadDescriptor(DESCRIPTOR_NAME, "Bad descriptor format. Descriptor text: $serializedDescriptor" + "\n" + e.localizedMessage))
+      LOG.info("Unable to read plugin descriptor ${FleetDescriptorSpec.DESCRIPTOR_FILE_NAME}", e)
+      return PluginCreationFail(UnableToReadDescriptor(
+        descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+        exceptionMessage = "Bad descriptor format. Descriptor text: $serializedDescriptor" + "\n" + e.localizedMessage
+      ))
     }
   }
 
