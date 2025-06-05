@@ -25,4 +25,7 @@ public interface PluginProvider {
      */
     @Nullable
     IdePlugin findPluginByModule(@NotNull String moduleId);
+
+    @NotNull
+    PluginProvision query(@NotNull PluginQuery query);
 }

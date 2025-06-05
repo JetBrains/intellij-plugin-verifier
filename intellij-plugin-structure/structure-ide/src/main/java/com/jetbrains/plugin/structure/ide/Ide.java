@@ -6,6 +6,8 @@ package com.jetbrains.plugin.structure.ide;
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin;
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider;
+import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision;
+import com.jetbrains.plugin.structure.intellij.plugin.PluginQuery;
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +21,8 @@ import java.util.Objects;
  * IDE can be created via {@link IdeManager#createIde(java.nio.file.Path)}.
  */
 public abstract class Ide implements PluginProvider {
+  private final PluginQueryMatcher queryMatcher = new PluginQueryMatcher();
+
   /**
    * Returns the IDE version either from 'build.txt' or specified with {@link IdeManager#createIde(java.nio.file.Path, IdeVersion)}
    *
@@ -76,6 +80,23 @@ public abstract class Ide implements PluginProvider {
       }
     }
     return null;
+  }
+
+  /**
+   * Finds bundled plugin according to specified query.
+   *
+   * @param query plugin search query.
+   * @return a plugin provision class of corresponding type. Never returns {@code null}.
+   */
+  @Override
+  public @NotNull PluginProvision query(@NotNull PluginQuery query) {
+    for (IdePlugin plugin : getBundledPlugins()) {
+      PluginProvision pluginProvision = queryMatcher.matches(plugin, query);
+      if (pluginProvision instanceof PluginProvision.Found) {
+        return pluginProvision;
+      }
+    }
+    return PluginProvision.NotFound.INSTANCE;
   }
 
   /**
