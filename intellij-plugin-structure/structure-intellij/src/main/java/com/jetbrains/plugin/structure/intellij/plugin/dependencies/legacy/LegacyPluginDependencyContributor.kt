@@ -43,7 +43,7 @@ class LegacyPluginDependencyContributor: DependenciesModifier {
 
   private fun IdePlugin.isNonBundled(pluginProvider: PluginProvider): Boolean {
     return pluginId?.let { id ->
-      pluginProvider.findPluginById(id) != null
+      pluginProvider.containsPlugin(id)
     } ?: false
   }
 

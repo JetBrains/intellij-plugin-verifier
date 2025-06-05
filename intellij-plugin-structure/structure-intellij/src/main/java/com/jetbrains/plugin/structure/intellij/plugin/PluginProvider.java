@@ -47,6 +47,13 @@ public interface PluginProvider {
         }
     }
 
-    @NotNull
-    PluginProvision query(@NotNull PluginQuery query);
+    /**
+     * Checks if the plugin provider contains a plugin with a specified identifier.
+     * It is expected that only proper plugin identifiers are used, and not the plugin alias.
+     *
+     * @param pluginId identifier, either from the plugin ID or the plugin name as a fallback
+     */
+    default boolean containsPlugin(@NotNull String pluginId) {
+        return findPluginById(pluginId) != null;
+    }
 }
