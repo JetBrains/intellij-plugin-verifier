@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
 import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
+import com.jetbrains.plugin.structure.intellij.plugin.Module
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.MutableIdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
@@ -42,6 +43,7 @@ data class MockIdePlugin(
   override val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1")
   override val untilBuild: IdeVersion? = null
   override val definedModules: Set<String> = emptySet()
+  override val contentModules: List<Module> = emptyList<Module>()
   override val originalFile: Path? = null
   override val useIdeClassLoader = false
   override val classpath: Classpath = Classpath.EMPTY
