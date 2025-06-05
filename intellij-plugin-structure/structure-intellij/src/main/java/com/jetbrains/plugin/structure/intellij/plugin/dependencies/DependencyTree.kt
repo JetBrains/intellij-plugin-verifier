@@ -10,6 +10,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PassThruDependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
+import com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult.Type.MODULE
+import com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult.Type.PLUGIN
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency.*
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import org.slf4j.Logger
@@ -178,32 +180,20 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
   }
 
   private fun PluginProvider.getPluginOrModule(id: String): Dependency {
-    val plugin = this.findPluginById(id)
-    return if (plugin != null) {
-      if (plugin is IdeModule) {
-        Module(plugin, id)
-      } else {
-        Plugin(plugin)
-      }
-    } else {
-      this.findPluginByModule(id)?.let {
-        Module(it, id)
-      } ?: None
-    }
-  }
-
-  /*
-  private fun PluginProvider.getPluginOrModule(id: String): Dependency {
     return findPluginByIdOrModuleId(id)
-      ?.let {
-        when (it) {
-          is IdeModule -> Module(it, id)
-          else -> Plugin(it)
+      ?.run {
+        when (type) {
+          PLUGIN -> {
+            if (plugin is IdeModule) {
+              Module(plugin, id)
+            } else {
+              Plugin(plugin)
+            }
+          }
+          MODULE -> Module(plugin, id)
         }
       } ?: None
   }
-
-   */
 
   private fun DiGraph<PluginId, Dependency>.toDebugString(
     id: PluginId,
