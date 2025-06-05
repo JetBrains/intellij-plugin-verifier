@@ -54,7 +54,7 @@ public abstract class Ide implements PluginProvider {
   @Override
   final public IdePlugin findPluginById(@NotNull String pluginId) {
     for (IdePlugin plugin : getBundledPlugins()) {
-      String id = plugin.getPluginId() != null ? plugin.getPluginId() : plugin.getPluginName();
+      String id = getId(plugin);
       if (Objects.equals(id, pluginId))
         return plugin;
     }
@@ -76,6 +76,22 @@ public abstract class Ide implements PluginProvider {
       }
     }
     return null;
+  }
+
+  /**
+   * Returns a plugin ID of the specified plugin. It uses the ID of the plugin if it is specified,
+   * or a plugin name if the ID is not specified.
+   *
+   * @param plugin plugin to get the ID of
+   * @return plugin identifier of the specified plugin
+   */
+  @Nullable
+  protected String getId(@NotNull IdePlugin plugin) {
+    String id = plugin.getPluginId();
+    if (id == null) {
+      id = plugin.getPluginName();
+    }
+    return id;
   }
 
   /**
