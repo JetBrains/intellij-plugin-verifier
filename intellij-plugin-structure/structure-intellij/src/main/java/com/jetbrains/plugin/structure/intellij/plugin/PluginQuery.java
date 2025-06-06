@@ -37,6 +37,40 @@ public class PluginQuery {
         return searchContentModuleId;
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Searching for '").append(identifier).append("'");
+        boolean hasField = false;
+        if (searchId) {
+            sb.append(" in plugin ID");
+            hasField = true;
+        }
+        if (searchName) {
+            if (hasField) {
+                sb.append(",");
+            }
+            sb.append(" in plugin name");
+            hasField = true;
+        }
+        if (searchPluginAliases) {
+            if (hasField) {
+                sb.append(",");
+            }
+            sb.append(" in plugin aliases");
+            hasField = true;
+        }
+
+        if (searchContentModuleId()) {
+            if (hasField) {
+                sb.append(",");
+            }
+            sb.append(" in content module identifiers");
+            hasField = true;
+        }
+        return sb.toString();
+    }
+
     public static class Builder {
         private final PluginQuery query = new PluginQuery();
 
