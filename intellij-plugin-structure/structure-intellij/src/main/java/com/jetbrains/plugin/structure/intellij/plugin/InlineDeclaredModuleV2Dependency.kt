@@ -40,8 +40,6 @@ sealed class InlineDeclaredModuleV2Dependency(
   PluginDependency {
   override val isModule = true
 
-  override fun asOptional(): InlineDeclaredModuleV2Dependency = this
-
   data class Plugin(
     private val pluginId: PluginId,
     override var isOptional: Boolean = false,
@@ -51,6 +49,8 @@ sealed class InlineDeclaredModuleV2Dependency(
 
     override fun toString() =
       "dependency on plugin '$id' specified in content module '$dependerContentModuleId' of '$contentModuleOwnerId'"
+
+    override fun asOptional() = copy(isOptional = true)
   }
 
   data class Module(
@@ -62,6 +62,8 @@ sealed class InlineDeclaredModuleV2Dependency(
 
     override fun toString() =
       "dependency on module '$id' specified in content module '$dependerContentModuleId' of '$contentModuleOwnerId'"
+
+    override fun asOptional() = copy(isOptional = true)
   }
 
   companion object {
