@@ -18,8 +18,10 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.classes.resolvers.UNNAMED_RESOLVER
 import com.jetbrains.plugin.structure.classes.resolvers.asResolver
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
+import com.jetbrains.plugin.structure.intellij.plugin.DependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
+import com.jetbrains.plugin.structure.intellij.plugin.PassThruDependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
@@ -27,7 +29,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTre
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.NegativeIdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginId
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
 import java.util.*
 
 /**
@@ -40,12 +41,11 @@ private const val UNKNOWN_DEPENDENCY_ID = "Unknown ID"
 class CachingPluginDependencyResolverProvider(
   pluginProvider: PluginProvider,
   private val secondaryPluginResolverProvider: PluginResolverProvider? = null,
-  ideModulePredicate: IdeModulePredicate = NegativeIdeModulePredicate
+  ideModulePredicate: IdeModulePredicate = NegativeIdeModulePredicate,
+  private val dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier
 ) : PluginResolverProvider {
 
   private val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate)
-
-  private val dependenciesModifier = LegacyPluginDependencyContributor()
 
   private val cache = Caffeine.newBuilder()
     .maximumSize(DEFAULT_CACHE_SIZE)

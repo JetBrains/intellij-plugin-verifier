@@ -151,7 +151,7 @@ class DependencyTreeTest {
     val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, bundledPlugins)
 
     val legacyPlugin = MockIdePlugin(pluginId = "com.example.Legacy")
-    val legacyPluginDependencyContributor = LegacyPluginDependencyContributor()
+    val legacyPluginDependencyContributor = LegacyPluginDependencyContributor(ide)
     val dependencyTree = DependencyTree(ide)
 
     val transitiveDependencies =
@@ -177,7 +177,7 @@ class DependencyTreeTest {
     val somePlugin = MockIdePlugin(pluginId = "com.example.A", dependencies = listOf(dependOnModule(platformPlugin)))
 
     val transitiveDependencies =
-      dependencyTree.getTransitiveDependencies(somePlugin, dependenciesModifier = LegacyPluginDependencyContributor())
+      dependencyTree.getTransitiveDependencies(somePlugin, dependenciesModifier = LegacyPluginDependencyContributor(ide))
     with(transitiveDependencies) {
       assertEquals(1, size)
 

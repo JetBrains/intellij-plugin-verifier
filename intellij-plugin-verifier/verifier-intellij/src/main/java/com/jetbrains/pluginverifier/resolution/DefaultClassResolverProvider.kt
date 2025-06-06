@@ -24,6 +24,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DefaultIdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.NegativeIdeModulePredicate
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
@@ -67,7 +68,8 @@ class DefaultClassResolverProvider(
   } else {
     ideDescriptor.ide
   }.let { pluginProvider ->
-    CachingPluginDependencyResolverProvider(pluginProvider, secondaryResolver, ideModulePredicate)
+    val dependenciesModifier = LegacyPluginDependencyContributor(ideDescriptor.ide)
+    CachingPluginDependencyResolverProvider(pluginProvider, secondaryResolver, ideModulePredicate, dependenciesModifier)
   }
 
   private val bundledPluginClassResolverProvider = BundledPluginClassResolverProvider()

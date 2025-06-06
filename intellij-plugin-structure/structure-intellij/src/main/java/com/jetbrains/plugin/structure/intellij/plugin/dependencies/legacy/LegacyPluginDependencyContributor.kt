@@ -24,18 +24,18 @@ private val JAVA_MODULE_DEPENDENCY = PluginDependencyImpl(JAVA_MODULE_ID, false,
  * If a plugin doesn't declare any dependencies in its `plugin.xml` file, or if it declares dependencies only on
   * other plugins but not modules, it is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
  */
-class LegacyPluginDependencyContributor: DependenciesModifier {
+class LegacyPluginDependencyContributor(private val ide: PluginProvider): DependenciesModifier {
   override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<PluginDependency> {
     if (plugin.pluginId == CORE_IDE_PLUGIN_ID) {
       return plugin.dependencies
     }
-    if (pluginProvider.findPluginByModule(ALL_MODULES_ID) == null) {
+    if (ide.findPluginByModule(ALL_MODULES_ID) == null) {
       return plugin.dependencies
     }
     val isLegacyPlugin = plugin.dependencies.none { it.isModule }
-    val isNonBundledPlugin = plugin.isNonBundled(pluginProvider)
+    val isNonBundledPlugin = plugin.isNonBundled(ide)
     if (isNonBundledPlugin && isLegacyPlugin) {
-      val javaModule = pluginProvider.findPluginByModule(JAVA_MODULE_ID)
+      val javaModule = ide.findPluginByModule(JAVA_MODULE_ID)
       if (javaModule != null) {
         return plugin.dependencies + JAVA_MODULE_DEPENDENCY
       }
