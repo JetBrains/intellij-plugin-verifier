@@ -24,6 +24,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdeModulePredicate
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.NegativeIdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginId
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
 import java.util.*
@@ -35,9 +37,13 @@ private const val DEFAULT_CACHE_SIZE = 1024L
 
 private const val UNKNOWN_DEPENDENCY_ID = "Unknown ID"
 
-class CachingPluginDependencyResolverProvider(pluginProvider: PluginProvider, private val secondaryPluginResolverProvider: PluginResolverProvider? = null) : PluginResolverProvider {
+class CachingPluginDependencyResolverProvider(
+  pluginProvider: PluginProvider,
+  private val secondaryPluginResolverProvider: PluginResolverProvider? = null,
+  ideModulePredicate: IdeModulePredicate = NegativeIdeModulePredicate
+) : PluginResolverProvider {
 
-  private val dependencyTree = DependencyTree(pluginProvider)
+  private val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate)
 
   private val dependenciesModifier = LegacyPluginDependencyContributor()
 

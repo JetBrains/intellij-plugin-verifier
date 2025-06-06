@@ -731,19 +731,6 @@ class DependenciesTest {
 
     val dependencyTree = DependencyTree(ide)
     with(dependencyTree.getTransitiveDependencies(git4Idea)) {
-      assertEquals(31, size)
-
-      data class DependencyEntry(val id: String, val ownerId: String? = null, val transitive: Boolean = false)
-
-      val depEntries = mapNotNull {
-        when (it) {
-          is Dependency.Plugin -> DependencyEntry(it.plugin.id, transitive = it.isTransitive)
-          is Dependency.Module -> DependencyEntry(it.id, it.plugin.id, transitive = it.isTransitive)
-          Dependency.None -> null
-        }
-      }.toSet()
-      assertEquals(31, size)
-
       val expectedDependencies = setOf(
         DependencyEntry(id = "com.jetbrains.performancePlugin"),
         DependencyEntry(id = "com.intellij.modules.lang", ownerId = "com.intellij", transitive = true),
@@ -779,10 +766,12 @@ class DependenciesTest {
         DependencyEntry(id = "com.intellij.properties", transitive = true),
         DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij"),
         DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl"),
-        DependencyEntry(id = "org.jetbrains.plugins.terminal")
+        DependencyEntry(id = "org.jetbrains.plugins.terminal"),
+        // duplicate, because ModuleV2Dependency is actually a plugin.
+        DependencyEntry(id = "com.intellij.modules.json", ownerId = "com.intellij.modules.json", transitive = true)
       )
 
-      assertEquals(expectedDependencies, depEntries)
+      assertSetsEqual(expectedDependencies, toDependencyEntries())
     }
 
     val expectedDebugString = """
@@ -817,7 +806,7 @@ class DependenciesTest {
                       * Plugin dependency: 'com.intellij.modules.json'
                       * Plugin dependency: 'org.jetbrains.plugins.yaml'
                         * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
-                        * Plugin dependency: 'com.intellij.modules.json' (already visited)
+                        * Module 'com.intellij.modules.json' provided by plugin 'com.intellij.modules.json' (already visited)
                       * Plugin dependency: 'org.toml.lang'
                         * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
                         * Plugin dependency: 'com.intellij.modules.json' (already visited)
@@ -845,7 +834,7 @@ class DependenciesTest {
       * Module 'intellij.platform.collaborationTools' provided by plugin 'com.intellij' (already visited)
       * Module 'com.intellij.modules.vcs' provided by plugin 'intellij.platform.vcs.impl' (already visited)
       * Plugin dependency: 'org.jetbrains.plugins.terminal' (already visited)
-      
+
     """.trimIndent()
 
     assertEquals(expectedDebugString, dependencyTree.toDebugString(git4Idea.pluginId!!).toString())
@@ -868,10 +857,7 @@ class DependenciesTest {
 
     val dependencyTree = DependencyTree(ide)
     with(dependencyTree.getTransitiveDependencies(coveragePlugin)) {
-      assertEquals(31, size)
-      assertEquals(31, expectedCoveragePluginDependencies.size)
-
-      expectedCoveragePluginDependencies.forEach(::assertContains)
+      assertSetsEqual(expectedCoveragePluginDependencies, toDependencyEntries())
     }
   }
 
@@ -1045,19 +1031,19 @@ class DependenciesTest {
 
     with(pluginProvider.pluginSearchLog) {
       assertEquals(1, size)
-      assertEquals(LogEntry("intellij.platform.vcs.impl", plugin, "module"), this[0])
+      assertEquals(LogEntry("intellij.platform.vcs.impl", plugin, "found via content module ID"), this[0])
     }
   }
 
   @Test
-  fun `plugin depends on a plugin alias in another plugin`() {
-    val plugin = buildPlugin {
+  fun `plugin depends on an IDE module`() {
+    val ideModule = buildPlugin {
       dir("META-INF") {
         file("plugin.xml") {
           """
             <idea-plugin>
               $HEADER
-              <module value="intellij.platform.vcs.impl" />
+              <module value="intellij.java.terminal" />
             </idea-plugin>
           """
         }
@@ -1074,8 +1060,103 @@ class DependenciesTest {
               <vendor email="vendor.com" url="url">vendor</vendor>
               <description>this description is looooooooooong enough</description>
               <idea-version since-build="131.1"/>
-              <!-- depends on a content module -->                            
-              <depends>intellij.platform.vcs.impl</depends>
+              <!-- depends on a plugin alias -->                            
+              <depends>intellij.java.terminal</depends>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    val ideModulePredicate = DefaultIdeModulePredicate(setOf("intellij.java.terminal"))
+    val pluginProvider = EventLogSinglePluginProvider(ideModule)
+
+    val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate)
+    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
+      assertEquals(1, size)
+      assertEquals(Dependency.Module(ideModule, "intellij.java.terminal"), single())
+    }
+
+    with(pluginProvider.pluginSearchLog) {
+      assertEquals(1, size)
+      assertEquals(LogEntry("intellij.java.terminal", ideModule, "found via plugin alias"), this[0])
+    }
+  }
+
+  @Test
+  fun `plugin depends on a plugin alias in another plugin`() {
+    val ideModule = buildPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <module value="intellij.java.terminal" />
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    val dependantPlugin = buildPlugin("dependant-plugin.jar") {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              <id>dependantPlugin</id>
+              <name>Dependant</name>
+              <version>someVersion</version>
+              <vendor email="vendor.com" url="url">vendor</vendor>
+              <description>this description is looooooooooong enough</description>
+              <idea-version since-build="131.1"/>
+              <!-- depends on a plugin alias -->                            
+              <depends>intellij.java.terminal</depends>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    val pluginProvider = EventLogSinglePluginProvider(ideModule)
+
+    val dependencyTree = DependencyTree(pluginProvider)
+    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
+      assertEquals(1, size)
+      assertEquals(Dependency.Plugin(ideModule), single())
+    }
+
+    with(pluginProvider.pluginSearchLog) {
+      assertEquals(1, size)
+      assertEquals(LogEntry("intellij.java.terminal", ideModule, "found via plugin alias"), this[0])
+    }
+  }
+
+  @Test
+  fun `plugin depends via v1 on an IDE module`() {
+    val plugin = buildPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <module value="com.intellij.modules.java" />
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    val dependantPlugin = buildPlugin("dependant-plugin.jar") {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              <id>dependantPlugin</id>
+              <name>Dependant</name>
+              <version>someVersion</version>
+              <vendor email="vendor.com" url="url">vendor</vendor>
+              <description>this description is looooooooooong enough</description>
+              <idea-version since-build="131.1"/>
+              <!-- depends on an IDE module -->                            
+              <depends>com.intellij.modules.java</depends>
             </idea-plugin>
           """
         }
@@ -1087,16 +1168,52 @@ class DependenciesTest {
     val dependencyTree = DependencyTree(pluginProvider)
     with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
       assertEquals(1, size)
-      assertEquals(Dependency.Module(plugin, "intellij.platform.vcs.impl"), single())
+      assertEquals(Dependency.Module(plugin, "com.intellij.modules.java"), single())
     }
 
     with(pluginProvider.pluginSearchLog) {
       assertEquals(1, size)
-      assertEquals(LogEntry("intellij.platform.vcs.impl", plugin, "module"), this[0])
+      assertEquals(LogEntry("com.intellij.modules.java", plugin, "found via plugin alias"), this[0])
     }
   }
 
-  private val expectedCoveragePluginDependencies = listOf(
+  private val expectedCoveragePluginDependencies = setOf(
+    DependencyEntry(id = "Git4Idea", transitive = true),
+    DependencyEntry(id = "JUnit", transitive = false),
+    DependencyEntry(id = "TestNG-J", transitive = false),
+    DependencyEntry(id = "XPathView", transitive = true),
+    DependencyEntry(id = "com.intellij.copyright", transitive = true),
+    DependencyEntry(id = "com.intellij.java", transitive = false),
+    DependencyEntry(id = "com.intellij.java", transitive = true),
+    DependencyEntry(id = "com.intellij.modules.java", ownerId = "com.intellij.java", transitive = true),
+    DependencyEntry(id = "com.intellij.modules.json", ownerId = "com.intellij.modules.json", transitive = true),
+    // duplicate, because ModuleV2Dependency is actually a plugin.
+    DependencyEntry(id = "com.intellij.modules.json", ownerId = null, transitive = true),
+    DependencyEntry(id = "com.intellij.modules.lang", ownerId = "com.intellij", transitive = true),
+    DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl", transitive = true),
+    DependencyEntry(id = "com.intellij.modules.xml", ownerId = "com.intellij", transitive = true),
+    DependencyEntry(id = "com.intellij.platform.images", transitive = true),
+    DependencyEntry(id = "com.intellij.properties", transitive = true),
+    DependencyEntry(id = "com.jetbrains.performancePlugin", transitive = true),
+    DependencyEntry(id = "com.jetbrains.sh", transitive = true),
+    DependencyEntry(id = "intellij.java.featuresTrainer", ownerId = "intellij.java.featuresTrainer", transitive = true),
+    DependencyEntry(id = "intellij.performanceTesting.vcs", ownerId = "com.jetbrains.performancePlugin", transitive = true),
+    DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij", transitive = true),
+    DependencyEntry(id = "intellij.platform.coverage", ownerId = "com.intellij", transitive = false),
+    DependencyEntry(id = "intellij.platform.lvcs.impl", ownerId = "com.intellij", transitive = true),
+    DependencyEntry(id = "intellij.platform.vcs.impl", ownerId = "com.intellij", transitive = true),
+    DependencyEntry(id = "kotlin.features-trainer", ownerId = "kotlin.features-trainer", transitive = true),
+    DependencyEntry(id = "org.intellij.intelliLang", transitive = true),
+    DependencyEntry(id = "org.intellij.plugins.markdown", transitive = true),
+    DependencyEntry(id = "org.jetbrains.kotlin", transitive = true),
+    DependencyEntry(id = "org.jetbrains.plugins.terminal", transitive = true),
+    DependencyEntry(id = "org.jetbrains.plugins.yaml", transitive = true),
+    DependencyEntry(id = "org.toml.lang", transitive = true),
+    DependencyEntry(id = "tanvd.grazi", transitive = true),
+    DependencyEntry(id = "training", transitive = true),
+  )
+
+  private val expectedCoveragePluginDependencyIdentifiers = listOf(
     "Git4Idea",
     "JUnit",
     "TestNG-J",
@@ -1138,9 +1255,38 @@ class DependenciesTest {
     }
     return (pluginCreationResult as PluginCreationSuccess).plugin
   }
+
+  private fun Collection<Dependency>.toDependencyEntries(): Set<DependencyEntry> {
+    return mapNotNull {
+      when (it) {
+        is Dependency.Plugin -> DependencyEntry(it.plugin.id, transitive = it.isTransitive)
+        is Dependency.Module -> DependencyEntry(it.id, it.plugin.id, transitive = it.isTransitive)
+        Dependency.None -> null
+      }
+    }.toSet()
+  }
 }
 
+private data class DependencyEntry(val id: String, val ownerId: String? = null, val transitive: Boolean = false)
 
 private fun Set<Dependency>.assertContains(id: String): Boolean =
   filterIsInstance<PluginAware>()
     .any { it.plugin.pluginId == id }
+
+fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>) {
+  val missing = expected - actual
+  val extra = actual - expected
+
+  if (missing.isNotEmpty() || extra.isNotEmpty()) {
+    val message = buildString {
+      appendLine("Sets are not equal.")
+      if (missing.isNotEmpty()) {
+        appendLine("Missing elements: $missing")
+      }
+      if (extra.isNotEmpty()) {
+        appendLine("Extra elements: $extra")
+      }
+    }
+    fail(message)
+  }
+}

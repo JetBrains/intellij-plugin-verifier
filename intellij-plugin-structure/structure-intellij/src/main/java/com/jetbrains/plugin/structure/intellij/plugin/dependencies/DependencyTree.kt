@@ -12,6 +12,9 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult.Type.MODULE
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult.Type.PLUGIN
+import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision
+import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision.Source.CONTENT_MODULE_ID
+import com.jetbrains.plugin.structure.intellij.plugin.PluginQuery
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency.*
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import org.slf4j.Logger
@@ -26,14 +29,18 @@ typealias MissingDependencyListener = (IdePlugin, PluginDependency) -> Unit
 
 private val EMPTY_MISSING_DEPENDENCY_LISTENER: MissingDependencyListener = { _, _ -> }
 
-class DependencyTree(private val pluginProvider: PluginProvider) {
+class DependencyTree(private val pluginProvider: PluginProvider, private val ideModulePredicate: IdeModulePredicate = NegativeIdeModulePredicate) {
 
-  fun getDependencyTreeResolution(plugin: IdePlugin, dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier): DependencyTreeResolution {
+  fun getDependencyTreeResolution(
+    plugin: IdePlugin,
+    dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier
+  ): DependencyTreeResolution {
     requireNotNull(plugin.pluginId) { missingId(plugin) }
     val missingDependencies = mutableMapOf<IdePlugin, Set<PluginDependency>>()
-    val missingDependencyListener: MissingDependencyListener = { idePlugin: IdePlugin, missingDependency: PluginDependency ->
-      missingDependencies.merge(idePlugin, setOf(missingDependency), Set<PluginDependency>::plus)
-    }
+    val missingDependencyListener: MissingDependencyListener =
+      { idePlugin: IdePlugin, missingDependency: PluginDependency ->
+        missingDependencies.merge(idePlugin, setOf(missingDependency), Set<PluginDependency>::plus)
+      }
 
     val dependencyResolutionContext = ResolutionContext(missingDependencyListener, dependenciesModifier)
     val dependencyGraph = getDependencyGraph(plugin, dependencyResolutionContext)
@@ -106,7 +113,7 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
           } else if (graph.contains(pluginId, hasId(dep))) {
             debugLog(nestedIndent, i + 1, "Resolved cached dependency '{}'", dep.id)
           } else {
-            when (val dependencyPlugin = pluginProvider.getPluginOrModule(dep.id)) {
+            when (val dependencyPlugin = resolve(dep)) {
               is Module,
               is Plugin -> {
                 if (dependencyPlugin is PluginAware && !dependencyPlugin.matches(pluginId)) {
@@ -114,6 +121,7 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
                   getDependencyGraph(dependencyPlugin.plugin, graph, resolutionDepth + 1, i, dependencyIndex, context)
                 }
               }
+
               is None -> {
                 context.notifyMissingDependency(plugin, dep)
                 debugLog(
@@ -128,6 +136,28 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
         }
       }
     }
+
+  private fun resolve(dependency: PluginDependency): Dependency {
+    return with(dependency) {
+      if (isModule) {
+        resolveModule(id)?.let { provision ->
+          //FIXME some plugins, like JSON, have ID 'com.intellij.modules.json' and they are declared as plugins
+          Module(provision.plugin, id)
+        }
+      } else {
+        resolvePlugin(id)?.let { provision ->
+          val plugin = provision.plugin
+          if (ideModulePredicate.matches(id, plugin)) {
+            Module(plugin, id)
+          } else if (provision.source == CONTENT_MODULE_ID) {
+            Module(plugin, id)
+          } else {
+            Plugin(plugin)
+          }
+        }
+      } ?: None
+    }
+  }
 
   private fun getNestedDependencyIndent(indent: String, dependencyNumber: String): String {
     val additionalIndent = " ".repeat(max(dependencyNumber.length, DEPENDENCY_INDEX_MAX_WIDTH))
@@ -179,6 +209,29 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     }
   }
 
+  private fun resolvePlugin(pluginId: PluginId): PluginProvision.Found? {
+    return PluginQuery.Builder.of(pluginId)
+      .inId()
+      .inName()
+      .inPluginAliases()
+      .inContentModuleId()
+      .build()
+      .let {
+        pluginProvider.query(it)
+      } as? PluginProvision.Found
+  }
+
+  private fun resolveModule(moduleId: String): PluginProvision.Found? {
+    return PluginQuery.Builder.of(moduleId)
+      .inId()
+      .inName()
+      .inPluginAliases()
+      .build()
+      .let {
+        pluginProvider.query(it)
+      } as? PluginProvision.Found
+  }
+
   private fun PluginProvider.getPluginOrModule(id: String): Dependency {
     return findPluginByIdOrModuleId(id)
       ?.run {
@@ -190,6 +243,7 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
               Plugin(plugin)
             }
           }
+
           MODULE -> Module(plugin, id)
         }
       } ?: None

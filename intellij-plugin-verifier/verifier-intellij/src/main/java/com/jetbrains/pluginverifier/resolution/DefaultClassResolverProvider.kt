@@ -17,14 +17,19 @@ import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependen
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClassesFinder
+import com.jetbrains.plugin.structure.intellij.plugin.CompositePluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.LegacyPluginAnalysis
 import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DefaultIdeModulePredicate
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdeModulePredicate
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.NegativeIdeModulePredicate
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphProvider
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinderPluginProvider
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyOrigin.Bundled
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginDetails
@@ -47,7 +52,23 @@ class DefaultClassResolverProvider(
 
   private val secondaryResolver = ideDescriptor.ideResolver as? ProductInfoClassResolver
 
-  private val pluginResolverProvider = CachingPluginDependencyResolverProvider(ideDescriptor.ide, secondaryResolver)
+  private val ideModulePredicate: IdeModulePredicate = if (ideDescriptor.isProductInfoBased()) {
+    val moduleIdentifiers = (ideDescriptor.ide as ProductInfoAware).productInfo.modules.toSet()
+    DefaultIdeModulePredicate(moduleIdentifiers)
+  } else {
+    NegativeIdeModulePredicate
+  }
+
+  private val pluginResolverProvider = if (downloadUnavailableBundledPlugins) {
+    CompositePluginProvider.of(
+      ideDescriptor.ide,
+      DependencyFinderPluginProvider(dependencyFinder, ideDescriptor.ide)
+    )
+  } else {
+    ideDescriptor.ide
+  }.let { pluginProvider ->
+    CachingPluginDependencyResolverProvider(pluginProvider, secondaryResolver, ideModulePredicate)
+  }
 
   private val bundledPluginClassResolverProvider = BundledPluginClassResolverProvider()
 
@@ -68,8 +89,7 @@ class DefaultClassResolverProvider(
       allResolvers += ideResolver
 
       val dependenciesGraph: DependenciesGraph
-      if (downloadUnavailableBundledPlugins
-        || !ideDescriptor.isProductInfoBased()
+      if (!ideDescriptor.isProductInfoBased()
         || legacyPluginAnalysis.isLegacyPlugin(checkedPluginDetails.idePlugin)
         || ideResolver !is DependencyTreeAwareResolver
         ) {
