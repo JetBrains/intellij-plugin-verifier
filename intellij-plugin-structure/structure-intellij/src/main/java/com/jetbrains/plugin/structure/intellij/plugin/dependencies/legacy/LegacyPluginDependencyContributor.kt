@@ -34,7 +34,7 @@ class LegacyPluginDependencyContributor: DependenciesModifier {
     }
     val isLegacyPlugin = plugin.dependencies.none { it.isModule }
     val isNonBundledPlugin = plugin.isNonBundled(pluginProvider)
-    if (isNonBundledPlugin || isLegacyPlugin) {
+    if (isNonBundledPlugin && isLegacyPlugin) {
       val javaModule = pluginProvider.findPluginByModule(JAVA_MODULE_ID)
       if (javaModule != null) {
         return plugin.dependencies + JAVA_MODULE_DEPENDENCY
@@ -45,7 +45,7 @@ class LegacyPluginDependencyContributor: DependenciesModifier {
 
   private fun IdePlugin.isNonBundled(pluginProvider: PluginProvider): Boolean {
     return pluginId?.let { id ->
-      pluginProvider.containsPlugin(id)
+      !pluginProvider.containsPlugin(id)
     } ?: false
   }
 }
