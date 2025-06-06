@@ -48,7 +48,7 @@ sealed class InlineDeclaredModuleV2Dependency(
   ) : InlineDeclaredModuleV2Dependency(pluginId, isOptional, contentModuleOwnerId, dependerContentModuleId) {
 
     override fun toString() =
-      "dependency on plugin '$id' specified in content module '$dependerContentModuleId' of '$contentModuleOwnerId'"
+      "dependency on plugin '$id' declared in content module '$dependerContentModuleId' of '$contentModuleOwnerId'"
 
     override fun asOptional() = copy(isOptional = true)
   }
@@ -61,7 +61,7 @@ sealed class InlineDeclaredModuleV2Dependency(
   ) : InlineDeclaredModuleV2Dependency(moduleId, isOptional, contentModuleOwnerId, dependerContentModuleId) {
 
     override fun toString() =
-      "dependency on module '$id' specified in content module '$dependerContentModuleId' of '$contentModuleOwnerId'"
+      "dependency on module '$id' declared in content module '$dependerContentModuleId' of '$contentModuleOwnerId'"
 
     override fun asOptional() = copy(isOptional = true)
   }

@@ -42,7 +42,7 @@ class InlineDeclaredModuleV2DependencyTest {
       assertTrue(isOptional)
       assertEquals(tomlPlugin.pluginId, contentModuleOwnerId)
       assertEquals("intellij.toml.json", dependerContentModuleId)
-      assertEquals("dependency on plugin 'com.intellij.modules.json' specified in content module 'intellij.toml.json' of 'org.toml.lang'", toString())
+      assertEquals("dependency on plugin 'com.intellij.modules.json' declared in content module 'intellij.toml.json' of 'org.toml.lang'", toString())
     }
   }
 
@@ -71,7 +71,7 @@ class InlineDeclaredModuleV2DependencyTest {
       assertTrue(isOptional)
       assertEquals(thymeleafPlugin.pluginId, contentModuleOwnerId)
       assertEquals("intellij.thymeleaf/spring-el", dependerContentModuleId)
-      assertEquals("dependency on module 'intellij.spring.el' specified in content module 'intellij.thymeleaf/spring-el' of 'com.intellij.thymeleaf'", toString())
+      assertEquals("dependency on module 'intellij.spring.el' declared in content module 'intellij.thymeleaf/spring-el' of 'com.intellij.thymeleaf'", toString())
     }
   }
 }
