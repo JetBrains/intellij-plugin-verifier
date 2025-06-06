@@ -19,12 +19,12 @@ package com.jetbrains.plugin.structure.intellij.plugin
  *           <plugin id="com.intellij.modules.json" />
  * ```
  * This declares `id` of `com.intellij.modules.json` in the content module owner `org.toml.lang`.
- * The _depender content module ID is `com.intellij.modules.json`.
+ * The _depender content module ID_ is `com.intellij.modules.json`.
  *
  *
  * @param id the ID of the dependency declared in the content module CDATA declaration
  * @param isOptional whether the dependency is optional
- * @param contentModuleOwnerId the ID of the owner of the content model. Usually taken from the `plugin.xml`, from `<id>`.
+ * @param contentModuleOwnerId the identifier of the content model’s owner, typically taken from the `<id>` element in plugin.xml.
  * @param dependerContentModuleId the ID of the content module that declares this dependency, taken from the
  *        `name` attribute of `<module>` element
  */
