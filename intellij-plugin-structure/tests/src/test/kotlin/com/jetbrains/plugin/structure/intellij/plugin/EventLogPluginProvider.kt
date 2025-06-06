@@ -4,7 +4,11 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.jetbrains.plugin.structure.ide.PluginQueryMatcher
+
 class EventLogSinglePluginProvider(private val plugin: IdePlugin) : PluginProvider {
+  private val pluginQueryMatcher = PluginQueryMatcher()
+
   private val _pluginSearchLog = mutableListOf<LogEntry>()
   val pluginSearchLog: List<LogEntry> = _pluginSearchLog
 
@@ -27,6 +31,8 @@ class EventLogSinglePluginProvider(private val plugin: IdePlugin) : PluginProvid
       null
     }
   }
+
+  override fun query(query: PluginQuery): PluginProvision = pluginQueryMatcher.matches(plugin, query)
 
   fun clear() {
     _pluginSearchLog.clear()

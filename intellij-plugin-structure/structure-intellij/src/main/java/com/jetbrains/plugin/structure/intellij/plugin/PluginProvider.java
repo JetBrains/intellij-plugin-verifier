@@ -7,6 +7,9 @@ package com.jetbrains.plugin.structure.intellij.plugin;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult.Type.MODULE;
+import static com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult.Type.PLUGIN;
+
 public interface PluginProvider {
     /**
      * Finds a plugin with specified plugin ID.
@@ -56,4 +59,13 @@ public interface PluginProvider {
     default boolean containsPlugin(@NotNull String pluginId) {
         return findPluginById(pluginId) != null;
     }
+
+    /**
+     * Finds a plugin according to a specified query.
+     *
+     * @param query plugin search query.
+     * @return a plugin provision class of a corresponding type. Never returns {@code null}.
+     */
+    @NotNull
+    PluginProvision query(@NotNull PluginQuery query);
 }

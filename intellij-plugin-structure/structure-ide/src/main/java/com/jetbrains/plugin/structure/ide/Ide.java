@@ -4,10 +4,7 @@
 
 package com.jetbrains.plugin.structure.ide;
 
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin;
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider;
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision;
-import com.jetbrains.plugin.structure.intellij.plugin.PluginQuery;
+import com.jetbrains.plugin.structure.intellij.plugin.*;
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,10 +102,10 @@ public abstract class Ide implements PluginProvider {
   }
 
   /**
-   * Finds bundled plugin according to specified query.
+   * Finds bundled plugin according to a specified query.
    *
    * @param query plugin search query.
-   * @return a plugin provision class of corresponding type. Never returns {@code null}.
+   * @return a plugin provision class of a corresponding type. Never returns {@code null}.
    */
   @Override
   public @NotNull PluginProvision query(@NotNull PluginQuery query) {
