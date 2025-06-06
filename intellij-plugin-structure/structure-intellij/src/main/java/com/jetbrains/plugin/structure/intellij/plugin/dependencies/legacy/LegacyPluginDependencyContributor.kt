@@ -16,6 +16,8 @@ private const val ALL_MODULES_ID = "com.intellij.modules.all"
 private const val JAVA_MODULE_ID = "com.intellij.modules.java"
 private const val UNKNOWN_PLUGIN_ID = "Unknown Plugin"
 
+private val JAVA_MODULE_DEPENDENCY = PluginDependencyImpl(JAVA_MODULE_ID, false, true)
+
 /**
  * Contributes a _Java Module_ as a dependency to legacy plugin.
  *
@@ -35,7 +37,7 @@ class LegacyPluginDependencyContributor: DependenciesModifier {
     if (isNonBundledPlugin || isLegacyPlugin) {
       val javaModule = pluginProvider.findPluginByModule(JAVA_MODULE_ID)
       if (javaModule != null) {
-        return plugin.dependencies + javaModule.asDependency()
+        return plugin.dependencies + JAVA_MODULE_DEPENDENCY
       }
     }
     return plugin.dependencies
@@ -46,13 +48,4 @@ class LegacyPluginDependencyContributor: DependenciesModifier {
       pluginProvider.containsPlugin(id)
     } ?: false
   }
-
-  private fun IdePlugin.asDependency(): PluginDependency {
-    return PluginDependencyImpl(id, false, true)
-  }
-
-  private val IdePlugin.id: String
-    get() {
-      return pluginId ?: pluginName ?: UNKNOWN_PLUGIN_ID
-    }
 }
