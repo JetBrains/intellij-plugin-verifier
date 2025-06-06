@@ -127,7 +127,7 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
                 debugLog(
                   nestedIndent,
                   numericIndex = i + 1,
-                  "Skipping dependency '{}' as it is not available in the IDE.",
+                  "Skipping dependency '{}' as it is not available",
                   dep.id
                 )
               }
