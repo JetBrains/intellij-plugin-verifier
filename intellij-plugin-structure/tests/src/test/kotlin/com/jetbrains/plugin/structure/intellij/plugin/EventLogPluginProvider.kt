@@ -32,10 +32,21 @@ class EventLogSinglePluginProvider(private val plugin: IdePlugin) : PluginProvid
     }
   }
 
-  override fun query(query: PluginQuery): PluginProvision = pluginQueryMatcher.matches(plugin, query)
+  override fun query(query: PluginQuery): PluginProvision {
+    return pluginQueryMatcher.matches(plugin, query).also {
+      _pluginSearchLog += LogEntry(query.identifier, plugin, it.toReason())
+    }
+  }
 
   fun clear() {
     _pluginSearchLog.clear()
+  }
+
+  private fun PluginProvision.toReason(): String {
+    return when (this) {
+      is PluginProvision.Found -> "found via $source"
+      PluginProvision.NotFound -> "not found"
+    }
   }
 
   data class LogEntry(val pluginId: String, val plugin: IdePlugin?, val reason: String)
