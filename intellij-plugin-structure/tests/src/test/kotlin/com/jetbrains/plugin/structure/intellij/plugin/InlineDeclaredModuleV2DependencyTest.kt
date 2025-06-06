@@ -31,7 +31,7 @@ class InlineDeclaredModuleV2DependencyTest {
 
     val moduleLoadingRule = ModuleLoadingRule.OPTIONAL
 
-    val dependency = InlineDeclaredModuleV2Dependency.of("com.intellij.modules.json",
+    val dependency = InlineDeclaredModuleV2Dependency.onPlugin("com.intellij.modules.json",
       moduleLoadingRule,
       contentModuleOwner = tomlPlugin,
       contentModuleReference = Module.InlineModule("intellij.toml.json",
@@ -42,7 +42,36 @@ class InlineDeclaredModuleV2DependencyTest {
       assertTrue(isOptional)
       assertEquals(tomlPlugin.pluginId, contentModuleOwnerId)
       assertEquals("intellij.toml.json", dependerContentModuleId)
-      assertEquals("com.intellij.modules.json (module, v2, specified in content module 'intellij.toml.json' of '${tomlPlugin.pluginId}')", toString())
+      assertEquals("dependency on plugin 'com.intellij.modules.json' specified in content module 'intellij.toml.json' of 'org.toml.lang'", toString())
+    }
+  }
+
+
+  @Test
+  fun `create inline dependency on a module`() {
+    val thymeleafPlugin = MockIdePlugin(pluginId = "com.intellij.thymeleaf")
+    val contentModuleContent = """
+      <idea-plugin package="com.intellij.thymeleaf.spring">
+        <dependencies>
+          <module name="intellij.spring.el" />
+        </dependencies>
+      </idea-plugin>              
+      """.trimIndent()
+
+    val moduleLoadingRule = ModuleLoadingRule.OPTIONAL
+
+    val dependency = InlineDeclaredModuleV2Dependency.onModule("intellij.spring.el",
+      moduleLoadingRule,
+      contentModuleOwner = thymeleafPlugin,
+      contentModuleReference = Module.InlineModule("intellij.thymeleaf/spring-el",
+        moduleLoadingRule, contentModuleContent)
+    )
+    with(dependency) {
+      assertEquals("intellij.spring.el", id)
+      assertTrue(isOptional)
+      assertEquals(thymeleafPlugin.pluginId, contentModuleOwnerId)
+      assertEquals("intellij.thymeleaf/spring-el", dependerContentModuleId)
+      assertEquals("dependency on module 'intellij.spring.el' specified in content module 'intellij.thymeleaf/spring-el' of 'com.intellij.thymeleaf'", toString())
     }
   }
 }
