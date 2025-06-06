@@ -151,4 +151,9 @@ public abstract class Ide implements PluginProvider {
   protected String getPluginId(IdePlugin plugin) {
     return plugin.getPluginId() != null ? plugin.getPluginId() : plugin.getPluginName();
   }
+
+  @Override
+  public String getPresentableName() {
+    return getVersion().asString();
+  }
 }

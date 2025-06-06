@@ -68,4 +68,13 @@ public interface PluginProvider {
      */
     @NotNull
     PluginProvision query(@NotNull PluginQuery query);
+
+    /**
+     * Return a human-readable name of the provider.
+     * By default, the {@link Object#toString()} is returned.
+     * @return human-readable name of the provider.
+     */
+    default String getPresentableName() {
+        return toString();
+    }
 }

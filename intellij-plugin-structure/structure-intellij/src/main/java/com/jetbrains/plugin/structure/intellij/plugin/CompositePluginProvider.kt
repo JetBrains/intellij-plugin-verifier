@@ -22,9 +22,9 @@ class CompositePluginProvider(private val pluginProviders: Collection<PluginProv
 
   private inline fun firstNotNullOfOrNull(id: String, transform: (PluginProvider) -> IdePlugin?): IdePlugin? {
     for (provider in pluginProviders) {
-      LOG.debug("Searching for plugin or module '{}' in '{}'", id, provider)
+      LOG.debug("Searching for plugin or module '{}' in '{}'", id, provider.presentableName)
       transform(provider)?.let { return it.also {
-        LOG.debug("Found plugin or module '{}' in '{}'", id, provider)
+        LOG.debug("Found plugin or module '{}' in '{}'", id, provider.presentableName)
       }}
     }
     return null
