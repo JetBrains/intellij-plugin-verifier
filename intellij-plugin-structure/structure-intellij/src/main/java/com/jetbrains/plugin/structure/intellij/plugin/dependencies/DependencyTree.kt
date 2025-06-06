@@ -79,7 +79,8 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
 
   private fun getDependencyGraph(plugin: IdePlugin, context: ResolutionContext): DiGraph<PluginId, Dependency> {
     val graph = DiGraph<PluginId, Dependency>()
-    getDependencyGraph(plugin, graph, resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1, context)
+    val missingDependencies = MissingDependencies()
+    getDependencyGraph(plugin, graph, resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1, missingDependencies, context)
     return graph
   }
 
@@ -89,6 +90,7 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     resolutionDepth: Int,
     dependencyIndex: Int,
     parentDependencyIndex: Int,
+    missingDependencies: MissingDependencies,
     context: ResolutionContext
   ): Unit =
     with(plugin) {
@@ -112,18 +114,21 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
             debugLog(nestedIndent, i + 1, "Ignoring '{}'", dep)
           } else if (graph.contains(pluginId, hasId(dep))) {
             debugLog(nestedIndent, i + 1, "Resolved cached dependency '{}'", dep.id)
+          } else if (dep in missingDependencies) {
+            debugLog(nestedIndent, i + 1, "Skipping dependency '{}' as it is already marked missing", dep.id)
           } else {
             when (val dependencyPlugin = resolve(dep)) {
               is Module,
               is Plugin -> {
                 if (dependencyPlugin is PluginAware && !dependencyPlugin.matches(pluginId)) {
                   graph.addEdge(pluginId, dependencyPlugin)
-                  getDependencyGraph(dependencyPlugin.plugin, graph, resolutionDepth + 1, i, dependencyIndex, context)
+                  getDependencyGraph(dependencyPlugin.plugin, graph, resolutionDepth + 1, i, dependencyIndex, missingDependencies, context)
                 }
               }
 
               is None -> {
                 context.notifyMissingDependency(plugin, dep)
+                missingDependencies += dep
                 debugLog(
                   nestedIndent,
                   numericIndex = i + 1,
@@ -328,6 +333,18 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
 
     internal fun forEachAdjacency(action: (I, List<O>) -> Unit) {
       adjacency.forEach(action)
+    }
+  }
+
+  internal class MissingDependencies {
+    private val _missingDependencies = mutableListOf<PluginDependency>()
+
+    operator fun plusAssign(dependency: PluginDependency) {
+      _missingDependencies += dependency
+    }
+
+    operator fun contains(dependency: PluginDependency): Boolean {
+      return dependency in _missingDependencies
     }
   }
 

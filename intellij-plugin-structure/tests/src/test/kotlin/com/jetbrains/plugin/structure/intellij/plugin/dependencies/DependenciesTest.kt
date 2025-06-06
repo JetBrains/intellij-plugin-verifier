@@ -12,6 +12,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.EventLogSinglePluginProvid
 import com.jetbrains.plugin.structure.intellij.plugin.EventLogSinglePluginProvider.LogEntry
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.mocks.modify
+import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -1174,6 +1176,54 @@ class DependenciesTest {
     with(pluginProvider.pluginSearchLog) {
       assertEquals(1, size)
       assertEquals(LogEntry("com.intellij.modules.java", plugin, "found via plugin alias"), this[0])
+    }
+  }
+
+  @Test
+  fun `dependency tree uses a missing dependency in multiple places`() {
+    val plugin = buildPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <module value="com.intellij.modules.java" />
+              <depends>nonexistent.plugin</depends>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    val dependantPlugin = buildPlugin("dependant-plugin.jar") {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            id = "<id>dependantPlugin</id>"
+            name = "<name>Dependant</name>"
+            depends = "<depends>com.intellij.modules.java</depends>" +
+                      "<depends>nonexistent.plugin</depends>"
+          }
+        }
+      }
+    }
+    val pluginProvider = EventLogSinglePluginProvider(plugin)
+
+    val dependencyTree = DependencyTree(pluginProvider)
+    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
+      assertEquals(1, size)
+      assertEquals(Dependency.Module(plugin, "com.intellij.modules.java"), single())
+    }
+
+    with(pluginProvider.pluginSearchLog) {
+      assertEquals(2, size)
+      with(this[0]) {
+        assertEquals("com.intellij.modules.java", pluginId)
+        assertEquals("found via plugin alias", reason)
+      }
+      with(this[1]) {
+        assertEquals("nonexistent.plugin", pluginId)
+        assertEquals("not found", reason)
+      }
     }
   }
 
