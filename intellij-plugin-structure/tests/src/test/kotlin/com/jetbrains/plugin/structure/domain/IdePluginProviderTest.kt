@@ -22,6 +22,7 @@ import org.junit.rules.TemporaryFolder
 private const val JAVA_PLUGIN_ID = "com.intellij.java"
 private const val JAVA_PLUGIN_NAME = "Java"
 private const val MODULE_ALIAS = "com.intellij.modules.java"
+private const val STRUCTURAL_SEARCH_CONTENT_MODULE_ID = "intellij.java.structuralSearch"
 
 class IdePluginProviderTest {
   @Rule
@@ -59,7 +60,15 @@ class IdePluginProviderTest {
                     id = "<id>$JAVA_PLUGIN_ID</id>"
                     name = "<name>$JAVA_PLUGIN_NAME</name>"
                     vendor = "<vendor>JetBrains</vendor>"
-                    modules = listOf(MODULE_ALIAS)
+                    modules = listOf(MODULE_ALIAS, STRUCTURAL_SEARCH_CONTENT_MODULE_ID)
+                    additionalContent = """
+                      <content>
+                        <module name="$STRUCTURAL_SEARCH_CONTENT_MODULE_ID"><![CDATA[
+                          <idea-plugin />
+                        ]]>
+                        </module>
+                     </content>
+                    """.trimIndent()
                   }
                 }
               }
@@ -112,5 +121,31 @@ class IdePluginProviderTest {
     pluginProvision as PluginProvision.Found
     assertEquals(JAVA_PLUGIN_ID, pluginProvision.plugin.pluginId)
     assertEquals(ALIAS, pluginProvision.source)
+  }
+
+  @Test
+  fun `resolve plugin by content module name`() {
+    val query = PluginQuery.Builder
+      .of(STRUCTURAL_SEARCH_CONTENT_MODULE_ID)
+      .inContentModuleId()
+      .build()
+    val pluginProvision = ide.query(query)
+    assertTrue(pluginProvision is PluginProvision.Found)
+    pluginProvision as PluginProvision.Found
+    assertEquals(JAVA_PLUGIN_ID, pluginProvision.plugin.pluginId)
+    assertEquals(CONTENT_MODULE_ID, pluginProvision.source)
+  }
+
+  @Test
+  fun `resolve plugin by content module name having preference before plugin alias`() {
+    val query = PluginQuery.Builder
+      .of(STRUCTURAL_SEARCH_CONTENT_MODULE_ID)
+      .inContentModuleId()
+      .build()
+    val pluginProvision = ide.query(query)
+    assertTrue(pluginProvision is PluginProvision.Found)
+    pluginProvision as PluginProvision.Found
+    assertEquals(JAVA_PLUGIN_ID, pluginProvision.plugin.pluginId)
+    assertEquals(CONTENT_MODULE_ID, pluginProvision.source)
   }
 }
