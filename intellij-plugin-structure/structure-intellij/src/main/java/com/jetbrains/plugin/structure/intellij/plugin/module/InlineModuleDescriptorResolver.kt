@@ -14,10 +14,12 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.InlineDeclaredModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorProblem
@@ -127,12 +129,19 @@ internal class InlineModuleDescriptorResolver : ModuleDescriptorResolver<InlineM
   ): MutableList<PluginDependency> {
     return mutableListOf<PluginDependency>().also { dependencies ->
       module.forEachDependencyNotIn(moduleOwner) {
-        dependencies += InlineDeclaredModuleV2Dependency.of(
-          it.id,
-          moduleReference.loadingRule,
-          moduleOwner,
-          moduleReference
-        )
+        dependencies += when (it) {
+          is PluginV2Dependency -> InlineDeclaredModuleV2Dependency.onPlugin(
+            it.id,
+            moduleReference.loadingRule,
+            moduleOwner,
+            moduleReference)
+          is ModuleV2Dependency -> InlineDeclaredModuleV2Dependency.onModule(
+            it.id,
+            moduleReference.loadingRule,
+            moduleOwner,
+            moduleReference)
+          else -> it
+        }
       }
     }
   }

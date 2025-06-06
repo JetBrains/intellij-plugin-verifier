@@ -4,6 +4,9 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginId
+
 /**
  * Dependency declared in a V2 module that is specified via `<![CDATA[...]]>` instruction.
  * Usually, this happens in the `plugin.xml` of a plugin, in the `<module name="...">` element content.
@@ -28,30 +31,59 @@ package com.jetbrains.plugin.structure.intellij.plugin
  * @param dependerContentModuleId the ID of the content module that declares this dependency, taken from the
  *        `name` attribute of `<module>` element
  */
-data class InlineDeclaredModuleV2Dependency(
+sealed class InlineDeclaredModuleV2Dependency(
   override val id: String,
   override var isOptional: Boolean = false,
-  val contentModuleOwnerId: String,
-  val dependerContentModuleId: String
+  open val contentModuleOwnerId: String,
+  open val dependerContentModuleId: String
 ) :
   PluginDependency {
   override val isModule = true
 
-  override fun asOptional(): InlineDeclaredModuleV2Dependency = copy(isOptional = true)
+  override fun asOptional(): InlineDeclaredModuleV2Dependency = this
 
-  override fun toString() = "$id (module, v2, specified in content module '$dependerContentModuleId' of '$contentModuleOwnerId')"
+  data class Plugin(
+    private val pluginId: PluginId,
+    override var isOptional: Boolean = false,
+    override val contentModuleOwnerId: String,
+    override val dependerContentModuleId: String
+  ) : InlineDeclaredModuleV2Dependency(pluginId, isOptional, contentModuleOwnerId, dependerContentModuleId) {
+
+    override fun toString() =
+      "dependency on plugin '$id' specified in content module '$dependerContentModuleId' of '$contentModuleOwnerId'"
+  }
+
+  data class Module(
+    private val moduleId: PluginId,
+    override var isOptional: Boolean = false,
+    override val contentModuleOwnerId: String,
+    override val dependerContentModuleId: String
+  ) : InlineDeclaredModuleV2Dependency(moduleId, isOptional, contentModuleOwnerId, dependerContentModuleId) {
+
+    override fun toString() =
+      "dependency on module '$id' specified in content module '$dependerContentModuleId' of '$contentModuleOwnerId'"
+  }
 
   companion object {
     private const val UNKNOWN_INCLUDER = "Unknown Includer"
 
     @JvmStatic
-    fun of(
+    fun onModule(
       moduleId: String,
       moduleLoadingRule: ModuleLoadingRule,
       contentModuleOwner: IdePlugin,
-      contentModuleReference: Module.InlineModule
-    ): InlineDeclaredModuleV2Dependency =
-      InlineDeclaredModuleV2Dependency(moduleId, !moduleLoadingRule.required, contentModuleOwner.id, contentModuleReference.name)
+      contentModuleReference: InlineModule
+    ): Module =
+      Module(moduleId, !moduleLoadingRule.required, contentModuleOwner.id, contentModuleReference.name)
+
+    @JvmStatic
+    fun onPlugin(
+      pluginId: PluginId,
+      moduleLoadingRule: ModuleLoadingRule,
+      contentModuleOwner: IdePlugin,
+      contentModuleReference: InlineModule
+    ): Plugin =
+      Plugin(pluginId, !moduleLoadingRule.required, contentModuleOwner.id, contentModuleReference.name)
 
     private val IdePlugin.id: String
       get() = pluginId ?: pluginName ?: UNKNOWN_INCLUDER
