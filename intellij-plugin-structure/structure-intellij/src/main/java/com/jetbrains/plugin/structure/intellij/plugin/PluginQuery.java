@@ -9,18 +9,14 @@ public class PluginQuery {
 
     private String identifier;
 
-    private boolean searchPluginAliases;
-
     private boolean searchId;
 
     private boolean searchName;
 
+    private boolean searchPluginAliases;
+
     public @NotNull String getIdentifier() {
         return identifier;
-    }
-
-    public boolean searchPluginAliases() {
-        return searchPluginAliases;
     }
 
     public boolean searchId() {
@@ -29,6 +25,10 @@ public class PluginQuery {
 
     public boolean searchName() {
         return searchName;
+    }
+
+    public boolean searchPluginAliases() {
+        return searchPluginAliases;
     }
 
     public static class Builder {
@@ -46,12 +46,6 @@ public class PluginQuery {
         }
 
         @NotNull
-        public Builder inPluginAliases() {
-            query.searchPluginAliases = true;
-            return this;
-        }
-
-        @NotNull
         public Builder inId() {
             query.searchId = true;
             return this;
@@ -60,6 +54,12 @@ public class PluginQuery {
         @NotNull
         public Builder inName() {
             query.searchName = true;
+            return this;
+        }
+
+        @NotNull
+        public Builder inPluginAliases() {
+            query.searchPluginAliases = true;
             return this;
         }
 
