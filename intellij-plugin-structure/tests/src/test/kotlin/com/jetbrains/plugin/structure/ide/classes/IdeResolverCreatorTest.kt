@@ -28,7 +28,7 @@ class IdeResolverCreatorTest {
 
   @Test
   fun `layout component with missing file in the filesystem fails the whole IDE`() {
-    val resolverConfiguration = IdeResolverConfiguration(ReadMode.FULL, MissingLayoutFileMode.FAIL)
+    val resolverConfiguration = IdeResolverConfiguration(ReadMode.FULL, MissingLayoutFileMode.FAIL, forceProductInfoValidation = true)
     assertThrows("IDE has invalid layout", InvalidIdeException::class.java) {
       IdeResolverCreator.createIdeResolver(createIdeWithNonExistentFileOfLayoutComponent(), resolverConfiguration)
     }
