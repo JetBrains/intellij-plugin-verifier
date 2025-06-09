@@ -4,11 +4,9 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.jetbrains.plugin.structure.base.plugin.IconTheme
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.PluginManager
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
@@ -36,6 +34,7 @@ import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor.extract
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.ContentModuleLoader
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginIconLoader
 import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleScanner
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
@@ -55,7 +54,6 @@ import org.jdom2.Document
 import org.jdom2.input.JDOMParseException
 import org.slf4j.LoggerFactory
 import java.io.File
-import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
@@ -79,6 +77,8 @@ class IdePluginManager private constructor(
   private val contentModuleLoader = ContentModuleLoader(this::loadPluginInfoFromJarOrDirectory)
 
   private val contentModuleScanner = ContentModuleScanner(fileSystemProvider)
+
+  private val pluginIconLoader = PluginIconLoader()
 
   private fun loadPluginInfoFromJarFile(
     jarFile: Path,
@@ -181,7 +181,7 @@ class IdePluginManager private constructor(
         problemResolver)
     } else try {
       val document = JDOMUtil.loadDocument(Files.newInputStream(descriptorFile))
-      val icons = loadIconsFromDir(pluginDirectory)
+      val icons = pluginIconLoader.load(pluginDirectory)
       val dependencies = getThirdPartyDependenciesFromDir(pluginDirectory)
       createPlugin(
         pluginDirectory.simpleName, descriptorPath, parentPlugin,
@@ -204,19 +204,6 @@ class IdePluginManager private constructor(
   private fun getThirdPartyDependenciesFromDir(pluginDirectory: Path): List<ThirdPartyDependency> {
     val path = pluginDirectory.resolve(META_INF).resolve(THIRD_PARTY_LIBRARIES_FILE_NAME)
     return parseThirdPartyDependenciesByPath(path)
-  }
-
-
-  @Throws(IOException::class)
-  private fun loadIconsFromDir(pluginDirectory: Path): List<PluginIcon> {
-    return IconTheme.values().mapNotNull { theme ->
-      val iconFile = pluginDirectory.resolve(META_INF).resolve(getIconFileName(theme))
-      if (iconFile.exists()) {
-        PluginIcon(theme, Files.readAllBytes(iconFile), iconFile.simpleName)
-      } else {
-        null
-      }
-    }
   }
 
   private fun loadPluginInfoFromLibDirectory(
@@ -526,7 +513,5 @@ class IdePluginManager private constructor(
         }
       }
     }
-
-    private fun getIconFileName(iconTheme: IconTheme) = "pluginIcon${iconTheme.suffix}.svg"
   }
 }
