@@ -16,7 +16,7 @@ abstract class BasePluginManagerTest<P : Plugin, M : PluginManager<P>>(fileSyste
   abstract fun createManager(extractDirectory: Path): M
 
   fun createPluginSuccessfully(pluginFile: Path, pluginFactory: PluginFactory<P, M> = ::defaultPluginFactory): PluginCreationSuccess<P> {
-    val pluginManager = createManager(temporaryFolder.newFolder("extract"))
+    val pluginManager = createManager(extractedDirectory)
     val pluginCreationResult = createPlugin(pluginManager, pluginFile, pluginFactory)
     if (pluginCreationResult is PluginCreationFail) {
       Assert.fail(pluginCreationResult.errorsAndWarnings.joinToString())
@@ -29,7 +29,7 @@ abstract class BasePluginManagerTest<P : Plugin, M : PluginManager<P>>(fileSyste
     expectedProblems: List<PluginProblem>,
     pluginFactory: PluginFactory<P, M> = ::defaultPluginFactory
   ): PluginCreationFail<P> {
-    val pluginManager = createManager(temporaryFolder.newFolder("extract"))
+    val pluginManager = createManager(extractedDirectory)
     val pluginCreationResult = createPlugin(pluginManager, pluginFile, pluginFactory)
     if (pluginCreationResult is PluginCreationSuccess) {
       Assert.fail("must have failed, but warnings: [${pluginCreationResult.warnings.joinToString()}]")
@@ -46,6 +46,10 @@ abstract class BasePluginManagerTest<P : Plugin, M : PluginManager<P>>(fileSyste
 
   protected fun defaultPluginFactory(pluginManager: M, pluginArtifactPath: Path): PluginCreationResult<P> {
     return pluginManager.createPlugin(pluginArtifactPath)
+  }
+
+  protected val extractedDirectory: Path by lazy {
+    temporaryFolder.newFolder("extract")
   }
 }
 
