@@ -22,7 +22,9 @@ import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.ide.ProductInfoAware
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin.IdeLibDirectory
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
-import com.jetbrains.plugin.structure.ide.resolver.LayoutComponentsProvider
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponentsAware
+import com.jetbrains.plugin.structure.ide.resolver.ValidatingLayoutComponentsProvider
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParseException
@@ -43,12 +45,13 @@ private const val CORE_IDE_PLUGIN_ID = "com.intellij"
 private const val PRODUCT_MODULE_V2 = "productModuleV2"
 private const val BOOTCLASSPATH_JAR_NAMES = "bootClassPathJarNames"
 
-class ProductInfoClassResolver(
-  private val productInfo: ProductInfo, val ide: Ide,
+class ProductInfoClassResolver private constructor(
+  private val productInfo: ProductInfo,
+  val ide: Ide,
   private val resolverConfiguration: IdeResolverConfiguration
 ) : NamedResolver("$PRODUCT_INFO_JSON Resolver"), PluginResolverProvider {
 
-  private val layoutComponentsProvider = LayoutComponentsProvider(resolverConfiguration.missingLayoutFileMode)
+  private val layoutComponentsProvider = ValidatingLayoutComponentsProvider(resolverConfiguration.missingLayoutFileMode)
 
   private val corePluginClasspathCache: MutableMap<Path, NamedResolver> = HashMap()
 
@@ -105,7 +108,7 @@ class ProductInfoClassResolver(
   }.asResolver("$name delegate")
 
   private fun resolveLayout(): List<LayoutComponentResolver> =
-    layoutComponentsProvider.resolveLayoutComponents(productInfo, ide.idePath)
+    getLayoutComponents()
       .map { it.layoutComponent }
       .map { layoutComponent ->
         if (layoutComponent is LayoutComponent.Classpathable) {
@@ -115,6 +118,25 @@ class ProductInfoClassResolver(
           layoutComponent.toEmptyResolver()
         }
       }
+
+  private fun getLayoutComponents(): LayoutComponents {
+    if (resolverConfiguration.forceProductInfoValidation) {
+      LOG.debug("Explicitly reparsing '$PRODUCT_INFO_JSON' for layout components")
+      return resolveLayoutComponents()
+    } else {
+      if (ide is LayoutComponentsAware) {
+        return ide.layoutComponents.also {
+          if (it.layoutComponents.isEmpty()) LOG.warn("IDE has no layout components declared.")
+        }
+      }
+      LOG.debug("Unable to obtain layout components from IDE. Reparsing '$PRODUCT_INFO_JSON'")
+      return resolveLayoutComponents()
+    }
+  }
+
+  private fun resolveLayoutComponents(): LayoutComponents {
+    return layoutComponentsProvider.resolveLayoutComponents(productInfo, ide.idePath)
+  }
 
   val layoutComponentNames: List<String> = resolvers.keys.toList()
 

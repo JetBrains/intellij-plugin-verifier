@@ -6,8 +6,11 @@ package com.jetbrains.plugin.structure.ide
 
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponentNameSource
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.SKIP_AND_WARN
+import com.jetbrains.plugin.structure.ide.resolver.ValidatingLayoutComponentsProvider
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParseException
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
@@ -23,15 +26,13 @@ internal val VERSION_FROM_PRODUCT_INFO: IdeVersion? = null
 
 class ProductInfoBasedIdeManager(
   missingLayoutFileMode: MissingLayoutFileMode = SKIP_AND_WARN,
-  additionalPluginReader: PluginReader = NoopPluginReader
+  private val additionalProductInfoPluginReader: PluginReader<ProductInfo> = NoOpProductInfoPluginReader,
+  private val additionalLayoutComponentsPluginReader: PluginReader<LayoutComponents> = NoOpLayoutComponentsPluginReader
 ) : IdeManager() {
 
   private val productInfoParser = ProductInfoParser()
 
-  private val pluginCollectionProvider = ProductInfoBasedPluginCollectionProvider(
-    missingLayoutFileMode, additionalPluginReader,
-    SingletonCachingJarFileSystemProvider
-  )
+  private val layoutComponentsProvider = ValidatingLayoutComponentsProvider(missingLayoutFileMode)
 
   @Throws(InvalidIdeException::class)
   override fun createIde(idePath: Path): Ide = createIde(idePath, VERSION_FROM_PRODUCT_INFO)
@@ -51,7 +52,9 @@ class ProductInfoBasedIdeManager(
     if (!idePath.isDirectory) {
       throw IOException("Specified path does not exist or is not a directory: $idePath")
     }
-    return ProductInfoBasedIde(idePath, ideVersion, productInfo, pluginCollectionProvider)
+
+    val pluginCollectionProviders = createPluginCollectionProviders(idePath, ideVersion, productInfo)
+    return ProductInfoBasedIde.of(idePath, ideVersion, productInfo, pluginCollectionProviders)
   }
 
   private fun createIdeVersion(productInfo: ProductInfo): IdeVersion {
@@ -63,6 +66,31 @@ class ProductInfoBasedIdeManager(
     }
     return IdeVersion.createIdeVersion(versionString)
   }
+
+  private fun createPluginCollectionProviders(idePath: Path, ideVersion: IdeVersion, productInfo: ProductInfo): Map<PluginCollectionSource<Path, *>, PluginCollectionProvider<Path>> {
+    return mutableMapOf<PluginCollectionSource<Path, *>, PluginCollectionProvider<Path>>().apply {
+      val layoutComponentsSource = createLayoutComponentsSource(idePath, ideVersion, productInfo)
+      this[layoutComponentsSource] = ProductInfoLayoutBasedPluginCollectionProvider(
+        additionalLayoutComponentsPluginReader,
+        SingletonCachingJarFileSystemProvider,
+      )
+
+      if (additionalProductInfoPluginReader !is NoOpProductInfoPluginReader) {
+        val productInfoSource = productInfo.asSource(idePath, ideVersion)
+        this[productInfoSource] = ProductInfoPluginReaderPluginCollectionProvider(additionalProductInfoPluginReader)
+      }
+    }
+  }
+
+  private fun createLayoutComponentsSource(idePath: Path, ideVersion: IdeVersion, productInfo: ProductInfo) =
+    layoutComponentsProvider.resolveLayoutComponents(productInfo, idePath)
+      .asSource(idePath, ideVersion)
+
+  private fun ProductInfo.asSource(idePath: Path, ideVersion: IdeVersion) =
+    ProductInfoPluginCollectionSource(idePath, ideVersion, this)
+
+  private fun LayoutComponents.asSource(idePath: Path, ideVersion: IdeVersion) =
+    ProductInfoLayoutComponentsPluginCollectionSource(idePath, ideVersion, this)
 
   private val Path.productInfoJson: Path?
     get() {
@@ -89,12 +117,36 @@ class ProductInfoBasedIdeManager(
     }
   }
 
-  fun interface PluginReader {
-    fun readPlugins(idePath: Path, productInfo: ProductInfo, ideVersion: IdeVersion): List<IdePlugin>
+  interface PluginReader<S> {
+    fun readPlugins(
+      idePath: Path,
+      pluginMetadataSource: S,
+      layoutComponentNameSource: LayoutComponentNameSource<S>,
+      ideVersion: IdeVersion
+    ): List<IdePlugin>
+
+    fun supports(pluginMetadataSource: Any): Boolean
   }
 
-  private object NoopPluginReader : PluginReader {
-    override fun readPlugins(idePath: Path, productInfo: ProductInfo, ideVersion: IdeVersion): List<IdePlugin> =
-      emptyList()
+  private object NoOpProductInfoPluginReader : PluginReader<ProductInfo> {
+    override fun readPlugins(
+      idePath: Path,
+      pluginMetadataSource: ProductInfo,
+      layoutComponentNameSource: LayoutComponentNameSource<ProductInfo>,
+      ideVersion: IdeVersion
+    ): List<IdePlugin> = emptyList()
+
+    override fun supports(pluginMetadataSource: Any): Boolean = true
+  }
+
+  private object NoOpLayoutComponentsPluginReader : PluginReader<LayoutComponents> {
+    override fun readPlugins(
+      idePath: Path,
+      pluginMetadataSource: LayoutComponents,
+      layoutComponentNameSource: LayoutComponentNameSource<LayoutComponents>,
+      ideVersion: IdeVersion
+    ): List<IdePlugin> = emptyList()
+
+    override fun supports(pluginMetadataSource: Any): Boolean = true
   }
 }

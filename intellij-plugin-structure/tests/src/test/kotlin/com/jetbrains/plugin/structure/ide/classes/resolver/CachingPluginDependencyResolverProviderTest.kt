@@ -19,6 +19,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
+import com.jetbrains.plugin.structure.mocks.MockProductInfoBasedIde
 import net.bytebuddy.ByteBuddy
 import org.junit.Assert.*
 import org.junit.Before
@@ -364,7 +365,6 @@ class CachingPluginDependencyResolverProviderTest {
   @Test
   fun `plugin depends on JSON that is in the secondary cache, but not fully`() {
     val ideRoot = temporaryFolder.newFolder("idea-" + UUID.randomUUID().toString()).toPath()
-    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
 
     val jsonPluginDir = buildDirectory(ideRoot) {
       dir("plugins") {
@@ -401,7 +401,6 @@ class CachingPluginDependencyResolverProviderTest {
       classpath = Classpath.of(listOf(ideRoot.resolve("plugins/json/lib/json.jar"), ideRoot.resolve("plugins/json/lib/modules/intellij.json.split.jar")))
     )
 
-    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(jsonPlugin))
     val productInfo = ProductInfo(
       layout = listOf(
         LayoutComponent.Plugin("com.intellij.modules.json", classPaths = listOf("plugins/json/lib/json.jar")),
@@ -411,8 +410,8 @@ class CachingPluginDependencyResolverProviderTest {
       name = UNKNOWN,
       version = UNKNOWN,
       versionSuffix = UNKNOWN,
-      buildNumber = UNKNOWN,
-      productCode = UNKNOWN,
+      buildNumber = "243.12818.47",
+      productCode = "IU",
       dataDirectoryName = UNKNOWN,
       svgIconPath = UNKNOWN,
       productVendor = UNKNOWN,
@@ -420,7 +419,8 @@ class CachingPluginDependencyResolverProviderTest {
       bundledPlugins = emptyList(),
       modules = emptyList()
     )
-    val productInfoClassResolver = ProductInfoClassResolver(productInfo, ide, IdeResolverConfiguration(readMode = Resolver.ReadMode.SIGNATURES))
+    val ide = MockProductInfoBasedIde(ideRoot, productInfo, bundledPlugins = listOf(jsonPlugin))
+    val productInfoClassResolver = ProductInfoClassResolver.of(ide, IdeResolverConfiguration(readMode = Resolver.ReadMode.SIGNATURES))
     val resolverProvider = CachingPluginDependencyResolverProvider(ide, productInfoClassResolver)
 
     val alphaPlugin = MockIdePlugin(
