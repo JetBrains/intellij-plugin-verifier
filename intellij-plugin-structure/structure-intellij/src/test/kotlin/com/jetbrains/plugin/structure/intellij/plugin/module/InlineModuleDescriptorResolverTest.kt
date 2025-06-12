@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleLoadingRule
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.ModuleFromDescriptorLoader
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -49,7 +50,8 @@ class InlineModuleDescriptorResolverTest {
       contentModules += thymeleafSpringElInlineModule
     }
 
-    val resolver = InlineModuleDescriptorResolver()
+    val loader = ModuleFromDescriptorLoader()
+    val resolver = InlineModuleDescriptorResolver(loader)
     val dependencies = resolver.getDependencies(thymeleafPlugin, thymeleafSpringElPlugin, thymeleafSpringElInlineModule)
     with(dependencies) {
       assertEquals(1, size)
@@ -102,7 +104,8 @@ class InlineModuleDescriptorResolverTest {
       contentModules += intellijTomJsonInlineModule
     }
 
-    val resolver = InlineModuleDescriptorResolver()
+    val loader = ModuleFromDescriptorLoader()
+    val resolver = InlineModuleDescriptorResolver(loader)
     val dependencies = resolver.getDependencies(tomlPlugin, intellijTomJsonPlugin, intellijTomJsonInlineModule)
     with(dependencies) {
       assertEquals(1, size)

@@ -8,7 +8,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.Module
 import com.jetbrains.plugin.structure.intellij.plugin.Module.FileBasedModule
 import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
-import com.jetbrains.plugin.structure.intellij.plugin.PluginLoader
 import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleLoadingResults
 import com.jetbrains.plugin.structure.intellij.plugin.module.FileBasedModuleDescriptorResolver
 import com.jetbrains.plugin.structure.intellij.plugin.module.InlineModuleDescriptorResolver
@@ -20,9 +19,12 @@ import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultReso
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.Path
 
-class ContentModuleLoader internal constructor(pluginLoader: PluginLoader) {
-  private val fileBasedModuleDescriptorResolver = FileBasedModuleDescriptorResolver(pluginLoader)
-  private val inlineModuleDescriptorResolver = InlineModuleDescriptorResolver()
+class ContentModuleLoader internal constructor(
+  jarOrDirLoader: JarOrDirectoryPluginLoader,
+  moduleFromDescriptorLoader: ModuleFromDescriptorLoader
+) {
+  private val fileBasedModuleDescriptorResolver = FileBasedModuleDescriptorResolver(jarOrDirLoader)
+  private val inlineModuleDescriptorResolver = InlineModuleDescriptorResolver(moduleFromDescriptorLoader)
 
   internal fun resolveContentModules(
     pluginFile: Path,
