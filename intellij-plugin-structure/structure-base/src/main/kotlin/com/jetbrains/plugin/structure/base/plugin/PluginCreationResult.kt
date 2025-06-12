@@ -19,7 +19,8 @@ data class PluginCreationSuccess<out PluginType : Plugin>(
   val plugin: PluginType,
   val warnings: List<PluginProblem>,
   val unacceptableWarnings: List<PluginProblem> = emptyList(),
-  val telemetry: PluginTelemetry = PluginTelemetry()
+  val telemetry: PluginTelemetry = PluginTelemetry(),
+  val resources: List<AutoCloseable> = emptyList()
 ) :
   PluginCreationResult<PluginType>() {
   constructor(plugin: PluginType, problems: List<PluginProblem>) : this(
