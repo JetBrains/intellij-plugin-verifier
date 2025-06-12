@@ -31,6 +31,7 @@ import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationRe
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.utils.CloseablePath
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
@@ -127,7 +128,8 @@ class IdePluginManager private constructor(
     descriptorPath: String,
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
-    problemResolver: PluginCreationResultResolver
+    problemResolver: PluginCreationResultResolver,
+    deleteExtractedDirectory: Boolean
   ): PluginCreator {
     val extractorResult = try {
       extractPlugin(pluginFile, extractDirectory)
@@ -136,15 +138,47 @@ class IdePluginManager private constructor(
       return createInvalidPlugin(pluginFile.simpleName, descriptorPath, UnableToExtractZip())
     }
     return when (extractorResult) {
-      is ExtractorResult.Success -> extractorResult.extractedPlugin.use { (extractedFile) ->
-        if (extractedFile.isJar() || extractedFile.isDirectory) {
-          getPluginCreator(extractedFile, descriptorPath, validateDescriptor, resourceResolver, problemResolver)
+      is ExtractorResult.Success -> {
+        val extractedPlugin = extractorResult.extractedPlugin
+        if (deleteExtractedDirectory) {
+          extractedPlugin.use { (extractedFile) ->
+            getPluginExtractorFromJarOrDirectory(
+              extractedFile,
+              descriptorPath,
+              validateDescriptor,
+              resourceResolver,
+              problemResolver
+            )
+          }
         } else {
-          getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
+          val extractedDir = extractedPlugin.pluginFile
+          getPluginExtractorFromJarOrDirectory(
+            extractedDir,
+            descriptorPath,
+            validateDescriptor,
+            resourceResolver,
+            problemResolver
+          ).apply {
+            resources += CloseablePath(extractedDir.parent)
+          }
         }
       }
 
       is ExtractorResult.Fail -> createInvalidPlugin(pluginFile.simpleName, descriptorPath, extractorResult.pluginProblem)
+    }
+  }
+
+  private fun getPluginExtractorFromJarOrDirectory(
+    pluginFile: Path,
+    descriptorPath: String,
+    validateDescriptor: Boolean,
+    resourceResolver: ResourceResolver,
+    problemResolver: PluginCreationResultResolver
+  ): PluginCreator {
+    return if (pluginFile.isJar() || pluginFile.isDirectory) {
+      getPluginCreator(pluginFile, descriptorPath, validateDescriptor, resourceResolver, problemResolver)
+    } else {
+      getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
     }
   }
 
@@ -155,9 +189,16 @@ class IdePluginManager private constructor(
     pluginFile: Path,
     validateDescriptor: Boolean,
     descriptorPath: String = PLUGIN_XML,
-    problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
+    problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
+    deleteExtractedDirectory: Boolean = true,
   ): PluginCreationResult<IdePlugin> {
-    val pluginCreator = getPluginCreatorWithResult(pluginFile, validateDescriptor, descriptorPath, problemResolver)
+    val pluginCreator = getPluginCreatorWithResult(
+      pluginFile,
+      validateDescriptor,
+      descriptorPath,
+      problemResolver,
+      deleteExtractedDirectory
+    )
     return pluginCreator.pluginCreationResult
   }
 
@@ -169,7 +210,10 @@ class IdePluginManager private constructor(
     problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
     fallbackPluginId: String? = null,
   ): PluginCreationResult<IdePlugin> {
-    val pluginCreator = getPluginCreatorWithResult(pluginFile, false, descriptorPath, problemResolver)
+    val pluginCreator = getPluginCreatorWithResult(
+      pluginFile, false, descriptorPath, problemResolver,
+      deleteExtractedDirectory = false
+    )
     pluginCreator.setPluginVersion(ideVersion.asStringWithoutProductCode())
     fallbackPluginId?.let { pluginCreator.setPluginIdIfNull(it) }
     return pluginCreator.pluginCreationResult
@@ -194,7 +238,8 @@ class IdePluginManager private constructor(
     pluginFile: Path,
     validateDescriptor: Boolean,
     descriptorPath: String,
-    problemResolver: PluginCreationResultResolver
+    problemResolver: PluginCreationResultResolver,
+    deleteExtractedDirectory: Boolean
   ): PluginCreator {
     if (!pluginFile.exists()) { throw PluginFileNotFoundException(pluginFile) }
     val pluginCreator: PluginCreator
@@ -205,7 +250,8 @@ class IdePluginManager private constructor(
           descriptorPath,
           validateDescriptor,
           myResourceResolver,
-          problemResolver
+          problemResolver,
+          deleteExtractedDirectory
         )
       } else if (pluginFile.isJar() || pluginFile.isDirectory) {
         pluginCreator = getPluginCreator(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, problemResolver)

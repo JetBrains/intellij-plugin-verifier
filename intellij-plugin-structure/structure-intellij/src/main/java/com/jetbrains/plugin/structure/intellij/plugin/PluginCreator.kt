@@ -166,13 +166,17 @@ internal class PluginCreator private constructor(
     get() {
       val invalidPlugin = invalidPlugin
       if (invalidPlugin != null) {
-        return PluginCreationFail(invalidPlugin.problems)
+        return PluginCreationFail<IdePlugin>(invalidPlugin.problems)
+          .also { closeResources() }
       }
 
       return problemResolver.resolve(resolvePlugin(), problems)
+        .propagateResources()
         .reassignStructureProblems()
         .add(telemetry)
     }
+
+  internal val resources: MutableList<AutoCloseable> = mutableListOf()
 
   val telemetry: MutablePluginTelemetry = MutablePluginTelemetry()
 
@@ -685,6 +689,12 @@ internal class PluginCreator private constructor(
       is PluginCreationFail -> this
     }
 
+  private fun PluginCreationResult<IdePlugin>.propagateResources() =
+    when (this) {
+      is PluginCreationSuccess -> this.copy(resources = this@PluginCreator.resources)
+      is PluginCreationFail -> this.also { closeResources() }
+    }
+
   private val PluginCreationSuccess<IdePlugin>.problems: List<PluginProblem>
     get() = warnings + unacceptableWarnings
 
@@ -693,6 +703,20 @@ internal class PluginCreator private constructor(
       optionalDependenciesConfigFiles[pluginDependency] =
         if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
     }
+  }
+
+  fun hasResources() = this.resources.isNotEmpty()
+
+  fun closeResources() {
+    resources.forEach {
+      it.close()
+      LOG.debug("Closed plugin creator resource [{}]", it)
+    }
+  }
+
+  fun clearResources() {
+    closeResources()
+    resources.clear()
   }
 }
 
