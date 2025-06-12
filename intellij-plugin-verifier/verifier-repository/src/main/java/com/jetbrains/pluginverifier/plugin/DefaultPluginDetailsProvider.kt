@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
@@ -13,6 +14,7 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.dependency.DependencyPluginInfo
+import java.io.Closeable
 import java.nio.file.Path
 
 /**
@@ -27,7 +29,7 @@ class DefaultPluginDetailsProvider(extractDirectory: Path) : AbstractPluginDetai
   private val dependencyProblemResolver: PluginCreationResultResolver =
     JetBrainsPluginCreationResultResolver.fromClassPathJson(IntelliJPluginCreationResultResolver())
 
-  private val closeableResources: MutableList<AutoCloseable> = mutableListOf()
+  private val closeableResources: MutableList<Closeable> = mutableListOf()
 
   override fun readPluginClasses(pluginInfo: PluginInfo, idePlugin: IdePlugin): IdePluginClassesLocations {
     return if (pluginInfo is BundledPluginInfo) {
@@ -58,6 +60,6 @@ class DefaultPluginDetailsProvider(extractDirectory: Path) : AbstractPluginDetai
   }
 
   override fun close() {
-    closeableResources.forEach { it.close() }
+    closeableResources.closeAll()
   }
 }

@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
+import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
@@ -42,6 +43,7 @@ import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import org.jdom2.Document
 import org.jdom2.Element
 import org.slf4j.LoggerFactory
+import java.io.Closeable
 import java.nio.file.Path
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -176,7 +178,7 @@ internal class PluginCreator private constructor(
         .add(telemetry)
     }
 
-  internal val resources: MutableList<AutoCloseable> = mutableListOf()
+  internal val resources: MutableList<Closeable> = mutableListOf()
 
   val telemetry: MutablePluginTelemetry = MutablePluginTelemetry()
 
@@ -708,15 +710,7 @@ internal class PluginCreator private constructor(
   fun hasResources() = this.resources.isNotEmpty()
 
   fun closeResources() {
-    resources.forEach {
-      it.close()
-      LOG.debug("Closed plugin creator resource [{}]", it)
-    }
-  }
-
-  fun clearResources() {
-    closeResources()
-    resources.clear()
+    resources.closeAll()
   }
 }
 

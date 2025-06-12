@@ -5,9 +5,10 @@
 package com.jetbrains.plugin.structure.intellij.utils
 
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
+import java.io.Closeable
 import java.nio.file.Path
 
-class CloseablePath(val path: Path) : AutoCloseable {
+class CloseablePath(val path: Path) : Closeable {
   override fun close() {
     path.deleteLogged()
   }
