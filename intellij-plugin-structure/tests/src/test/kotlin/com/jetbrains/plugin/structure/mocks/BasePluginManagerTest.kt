@@ -1,9 +1,14 @@
 package com.jetbrains.plugin.structure.mocks
 
-import com.jetbrains.plugin.structure.base.plugin.*
+import com.jetbrains.plugin.structure.base.plugin.Plugin
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.PluginManager
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert
+import org.junit.Assert.assertEquals
 import java.nio.file.Path
 
 abstract class BasePluginManagerTest<P : Plugin, M : PluginManager<P>>(fileSystemType: FileSystemType) : BaseFileSystemAwareTest(fileSystemType) {
@@ -19,14 +24,19 @@ abstract class BasePluginManagerTest<P : Plugin, M : PluginManager<P>>(fileSyste
     return pluginCreationResult as PluginCreationSuccess<P>
   }
 
-  fun assertProblematicPlugin(pluginFile: Path, expectedProblems: List<PluginProblem>): PluginCreationFail<P> {
-    val pluginCreationResult = createManager(temporaryFolder.newFolder("extract")).createPlugin(pluginFile)
+  fun assertProblematicPlugin(
+    pluginFile: Path,
+    expectedProblems: List<PluginProblem>,
+    pluginFactory: PluginFactory<P, M> = ::defaultPluginFactory
+  ): PluginCreationFail<P> {
+    val pluginManager = createManager(temporaryFolder.newFolder("extract"))
+    val pluginCreationResult = createPlugin(pluginManager, pluginFile, pluginFactory)
     if (pluginCreationResult is PluginCreationSuccess) {
       Assert.fail("must have failed, but warnings: [${pluginCreationResult.warnings.joinToString()}]")
     }
     val creationFail = pluginCreationResult as PluginCreationFail
     val actualProblems = creationFail.errorsAndWarnings
-    Assert.assertEquals(expectedProblems.toSet(), actualProblems.toSet())
+    assertEquals(expectedProblems.toSet(), actualProblems.toSet())
     return creationFail
   }
 
