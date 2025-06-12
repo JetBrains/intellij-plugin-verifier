@@ -707,8 +707,6 @@ internal class PluginCreator private constructor(
     }
   }
 
-  fun hasResources() = this.resources.isNotEmpty()
-
   fun closeResources() {
     resources.closeAll()
   }

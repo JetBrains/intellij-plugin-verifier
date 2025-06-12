@@ -26,7 +26,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.loaders.LibDirectoryPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.ModuleFromDescriptorLoader
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginDirectoryLoader
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginLoaderProvider
-import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleScanner
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
@@ -69,8 +68,6 @@ class IdePluginManager private constructor(
   private val jarOrDirLoader = pluginLoaderRegistry.get<JarOrDirectoryPluginLoader.Context, JarOrDirectoryPluginLoader>()
 
   private val contentModuleLoader = ContentModuleLoader(jarOrDirLoader, moduleFromDescriptorLoader)
-
-  private val contentModuleScanner = ContentModuleScanner(fileSystemProvider)
 
   private val optionalDependencyResolver = OptionalDependencyResolver(object : PluginLoader {
     override fun load(
@@ -286,12 +283,6 @@ class IdePluginManager private constructor(
       parsingDuration = Duration.ofMillis(pluginCreationDurationInMillis)
       archiveFileSize = pluginFile.pluginSize
     }
-  }
-
-  private fun CreationResult.withResolvedClasspath(): CreationResult = apply {
-    val contentModules = contentModuleScanner.getContentModules(artifact)
-    val classpath = contentModules.asClasspath()
-    creator.setClasspath(classpath.getUnique())
   }
 
   internal data class CreationResult(val artifact: Path, val creator: PluginCreator)
