@@ -4,21 +4,13 @@
 
 package com.jetbrains.pluginverifier.dependencies.resolution
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.ide.Ide
-import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
-import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision
 import com.jetbrains.plugin.structure.intellij.plugin.PluginQuery
-import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyOrigin.Bundled
 import com.jetbrains.pluginverifier.plugin.PluginDetails
-import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginInfo
-import com.jetbrains.pluginverifier.repository.repositories.dependency.DependencyPluginInfo
-import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 
 class DependencyFinderPluginProvider(private val dependencyFinder: DependencyFinder, private val ide: Ide) : PluginProvider {
   override fun findPluginById(pluginId: String): IdePlugin? {
@@ -66,30 +58,5 @@ class DependencyFinderPluginProvider(private val dependencyFinder: DependencyFin
     } else {
       getNonBundledDependencyDetails(plugin)
     }
-  }
-
-  // FIXME duplicate with DefaultClassResolverProvider
-  private fun DependencyFinder.Result.DetailsProvided.getDetails(): PluginDetails? {
-    return (pluginDetailsCacheResult as? PluginDetailsCache.Result.Provided)?.pluginDetails
-  }
-
-  // FIXME duplicate with DefaultClassResolverProvider
-  private fun getNonBundledDependencyDetails(plugin: IdePlugin): PluginDetails {
-    val pluginWarnings =
-      (if (plugin is StructurallyValidated) plugin.problems else emptyList()).filter { it.level == PluginProblem.Level.WARNING }
-    return PluginDetails(
-      DependencyPluginInfo(LocalPluginInfo(plugin)), plugin, pluginWarnings,
-      BundledPluginClassesFinder.findPluginClasses(plugin, additionalKeys = listOf(CompileServerExtensionKey)), null
-    )
-  }
-
-  // FIXME duplicate with DefaultClassResolverProvider
-  private fun getBundledPluginDetails(ide: Ide, plugin: IdePlugin): PluginDetails {
-    val pluginWarnings =
-      (if (plugin is StructurallyValidated) plugin.problems else emptyList()).filter { it.level == PluginProblem.Level.WARNING }
-    return PluginDetails(
-      BundledPluginInfo(ide.version, plugin), plugin, pluginWarnings,
-      BundledPluginClassesFinder.findPluginClasses(plugin, additionalKeys = listOf(CompileServerExtensionKey)), null
-    )
   }
 }
