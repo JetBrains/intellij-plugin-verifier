@@ -16,6 +16,7 @@ import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPlugi
 import com.jetbrains.pluginverifier.repository.repositories.dependency.DependencyPluginInfo
 import java.io.Closeable
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Provides plugin details with explicit support for bundled plugins that are provided by the Platform
@@ -29,6 +30,8 @@ class DefaultPluginDetailsProvider(extractDirectory: Path) : AbstractPluginDetai
   private val dependencyProblemResolver: PluginCreationResultResolver =
     JetBrainsPluginCreationResultResolver.fromClassPathJson(IntelliJPluginCreationResultResolver())
 
+  private val extractedPluginLocationCache = ConcurrentHashMap<Path, PluginCreationResult<IdePlugin>>()
+
   private val closeableResources: MutableList<Closeable> = mutableListOf()
 
   override fun readPluginClasses(pluginInfo: PluginInfo, idePlugin: IdePlugin): IdePluginClassesLocations {
@@ -41,13 +44,25 @@ class DefaultPluginDetailsProvider(extractDirectory: Path) : AbstractPluginDetai
 
   override fun createPlugin(pluginInfo: PluginInfo, pluginFileLock: FileLock): PluginCreationResult<IdePlugin> {
     return if (pluginInfo is DependencyPluginInfo) {
-      idePluginManager
-        .createPlugin(
-          pluginFileLock.file,
-          validateDescriptor = false,
-          problemResolver = dependencyProblemResolver,
-          deleteExtractedDirectory = false
-        ).registerCloseableResources()
+      synchronized(extractedPluginLocationCache) {
+        val pluginArtifactPath = pluginFileLock.file
+        if (extractedPluginLocationCache.containsKey(pluginArtifactPath)) {
+          eventLog.logCached(pluginArtifactPath)
+          extractedPluginLocationCache.getValue(pluginArtifactPath)
+        } else {
+          idePluginManager
+            .createPlugin(
+              pluginArtifactPath,
+              validateDescriptor = false,
+              problemResolver = dependencyProblemResolver,
+              deleteExtractedDirectory = false
+            ).also {
+              eventLog.logExtracted(pluginArtifactPath)
+              it.registerCloseableResources()
+                .cacheExtractedDirectory(pluginArtifactPath)
+            }
+        }
+      }
     } else {
       super.createPlugin(pluginInfo, pluginFileLock)
     }
@@ -59,7 +74,38 @@ class DefaultPluginDetailsProvider(extractDirectory: Path) : AbstractPluginDetai
     }
   }
 
+  private fun PluginCreationResult<IdePlugin>.cacheExtractedDirectory(artifactPath: Path) = apply {
+    if (this is PluginCreationSuccess) {
+      extractedPluginLocationCache[artifactPath] = this
+    }
+  }
+
   override fun close() {
+    eventLog.clear()
     closeableResources.closeAll()
+  }
+
+  val closeableResourcesSize: Int
+    get() = closeableResources.size
+
+  val eventLog = EventLog()
+
+  class EventLog() : AbstractList<String>() {
+    private val events: MutableList<String> = mutableListOf()
+
+    fun logCached(path: Path) = log(path, true)
+
+    fun logExtracted(path: Path) = log(path, false)
+
+    fun log(path: Path, isCached: Boolean) {
+      events += (if (isCached) "cached " else "extracted ") + path
+    }
+
+    override val size: Int
+      get() = events.size
+
+    override fun get(index: Int): String = events[index]
+
+    fun clear() = events.clear()
   }
 }
