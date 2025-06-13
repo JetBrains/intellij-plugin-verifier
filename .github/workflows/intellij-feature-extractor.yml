@@ -74,4 +74,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-intellij-feature-extractor
-          path: ${{ github.workspace }}/intellij-feature-extractor/build/reports/tests/test/
+          path: ${{ github.workspace }}/intellij-feature-extractor/build/reports/problems/

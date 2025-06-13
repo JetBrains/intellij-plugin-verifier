@@ -67,4 +67,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-plugins-verifier-service
-          path: ${{ github.workspace }}/plugins-verifier-service/build/reports/tests/test/
+          path: ${{ github.workspace }}/plugins-verifier-service/build/reports/problems/
