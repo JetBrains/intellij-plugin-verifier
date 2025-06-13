@@ -73,4 +73,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results-intellij-plugin-verifier
-          path: ${{ github.workspace }}/intellij-plugin-verifier/build/reports/tests/test/
+          path: ${{ github.workspace }}/intellij-plugin-verifier/build/reports/problems/
