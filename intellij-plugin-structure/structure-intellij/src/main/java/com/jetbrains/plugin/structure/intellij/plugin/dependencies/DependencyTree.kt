@@ -10,13 +10,10 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PassThruDependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult.Type.MODULE
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult.Type.PLUGIN
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision.Source.CONTENT_MODULE_ID
 import com.jetbrains.plugin.structure.intellij.plugin.PluginQuery
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency.*
-import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.math.max
@@ -255,23 +252,6 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
       .let {
         pluginProvider.query(it)
       } as? PluginProvision.Found
-  }
-
-  private fun PluginProvider.getPluginOrModule(id: String): Dependency {
-    return findPluginByIdOrModuleId(id)
-      ?.run {
-        when (type) {
-          PLUGIN -> {
-            if (plugin is IdeModule) {
-              Module(plugin, id)
-            } else {
-              Plugin(plugin)
-            }
-          }
-
-          MODULE -> Module(plugin, id)
-        }
-      } ?: None
   }
 
   private fun DiGraph<PluginId, Dependency>.toDebugString(
