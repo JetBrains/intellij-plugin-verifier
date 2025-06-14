@@ -693,8 +693,8 @@ internal class PluginCreator private constructor(
 
   private fun PluginCreationResult<IdePlugin>.propagateResources() =
     when (this) {
-      is PluginCreationSuccess -> this.copy(resources = this@PluginCreator.resources)
-      is PluginCreationFail -> this.also { closeResources() }
+      is PluginCreationSuccess -> copy(resources = this@PluginCreator.resources)
+      is PluginCreationFail -> also { closeResources() }
     }
 
   private val PluginCreationSuccess<IdePlugin>.problems: List<PluginProblem>
@@ -707,7 +707,7 @@ internal class PluginCreator private constructor(
     }
   }
 
-  fun closeResources() {
+  private fun closeResources() {
     resources.closeAll()
   }
 }
