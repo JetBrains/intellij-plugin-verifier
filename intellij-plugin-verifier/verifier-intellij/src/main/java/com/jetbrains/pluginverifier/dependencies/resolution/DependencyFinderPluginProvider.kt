@@ -9,20 +9,18 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision
 import com.jetbrains.plugin.structure.intellij.plugin.PluginQuery
-import com.jetbrains.pluginverifier.dependencies.resolution.DependencyOrigin.Bundled
-import com.jetbrains.pluginverifier.plugin.PluginDetails
 
 class DependencyFinderPluginProvider(private val dependencyFinder: DependencyFinder, private val ide: Ide) : PluginProvider {
   override fun findPluginById(pluginId: String): IdePlugin? {
     return dependencyFinder
       .findPluginDependency(pluginId, isModule = false)
-      .getPlugin()
+      .resolvePlugin(ide)
   }
 
   override fun findPluginByModule(moduleId: String): IdePlugin? {
     return dependencyFinder
       .findPluginDependency(moduleId, isModule = true)
-      .getPlugin()
+      .resolvePlugin(ide)
   }
 
   override fun query(query: PluginQuery): PluginProvision {
@@ -40,23 +38,5 @@ class DependencyFinderPluginProvider(private val dependencyFinder: DependencyFin
       }
     }
     return PluginProvision.NotFound
-  }
-
-  private fun DependencyFinder.Result.getPlugin(): IdePlugin? {
-    val pluginDetails = when (this) {
-      is DependencyFinder.Result.DetailsProvided -> this.getDetails()
-      is DependencyFinder.Result.FoundPlugin -> this.getDetails()
-      is DependencyFinder.Result.NotFound -> null
-    }
-    return pluginDetails?.idePlugin
-  }
-
-  // FIXME duplicate with DefaultClassResolverProvider
-  private fun DependencyFinder.Result.FoundPlugin.getDetails(): PluginDetails {
-    return if (origin == Bundled) {
-      getBundledPluginDetails(ide, plugin)
-    } else {
-      getNonBundledDependencyDetails(plugin)
-    }
   }
 }

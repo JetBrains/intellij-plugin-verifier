@@ -17,6 +17,16 @@ import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPlugi
 import com.jetbrains.pluginverifier.repository.repositories.dependency.DependencyPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 
+
+internal fun DependencyFinder.Result.resolvePlugin(ide: Ide): IdePlugin? {
+  val pluginDetails = when (this) {
+    is DependencyFinder.Result.DetailsProvided -> this.getDetails()
+    is DependencyFinder.Result.FoundPlugin -> this.getDetails(ide)
+    is DependencyFinder.Result.NotFound -> null
+  }
+  return pluginDetails?.idePlugin
+}
+
 internal fun DependencyFinder.Result.FoundPlugin.getDetails(ide: Ide): PluginDetails {
   return if (origin == Bundled) {
     getBundledPluginDetails(ide, plugin)
