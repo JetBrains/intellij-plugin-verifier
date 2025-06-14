@@ -116,32 +116,32 @@ object PluginVerifierMain {
 
     val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5L * 1024)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
-    val pluginDetailsProvider = DefaultPluginDetailsProvider(getPluginsExtractDirectory())
+    DefaultPluginDetailsProvider(getPluginsExtractDirectory()).use { pluginDetailsProvider ->
+      val reportageAggregator = LoggingPluginVerificationReportageAggregator()
+      DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
+        measurePluginVerification {
+          val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
+          val taskResult = SizeLimitedPluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
+            runner.getParametersBuilder(
+              pluginRepository,
+              pluginDetailsCache,
+              reportage
+            ).build(opts, freeArgs).use { parameters ->
+              reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")
 
-    val reportageAggregator = LoggingPluginVerificationReportageAggregator()
-    DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
-      measurePluginVerification {
-        val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
-        val taskResult = SizeLimitedPluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
-          runner.getParametersBuilder(
-            pluginRepository,
-            pluginDetailsCache,
-            reportage
-          ).build(opts, freeArgs).use { parameters ->
-            reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")
-
-            parameters
-              .createTask()
-              .execute(reportage, pluginDetailsCache)
+              parameters
+                .createTask()
+                .execute(reportage, pluginDetailsCache)
+            }
           }
+          taskResult
+        }.run {
+          val taskResultsPrinter = taskResult.createTaskResultsPrinter(pluginRepository)
+          taskResultsPrinter.printResults(taskResult, outputOptions)
+          reportage.reportDownloadStatistics(outputOptions, pluginFilesBank)
+          reportageAggregator.handleAggregatedReportage()
+          reportage.reportVerificationDuration(this)
         }
-        taskResult
-      }.run {
-        val taskResultsPrinter = taskResult.createTaskResultsPrinter(pluginRepository)
-        taskResultsPrinter.printResults(taskResult, outputOptions)
-        reportage.reportDownloadStatistics(outputOptions, pluginFilesBank)
-        reportageAggregator.handleAggregatedReportage()
-        reportage.reportVerificationDuration(this)
       }
     }
   }

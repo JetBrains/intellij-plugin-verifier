@@ -45,7 +45,6 @@ data class MockIdePlugin(
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
   override val contentModules: List<Module> = emptyList(),
-
   @Deprecated("See IdePlugin::isV2")
   override val isV2: Boolean = false,
   override val hasPackagePrefix: Boolean = false,

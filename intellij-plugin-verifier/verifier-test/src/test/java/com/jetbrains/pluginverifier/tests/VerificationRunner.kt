@@ -54,7 +54,7 @@ class VerificationRunner {
       val additionalResolvers = getAdditionalClassResolvers(ide, includeKotlinStdLib)
 
       val classResolverProvider = DefaultClassResolverProvider(
-        BundledPluginDependencyFinder(ide, pluginDetailsCache),
+        BundledPluginDependencyFinder(ide),
         ideDescriptor,
         externalClassesPackageFilter,
         additionalResolvers

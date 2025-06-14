@@ -1,10 +1,15 @@
 package com.jetbrains.plugin.structure.mocks
 
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.classes.resolvers.AbstractJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.DirectoryFileOrigin
@@ -21,16 +26,20 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
+import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
+import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsSingleJarInRoot
 import com.jetbrains.plugin.structure.intellij.problems.UnexpectedPluginZipStructure
+import com.jetbrains.plugin.structure.intellij.utils.CloseablePath
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.Assert.*
 import org.junit.Test
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate
 import java.util.*
@@ -358,7 +367,10 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
               """.trimIndent()
           )
 
-          file("transitiveOptionalDependency.xml", """<idea-plugin><id>mock.TransitiveOptionalDependency</id></idea-plugin>""".trimIndent())
+          file(
+            "transitiveOptionalDependency.xml",
+            """<idea-plugin><id>mock.TransitiveOptionalDependency</id></idea-plugin>""".trimIndent()
+          )
         }
       }
     }
@@ -368,9 +380,12 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     assertEquals(PluginDependencyImpl("optionalDependencyId", true, false), optionalDescriptor.dependency)
 
     val optionalPlugin = optionalDescriptor.optionalPlugin
-    assertEquals(listOf("transitiveMandatoryDependencyId", "transitiveOptionalDependencyId"), optionalPlugin.dependencies.map { it.id })
+    assertEquals(
+      listOf("transitiveMandatoryDependencyId", "transitiveOptionalDependencyId"),
+      optionalPlugin.dependencies.map { it.id })
 
-    val transitiveOptional = optionalPlugin.optionalDescriptors.find { it.dependency.id == "transitiveOptionalDependencyId" }!!
+    val transitiveOptional =
+      optionalPlugin.optionalDescriptors.find { it.dependency.id == "transitiveOptionalDependencyId" }!!
     assertEquals("transitiveOptionalDependency.xml", transitiveOptional.configurationFilePath)
     assertEquals(PluginDependencyImpl("transitiveOptionalDependencyId", true, false), transitiveOptional.dependency)
   }
@@ -613,6 +628,70 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     assertTrue(plugin.hasDotNetPart)
   }
 
+  @Test
+  fun `plugin is extracted, successfully constructed and the extraction directory is not deleted`() {
+    val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->
+      pluginManager.createPlugin(
+        pluginArtifactPath,
+        validateDescriptor = true,
+        problemResolver = AnyProblemToWarningPluginCreationResultResolver,
+        deleteExtractedDirectory = false
+      )
+    }
+
+    val pluginArtifactPath = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml") { perfectXmlBuilder.modify { } }
+            }
+          }
+        }
+      }
+    }
+    val successResult = createPluginSuccessfully(pluginArtifactPath, pluginFactory)
+    assertEquals(1, successResult.resources.size)
+    val resource = successResult.resources.first()
+    assertTrue(resource is CloseablePath)
+    resource as CloseablePath
+    assertTrue(resource.path.isDirectory)
+    resource.close()
+    assertFalse(resource.path.isDirectory)
+  }
+
+  @Test
+  fun `plugin is extracted, intentionally failed on construction, but the extraction directory is automatically deleted`() {
+    val failingProblemRemapper = object : PluginCreationResultResolver {
+      override fun resolve(plugin: IdePlugin, problems: List<PluginProblem> ): PluginCreationResult<IdePlugin> {
+        return PluginCreationFail(problems)
+      }
+    }
+
+    val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->
+      pluginManager.createPlugin(
+        pluginArtifactPath,
+        validateDescriptor = true,
+        problemResolver = failingProblemRemapper,
+        deleteExtractedDirectory = false
+      )
+    }
+
+    val pluginArtifactPath = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml") { perfectXmlBuilder.modify { } }
+            }
+          }
+        }
+      }
+    }
+    val creationResult = assertProblematicPlugin(pluginArtifactPath, emptyList(), pluginFactory)
+    assertEquals(emptyList<Path>(), extractedDirectory.listFiles())
+  }
+
   private fun checkPluginValues(plugin: IdePlugin, isDirectoryBasedPlugin: Boolean) {
     assertEquals("https://kotlinlang.org", plugin.url)
     assertEquals("Kotlin", plugin.pluginName)
@@ -671,16 +750,17 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     propertyFileOrigin: FileOrigin
   ) {
     assertNotNull(plugin.originalFile)
-    IdePluginClassesFinder.findPluginClasses(plugin, Resolver.ReadMode.FULL, listOf(CompileServerExtensionKey)).use { classesLocations ->
-      checkCompileServerJars(classesLocations, plugin)
+    IdePluginClassesFinder.findPluginClasses(plugin, Resolver.ReadMode.FULL, listOf(CompileServerExtensionKey))
+      .use { classesLocations ->
+        checkCompileServerJars(classesLocations, plugin)
 
-      val mainResolver = CompositeResolver.create(
-        IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
-      )
+        val mainResolver = CompositeResolver.create(
+          IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }
+        )
 
-      checkPluginClasses(mainResolver, classFilesOrigin)
-      checkPluginProperties(mainResolver, propertyFileOrigin)
-    }
+        checkPluginClasses(mainResolver, classFilesOrigin)
+        checkPluginProperties(mainResolver, propertyFileOrigin)
+      }
     assertFalse(plugin.hasDotNetPart)
   }
 
@@ -711,14 +791,20 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     assertEquals(setOf("properties.someBundle"), bundleNameSet.baseBundleNames)
     assertEquals(setOf("properties.someBundle", "properties.someBundle_en"), bundleNameSet["properties.someBundle"])
 
-    val (enBundle, enFileOrigin) = resolver.resolveExactPropertyResourceBundle("properties.someBundle", Locale.ENGLISH) as ResolutionResult.Found
+    val (enBundle, enFileOrigin) = resolver.resolveExactPropertyResourceBundle(
+      "properties.someBundle",
+      Locale.ENGLISH
+    ) as ResolutionResult.Found
 
     assertEquals(propertyFileOrigin, enFileOrigin)
     assertEquals("en.only.property.value", enBundle.getString("en.only.property"))
     assertEquals("new.overridden.key.value", enBundle.getString("overridden.key"))
     assertNull(enBundle.handleGetObject("common.key"))
 
-    val (rootBundle, rootFileOrigin) = resolver.resolveExactPropertyResourceBundle("properties.someBundle", Locale.ROOT) as ResolutionResult.Found
+    val (rootBundle, rootFileOrigin) = resolver.resolveExactPropertyResourceBundle(
+      "properties.someBundle",
+      Locale.ROOT
+    ) as ResolutionResult.Found
 
     assertEquals(propertyFileOrigin, rootFileOrigin)
     assertEquals("common.key.value", rootBundle.getString("common.key"))
@@ -844,7 +930,8 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     assertNotNull(plugin.actions.find { it.getAttributeValue("class") == "SomeActionClass" })
     assertNotNull(plugin.actions.find { it.getAttributeValue("id") == "SomeGroupId" })
 
-    val optionalPlugin = plugin.optionalDescriptors.find { it.dependency.id == "optionalDependency" }!!.optionalPlugin as IdePluginImpl
+    val optionalPlugin =
+      plugin.optionalDescriptors.find { it.dependency.id == "optionalDependency" }!!.optionalPlugin as IdePluginImpl
     assertEquals(
       setOf("org.jetbrains.kotlin2.optionalUpdater"),
       optionalPlugin.appContainerDescriptor.extensionPoints.map { it.extensionPointName }.toSet()

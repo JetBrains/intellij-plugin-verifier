@@ -70,7 +70,8 @@ class CheckPluginParamsBuilder(
       val classResolverProvider = DefaultClassResolverProvider(
         dependencyFinder,
         ideDescriptor,
-        externalClassesPackageFilter
+        externalClassesPackageFilter,
+        downloadUnavailableBundledPlugins = true
       )
 
       pluginsSet.pluginsToCheck.map {

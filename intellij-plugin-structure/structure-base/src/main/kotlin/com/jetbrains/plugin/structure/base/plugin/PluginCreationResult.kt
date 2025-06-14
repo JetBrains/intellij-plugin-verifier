@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.base.plugin
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
+import java.io.Closeable
 
 sealed class PluginCreationResult<out PluginType : Plugin>
 
@@ -19,7 +20,8 @@ data class PluginCreationSuccess<out PluginType : Plugin>(
   val plugin: PluginType,
   val warnings: List<PluginProblem>,
   val unacceptableWarnings: List<PluginProblem> = emptyList(),
-  val telemetry: PluginTelemetry = PluginTelemetry()
+  val telemetry: PluginTelemetry = PluginTelemetry(),
+  val resources: List<Closeable> = emptyList()
 ) :
   PluginCreationResult<PluginType>() {
   constructor(plugin: PluginType, problems: List<PluginProblem>) : this(

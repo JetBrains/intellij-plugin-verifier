@@ -212,7 +212,7 @@ class CheckTrunkApiParamsBuilder(
     localPluginRepository: PluginRepository,
     pluginDetailsCache: PluginDetailsCache
   ): DependencyFinder {
-    val bundledFinder = BundledPluginDependencyFinder(releaseOrTrunkIde, pluginDetailsCache)
+    val bundledFinder = BundledPluginDependencyFinder(releaseOrTrunkIde)
 
     val localRepositoryDependencyFinder = RepositoryDependencyFinder(
       localPluginRepository,

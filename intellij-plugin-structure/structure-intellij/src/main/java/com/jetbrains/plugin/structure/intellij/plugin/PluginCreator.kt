@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
+import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
@@ -42,6 +43,7 @@ import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import org.jdom2.Document
 import org.jdom2.Element
 import org.slf4j.LoggerFactory
+import java.io.Closeable
 import java.nio.file.Path
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -166,13 +168,17 @@ internal class PluginCreator private constructor(
     get() {
       val invalidPlugin = invalidPlugin
       if (invalidPlugin != null) {
-        return PluginCreationFail(invalidPlugin.problems)
+        return PluginCreationFail<IdePlugin>(invalidPlugin.problems)
+          .also { closeResources() }
       }
 
       return problemResolver.resolve(resolvePlugin(), problems)
+        .propagateResources()
         .reassignStructureProblems()
         .add(telemetry)
     }
+
+  internal val resources: MutableList<Closeable> = mutableListOf()
 
   val telemetry: MutablePluginTelemetry = MutablePluginTelemetry()
 
@@ -685,6 +691,12 @@ internal class PluginCreator private constructor(
       is PluginCreationFail -> this
     }
 
+  private fun PluginCreationResult<IdePlugin>.propagateResources() =
+    when (this) {
+      is PluginCreationSuccess -> this.copy(resources = this@PluginCreator.resources)
+      is PluginCreationFail -> this.also { closeResources() }
+    }
+
   private val PluginCreationSuccess<IdePlugin>.problems: List<PluginProblem>
     get() = warnings + unacceptableWarnings
 
@@ -693,6 +705,10 @@ internal class PluginCreator private constructor(
       optionalDependenciesConfigFiles[pluginDependency] =
         if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
     }
+  }
+
+  fun closeResources() {
+    resources.closeAll()
   }
 }
 
