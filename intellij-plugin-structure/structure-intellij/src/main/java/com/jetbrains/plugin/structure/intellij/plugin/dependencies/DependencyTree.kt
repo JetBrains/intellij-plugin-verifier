@@ -80,7 +80,10 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
   private fun getDependencyGraph(plugin: IdePlugin, context: ResolutionContext): DiGraph<PluginId, Dependency> {
     val graph = DiGraph<PluginId, Dependency>()
     val missingDependencies = MissingDependencies()
-    getDependencyGraph(plugin, graph, resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1, missingDependencies, context)
+    getDependencyGraph(plugin, graph, resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1,
+      missingDependencies, context,
+      plugin.id
+      )
     return graph
   }
 
@@ -91,11 +94,12 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     dependencyIndex: Int,
     parentDependencyIndex: Int,
     missingDependencies: MissingDependencies,
-    context: ResolutionContext
+    context: ResolutionContext,
+    artifactId: PluginId?
   ): Unit =
     with(plugin) {
       val dependencies = context.dependenciesModifier.apply(this, pluginProvider)
-      val pluginId = pluginId ?: return@with
+      val pluginId = artifactId ?: pluginId ?: return@with
       val number = if (dependencyIndex < 0) "" else "" + (dependencyIndex + 1) + ") "
       val indent = getIndent(resolutionDepth, parentDependencyIndex)
       if (dependencies.isEmpty()) {
@@ -122,7 +126,16 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
               is Plugin -> {
                 if (dependencyPlugin is PluginAware && !dependencyPlugin.matches(pluginId)) {
                   graph.addEdge(pluginId, dependencyPlugin)
-                  getDependencyGraph(dependencyPlugin.plugin, graph, resolutionDepth + 1, i, dependencyIndex, missingDependencies, context)
+                  getDependencyGraph(
+                    dependencyPlugin.plugin,
+                    graph,
+                    resolutionDepth + 1,
+                    i,
+                    dependencyIndex,
+                    missingDependencies,
+                    context,
+                    dependencyPlugin.artifactId
+                  )
                 }
               }
 
@@ -190,6 +203,13 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     val originalFile = plugin.originalFile ?: "unknown plugin artifact path"
     return "Plugin must have an ID. Name: $name. Path: $originalFile"
   }
+
+  private val Dependency.artifactId: PluginId?
+    get() = when (this) {
+      is Plugin -> id
+      is Module -> id
+      None -> null
+    }
 
   private fun DiGraph<PluginId, Dependency>.collectDependencies(id: PluginId): Set<Dependency> {
     return mutableSetOf<Dependency>().apply {
@@ -261,17 +281,19 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     printer: StringBuilder
   ) {
     val indent = "  ".repeat(indentSize)
-    this[id].forEach { dep ->
-      if (dep is PluginAware) {
-        val depId = dep.plugin.pluginId!!
-        if (depId !in visited) {
-          visited += depId
-          printer.appendLine("${indent}* " + dep)
-          toDebugString(depId, indentSize + 1, visited, printer)
-        } else {
-          printer.appendLine("${indent}* $dep (already visited)")
+    this[id]
+      .sortedBy { it.id }
+      .forEach { dep ->
+        if (dep is PluginAware) {
+          val depId = dep.id
+          if (depId !in visited) {
+            visited += depId
+            printer.appendLine("${indent}* " + dep)
+            toDebugString(depId, indentSize + 1, visited, printer)
+          } else {
+            printer.appendLine("${indent}* $dep (already visited)")
+          }
         }
-      }
     }
   }
 
