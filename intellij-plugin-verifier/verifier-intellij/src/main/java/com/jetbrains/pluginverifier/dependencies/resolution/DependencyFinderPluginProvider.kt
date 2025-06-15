@@ -10,6 +10,12 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision
 import com.jetbrains.plugin.structure.intellij.plugin.PluginQuery
 
+/**
+ * A dependency resolution bridge between IntelliJ Plugin Verifier [DependencyFinder] and IntelliJ Structure Library [PluginProvider].
+ *
+ * This allows using JetBrains Marketplace repositories or local repositories as sources for plugin resolution within the
+ * "Structure" library.
+ */
 class DependencyFinderPluginProvider(private val dependencyFinder: DependencyFinder, private val ide: Ide) : PluginProvider {
   override fun findPluginById(pluginId: String): IdePlugin? {
     return dependencyFinder

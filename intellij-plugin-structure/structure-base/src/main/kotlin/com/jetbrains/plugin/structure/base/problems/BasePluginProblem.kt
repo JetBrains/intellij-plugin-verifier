@@ -33,7 +33,7 @@ abstract class PluginProblem {
      * Represents a plugin problem resulting from a failed validation rule.
      * Despite the failure, the plugin was successfully parsed and its model was properly constructed.
      *
-     * It is up to downstream clients to determine how to handle such problem.
+     * It is up to downstream clients to determine how to handle such a problem.
      */
     UNACCEPTABLE_WARNING
   }

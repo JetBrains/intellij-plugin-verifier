@@ -16,6 +16,15 @@ data class PluginCreationFail<out PluginType : Plugin>(val errorsAndWarnings: Li
   override fun toString(): String = "Failed: ${errorsAndWarnings.joinToString()}"
 }
 
+/**
+ * Indicates a successfully constructed plugin without any [plugin errors][PluginProblem.Level.ERROR].
+ *
+ * @param plugin a successfully constructed plugin
+ * @param warnings list of plugin problems with the [warning][PluginProblem.Level.WARNING]
+ * @param unacceptableWarnings list of plugin problems with the [warning][PluginProblem.Level.UNACCEPTABLE_WARNING]
+ * @param telemetry telemetry data when constructing this plugin
+ * @param resources closeable resources, such as directory containing extracted contents of a ZIP plugin
+ */
 data class PluginCreationSuccess<out PluginType : Plugin>(
   val plugin: PluginType,
   val warnings: List<PluginProblem>,
