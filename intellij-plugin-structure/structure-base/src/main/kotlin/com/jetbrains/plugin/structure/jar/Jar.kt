@@ -93,6 +93,8 @@ class Jar(
             scan(zipEntry)
           }
         }
+    } catch (e: NoSuchElementException) {
+      throw JarArchiveException("JAR archive is not found at [$jarPath]: ${e.message} ", e)
     } catch (e: IOException) {
       throw JarArchiveException("JAR archive could not be opened at [$jarPath]: ${e.message} ", e)
     }
