@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DependencyTreeDiGraphTest {
@@ -41,6 +42,11 @@ class DependencyTreeDiGraphTest {
       }
     }
     assertEquals(setOf(somePluginId, alphaPluginId, betaPluginId, comIntellijPluginId), vertices)
+
+    val somePluginDependsOnAlpha = graph.contains(somePluginId) {
+      it.matches(alphaPluginId)
+    }
+    assertTrue(somePluginDependsOnAlpha)
   }
 
   // FIXME Duplicate from com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.getPluginId

@@ -10,8 +10,10 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PassThruDependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
+import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision
+import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision.Source.CONTENT_MODULE_ID
+import com.jetbrains.plugin.structure.intellij.plugin.PluginQuery
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency.*
-import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import kotlin.math.max
@@ -24,19 +26,19 @@ typealias MissingDependencyListener = (IdePlugin, PluginDependency) -> Unit
 
 private val EMPTY_MISSING_DEPENDENCY_LISTENER: MissingDependencyListener = { _, _ -> }
 
-class DependencyTree(private val pluginProvider: PluginProvider) {
+class DependencyTree(private val pluginProvider: PluginProvider, private val ideModulePredicate: IdeModulePredicate = NegativeIdeModulePredicate) {
 
-  fun getDependencyTreeResolution(plugin: IdePlugin, dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier): DependencyTreeResolution {
-    val pluginId: PluginId = requireNotNull(plugin.pluginId) { missingId(plugin) }
+  fun getDependencyTreeResolution(
+    plugin: IdePlugin,
+    dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier
+  ): DependencyTreeResolution {
+    requireNotNull(plugin.pluginId) { missingId(plugin) }
     val missingDependencies = mutableMapOf<IdePlugin, Set<PluginDependency>>()
-    val missingDependencyListener = object : MissingDependencyListener {
-      override fun invoke(idePlugin: IdePlugin, missingDependency: PluginDependency) {
-        missingDependencies.merge(
-          idePlugin,
-          setOf(missingDependency)
-        ) { existingMissingDependencies, newMissingDependencies -> existingMissingDependencies + newMissingDependencies }
+    val missingDependencyListener: MissingDependencyListener =
+      { idePlugin: IdePlugin, missingDependency: PluginDependency ->
+        missingDependencies.merge(idePlugin, setOf(missingDependency), Set<PluginDependency>::plus)
       }
-    }
+
     val dependencyResolutionContext = ResolutionContext(missingDependencyListener, dependenciesModifier)
     val dependencyGraph = getDependencyGraph(plugin, dependencyResolutionContext)
 
@@ -74,7 +76,11 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
 
   private fun getDependencyGraph(plugin: IdePlugin, context: ResolutionContext): DiGraph<PluginId, Dependency> {
     val graph = DiGraph<PluginId, Dependency>()
-    getDependencyGraph(plugin, graph, resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1, context)
+    val missingDependencies = MissingDependencies()
+    getDependencyGraph(plugin, graph, resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1,
+      missingDependencies, context,
+      plugin.id
+      )
     return graph
   }
 
@@ -84,11 +90,13 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     resolutionDepth: Int,
     dependencyIndex: Int,
     parentDependencyIndex: Int,
-    context: ResolutionContext
+    missingDependencies: MissingDependencies,
+    context: ResolutionContext,
+    artifactId: PluginId?
   ): Unit =
     with(plugin) {
       val dependencies = context.dependenciesModifier.apply(this, pluginProvider)
-      val pluginId = pluginId ?: return@with
+      val pluginId = artifactId ?: pluginId ?: return@with
       val number = if (dependencyIndex < 0) "" else "" + (dependencyIndex + 1) + ") "
       val indent = getIndent(resolutionDepth, parentDependencyIndex)
       if (dependencies.isEmpty()) {
@@ -103,26 +111,38 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
 
         val nestedIndent = getNestedDependencyIndent(indent, number)
         dependencies.forEachIndexed { i, dep ->
-          val dependencyPlugin = pluginProvider.getPluginOrModule(dep.id)
           if (ignore(plugin, dep)) {
             debugLog(nestedIndent, i + 1, "Ignoring '{}'", dep)
-          } else if (graph.contains(pluginId, dependencyPlugin)) {
+          } else if (graph.contains(pluginId, hasId(dep))) {
             debugLog(nestedIndent, i + 1, "Resolved cached dependency '{}'", dep.id)
+          } else if (dep in missingDependencies) {
+            debugLog(nestedIndent, i + 1, "Skipping dependency '{}' as it is already marked missing", dep.id)
           } else {
-            when (dependencyPlugin) {
+            when (val dependencyPlugin = resolve(dep)) {
               is Module,
               is Plugin -> {
                 if (dependencyPlugin is PluginAware && !dependencyPlugin.matches(pluginId)) {
                   graph.addEdge(pluginId, dependencyPlugin)
-                  getDependencyGraph(dependencyPlugin.plugin, graph, resolutionDepth + 1, i, dependencyIndex, context)
+                  getDependencyGraph(
+                    dependencyPlugin.plugin,
+                    graph,
+                    resolutionDepth + 1,
+                    i,
+                    dependencyIndex,
+                    missingDependencies,
+                    context,
+                    dependencyPlugin.artifactId
+                  )
                 }
               }
+
               is None -> {
                 context.notifyMissingDependency(plugin, dep)
+                missingDependencies += dep
                 debugLog(
                   nestedIndent,
                   numericIndex = i + 1,
-                  "Skipping dependency '{}' as it is not available in the IDE.",
+                  "Skipping dependency '{}' as it is not available",
                   dep.id
                 )
               }
@@ -131,6 +151,28 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
         }
       }
     }
+
+  private fun resolve(dependency: PluginDependency): Dependency {
+    return with(dependency) {
+      if (isModule) {
+        resolveModule(id)?.let { provision ->
+          //FIXME some plugins, like JSON, have ID 'com.intellij.modules.json' and they are declared as plugins
+          Module(provision.plugin, id)
+        }
+      } else {
+        resolvePlugin(id)?.let { provision ->
+          val plugin = provision.plugin
+          if (ideModulePredicate.matches(id, plugin)) {
+            Module(plugin, id)
+          } else if (provision.source == CONTENT_MODULE_ID) {
+            Module(plugin, id)
+          } else {
+            Plugin(plugin)
+          }
+        }
+      } ?: None
+    }
+  }
 
   private fun getNestedDependencyIndent(indent: String, dependencyNumber: String): String {
     val additionalIndent = " ".repeat(max(dependencyNumber.length, DEPENDENCY_INDEX_MAX_WIDTH))
@@ -159,6 +201,13 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     return "Plugin must have an ID. Name: $name. Path: $originalFile"
   }
 
+  private val Dependency.artifactId: PluginId?
+    get() = when (this) {
+      is Plugin -> id
+      is Module -> id
+      None -> null
+    }
+
   private fun DiGraph<PluginId, Dependency>.collectDependencies(id: PluginId): Set<Dependency> {
     return mutableSetOf<Dependency>().apply {
       collectDependencies(id, this)
@@ -182,19 +231,27 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     }
   }
 
-  private fun PluginProvider.getPluginOrModule(id: String): Dependency {
-    val plugin = this.findPluginById(id)
-    return if (plugin != null) {
-      if (plugin is IdeModule) {
-        Module(plugin, id)
-      } else {
-        Plugin(plugin)
-      }
-    } else {
-      this.findPluginByModule(id)?.let {
-        Module(it, id)
-      } ?: None
-    }
+  private fun resolvePlugin(pluginId: PluginId): PluginProvision.Found? {
+    return PluginQuery.Builder.of(pluginId)
+      .inId()
+      .inName()
+      .inPluginAliases()
+      .inContentModuleId()
+      .build()
+      .let {
+        pluginProvider.query(it)
+      } as? PluginProvision.Found
+  }
+
+  private fun resolveModule(moduleId: String): PluginProvision.Found? {
+    return PluginQuery.Builder.of(moduleId)
+      .inId()
+      .inName()
+      .inPluginAliases()
+      .build()
+      .let {
+        pluginProvider.query(it)
+      } as? PluginProvision.Found
   }
 
   private fun DiGraph<PluginId, Dependency>.toDebugString(
@@ -204,17 +261,19 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
     printer: StringBuilder
   ) {
     val indent = "  ".repeat(indentSize)
-    this[id].forEach { dep ->
-      if (dep is PluginAware) {
-        val depId = dep.plugin.pluginId!!
-        if (depId !in visited) {
-          visited += depId
-          printer.appendLine("${indent}* " + dep)
-          toDebugString(depId, indentSize + 1, visited, printer)
-        } else {
-          printer.appendLine("${indent}* $dep (already visited)")
+    this[id]
+      .sortedBy { it.id }
+      .forEach { dep ->
+        if (dep is PluginAware) {
+          val depId = dep.id
+          if (depId !in visited) {
+            visited += depId
+            printer.appendLine("${indent}* " + dep)
+            toDebugString(depId, indentSize + 1, visited, printer)
+          } else {
+            printer.appendLine("${indent}* $dep (already visited)")
+          }
         }
-      }
     }
   }
 
@@ -225,6 +284,8 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
       is None -> this
     }
   }
+
+  private fun hasId(dependency: PluginDependency) = { dep: Dependency -> dep.matches(dependency.id) }
 
   fun toDebugString(pluginId: String): CharSequence {
     val resolutionContext = ResolutionContext(EMPTY_MISSING_DEPENDENCY_LISTENER)
@@ -266,8 +327,26 @@ class DependencyTree(private val pluginProvider: PluginProvider) {
 
     fun contains(from: I, to: O): Boolean = adjacency[from]?.contains(to) == true
 
+    fun contains(from: I, toIdPredicate: (O) -> Boolean): Boolean {
+      return adjacency[from]?.let { adj ->
+        adj.any { toIdPredicate(it) }
+      } ?: false
+    }
+
     internal fun forEachAdjacency(action: (I, List<O>) -> Unit) {
       adjacency.forEach(action)
+    }
+  }
+
+  internal class MissingDependencies {
+    private val _missingDependencies = mutableListOf<PluginDependency>()
+
+    operator fun plusAssign(dependency: PluginDependency) {
+      _missingDependencies += dependency
+    }
+
+    operator fun contains(dependency: PluginDependency): Boolean {
+      return dependency in _missingDependencies
     }
   }
 

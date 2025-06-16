@@ -6,7 +6,6 @@ package com.jetbrains.pluginverifier.dependencies.resolution
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
@@ -14,7 +13,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.jdk.DefaultJdkDescriptorProvider
 import com.jetbrains.pluginverifier.jdk.JdkDescriptorProvider
-import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.resolution.DefaultPluginDetailsBasedResolverProvider
 import com.jetbrains.pluginverifier.resolution.PluginDetailsBasedResolverProvider
@@ -78,7 +76,7 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
   }
 
   @Test
-  fun `plugin with a bundled dependency unavailable in the Platform 243, but downloaded by custom details resolver provider`() {
+  fun `plugin declaring a dependency that is unavailable in the Platform 243, but downloaded by custom details resolver provider`() {
     val ide = buildIdeWithBundledPlugins(
       version = "IU-243.21565.193",
       productInfo = productInfoJsonIU243,
@@ -97,17 +95,15 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
     )
 
     val defaultPluginDetailsBasedResolverProvider = DefaultPluginDetailsBasedResolverProvider()
-    val pluginDetailsResolverProvider = object : PluginDetailsBasedResolverProvider {
-      override fun getPluginResolver(pluginDependency: PluginDetails): Resolver {
-        return if (pluginDependency.idePlugin.pluginId == "com.intellij") {
-          with(pluginDependency.pluginClassesLocations) {
-            locationKeys
-              .flatMap { getResolvers(it) }
-              .let { resolvers -> CompositeResolver.create(resolvers) }
-          }
-        } else {
-          defaultPluginDetailsBasedResolverProvider.getPluginResolver(pluginDependency)
+    val pluginDetailsResolverProvider = PluginDetailsBasedResolverProvider { pluginDependency ->
+      if (pluginDependency.idePlugin.pluginId == "com.intellij") {
+        with(pluginDependency.pluginClassesLocations) {
+          locationKeys
+            .flatMap { getResolvers(it) }
+            .let { resolvers -> CompositeResolver.create(resolvers) }
         }
+      } else {
+        defaultPluginDetailsBasedResolverProvider.getPluginResolver(pluginDependency)
       }
     }
 
@@ -127,7 +123,7 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
   }
 
   @Test
-  fun `plugin with a bundled dependency unavailable in the Platform 243, but downloaded`() {
+  fun `plugin has a dependency that is unavailable in the Platform 243, but downloaded via legacy dependency tree resolution`() {
     val ide = buildIdeWithBundledPlugins(
       version = "IU-243.21565.193",
       productInfo = productInfoJsonIU243,
@@ -160,7 +156,40 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
   }
 
   @Test
-  fun `plugin with a bundled dependency unavailable in the Platform 223, but downloaded`() {
+  fun `plugin has a dependency that is unavailable in the Platform 243, but downloaded via dependency tree resolution`() {
+    val ide = buildIdeWithBundledPlugins(
+      version = "IU-243.21565.193",
+      productInfo = productInfoJsonIU243,
+      hasModuleDescriptors = true
+    )
+    val ideDescriptor = IdeDescriptor.create(ide.idePath, defaultJdkPath = null, ideFileLock = null)
+
+    val dependencyFinder = RuleBasedDependencyFinder.create(
+      ide,
+      Rule("com.intellij.modules.python", mockPythonPlugin),
+      Rule(
+        "com.intellij.modules.platform", mockIdeaCorePlugin, listOf(
+          publicClass("com/intellij/tasks/Task")
+        ), isBundledPlugin = true
+      ),
+    )
+
+    val resolverProvider = DefaultClassResolverProvider(
+      dependencyFinder,
+      ideDescriptor,
+      packageFilter,
+      downloadUnavailableBundledPlugins = true
+    )
+
+    val plugin = this.plugin.copy(dependencies = listOf(pythonModuleDependency))
+
+    val classResolver = resolverProvider.provide(plugin.getDetails())
+    // class from app.jar from mock IDE
+    assertTrue(classResolver.allResolver.containsClass("com/intellij/tasks/Task"))
+  }
+
+  @Test
+  fun `plugin has a dependency that is unavailable in the Platform 223, but downloaded`() {
     val ide = buildIdeWithBundledPlugins(version = "223.8836.41")
     val ideDescriptor = IdeDescriptor.create(ide.idePath, defaultJdkPath = null, ideFileLock = null)
 

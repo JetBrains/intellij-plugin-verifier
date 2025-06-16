@@ -13,7 +13,7 @@ fun createIdeBundledOrPluginRepositoryDependencyFinder(
   pluginRepository: PluginRepository,
   pluginDetailsCache: PluginDetailsCache
 ): DependencyFinder {
-  val bundledPluginFinder = BundledPluginDependencyFinder(ide, pluginDetailsCache)
+  val bundledPluginFinder = BundledPluginDependencyFinder(ide)
 
   val repositoryDependencyFinder = RepositoryDependencyFinder(
     pluginRepository,

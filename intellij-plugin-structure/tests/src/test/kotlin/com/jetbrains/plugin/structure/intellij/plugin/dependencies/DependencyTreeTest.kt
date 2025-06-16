@@ -139,7 +139,11 @@ class DependencyTreeTest {
 
   @Test
   fun `plugin has no dependencies but dependency modifier for legacy plugins adds Java module`() {
-    val javaPlugin = MockIdePlugin(pluginId = "Java", definedModules = setOf("com.intellij.modules.java"))
+    val javaPlugin = MockIdePlugin(
+      pluginName = "Java",
+      pluginId = "com.intellij.java",
+      definedModules = setOf("com.intellij.modules.java")
+    )
     val bundledPlugins = listOf(
       MockIdePlugin(pluginId = "com.intellij", definedModules = setOf("com.intellij.modules.all")),
       javaPlugin
@@ -147,13 +151,13 @@ class DependencyTreeTest {
     val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, bundledPlugins)
 
     val legacyPlugin = MockIdePlugin(pluginId = "com.example.Legacy")
-    val legacyPluginDependencyContributor = LegacyPluginDependencyContributor()
+    val legacyPluginDependencyContributor = LegacyPluginDependencyContributor(ide)
     val dependencyTree = DependencyTree(ide)
 
     val transitiveDependencies =
       dependencyTree.getTransitiveDependencies(legacyPlugin, dependenciesModifier = legacyPluginDependencyContributor)
 
-    val expectedJavaDependency = Dependency.Plugin(javaPlugin, isTransitive = false)
+    val expectedJavaDependency = Dependency.Module(javaPlugin, isTransitive = false, id = "com.intellij.modules.java")
     with(transitiveDependencies) {
       assertEquals(1, size)
       assertEquals(expectedJavaDependency, transitiveDependencies.first())
@@ -162,7 +166,8 @@ class DependencyTreeTest {
 
   @Test
   fun `standard plugin has no Java plugin contributed from to legacy rule`() {
-    val javaPlugin = MockIdePlugin(pluginId = "Java", definedModules = setOf("com.intellij.modules.java"))
+    val javaModuleName = "com.intellij.modules.java"
+    val javaPlugin = MockIdePlugin(pluginId = "Java", definedModules = setOf(javaModuleName))
     val platformPlugin = MockIdePlugin(pluginId = "com.intellij", definedModules = setOf("com.intellij.modules.all", "com.intellij.modules.platform"))
     val bundledPlugins = listOf(platformPlugin, javaPlugin)
     val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, bundledPlugins)
@@ -172,11 +177,12 @@ class DependencyTreeTest {
     val somePlugin = MockIdePlugin(pluginId = "com.example.A", dependencies = listOf(dependOnModule(platformPlugin)))
 
     val transitiveDependencies =
-      dependencyTree.getTransitiveDependencies(somePlugin, dependenciesModifier = LegacyPluginDependencyContributor())
+      dependencyTree.getTransitiveDependencies(somePlugin, dependenciesModifier = LegacyPluginDependencyContributor(ide))
     with(transitiveDependencies) {
       assertEquals(1, size)
 
-      val expectedPlatformDependency = Dependency.Plugin(platformPlugin, isTransitive = false)
+      val expectedPlatformDependency =
+        Dependency.Module(platformPlugin, "com.intellij", isTransitive = false)
       assertEquals(expectedPlatformDependency, transitiveDependencies.first())
     }
   }

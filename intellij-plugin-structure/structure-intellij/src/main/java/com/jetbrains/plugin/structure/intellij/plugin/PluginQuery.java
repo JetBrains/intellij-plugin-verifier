@@ -15,6 +15,8 @@ public class PluginQuery {
 
     private boolean searchPluginAliases;
 
+    private boolean searchContentModuleId;
+
     public @NotNull String getIdentifier() {
         return identifier;
     }
@@ -29,6 +31,44 @@ public class PluginQuery {
 
     public boolean searchPluginAliases() {
         return searchPluginAliases;
+    }
+
+    public boolean searchContentModuleId() {
+        return searchContentModuleId;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Searching for '").append(identifier).append("'");
+        boolean hasField = false;
+        if (searchId) {
+            sb.append(" in plugin ID");
+            hasField = true;
+        }
+        if (searchName) {
+            if (hasField) {
+                sb.append(",");
+            }
+            sb.append(" in plugin name");
+            hasField = true;
+        }
+        if (searchPluginAliases) {
+            if (hasField) {
+                sb.append(",");
+            }
+            sb.append(" in plugin aliases");
+            hasField = true;
+        }
+
+        if (searchContentModuleId()) {
+            if (hasField) {
+                sb.append(",");
+            }
+            sb.append(" in content module identifiers");
+            hasField = true;
+        }
+        return sb.toString();
     }
 
     public static class Builder {
@@ -60,6 +100,12 @@ public class PluginQuery {
         @NotNull
         public Builder inPluginAliases() {
             query.searchPluginAliases = true;
+            return this;
+        }
+
+        @NotNull
+        public Builder inContentModuleId() {
+            query.searchContentModuleId = true;
             return this;
         }
 

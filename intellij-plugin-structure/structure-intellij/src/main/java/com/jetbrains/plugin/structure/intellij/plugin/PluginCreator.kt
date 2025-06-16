@@ -33,6 +33,7 @@ import com.jetbrains.plugin.structure.intellij.problems.UnableToFindTheme
 import com.jetbrains.plugin.structure.intellij.problems.UnableToReadTheme
 import com.jetbrains.plugin.structure.intellij.problems.UnknownServiceClientValue
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import com.jetbrains.plugin.structure.intellij.verifiers.ExposedModulesVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.K2IdeModeCompatibilityVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
@@ -166,13 +167,17 @@ internal class PluginCreator private constructor(
     get() {
       val invalidPlugin = invalidPlugin
       if (invalidPlugin != null) {
-        return PluginCreationFail(invalidPlugin.problems)
+        return PluginCreationFail<IdePlugin>(invalidPlugin.problems)
+          .also { deleteResources() }
       }
 
       return problemResolver.resolve(resolvePlugin(), problems)
+        .propagateResources()
         .reassignStructureProblems()
         .add(telemetry)
     }
+
+  internal val resources = mutableListOf<ZipPluginResource>()
 
   val telemetry: MutablePluginTelemetry = MutablePluginTelemetry()
 
@@ -685,6 +690,12 @@ internal class PluginCreator private constructor(
       is PluginCreationFail -> this
     }
 
+  private fun PluginCreationResult<IdePlugin>.propagateResources() =
+    when (this) {
+      is PluginCreationSuccess -> copy(resources = this@PluginCreator.resources)
+      is PluginCreationFail -> also { deleteResources() }
+    }
+
   private val PluginCreationSuccess<IdePlugin>.problems: List<PluginProblem>
     get() = warnings + unacceptableWarnings
 
@@ -693,6 +704,10 @@ internal class PluginCreator private constructor(
       optionalDependenciesConfigFiles[pluginDependency] =
         if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
     }
+  }
+
+  private fun deleteResources() {
+    resources.forEach { it.delete() }
   }
 }
 

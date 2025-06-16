@@ -4,10 +4,7 @@
 
 package com.jetbrains.plugin.structure.ide;
 
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin;
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider;
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision;
-import com.jetbrains.plugin.structure.intellij.plugin.PluginQuery;
+import com.jetbrains.plugin.structure.intellij.plugin.*;
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +12,9 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+
+import static com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult.Type.MODULE;
+import static com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult.Type.PLUGIN;
 
 /**
  * An IDE instance consisting of the class-files and plugins.
@@ -83,10 +83,29 @@ public abstract class Ide implements PluginProvider {
   }
 
   /**
-   * Finds bundled plugin according to specified query.
+   * Return a bundled plugin with a corresponding ID or with a corresponding alias (module ID).
+   * The plugin resolution type is provided with a plugin instance.
+   * @param pluginIdOrModuleId plugin ID or alias
+   * @return bundled plugin with a resolution type.
+   */
+  @Override
+  public @Nullable PluginProviderResult findPluginByIdOrModuleId(@NotNull String pluginIdOrModuleId) {
+    for (IdePlugin plugin : getBundledPlugins()) {
+      String id = getPluginId(plugin);
+      if (Objects.equals(id, pluginIdOrModuleId)) {
+        return new PluginProviderResult(PLUGIN, plugin);
+      } else if (plugin.getDefinedModules().contains(pluginIdOrModuleId)) {
+        return new PluginProviderResult(MODULE, plugin);
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Finds bundled plugin according to a specified query.
    *
    * @param query plugin search query.
-   * @return a plugin provision class of corresponding type. Never returns {@code null}.
+   * @return a plugin provision class of a corresponding type. Never returns {@code null}.
    */
   @Override
   public @NotNull PluginProvision query(@NotNull PluginQuery query) {
@@ -122,4 +141,19 @@ public abstract class Ide implements PluginProvider {
    */
   @NotNull
   public abstract Path getIdePath();
+
+  /**
+   * Returns the plugin identifier. It is either a plugin proper ID or a plugin name, as a fallback.
+   * @param plugin plugin to get the identifier for.
+   * @return the plugin identifier.
+   */
+  @Nullable
+  protected String getPluginId(IdePlugin plugin) {
+    return plugin.getPluginId() != null ? plugin.getPluginId() : plugin.getPluginName();
+  }
+
+  @Override
+  public String getPresentableName() {
+    return getVersion().asString();
+  }
 }

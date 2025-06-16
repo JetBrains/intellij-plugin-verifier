@@ -4,11 +4,9 @@
 
 package com.jetbrains.plugin.structure.intellij.classes.plugin
 
-import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.closeOnException
-import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.isJar
@@ -22,7 +20,9 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.LocationKey
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
 import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import java.io.Closeable
+import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
+import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
+import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource.Companion.matches
 import java.io.IOException
 import java.nio.file.Path
 
@@ -40,13 +40,14 @@ class IdePluginClassesFinder private constructor(
   private val idePlugin: IdePlugin,
   private val extractDirectory: Path,
   private val readMode: Resolver.ReadMode,
-  private val locatorKeys: List<LocationKey>
+  private val locatorKeys: List<LocationKey>,
+  private val pluginResourceCache: PluginResourceCache
 ) {
 
   private fun findPluginClasses(): IdePluginClassesLocations {
     val pluginFile = idePlugin.originalFile
     if (pluginFile == null) {
-      return IdePluginClassesLocations(idePlugin, Closeable { /* Nothing to close */ }, emptyMap())
+      return IdePluginClassesLocations(idePlugin, allocatedResource = { /* Nothing to close */ }, emptyMap())
     } else if (!pluginFile.exists()) {
       throw IllegalArgumentException("Plugin file doesn't exist $pluginFile")
     } else if (!pluginFile.isDirectory && !pluginFile.isJar() && !pluginFile.isZip()) {
@@ -57,18 +58,43 @@ class IdePluginClassesFinder private constructor(
       findInZip(pluginFile)
     } else {
       val locations = findLocations(pluginFile)
-      IdePluginClassesLocations(idePlugin, Closeable { /* Nothing to delete */ }, locations)
+      IdePluginClassesLocations(idePlugin, allocatedResource = { /* Nothing to delete */ }, locations)
     }
   }
 
   private fun findInZip(pluginZip: Path): IdePluginClassesLocations {
-    return when (val extractorResult = PluginExtractor.extractPlugin(pluginZip, extractDirectory)) {
+    val cachedResult = pluginResourceCache.findFirst(pluginZip.matches())
+    return when (cachedResult) {
+      is PluginResourceCache.Result.Found ->
+        cachedResult.pluginResource.let { it ->
+          IdePluginClassesLocations(
+            idePlugin,
+            allocatedResource = it,
+            findLocations(it.extractedPluginPath)
+          )
+        }
+
+      is PluginResourceCache.Result.NotFound -> {
+        extractAndGetClasses(pluginZip).let { (extractedPluginPath, locations) ->
+          pluginResourceCache += ZipPluginResource.of(pluginZip, extractedPluginPath, idePlugin)
+          locations
+        }
+      }
+    }
+  }
+
+  private fun Path.matches() = { zipResource: ZipPluginResource -> zipResource.matches(this, idePlugin) }
+
+  @Throws(IOException::class)
+  private fun extractAndGetClasses(pluginZipPath: Path): Pair<Path, IdePluginClassesLocations> {
+    return when (val extractorResult = PluginExtractor.extractPlugin(pluginZipPath, extractDirectory)) {
       is ExtractorResult.Success -> {
         extractorResult.extractedPlugin.closeOnException {
           val locations = findLocations(it.pluginFile)
-          IdePluginClassesLocations(idePlugin, it, locations)
+          it.pluginFile to IdePluginClassesLocations(idePlugin, it, locations)
         }
       }
+
       is ExtractorResult.Fail -> throw IOException(extractorResult.pluginProblem.message)
     }
   }
@@ -98,36 +124,34 @@ class IdePluginClassesFinder private constructor(
       idePlugin: IdePlugin,
       additionalKeys: List<LocationKey> = emptyList()
     ): IdePluginClassesLocations =
-      findPluginClasses(idePlugin, Resolver.ReadMode.FULL, additionalKeys)
+      find(idePlugin, MAIN_CLASSES_KEYS + additionalKeys, Resolver.ReadMode.FULL, ClassSearchContext())
 
     fun findPluginClasses(
       idePlugin: IdePlugin,
-      readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
-      additionalKeys: List<LocationKey> = emptyList()
-    ): IdePluginClassesLocations {
-      val extractDirectory = Settings.EXTRACT_DIRECTORY.getAsPath().createDir()
-      return findPluginClasses(idePlugin, extractDirectory, readMode, additionalKeys)
-    }
+      additionalKeys: List<LocationKey> = emptyList(),
+      searchContext: ClassSearchContext
+    ): IdePluginClassesLocations =
+      find(idePlugin, MAIN_CLASSES_KEYS + additionalKeys, Resolver.ReadMode.FULL, searchContext)
 
-    fun fullyFindPluginClassesInExplicitLocations(idePlugin: IdePlugin, locations: List<LocationKey>): IdePluginClassesLocations =
+    fun fullyFindPluginClassesInExplicitLocations(
+      idePlugin: IdePlugin,
+      locations: List<LocationKey>,
+      searchContext: ClassSearchContext
+    ): IdePluginClassesLocations =
+      find(idePlugin, locations, Resolver.ReadMode.FULL, searchContext)
+
+    private fun find(
+      idePlugin: IdePlugin,
+      explicitLocations: List<LocationKey>,
+      readMode: Resolver.ReadMode,
+      searchContext: ClassSearchContext
+    ): IdePluginClassesLocations =
       IdePluginClassesFinder(
         idePlugin,
-        extractDirectory = Settings.EXTRACT_DIRECTORY.getAsPath().createDir(),
-        Resolver.ReadMode.FULL,
-        locations
+        searchContext.extractDirectory,
+        readMode,
+        explicitLocations,
+        searchContext.pluginCache
       ).findPluginClasses()
-
-    private fun findPluginClasses(
-      idePlugin: IdePlugin,
-      extractDirectory: Path,
-      readMode: Resolver.ReadMode = Resolver.ReadMode.FULL,
-      additionalKeys: List<LocationKey> = emptyList()
-    ): IdePluginClassesLocations = IdePluginClassesFinder(
-      idePlugin,
-      extractDirectory,
-      readMode,
-      MAIN_CLASSES_KEYS + additionalKeys
-    ).findPluginClasses()
   }
-
 }

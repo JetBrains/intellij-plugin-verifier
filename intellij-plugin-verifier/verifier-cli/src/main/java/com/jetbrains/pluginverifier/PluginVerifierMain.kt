@@ -7,6 +7,7 @@ package com.jetbrains.pluginverifier
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.forceDeleteIfExists
 import com.jetbrains.plugin.structure.base.utils.formatDuration
+import com.jetbrains.plugin.structure.intellij.plugin.caches.SimplePluginResourceCache
 import com.jetbrains.pluginverifier.PluginVerifierMain.commandRunners
 import com.jetbrains.pluginverifier.PluginVerifierMain.main
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -116,37 +117,47 @@ object PluginVerifierMain {
 
     val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5L * 1024)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
-    val pluginDetailsProvider = DefaultPluginDetailsProvider(getPluginsExtractDirectory())
+    SimplePluginResourceCache().use { extractedPluginCache ->
+      DefaultPluginDetailsProvider(getPluginsExtractDirectory(), extractedPluginCache).use { pluginDetailsProvider ->
+        val reportageAggregator = LoggingPluginVerificationReportageAggregator()
+        DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
+          measurePluginVerification {
+            val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
+            val taskResult = SizeLimitedPluginDetailsCache(
+              detailsCacheSize,
+              pluginFilesBank,
+              pluginDetailsProvider
+            ).use { pluginDetailsCache ->
+              runner.getParametersBuilder(
+                pluginRepository,
+                pluginDetailsCache,
+                extractedPluginCache,
+                reportage
+              ).build(opts, freeArgs).use { parameters ->
+                reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")
 
-    val reportageAggregator = LoggingPluginVerificationReportageAggregator()
-    DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
-      measurePluginVerification {
-        val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
-        val taskResult = SizeLimitedPluginDetailsCache(detailsCacheSize, pluginFilesBank, pluginDetailsProvider).use { pluginDetailsCache ->
-          runner.getParametersBuilder(
-            pluginRepository,
-            pluginDetailsCache,
-            reportage
-          ).build(opts, freeArgs).use { parameters ->
-            reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")
-
-            parameters
-              .createTask()
-              .execute(reportage, pluginDetailsCache)
+                parameters
+                  .createTask()
+                  .execute(reportage, pluginDetailsCache)
+              }
+            }
+            taskResult
+          }.run {
+            val taskResultsPrinter = taskResult.createTaskResultsPrinter(pluginRepository)
+            taskResultsPrinter.printResults(taskResult, outputOptions)
+            reportage.reportDownloadStatistics(outputOptions, pluginFilesBank)
+            reportageAggregator.handleAggregatedReportage()
+            reportage.reportVerificationDuration(this)
           }
         }
-        taskResult
-      }.run {
-        val taskResultsPrinter = taskResult.createTaskResultsPrinter(pluginRepository)
-        taskResultsPrinter.printResults(taskResult, outputOptions)
-        reportage.reportDownloadStatistics(outputOptions, pluginFilesBank)
-        reportageAggregator.handleAggregatedReportage()
-        reportage.reportVerificationDuration(this)
       }
     }
   }
 
-  private fun PluginVerificationReportage.reportDownloadStatistics(outputOptions: OutputOptions, pluginFilesBank: PluginFilesBank) {
+  private fun PluginVerificationReportage.reportDownloadStatistics(
+    outputOptions: OutputOptions,
+    pluginFilesBank: PluginFilesBank
+  ) {
     val downloadStatistics = pluginFilesBank.downloadStatistics
     val totalSpaceUsed = pluginFilesBank.getAvailablePluginFiles().fold(SpaceAmount.ZERO_SPACE) { acc, availableFile ->
       acc + availableFile.resourceInfo.weight.spaceAmount
@@ -159,9 +170,18 @@ object PluginVerifierMain {
     logVerificationStage("Total amount of plugins and dependencies downloaded: ${totalDownloadedAmount.presentableAmount()}")
     logVerificationStage("Total amount of space used for plugins and dependencies: ${totalSpaceUsed.presentableAmount()}")
     if (outputOptions.teamCityLog != null) {
-      outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.downloading.time.ms", totalDownloadDuration.toMillis())
-      outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.downloading.amount.bytes", totalDownloadedAmount.to(SpaceUnit.BYTE).toLong())
-      outputOptions.teamCityLog.buildStatisticValue("intellij.plugin.verifier.total.space.used", totalSpaceUsed.to(SpaceUnit.BYTE).toLong())
+      outputOptions.teamCityLog.buildStatisticValue(
+        "intellij.plugin.verifier.downloading.time.ms",
+        totalDownloadDuration.toMillis()
+      )
+      outputOptions.teamCityLog.buildStatisticValue(
+        "intellij.plugin.verifier.downloading.amount.bytes",
+        totalDownloadedAmount.to(SpaceUnit.BYTE).toLong()
+      )
+      outputOptions.teamCityLog.buildStatisticValue(
+        "intellij.plugin.verifier.total.space.used",
+        totalSpaceUsed.to(SpaceUnit.BYTE).toLong()
+      )
     }
   }
 

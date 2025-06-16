@@ -1,5 +1,6 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
+import com.jetbrains.plugin.structure.intellij.plugin.caches.SimplePluginResourceCache
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.SubmissionType
@@ -41,7 +42,13 @@ class CheckPluginParamsBuilderTest {
     val somePluginZipFile = createTempFile(suffix = ".zip")
     val someIde = createTempDirectory("idea-IU-117.963")
 
-    val params = CheckPluginParamsBuilder(pluginRepository, pluginVerificationReportage, pluginDetailsCache, ideDescriptorParser)
+    val params = CheckPluginParamsBuilder(
+      pluginRepository,
+      pluginVerificationReportage,
+      pluginDetailsCache,
+      SimplePluginResourceCache(),
+      ideDescriptorParser
+    )
       .build(cmdOpts, freeArgs = listOf(somePluginZipFile.absolutePathString(), someIde.absolutePathString()))
 
     assertEquals(InternalApiVerificationMode.IGNORE_IN_JETBRAINS_PLUGINS, params.internalApiVerificationMode)
@@ -58,7 +65,13 @@ class CheckPluginParamsBuilderTest {
     val somePluginZipFile = createTempFile(suffix = ".zip")
     val someIde = createTempDirectory("idea-IU-117.963")
 
-    val params = CheckPluginParamsBuilder(pluginRepository, pluginVerificationReportage, pluginDetailsCache, ideDescriptorParser)
+    val params = CheckPluginParamsBuilder(
+      pluginRepository,
+      pluginVerificationReportage,
+      pluginDetailsCache,
+      SimplePluginResourceCache(),
+      ideDescriptorParser
+    )
       .build(cmdOpts, freeArgs = listOf(somePluginZipFile.absolutePathString(), someIde.absolutePathString()))
 
     assertEquals(SubmissionType.EXISTING, params.pluginSubmissionType)

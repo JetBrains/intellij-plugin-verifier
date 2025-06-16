@@ -1,16 +1,38 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
+import com.jetbrains.plugin.structure.ide.ProductInfoBasedIde
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
+import com.jetbrains.plugin.structure.intellij.plugin.EventLogSinglePluginProvider
+import com.jetbrains.plugin.structure.intellij.plugin.EventLogSinglePluginProvider.LogEntry
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.mocks.modify
+import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.math.max
+
+private const val HEADER = """
+      <id>someId</id>
+      <name>someName</name>
+      <version>someVersion</version>
+      <vendor email="vendor.com" url="url">vendor</vendor>
+      <description>this description is looooooooooong enough</description>
+      <change-notes>these change-notes are looooooooooong enough</change-notes>
+      <idea-version since-build="131.1"/>
+    """
 
 class DependenciesTest {
   @Rule
@@ -644,9 +666,9 @@ class DependenciesTest {
     assertNotNull("No Git4Idea plugin found in the IDE", git4Idea)
     git4Idea!!
 
-    val dependencyTree = DependencyTree(ide)
+    val dependencyTree = DependencyTree(ide, ide.modulePredicate)
     with(dependencyTree.getTransitiveDependencies(git4Idea)) {
-      assertEquals(42, size)
+      assertEquals(30, size)
       listOf(
         "com.jetbrains.performancePlugin",
         "com.intellij.modules.lang",
@@ -712,141 +734,50 @@ class DependenciesTest {
     assertNotNull("No Git4Idea plugin found in the IDE", git4Idea)
     git4Idea!!
 
-    val dependencyTree = DependencyTree(ide)
+    val dependencyTree = DependencyTree(ide, ide.modulePredicate)
     with(dependencyTree.getTransitiveDependencies(git4Idea)) {
-      assertEquals(46, size)
-      listOf(
-        "XPathView",
-        "com.intellij.copyright",
-        "com.intellij.java",
-        "com.intellij.modules.java",
-        "com.intellij.modules.java-capable",
-        "com.intellij.modules.json",
-        "com.intellij.modules.lang",
-        "com.intellij.modules.vcs",
-        "com.intellij.modules.xdebugger",
-        "com.intellij.modules.xml",
-        "com.intellij.platform.images",
-        "com.intellij.properties",
-        "com.jetbrains.performancePlugin",
-        "com.jetbrains.performancePlugin",
-        "com.jetbrains.sh",
-        "intellij.libraries.microba",
-        "intellij.performanceTesting.vcs",
-        "intellij.platform.collaborationTools",
-        "intellij.platform.coverage",
-        "intellij.platform.coverage.agent",
-        "intellij.platform.ide.newUiOnboarding",
-        "intellij.platform.vcs.dvcs.impl",
-        "intellij.platform.vcs.impl",
-        "intellij.platform.vcs.log.impl",
-        "org.intellij.intelliLang",
-        "org.intellij.plugins.markdown",
-        "org.jetbrains.plugins.terminal",
-        "org.jetbrains.plugins.terminal",
-        "org.jetbrains.plugins.yaml",
-        "org.toml.lang",
-        "tanvd.grazi",
-      ).forEach(::assertContains)
+      val expectedDependencies = setOf(
+        DependencyEntry(id = "com.jetbrains.performancePlugin"),
+        DependencyEntry(id = "com.intellij.modules.lang", ownerId = "com.intellij", transitive = true),
+        DependencyEntry(id = "com.intellij.java", transitive = true),
+        DependencyEntry(id = "com.intellij.copyright", transitive = true),
+        DependencyEntry(id = "com.intellij.platform.images", transitive = true),
+        DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl", transitive = true),
+        DependencyEntry(id = "training", transitive = true),
+        DependencyEntry(id = "intellij.platform.lvcs.impl", ownerId = "com.intellij", transitive = true),
+        DependencyEntry(id = "kotlin.features-trainer", ownerId = "kotlin.features-trainer", transitive = true),
+        DependencyEntry(
+          id = "intellij.java.featuresTrainer", ownerId = "intellij.java.featuresTrainer", transitive = true
+        ),
+        DependencyEntry(id = "org.jetbrains.kotlin", transitive = true),
+        DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij", transitive = true),
+        DependencyEntry(id = "Git4Idea", transitive = true),
+        DependencyEntry(id = "com.jetbrains.performancePlugin", transitive = true),
+        DependencyEntry(id = "org.jetbrains.plugins.terminal", transitive = true),
+        DependencyEntry(id = "com.jetbrains.sh", transitive = true),
+        DependencyEntry(id = "org.intellij.plugins.markdown", transitive = true),
+        DependencyEntry(id = "org.intellij.intelliLang", transitive = true),
+        DependencyEntry(id = "XPathView", transitive = true),
+        DependencyEntry(id = "com.intellij.modules.xml", ownerId = "com.intellij", transitive = true),
+        DependencyEntry(id = "com.intellij.modules.java", ownerId = "com.intellij.java", transitive = true),
+        DependencyEntry(
+          id = "intellij.performanceTesting.vcs", ownerId = "com.jetbrains.performancePlugin", transitive = true
+        ),
+        DependencyEntry(id = "com.intellij.modules.json", transitive = true),
+        DependencyEntry(id = "org.jetbrains.plugins.yaml", transitive = true),
+        DependencyEntry(id = "org.toml.lang", transitive = true),
+        DependencyEntry(id = "tanvd.grazi", transitive = true),
+        DependencyEntry(id = "intellij.platform.vcs.impl", ownerId = "com.intellij", transitive = true),
+        DependencyEntry(id = "com.intellij.properties", transitive = true),
+        DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij"),
+        DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl"),
+        DependencyEntry(id = "org.jetbrains.plugins.terminal"),
+        // duplicate, because ModuleV2Dependency is actually a plugin.
+        DependencyEntry(id = "com.intellij.modules.json", ownerId = "com.intellij.modules.json", transitive = true)
+      )
+
+      assertSetsEqual(expectedDependencies, toDependencyEntries())
     }
-
-    val expectedDebugString = """
-      * Plugin dependency: 'com.jetbrains.performancePlugin'
-        * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij'
-          * Plugin dependency: 'com.intellij.java'
-            * Plugin dependency: 'com.intellij.copyright'
-              * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
-              * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
-              * Module 'intellij.platform.vcs.impl' provided by plugin 'intellij.platform.vcs.impl'
-                * Module 'intellij.libraries.microba' provided by plugin 'intellij.libraries.microba'
-            * Plugin dependency: 'com.intellij.platform.images'
-              * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
-            * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
-            * Module 'com.intellij.modules.vcs' provided by plugin 'intellij.platform.vcs.impl' (already visited)
-            * Module 'com.intellij.modules.xdebugger' provided by plugin 'com.intellij' (already visited)
-            * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
-            * Module 'com.intellij.modules.java-capable' provided by plugin 'com.intellij' (already visited)
-            * Plugin dependency: 'training'
-              * Module 'intellij.platform.lvcs.impl' provided by plugin 'intellij.platform.lvcs.impl'
-                * Module 'intellij.platform.vcs.impl' provided by plugin 'intellij.platform.vcs.impl' (already visited)
-              * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
-              * Plugin dependency: 'Git4Idea'
-                * Plugin dependency: 'com.jetbrains.performancePlugin' (already visited)
-                * Module 'intellij.platform.collaborationTools' provided by plugin 'intellij.platform.collaborationTools'
-                  * Module 'intellij.platform.vcs.dvcs.impl' provided by plugin 'intellij.platform.vcs.dvcs.impl'
-                    * Module 'intellij.platform.vcs.log.impl' provided by plugin 'intellij.platform.vcs.log.impl'
-                      * Module 'intellij.platform.vcs.impl' provided by plugin 'intellij.platform.vcs.impl' (already visited)
-                  * Module 'intellij.platform.vcs.log.impl' provided by plugin 'intellij.platform.vcs.log.impl' (already visited)
-                * Module 'com.intellij.modules.vcs' provided by plugin 'intellij.platform.vcs.impl' (already visited)
-                * Module 'intellij.platform.ide.newUiOnboarding' provided by plugin 'intellij.platform.ide.newUiOnboarding'
-                * Plugin dependency: 'org.jetbrains.plugins.terminal'
-                  * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
-                  * Plugin dependency: 'com.jetbrains.sh'
-                    * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
-                    * Plugin dependency: 'org.jetbrains.plugins.terminal' (already visited)
-                    * Plugin dependency: 'com.intellij.copyright' (already visited)
-                    * Plugin dependency: 'org.intellij.plugins.markdown'
-                      * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
-                      * Plugin dependency: 'org.intellij.intelliLang'
-                        * Plugin dependency: 'XPathView'
-                          * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
-                        * Module 'com.intellij.modules.java' provided by plugin 'com.intellij.java' (already visited)
-                        * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
-                      * Plugin dependency: 'com.intellij.modules.json'
-                      * Plugin dependency: 'org.jetbrains.plugins.yaml'
-                        * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
-                        * Plugin dependency: 'com.intellij.modules.json' (already visited)
-                      * Plugin dependency: 'org.toml.lang'
-                        * Module 'com.intellij.modules.lang' provided by plugin 'com.intellij' (already visited)
-                        * Plugin dependency: 'com.intellij.modules.json' (already visited)
-                        * Plugin dependency: 'tanvd.grazi'
-                          * Module 'intellij.platform.vcs.impl' provided by plugin 'intellij.platform.vcs.impl' (already visited)
-                          * Plugin dependency: 'com.intellij.java' (already visited)
-                          * Plugin dependency: 'com.intellij.modules.json' (already visited)
-                          * Plugin dependency: 'org.intellij.plugins.markdown' (already visited)
-                          * Plugin dependency: 'com.intellij.properties'
-                            * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
-                            * Plugin dependency: 'com.intellij.copyright' (already visited)
-                          * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
-                          * Plugin dependency: 'org.jetbrains.plugins.yaml' (already visited)
-                      * Plugin dependency: 'com.intellij.platform.images' (already visited)
-                      * Module 'com.intellij.modules.xml' provided by plugin 'com.intellij' (already visited)
-                      * Module 'intellij.platform.compose' provided by plugin 'intellij.platform.compose'
-                        * Module 'intellij.libraries.compose.desktop' provided by plugin 'intellij.libraries.compose.desktop'
-                          * Module 'intellij.libraries.skiko' provided by plugin 'intellij.libraries.skiko'
-                        * Module 'intellij.libraries.skiko' provided by plugin 'intellij.libraries.skiko' (already visited)
-                * Module 'intellij.platform.coverage' provided by plugin 'intellij.platform.coverage'
-                  * Module 'intellij.platform.coverage.agent' provided by plugin 'intellij.platform.coverage.agent'
-              * Module 'intellij.platform.ide.newUiOnboarding' provided by plugin 'intellij.platform.ide.newUiOnboarding' (already visited)
-              * Module 'intellij.platform.ide.newUsersOnboarding' provided by plugin 'intellij.platform.ide.newUsersOnboarding'
-                * Module 'intellij.platform.ide.newUiOnboarding' provided by plugin 'intellij.platform.ide.newUiOnboarding' (already visited)
-                * Module 'intellij.platform.experiment' provided by plugin 'intellij.platform.experiment'
-            * Module 'intellij.performanceTesting.vcs' provided by plugin 'intellij.performanceTesting.vcs'
-              * Module 'intellij.platform.vcs.impl' provided by plugin 'intellij.platform.vcs.impl' (already visited)
-              * Module 'intellij.platform.vcs.log.impl' provided by plugin 'intellij.platform.vcs.log.impl' (already visited)
-            * Plugin dependency: 'com.jetbrains.performancePlugin' (already visited)
-            * Module 'intellij.platform.vcs.impl' provided by plugin 'intellij.platform.vcs.impl' (already visited)
-          * Module 'kotlin.features-trainer' provided by plugin 'kotlin.features-trainer'
-            * Module 'intellij.java.featuresTrainer' provided by plugin 'intellij.java.featuresTrainer'
-              * Plugin dependency: 'training' (already visited)
-            * Plugin dependency: 'training' (already visited)
-          * Module 'intellij.java.featuresTrainer' provided by plugin 'intellij.java.featuresTrainer' (already visited)
-          * Plugin dependency: 'org.jetbrains.kotlin'
-            * Module 'intellij.platform.collaborationTools' provided by plugin 'intellij.platform.collaborationTools' (already visited)
-            * Plugin dependency: 'com.intellij.java' (already visited)
-          * Plugin dependency: 'com.intellij.platform.images' (already visited)
-          * Plugin dependency: 'com.intellij.copyright' (already visited)
-        * Module 'intellij.platform.vcs.impl' provided by plugin 'intellij.platform.vcs.impl' (already visited)
-        * Module 'intellij.platform.vcs.log.impl' provided by plugin 'intellij.platform.vcs.log.impl' (already visited)
-      * Module 'intellij.platform.collaborationTools' provided by plugin 'intellij.platform.collaborationTools' (already visited)
-      * Module 'com.intellij.modules.vcs' provided by plugin 'intellij.platform.vcs.impl' (already visited)
-      * Module 'intellij.platform.ide.newUiOnboarding' provided by plugin 'intellij.platform.ide.newUiOnboarding' (already visited)
-      * Plugin dependency: 'org.jetbrains.plugins.terminal' (already visited)
-      * Module 'intellij.platform.coverage' provided by plugin 'intellij.platform.coverage' (already visited)
-      
-    """.trimIndent()
-
-    assertEquals(expectedDebugString, dependencyTree.toDebugString(git4Idea.pluginId!!).toString())
   }
 
   @Test
@@ -864,10 +795,9 @@ class DependenciesTest {
     assertNotNull("No 'Coverage' plugin found in the IDE", coveragePlugin)
     coveragePlugin!!
 
-    val dependencyTree = DependencyTree(ide)
+    val dependencyTree = DependencyTree(ide, ide.modulePredicate)
     with(dependencyTree.getTransitiveDependencies(coveragePlugin)) {
-      assertEquals(44, size)
-      assertContains("intellij.platform.coverage.agent")
+      assertSetsEqual(expectedCoveragePluginDependencies, toDependencyEntries())
     }
   }
 
@@ -886,7 +816,7 @@ class DependenciesTest {
     assertNotNull("No 'Coverage' plugin found in the IDE", coveragePlugin)
     coveragePlugin!!
 
-    val dependencyTree = DependencyTree(ide)
+    val dependencyTree = DependencyTree(ide, ide.modulePredicate)
     val dependencies = dependencyTree.getTransitiveDependencies(coveragePlugin)
     val transitiveClasspath = dependencies.flatMap {
       when (it) {
@@ -985,9 +915,397 @@ class DependenciesTest {
 
     assertEquals(expectedClassPath, relativeClasspaths.map { it.toString() }.toSet())
   }
+
+  @Test
+  fun `plugin depends on an content module, but the content module owner is resolved as a single dependency`() {
+    val plugin = buildPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <content>
+                <module name="intellij.libraries.microba"><![CDATA[<idea-plugin />]]></module>
+              </content>
+              <content>
+                <module name="intellij.platform.vcs.impl"><![CDATA[
+                  <idea-plugin>
+                    <module value="com.intellij.modules.vcs" />
+                    <dependencies>
+                      <module name="intellij.libraries.microba" />
+                    </dependencies>                
+                  </idea-plugin>]]>
+                </module>
+              </content>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    val dependantPlugin = buildPlugin("dependant-plugin.jar") {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              <id>dependantPlugin</id>
+              <name>Dependant</name>
+              <version>someVersion</version>
+              <vendor email="vendor.com" url="url">vendor</vendor>
+              <description>this description is looooooooooong enough</description>
+              <idea-version since-build="131.1"/>
+              <!-- depends on a content module -->                            
+              <depends>intellij.platform.vcs.impl</depends>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    val pluginProvider = EventLogSinglePluginProvider(plugin)
+
+    val dependencyTree = DependencyTree(pluginProvider)
+    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
+      assertEquals(1, size)
+      assertEquals(Dependency.Module(plugin, "intellij.platform.vcs.impl"), single())
+    }
+
+    with(pluginProvider.pluginSearchLog) {
+      assertEquals(1, size)
+      assertEquals(LogEntry("intellij.platform.vcs.impl", plugin, "found via content module ID"), this[0])
+    }
+  }
+
+  @Test
+  fun `plugin depends on an IDE module`() {
+    val ideModule = buildPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <module value="intellij.java.terminal" />
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    val dependantPlugin = buildPlugin("dependant-plugin.jar") {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              <id>dependantPlugin</id>
+              <name>Dependant</name>
+              <version>someVersion</version>
+              <vendor email="vendor.com" url="url">vendor</vendor>
+              <description>this description is looooooooooong enough</description>
+              <idea-version since-build="131.1"/>
+              <!-- depends on a plugin alias -->                            
+              <depends>intellij.java.terminal</depends>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    val ideModulePredicate = DefaultIdeModulePredicate(setOf("intellij.java.terminal"))
+    val pluginProvider = EventLogSinglePluginProvider(ideModule)
+
+    val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate)
+    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
+      assertEquals(1, size)
+      assertEquals(Dependency.Module(ideModule, "intellij.java.terminal"), single())
+    }
+
+    with(pluginProvider.pluginSearchLog) {
+      assertEquals(1, size)
+      assertEquals(LogEntry("intellij.java.terminal", ideModule, "found via plugin alias"), this[0])
+    }
+  }
+
+  @Test
+  fun `plugin depends on a plugin alias in another plugin`() {
+    val ideModule = buildPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <module value="intellij.java.terminal" />
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    val dependantPlugin = buildPlugin("dependant-plugin.jar") {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              <id>dependantPlugin</id>
+              <name>Dependant</name>
+              <version>someVersion</version>
+              <vendor email="vendor.com" url="url">vendor</vendor>
+              <description>this description is looooooooooong enough</description>
+              <idea-version since-build="131.1"/>
+              <!-- depends on a plugin alias -->                            
+              <depends>intellij.java.terminal</depends>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    val pluginProvider = EventLogSinglePluginProvider(ideModule)
+
+    val dependencyTree = DependencyTree(pluginProvider)
+    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
+      assertEquals(1, size)
+      assertEquals(Dependency.Plugin(ideModule), single())
+    }
+
+    with(pluginProvider.pluginSearchLog) {
+      assertEquals(1, size)
+      assertEquals(LogEntry("intellij.java.terminal", ideModule, "found via plugin alias"), this[0])
+    }
+  }
+
+  @Test
+  fun `plugin depends via v1 on an IDE module`() {
+    val plugin = buildPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <module value="com.intellij.modules.java" />
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    val dependantPlugin = buildPlugin("dependant-plugin.jar") {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              <id>dependantPlugin</id>
+              <name>Dependant</name>
+              <version>someVersion</version>
+              <vendor email="vendor.com" url="url">vendor</vendor>
+              <description>this description is looooooooooong enough</description>
+              <idea-version since-build="131.1"/>
+              <!-- depends on an IDE module -->                            
+              <depends>com.intellij.modules.java</depends>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    val pluginProvider = EventLogSinglePluginProvider(plugin)
+
+    val dependencyTree = DependencyTree(pluginProvider)
+    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
+      assertEquals(1, size)
+      assertEquals(Dependency.Module(plugin, "com.intellij.modules.java"), single())
+    }
+
+    with(pluginProvider.pluginSearchLog) {
+      assertEquals(1, size)
+      assertEquals(LogEntry("com.intellij.modules.java", plugin, "found via plugin alias"), this[0])
+    }
+  }
+
+  @Test
+  fun `dependency tree uses a missing dependency in multiple places`() {
+    val plugin = buildPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <module value="com.intellij.modules.java" />
+              <depends>nonexistent.plugin</depends>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+    val dependantPlugin = buildPlugin("dependant-plugin.jar") {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            id = "<id>dependantPlugin</id>"
+            name = "<name>Dependant</name>"
+            depends = "<depends>com.intellij.modules.java</depends>" +
+                      "<depends>nonexistent.plugin</depends>"
+          }
+        }
+      }
+    }
+    val pluginProvider = EventLogSinglePluginProvider(plugin)
+
+    val dependencyTree = DependencyTree(pluginProvider)
+    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
+      assertEquals(1, size)
+      assertEquals(Dependency.Module(plugin, "com.intellij.modules.java"), single())
+    }
+
+    with(pluginProvider.pluginSearchLog) {
+      assertEquals(2, size)
+      with(this[0]) {
+        assertEquals("com.intellij.modules.java", pluginId)
+        assertEquals("found via plugin alias", reason)
+      }
+      with(this[1]) {
+        assertEquals("nonexistent.plugin", pluginId)
+        assertEquals("not found", reason)
+      }
+    }
+  }
+
+  private val Ide.modulePredicate: IdeModulePredicate
+    get() {
+      assertTrue("IDE must be product-info.json based", this is ProductInfoBasedIde)
+      this as ProductInfoBasedIde
+      return ProductInfoBasedIdeModulePredicate(productInfo)
+    }
+
+  private val expectedCoveragePluginDependencies = setOf(
+    DependencyEntry(id = "Git4Idea", transitive = true),
+    DependencyEntry(id = "JUnit", transitive = false),
+    DependencyEntry(id = "TestNG-J", transitive = false),
+    DependencyEntry(id = "XPathView", transitive = true),
+    DependencyEntry(id = "com.intellij.copyright", transitive = true),
+    DependencyEntry(id = "com.intellij.java", transitive = false),
+    DependencyEntry(id = "com.intellij.java", transitive = true),
+    DependencyEntry(id = "com.intellij.modules.java", ownerId = "com.intellij.java", transitive = true),
+    DependencyEntry(id = "com.intellij.modules.json", ownerId = "com.intellij.modules.json", transitive = true),
+    // duplicate, because ModuleV2Dependency is actually a plugin.
+    DependencyEntry(id = "com.intellij.modules.json", ownerId = null, transitive = true),
+    DependencyEntry(id = "com.intellij.modules.lang", ownerId = "com.intellij", transitive = true),
+    DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl", transitive = true),
+    DependencyEntry(id = "com.intellij.modules.xml", ownerId = "com.intellij", transitive = true),
+    DependencyEntry(id = "com.intellij.platform.images", transitive = true),
+    DependencyEntry(id = "com.intellij.properties", transitive = true),
+    DependencyEntry(id = "com.jetbrains.performancePlugin", transitive = true),
+    DependencyEntry(id = "com.jetbrains.sh", transitive = true),
+    DependencyEntry(id = "intellij.java.featuresTrainer", ownerId = "intellij.java.featuresTrainer", transitive = true),
+    DependencyEntry(id = "intellij.performanceTesting.vcs", ownerId = "com.jetbrains.performancePlugin", transitive = true),
+    DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij", transitive = true),
+    DependencyEntry(id = "intellij.platform.coverage", ownerId = "com.intellij", transitive = false),
+    DependencyEntry(id = "intellij.platform.lvcs.impl", ownerId = "com.intellij", transitive = true),
+    DependencyEntry(id = "intellij.platform.vcs.impl", ownerId = "com.intellij", transitive = true),
+    DependencyEntry(id = "kotlin.features-trainer", ownerId = "kotlin.features-trainer", transitive = true),
+    DependencyEntry(id = "org.intellij.intelliLang", transitive = true),
+    DependencyEntry(id = "org.intellij.plugins.markdown", transitive = true),
+    DependencyEntry(id = "org.jetbrains.kotlin", transitive = true),
+    DependencyEntry(id = "org.jetbrains.plugins.terminal", transitive = true),
+    DependencyEntry(id = "org.jetbrains.plugins.yaml", transitive = true),
+    DependencyEntry(id = "org.toml.lang", transitive = true),
+    DependencyEntry(id = "tanvd.grazi", transitive = true),
+    DependencyEntry(id = "training", transitive = true),
+  )
+
+  private val expectedCoveragePluginDependencyIdentifiers = listOf(
+    "Git4Idea",
+    "JUnit",
+    "TestNG-J",
+    "XPathView",
+    "com.intellij.copyright",
+    "com.intellij.java",
+    "com.intellij.java", // duplicate via transitive dependency
+    "com.intellij.modules.java provided by plugin com.intellij.java",
+    "com.intellij.modules.json",
+    "com.intellij.modules.lang provided by plugin com.intellij",
+    "com.intellij.modules.vcs provided by plugin intellij.platform.vcs.impl",
+    "com.intellij.modules.xml provided by plugin com.intellij",
+    "com.intellij.platform.images",
+    "com.intellij.properties",
+    "com.jetbrains.performancePlugin",
+    "com.jetbrains.sh",
+    "intellij.java.featuresTrainer provided by plugin intellij.java.featuresTrainer",
+    "intellij.performanceTesting.vcs provided by plugin com.jetbrains.performancePlugin",
+    "intellij.platform.collaborationTools provided by plugin com.intellij",
+    "intellij.platform.coverage provided by plugin com.intellij",
+    "intellij.platform.lvcs.impl provided by plugin com.intellij",
+    "intellij.platform.vcs.impl provided by plugin com.intellij",
+    "kotlin.features-trainer provided by plugin kotlin.features-trainer",
+    "org.intellij.intelliLang",
+    "org.intellij.plugins.markdown",
+    "org.jetbrains.kotlin",
+    "org.jetbrains.plugins.terminal",
+    "org.jetbrains.plugins.yaml",
+    "org.toml.lang",
+    "tanvd.grazi",
+    "training"
+  )
+
+  private fun buildPlugin(pluginName: String = "plugin.jar", pluginContentBuilder: ContentBuilder.() -> Unit): IdePlugin {
+    val pluginFile = buildZipFile(temporaryFolder.newFile(pluginName).toPath(), pluginContentBuilder)
+    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
+    if (pluginCreationResult is PluginCreationFail) {
+      fail(pluginCreationResult.errorsAndWarnings.joinToString { it.message })
+    }
+    return (pluginCreationResult as PluginCreationSuccess).plugin
+  }
+
+  private fun Collection<Dependency>.toDependencyEntries(): Set<DependencyEntry> {
+    return mapNotNull {
+      when (it) {
+        is Dependency.Plugin -> DependencyEntry(it.plugin.id, transitive = it.isTransitive)
+        is Dependency.Module -> DependencyEntry(it.id, it.plugin.id, transitive = it.isTransitive)
+        Dependency.None -> null
+      }
+    }.toSet()
+  }
 }
 
+private data class DependencyEntry(val id: String, val ownerId: String? = null, val transitive: Boolean = false)
 
 private fun Set<Dependency>.assertContains(id: String): Boolean =
   filterIsInstance<PluginAware>()
     .any { it.plugin.pluginId == id }
+
+fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>) {
+  val missing = expected - actual
+  val extra = actual - expected
+
+  if (missing.isNotEmpty() || extra.isNotEmpty()) {
+    val message = buildString {
+      appendLine("Sets are not equal.")
+      if (missing.isNotEmpty()) {
+        appendLine("Missing elements: $missing")
+      }
+      if (extra.isNotEmpty()) {
+        appendLine("Extra elements: $extra")
+      }
+    }
+    fail(message)
+  }
+}
+
+internal fun assertLineByLineEquals(expected: String, actual: String) {
+  val expectedLines = expected.split('\n').dropLastWhile { it.isEmpty() }
+  val actualLines = actual.split('\n').dropLastWhile { it.isEmpty() }
+
+  val message = StringBuilder()
+  var mismatch = false
+
+  for (i in 0 until max(expectedLines.size, actualLines.size)) {
+    val expectedLine = if (i < expectedLines.size) expectedLines[i] else "<missing>"
+    val actualLine = if (i < actualLines.size) actualLines[i] else "<missing>"
+
+    if (expectedLine != actualLine) {
+      mismatch = true
+      message.append(String.format("Line %d:\n", i + 1))
+      message.append(String.format("  Expected: \"%s\"\n", expectedLine))
+      message.append(String.format("  Actual:   \"%s\"\n\n", actualLine))
+    }
+  }
+
+  if (mismatch) {
+    fail("Line by line comparison failed:\n$message")
+  }
+}

@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.jdk.JdkDescriptorCreator
@@ -34,6 +35,7 @@ import java.nio.file.Paths
 class CheckPluginApiParamsBuilder(
   private val pluginRepository: PluginRepository,
   private val pluginDetailsCache: PluginDetailsCache,
+  private val extractedPluginCache: PluginResourceCache,
   private val reportage: PluginVerificationReportage
 ) : TaskParametersBuilder {
   private companion object {
@@ -139,7 +141,7 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
    */
   private fun parsePluginsToCheck(pluginsToCheckFile: Path): PluginsSet {
     val pluginsSet = PluginsSet()
-    val pluginsParsing = PluginsParsing(pluginRepository, reportage, pluginsSet)
+    val pluginsParsing = PluginsParsing(pluginRepository, extractedPluginCache, reportage, pluginsSet)
 
     for (line in pluginsToCheckFile.readLines()) {
       val validateDescriptor = !line.endsWith("!!")

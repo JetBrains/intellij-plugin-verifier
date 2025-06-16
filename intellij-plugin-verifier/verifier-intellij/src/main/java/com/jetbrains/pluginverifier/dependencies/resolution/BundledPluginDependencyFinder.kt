@@ -10,12 +10,11 @@ import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyOrigin.Bundled
-import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 
 /**
  * [DependencyFinder] that searches for plugins among bundled plugins of the [ide].
  */
-class BundledPluginDependencyFinder(val ide: Ide, private val pluginDetailsCache: PluginDetailsCache) :
+class BundledPluginDependencyFinder(val ide: Ide) :
   DependencyFinder {
   override val presentableName
     get() = "Bundled plugins of ${ide.version.asString()}"

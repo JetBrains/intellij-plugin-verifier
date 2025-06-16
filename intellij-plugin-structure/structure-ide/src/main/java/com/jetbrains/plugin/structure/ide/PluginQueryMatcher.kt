@@ -16,6 +16,8 @@ class PluginQueryMatcher {
       PluginProvision.Found(plugin, ID)
     } else if (query.searchName() && plugin.pluginName == identifier) {
       PluginProvision.Found(plugin, NAME)
+    } else if (query.searchContentModuleId() && plugin.contentModules.any { it.name == identifier }) {
+      PluginProvision.Found(plugin, CONTENT_MODULE_ID)
     } else if (query.searchPluginAliases() && plugin.definedModules.contains(identifier)) {
       PluginProvision.Found(plugin, ALIAS)
     } else PluginProvision.NotFound

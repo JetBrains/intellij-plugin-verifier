@@ -36,7 +36,7 @@ class BundledPluginDependencyFinderTest : BaseBytecodeTest() {
     val cache = MockSinglePluginDetailsCache(supportedPluginId = JSON_PLUGIN_ID, pluginDetailsProvider = detailsProvider)
 
     val ide = buildIdeWithBundledPlugins(bundledPlugins = listOf(jsonPlugin))
-    val finder = BundledPluginDependencyFinder(ide, cache)
+    val finder = BundledPluginDependencyFinder(ide)
 
     val dependencyResult = finder.findPluginDependency(JSON_PLUGIN_ID, true)
     assertTrue("Dependency must be 'FoundPljugin', but is '${dependencyResult.javaClass}'", dependencyResult is DependencyFinder.Result.FoundPlugin)

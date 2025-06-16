@@ -19,9 +19,10 @@ class BundledPluginClassesFinder {
 
     fun findPluginClasses(
       idePlugin: IdePlugin,
-      additionalKeys: List<LocationKey> = emptyList()
+      additionalKeys: List<LocationKey> = emptyList(),
+      searchContext: ClassSearchContext
     ): IdePluginClassesLocations {
-      return IdePluginClassesFinder.fullyFindPluginClassesInExplicitLocations(idePlugin, LOCATION_KEYS + additionalKeys)
+      return IdePluginClassesFinder.fullyFindPluginClassesInExplicitLocations(idePlugin, LOCATION_KEYS + additionalKeys, searchContext)
     }
   }
 
