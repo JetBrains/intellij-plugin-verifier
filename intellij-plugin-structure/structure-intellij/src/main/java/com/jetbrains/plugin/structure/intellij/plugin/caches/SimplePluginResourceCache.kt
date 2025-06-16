@@ -8,10 +8,10 @@ import com.jetbrains.plugin.structure.base.utils.Deletable
 import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import java.io.Closeable
 import java.nio.file.Path
-import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ConcurrentHashMap
 
 class SimplePluginResourceCache : PluginResourceCache, Deletable, Closeable {
-  private val cache = CopyOnWriteArrayList<ZipPluginResource>()
+  private val cache = ConcurrentHashMap.newKeySet<ZipPluginResource>()
 
   override fun getPluginResource(pluginArtifactPath: Path): PluginResourceCache.Result {
     return cache.find { it.pluginArtifactPath == pluginArtifactPath }
@@ -19,8 +19,14 @@ class SimplePluginResourceCache : PluginResourceCache, Deletable, Closeable {
       ?: PluginResourceCache.Result.NotFound
   }
 
+  override fun findFirst(predicate: (ZipPluginResource) -> Boolean): PluginResourceCache.Result {
+    return cache.find(predicate)
+      ?.let { PluginResourceCache.Result.Found(it) }
+      ?: PluginResourceCache.Result.NotFound
+  }
+
   override fun plusAssign(pluginResource: ZipPluginResource) {
-    cache.addIfAbsent(pluginResource)
+    cache += pluginResource
   }
 
   @Synchronized
