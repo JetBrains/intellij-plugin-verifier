@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.tasks.checkPluginApi
 
+import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -18,7 +19,8 @@ class CheckPluginApiRunner : CommandRunner {
   override fun getParametersBuilder(
     pluginRepository: PluginRepository,
     pluginDetailsCache: PluginDetailsCache,
+    extractedPluginCache: PluginResourceCache,
     reportage: PluginVerificationReportage
-  ) = CheckPluginApiParamsBuilder(pluginRepository, pluginDetailsCache, reportage)
+  ) = CheckPluginApiParamsBuilder(pluginRepository, pluginDetailsCache, extractedPluginCache, reportage)
 
 }

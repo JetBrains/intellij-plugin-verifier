@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
+import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
@@ -128,7 +129,7 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     propertyFileOrigin: FileOrigin
   ) {
     assertNotNull(plugin.originalFile)
-    IdePluginClassesFinder.findPluginClasses(plugin, Resolver.ReadMode.FULL, emptyList()).use { classesLocations ->
+    IdePluginClassesFinder.findPluginClasses(plugin, additionalKeys = emptyList(), ClassSearchContext.DEFAULT).use { classesLocations ->
 
       val mainResolver = CompositeResolver.create(
         IdePluginClassesFinder.MAIN_CLASSES_KEYS.flatMap { classesLocations.getResolvers(it) }

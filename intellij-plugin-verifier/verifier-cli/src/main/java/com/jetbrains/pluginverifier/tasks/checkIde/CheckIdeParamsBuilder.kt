@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.tasks.checkIde
 
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
@@ -26,6 +27,7 @@ import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 class CheckIdeParamsBuilder(
   val pluginRepository: PluginRepository,
   val pluginDetailsCache: PluginDetailsCache,
+  val extractedPluginCache: PluginResourceCache,
   val reportage: PluginVerificationReportage
 ) : TaskParametersBuilder {
 
@@ -36,7 +38,7 @@ class CheckIdeParamsBuilder(
       val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
       val pluginsSet = PluginsSet()
-      PluginsParsing(pluginRepository, reportage, pluginsSet).addPluginsFromCmdOpts(opts, ideDescriptor.ideVersion)
+      PluginsParsing(pluginRepository, extractedPluginCache, reportage, pluginsSet).addPluginsFromCmdOpts(opts, ideDescriptor.ideVersion)
 
       val missingCompatibleVersionsProblems = findMissingCompatibleVersionsProblems(ideDescriptor.ideVersion, pluginsSet)
 

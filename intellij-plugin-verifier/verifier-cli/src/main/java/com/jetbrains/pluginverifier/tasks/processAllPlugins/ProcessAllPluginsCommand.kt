@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.tasks.processAllPlugins
 
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.exists
+import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -31,6 +32,7 @@ class ProcessAllPluginsCommand : CommandRunner {
   override fun getParametersBuilder(
     pluginRepository: PluginRepository,
     pluginDetailsCache: PluginDetailsCache,
+    extractedPluginCache: PluginResourceCache,
     reportage: PluginVerificationReportage
   ): TaskParametersBuilder = object : TaskParametersBuilder {
     override fun build(opts: CmdOpts, freeArgs: List<String>): TaskParameters {

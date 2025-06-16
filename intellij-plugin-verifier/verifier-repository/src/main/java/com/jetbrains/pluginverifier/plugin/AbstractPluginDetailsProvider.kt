@@ -23,7 +23,7 @@ import java.nio.file.Path
  * Baseline implementation of the [PluginDetailsProvider] that
  * uses the [extractDirectory] for extracting `.zip`-ped plugins.
  */
-abstract class AbstractPluginDetailsProvider(private val extractDirectory: Path) : PluginDetailsProvider {
+abstract class AbstractPluginDetailsProvider(protected val extractDirectory: Path) : PluginDetailsProvider {
   protected val idePluginManager = IdePluginManager.createManager(extractDirectory)
 
   private val IdePlugin.problems: List<PluginProblem>

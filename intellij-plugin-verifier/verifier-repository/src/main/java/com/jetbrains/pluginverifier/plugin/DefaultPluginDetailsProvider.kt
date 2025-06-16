@@ -5,11 +5,16 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClassesFinder
+import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.caches.EmptyPluginResourceCache
+import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
+import com.jetbrains.plugin.structure.intellij.utils.DeletableOnClose
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginInfo
@@ -24,8 +29,14 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * Non-bundled plugins that aren't dependencies are handled by the delegate [PluginDetailsProviderImpl].
  */
-class DefaultPluginDetailsProvider(extractDirectory: Path) : AbstractPluginDetailsProvider(extractDirectory), AutoCloseable {
-  private val nonBundledPluginDetailsProvider: PluginDetailsProviderImpl = PluginDetailsProviderImpl(extractDirectory)
+class DefaultPluginDetailsProvider(
+  extractDirectory: Path,
+  private val pluginCache: PluginResourceCache = EmptyPluginResourceCache
+) : AbstractPluginDetailsProvider(extractDirectory), AutoCloseable {
+
+  private val nonBundledPluginDetailsProvider: PluginDetailsProviderImpl = PluginDetailsProviderImpl(extractDirectory, pluginCache)
+
+  private val dependencyDetailsProvider = DependencyDetailsProvider(extractDirectory, pluginCache)
 
   private val dependencyProblemResolver: PluginCreationResultResolver =
     JetBrainsPluginCreationResultResolver.fromClassPathJson(IntelliJPluginCreationResultResolver())
@@ -35,10 +46,15 @@ class DefaultPluginDetailsProvider(extractDirectory: Path) : AbstractPluginDetai
   private val closeableResources: MutableList<Closeable> = mutableListOf()
 
   override fun readPluginClasses(pluginInfo: PluginInfo, idePlugin: IdePlugin): IdePluginClassesLocations {
-    return if (pluginInfo is BundledPluginInfo) {
-      BundledPluginClassesFinder.findPluginClasses(idePlugin, additionalKeys = listOf(CompileServerExtensionKey))
-    } else {
-      nonBundledPluginDetailsProvider.readPluginClasses(pluginInfo, idePlugin)
+    return when (pluginInfo) {
+      is BundledPluginInfo ->
+        BundledPluginClassesFinder.findPluginClasses(idePlugin, additionalKeys = listOf(CompileServerExtensionKey),
+          ClassSearchContext(pluginCache))
+
+      is DependencyPluginInfo ->
+        dependencyDetailsProvider.readPluginClasses(pluginInfo, idePlugin)
+
+      else -> nonBundledPluginDetailsProvider.readPluginClasses(pluginInfo, idePlugin)
     }
   }
 
@@ -70,7 +86,13 @@ class DefaultPluginDetailsProvider(extractDirectory: Path) : AbstractPluginDetai
 
   private fun PluginCreationResult<IdePlugin>.registerCloseableResources() = apply {
     if (this is PluginCreationSuccess) {
-      closeableResources += resources
+      resources.forEach {
+        if (it is ZipPluginResource) {
+          pluginCache += it
+        } else {
+          closeableResources += DeletableOnClose.of(it)
+        }
+      }
     }
   }
 
@@ -81,6 +103,7 @@ class DefaultPluginDetailsProvider(extractDirectory: Path) : AbstractPluginDetai
   }
 
   override fun close() {
+    pluginCache.delete()
     eventLog.clear()
     closeableResources.closeAll()
   }

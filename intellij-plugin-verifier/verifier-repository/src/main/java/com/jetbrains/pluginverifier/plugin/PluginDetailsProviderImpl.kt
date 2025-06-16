@@ -5,12 +5,17 @@
 package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
+import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import java.nio.file.Path
 
-class PluginDetailsProviderImpl(extractDirectory: Path) : AbstractPluginDetailsProvider(extractDirectory) {
+class PluginDetailsProviderImpl(extractDirectory: Path, private val pluginResourceCache: PluginResourceCache) : AbstractPluginDetailsProvider(extractDirectory) {
   override fun readPluginClasses(pluginInfo: PluginInfo, idePlugin: IdePlugin) =
-    IdePluginClassesFinder.findPluginClasses(idePlugin, additionalKeys = listOf(CompileServerExtensionKey))
+    IdePluginClassesFinder
+      .findPluginClasses(idePlugin,
+        additionalKeys = listOf(CompileServerExtensionKey),
+        searchContext = ClassSearchContext(pluginResourceCache, extractDirectory))
 }

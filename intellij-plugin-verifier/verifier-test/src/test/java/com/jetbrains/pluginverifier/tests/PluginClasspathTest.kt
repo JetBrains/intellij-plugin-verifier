@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.intellij.classes.locator.LibModulesDirectoryLocator
 import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClassesFinder
+import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -147,7 +148,7 @@ class PluginClasspathTest : BasePluginTest() {
     val classResolverProvider = BundledPluginClassResolverProvider()
 
     assertSuccess(result) {
-      BundledPluginClassesFinder.findPluginClasses(plugin).use { classLocations ->
+      BundledPluginClassesFinder.findPluginClasses(plugin, searchContext = ClassSearchContext.DEFAULT).use { classLocations ->
         classResolverProvider.getResolver(classLocations, resolverName = pluginId).use {
           val pluginClasses = it.allClassNames
           assertEquals(2, pluginClasses.size)

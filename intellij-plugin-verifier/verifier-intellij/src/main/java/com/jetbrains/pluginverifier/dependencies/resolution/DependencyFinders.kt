@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClassesFinder
+import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyOrigin.Bundled
@@ -40,20 +41,28 @@ internal fun DependencyFinder.Result.DetailsProvided.getDetails(): PluginDetails
 }
 
 internal fun getBundledPluginDetails(ide: Ide, plugin: IdePlugin): PluginDetails {
-  val pluginWarnings =
+  val warnings =
     (if (plugin is StructurallyValidated) plugin.problems else emptyList()).filter { it.level == PluginProblem.Level.WARNING }
+  val classes = BundledPluginClassesFinder.findPluginClasses(
+    plugin,
+    additionalKeys = listOf(CompileServerExtensionKey),
+    searchContext = ClassSearchContext())
+  val bundledInfo = BundledPluginInfo(ide.version, plugin)
   return PluginDetails(
-    BundledPluginInfo(ide.version, plugin), plugin, pluginWarnings,
-    BundledPluginClassesFinder.findPluginClasses(plugin, additionalKeys = listOf(CompileServerExtensionKey)), null
+    bundledInfo, plugin, warnings, classes, null
   )
 }
 
 internal fun getNonBundledDependencyDetails(plugin: IdePlugin): PluginDetails {
-  val pluginWarnings =
+  val warnings =
     (if (plugin is StructurallyValidated) plugin.problems else emptyList()).filter { it.level == PluginProblem.Level.WARNING }
+  val classes = BundledPluginClassesFinder.findPluginClasses(
+    plugin,
+    additionalKeys = listOf(CompileServerExtensionKey),
+    searchContext = ClassSearchContext())
+  val dependencyInfo = DependencyPluginInfo(LocalPluginInfo(plugin))
   return PluginDetails(
-    DependencyPluginInfo(LocalPluginInfo(plugin)), plugin, pluginWarnings,
-    BundledPluginClassesFinder.findPluginClasses(plugin, additionalKeys = listOf(CompileServerExtensionKey)), null
+    dependencyInfo, plugin, warnings, classes, null
   )
 }
 

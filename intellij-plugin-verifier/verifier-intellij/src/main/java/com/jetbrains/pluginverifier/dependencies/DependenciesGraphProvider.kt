@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 
 private const val UNKNOWN_VERSION = "unknown version"
@@ -50,9 +51,9 @@ class DependenciesGraphProvider {
     return edges
   }
 
-  private val pluginDependencyCache = hashMapOf<PluginDependency, PluginDependency>()
+  private val pluginDependencyCache = ConcurrentHashMap<PluginDependency, PluginDependency>()
   private fun PluginDependency.intern(): PluginDependency = pluginDependencyCache.computeIfAbsent(this, Function.identity())
-  private val dependencyNodeCache = hashMapOf<DependencyNode, DependencyNode>()
+  private val dependencyNodeCache = ConcurrentHashMap<DependencyNode, DependencyNode>()
   private fun DependencyNode.intern(): DependencyNode = dependencyNodeCache.computeIfAbsent(this, Function.identity())
 
   private fun DependencyTreeResolution.getMissingDependencies(): Map<DependencyNode, Set<MissingDependency>> {

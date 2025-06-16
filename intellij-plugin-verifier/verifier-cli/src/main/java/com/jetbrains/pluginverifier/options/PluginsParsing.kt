@@ -11,8 +11,10 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.problems.remapping.JsonUrlProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.remapping.JsonUrlProblemLevelRemappingManager
+import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.dependencies.resolution.PluginVersionSelector
@@ -32,6 +34,7 @@ import java.nio.file.Paths
  */
 class PluginsParsing(
   private val pluginRepository: PluginRepository,
+  private val extractedPluginCache: PluginResourceCache,
   private val reportage: PluginVerificationReportage,
   private val pluginsSet: PluginsSet,
   private val configuration: PluginParsingConfiguration = PluginParsingConfiguration()
@@ -219,12 +222,19 @@ class PluginsParsing(
     reportage.logVerificationStage(READING_PLUGIN_FROM.format(pluginFile))
     val pluginCreationResult = IdePluginManager
       .createManager()
-      .createPlugin(pluginFile, validateDescriptor, problemResolver = configuration.problemResolver)
+      .createPlugin(
+        pluginFile,
+        validateDescriptor,
+        problemResolver = configuration.problemResolver,
+        // No need to delete the directory, as it will be cached by 'extractedPluginCache'
+        deleteExtractedDirectory = false
+      )
     with(pluginCreationResult) {
       when (this) {
         is PluginCreationSuccess -> {
           pluginsSet.scheduleLocalPlugin(plugin).also {
             reportLocalPluginTelemetry(plugin, telemetry)
+            cacheExtractedPlugins()
           }
         }
         is PluginCreationFail -> {
@@ -242,4 +252,9 @@ class PluginsParsing(
   private val PluginParsingConfiguration.problemResolver: PluginCreationResultResolver
     get() = pluginParsingConfigurationResolution.resolveProblemLevelMapping(this, JsonUrlProblemLevelRemappingManager.fromClassPathJson())
 
+  private fun PluginCreationSuccess<IdePlugin>.cacheExtractedPlugins() {
+    resources
+      .filterIsInstance<ZipPluginResource>()
+      .forEach { extractedPluginCache += it }
+  }
 }
