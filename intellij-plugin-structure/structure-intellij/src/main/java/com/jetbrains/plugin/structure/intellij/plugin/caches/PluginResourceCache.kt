@@ -12,6 +12,8 @@ import java.nio.file.Path
 interface PluginResourceCache : Closeable, Deletable {
   fun getPluginResource(pluginArtifactPath: Path): Result
 
+  fun findFirst(predicate: (ZipPluginResource) -> Boolean): Result
+
   operator fun plusAssign(pluginResource: ZipPluginResource)
 
   sealed class Result {
