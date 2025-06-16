@@ -23,7 +23,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
 import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource.Companion.matches
-import java.io.Closeable
 import java.io.IOException
 import java.nio.file.Path
 
@@ -48,7 +47,7 @@ class IdePluginClassesFinder private constructor(
   private fun findPluginClasses(): IdePluginClassesLocations {
     val pluginFile = idePlugin.originalFile
     if (pluginFile == null) {
-      return IdePluginClassesLocations(idePlugin, Closeable { /* Nothing to close */ }, emptyMap())
+      return IdePluginClassesLocations(idePlugin, allocatedResource = { /* Nothing to close */ }, emptyMap())
     } else if (!pluginFile.exists()) {
       throw IllegalArgumentException("Plugin file doesn't exist $pluginFile")
     } else if (!pluginFile.isDirectory && !pluginFile.isJar() && !pluginFile.isZip()) {
@@ -59,7 +58,7 @@ class IdePluginClassesFinder private constructor(
       findInZip(pluginFile)
     } else {
       val locations = findLocations(pluginFile)
-      IdePluginClassesLocations(idePlugin, Closeable { /* Nothing to delete */ }, locations)
+      IdePluginClassesLocations(idePlugin, allocatedResource = { /* Nothing to delete */ }, locations)
     }
   }
 
