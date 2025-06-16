@@ -30,7 +30,7 @@ import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationRe
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
-import com.jetbrains.plugin.structure.intellij.utils.CloseablePath
+import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
@@ -156,7 +156,7 @@ class IdePluginManager private constructor(
             resourceResolver,
             problemResolver
           ).apply {
-            resources += CloseablePath(extractedDir.parent)
+            resources += ZipPluginResource.of(pluginFile, extractedDir, plugin)
           }
         }
       }

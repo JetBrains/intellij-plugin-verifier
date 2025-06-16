@@ -14,7 +14,6 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
-import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
@@ -34,6 +33,7 @@ import com.jetbrains.plugin.structure.intellij.problems.UnableToFindTheme
 import com.jetbrains.plugin.structure.intellij.problems.UnableToReadTheme
 import com.jetbrains.plugin.structure.intellij.problems.UnknownServiceClientValue
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import com.jetbrains.plugin.structure.intellij.verifiers.ExposedModulesVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.K2IdeModeCompatibilityVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
@@ -43,7 +43,6 @@ import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import org.jdom2.Document
 import org.jdom2.Element
 import org.slf4j.LoggerFactory
-import java.io.Closeable
 import java.nio.file.Path
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -169,7 +168,7 @@ internal class PluginCreator private constructor(
       val invalidPlugin = invalidPlugin
       if (invalidPlugin != null) {
         return PluginCreationFail<IdePlugin>(invalidPlugin.problems)
-          .also { closeResources() }
+          .also { deleteResources() }
       }
 
       return problemResolver.resolve(resolvePlugin(), problems)
@@ -178,7 +177,7 @@ internal class PluginCreator private constructor(
         .add(telemetry)
     }
 
-  internal val resources: MutableList<Closeable> = mutableListOf()
+  internal val resources = mutableListOf<ZipPluginResource>()
 
   val telemetry: MutablePluginTelemetry = MutablePluginTelemetry()
 
@@ -694,7 +693,7 @@ internal class PluginCreator private constructor(
   private fun PluginCreationResult<IdePlugin>.propagateResources() =
     when (this) {
       is PluginCreationSuccess -> copy(resources = this@PluginCreator.resources)
-      is PluginCreationFail -> also { closeResources() }
+      is PluginCreationFail -> also { deleteResources() }
     }
 
   private val PluginCreationSuccess<IdePlugin>.problems: List<PluginProblem>
@@ -707,8 +706,8 @@ internal class PluginCreator private constructor(
     }
   }
 
-  private fun closeResources() {
-    resources.closeAll()
+  private fun deleteResources() {
+    resources.forEach { it.delete() }
   }
 }
 
