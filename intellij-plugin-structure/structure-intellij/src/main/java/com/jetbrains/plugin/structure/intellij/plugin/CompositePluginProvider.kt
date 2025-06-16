@@ -32,11 +32,13 @@ class CompositePluginProvider(private val pluginProviders: Collection<PluginProv
 
   override fun findPluginByIdOrModuleId(pluginIdOrModuleId: String): PluginProviderResult? {
     for (provider in pluginProviders) {
-      provider
-        .findPluginById(pluginIdOrModuleId)
-        ?.let { PluginProviderResult(PLUGIN, it) }
-        ?: provider.findPluginByModule(pluginIdOrModuleId)
-          ?.let { PluginProviderResult(MODULE, it) }
+      provider.findPluginById(pluginIdOrModuleId)?.let {
+        return PluginProviderResult(PLUGIN, it)
+      }
+
+      provider.findPluginByModule(pluginIdOrModuleId)?.let {
+        return PluginProviderResult(MODULE, it)
+      }
     }
     return null
   }
