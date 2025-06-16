@@ -17,7 +17,13 @@ interface PluginResourceCache : Closeable, Deletable {
   operator fun plusAssign(pluginResource: ZipPluginResource)
 
   sealed class Result {
-    data class Found(val pluginResource: ZipPluginResource) : Result()
-    object NotFound : Result()
+    data class Found(val pluginResource: ZipPluginResource) : Result() {
+      override fun toString(): String = with(pluginResource) {
+        return "$pluginArtifactPath cached to $extractedPluginPath (plugin '$id' at '$version')"
+      }
+    }
+    object NotFound : Result() {
+      override fun toString(): String = "Not found in cache"
+    }
   }
 }
