@@ -53,8 +53,8 @@ class PluginDetailsProviderTest : BasePluginTest() {
         val pluginDetailsResult = provider.providePluginDetails(pluginInfo, IdleFileLock(pluginZipPath))
         assertTrue(pluginDetailsResult is PluginDetailsProvider.Result.Provided)
       }
-      // the second access is cached
-      assertEquals(1, provider.closeableResourcesSize)
+      // Closeables are handled by the plugin cache. No other should be open
+      assertEquals(0, provider.closeableResourcesSize)
       with(provider.eventLog) {
         assertEquals(2, size)
         assertEquals("extracted $pluginZipPath", this[0])
