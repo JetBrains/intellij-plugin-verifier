@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.387 - 2025-06-18
+
+### Added
+
 - IntelliJ Structure: Query plugin provider by explicit attributes ([#1288](https://github.com/JetBrains/intellij-plugin-verifier/pull/1288))
 - IntelliJ Structure: Inline content module dependencies explicitly indicate plugin or module ([#1289](https://github.com/JetBrains/intellij-plugin-verifier/pull/1289))
 - IntelliJ Structure: TeamCity Recipes: added a "title" field
