@@ -6,9 +6,27 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- IntelliJ Structure: Query plugin provider by explicit attributes ([#1288](https://github.com/JetBrains/intellij-plugin-verifier/pull/1288))
+- IntelliJ Structure: Inline content module dependencies explicitly indicate plugin or module ([#1289](https://github.com/JetBrains/intellij-plugin-verifier/pull/1289))
+- IntelliJ Structure: TeamCity Recipes: added a "title" field
+- IntelliJ Structure: TeamCity Recipes: forbid duplicate properties in YAML
+- IntelliJ Structure: TeamCity Recipes: support recipe dependencies ([#1284](https://github.com/JetBrains/intellij-plugin-verifier/pull/1284), [TW-93481](https://youtrack.jetbrains.com/issue/TW-93481/Recipes-return-a-list-of-recipe-dependencies-in-the-Marketplace-code))
+- IntelliJ Structure: Support additional Fleet products which respect IJ versioning ([#1287](https://github.com/JetBrains/intellij-plugin-verifier/pull/1287))
+
 ### Changed
 
+- Prevent duplicate log messages by reusing the type-safe model of Product Info layout components between IDE model, resource resolvers and class resolvers ([#1285](https://github.com/JetBrains/intellij-plugin-verifier/commit/0fbd3b03141005ea5c701500868a34ee6b3400b4#:~:text=and%20class%20resolvers%20(-,%231285,-)))
+- Shorten the error message printed by _IntelliJ API Compatibility Check_ configurations
+- Extract content module resolution to separate classes ([#1286](https://github.com/JetBrains/intellij-plugin-verifier/pull/1286))
+- IntelliJ Structure: Extract icon loading and dependency loading into separate class ([#1291](https://github.com/JetBrains/intellij-plugin-verifier/pull/1291))
+- IntelliJ Structure: Extract away plugin component loaders from `PluginCreator` ([#1292](https://github.com/JetBrains/intellij-plugin-verifier/commit/3fb99fd672c876503ce3fe8445bde21f84df855d))
+- Update ByteBuddy to 1.17.6
+- Update Gradle to 8.14.2
+
 ### Fixed
+
+- Download plugin-declared dependencies missing from the target IDE ([#1294](https://github.com/JetBrains/intellij-plugin-verifier/pull/1294))
+- Prevent race condition when a new filesystem has been created between 'get' and 'new' calls
 
 ## 1.386 - 2025-05-19
 
