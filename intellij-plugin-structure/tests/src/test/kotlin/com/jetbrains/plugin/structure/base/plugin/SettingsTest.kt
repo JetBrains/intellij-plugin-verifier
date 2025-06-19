@@ -5,7 +5,7 @@ import org.junit.Test
 
 class SettingsTest {
   @Test
-  fun `1_5GB is the IntelliJ plugin size limit`() {
-    assertEquals(1_610_612_736L,Settings.INTELLIJ_PLUGIN_SIZE_LIMIT.getAsLong())
+  fun `5GB is the IntelliJ plugin size limit`() {
+    assertEquals(5_368_709_120L,Settings.INTELLIJ_PLUGIN_SIZE_LIMIT.getAsLong())
   }
 }
