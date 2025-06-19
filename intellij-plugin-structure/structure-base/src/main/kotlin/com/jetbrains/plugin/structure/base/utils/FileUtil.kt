@@ -22,14 +22,13 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.stream.Collectors
-import kotlin.streams.toList
 
 private val LOG = LoggerFactory.getLogger("structure.FileUtil")
 
 typealias Bytes = Long
 
 internal val ONE_GB_BD = BigDecimal(ONE_GB)
-internal val ONE_POINT_FIVE_GB = BigDecimal("1.5").multiply(ONE_GB_BD).toLong()
+internal val FIVE_GB = BigDecimal("5").multiply(ONE_GB_BD).toLong()
 
 fun Path.isZip(): Boolean = this.hasExtension("zip")
 
