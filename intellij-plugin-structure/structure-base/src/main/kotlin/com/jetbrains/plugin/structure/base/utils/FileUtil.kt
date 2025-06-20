@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.base.utils
@@ -22,6 +22,7 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.stream.Collectors
+import kotlin.streams.toList
 
 private val LOG = LoggerFactory.getLogger("structure.FileUtil")
 
@@ -38,7 +39,8 @@ fun Path.hasExtension(expected: String) =
   Files.isRegularFile(this) && expected == extension
 
 fun Path.listRecursivelyAllFilesWithExtension(extension: String) =
-  Files.walk(this, FileVisitOption.FOLLOW_LINKS).use { stream -> stream.filter { it.toString().endsWith(".${extension}") }.toList() }
+  Files.walk(this, FileVisitOption.FOLLOW_LINKS)
+    .use { stream -> stream.filter { it.toString().endsWith(".${extension}") }.toList() }
 
 fun String.withPathSeparatorOf(path: Path) = replace('\\', '/').replace("/", path.fileSystem.separator)
 fun String.withZipFsSeparator() = replace('\\', '/')
