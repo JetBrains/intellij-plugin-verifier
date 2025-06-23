@@ -60,7 +60,10 @@ class ProcessAllPluginsCommand : CommandRunner {
       val compatiblePluginsList = pluginRepository.retry("Request plugins compatible with ${ideDescriptor.ideVersion}") {
         getLastCompatiblePlugins(ideDescriptor.ideVersion)
       }
-      val localPluginRepository = LocalPluginRepositoryFactory.createLocalPluginRepository(idePluginsRoot)
+      val localPluginRepository = LocalPluginRepositoryFactory.createLocalPluginRepository(
+        idePluginsRoot,
+        opts.forceOfflineCompatibility
+      )
       val additionalIdePlugins = localPluginRepository.getLastCompatiblePlugins(ideDescriptor.ideVersion)
 
       return CountUsagesOfExtensionPointsParameters(ideDescriptor, additionalIdePlugins, compatiblePluginsList, outputJson)

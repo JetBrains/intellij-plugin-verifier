@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.listPresentationInColumns
 import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDependencyFinder
@@ -84,11 +85,11 @@ class CheckTrunkApiParamsBuilder(
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
     val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot
-      ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
+      ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it), opts.forceOfflineCompatibility) }
       ?: EmptyPluginRepository
 
     val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot
-      ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it)) }
+      ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it), opts.forceOfflineCompatibility) }
       ?: EmptyPluginRepository
 
     val message = "Requesting a list of plugins compatible with the release IDE ${releaseIdeDescriptor.ideVersion}"
@@ -118,19 +119,7 @@ class CheckTrunkApiParamsBuilder(
     reportage.logVerificationStage("Scheduling ${releaseCompatibleVersions.size} plugins for verification against trunk IDE")
     trunkPluginsSet.schedulePlugins(releaseCompatibleVersions)
 
-    //For plugins that are not compatible with the trunk IDE verify their latest versions, too.
-    //This is in order to check if found compatibility problems are also present in the latest version.
-    val latestCompatibleVersions = arrayListOf<PluginInfo>()
-    for (pluginInfo in releaseCompatibleVersions) {
-      if (!pluginInfo.isCompatibleWith(trunkIdeDescriptor.ideVersion)) {
-        val lastCompatibleVersion = runCatching {
-          pluginRepository.getLastCompatibleVersionOfPlugin(trunkIdeDescriptor.ideVersion, pluginInfo.pluginId)
-        }.getOrNull()
-        if (lastCompatibleVersion != null && lastCompatibleVersion != pluginInfo) {
-          latestCompatibleVersions += lastCompatibleVersion
-        }
-      }
-    }
+    val latestCompatibleVersions = getLatestCompatibleVersions(releaseCompatibleVersions, trunkIdeDescriptor.ideVersion)
     trunkPluginsSet.schedulePlugins(latestCompatibleVersions)
 
     val releasePluginsToCheck = releasePluginsSet.pluginsToCheck.sortedWith { plugin, anotherPlugin ->
@@ -251,6 +240,23 @@ class CheckTrunkApiParamsBuilder(
       }
       return PluginFilter.Result.Verify
     }
+  }
+
+  //For plugins that are not compatible with the trunk IDE verify their latest versions, too.
+  //This is in order to check if found compatibility problems are also present in the latest version.
+  private fun getLatestCompatibleVersions(releaseCompatibleVersions: List<PluginInfo>, trunkVersion: IdeVersion): List<PluginInfo> {
+    val latestCompatibleVersions = arrayListOf<PluginInfo>()
+    for (pluginInfo in releaseCompatibleVersions) {
+      if (!pluginInfo.isCompatibleWith(trunkVersion)) {
+        val lastCompatibleVersion = runCatching {
+          pluginRepository.getLastCompatibleVersionOfPlugin(trunkVersion, pluginInfo.pluginId)
+        }.getOrNull()
+        if (lastCompatibleVersion != null && lastCompatibleVersion != pluginInfo) {
+          latestCompatibleVersions += lastCompatibleVersion
+        }
+      }
+    }
+    return latestCompatibleVersions
   }
 
 }

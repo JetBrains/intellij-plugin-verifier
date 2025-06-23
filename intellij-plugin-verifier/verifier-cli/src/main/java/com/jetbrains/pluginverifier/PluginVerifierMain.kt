@@ -110,7 +110,7 @@ object PluginVerifierMain {
     val outputOptions = OptionsParser.parseOutputOptions(opts)
 
     val pluginRepository = if (opts.offlineMode) {
-      LocalPluginRepositoryFactory.createLocalPluginRepository(downloadDirectory)
+      LocalPluginRepositoryFactory.createLocalPluginRepository(downloadDirectory, opts.forceOfflineCompatibility)
     } else {
       MarketplaceRepository(URL(pluginRepositoryUrl))
     }

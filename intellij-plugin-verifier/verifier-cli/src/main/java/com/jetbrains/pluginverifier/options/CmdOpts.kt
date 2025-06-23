@@ -26,6 +26,9 @@ open class CmdOpts(
   @set:Argument("offline", alias = "offline", description = "Specify this flag if the Plugin Verifier must use only locally downloaded dependencies of plugins")
   var offlineMode: Boolean = false,
 
+  @set:Argument("force-offline-compatibility", description = "When using offline mode, consider any plugin in the local plugin repository to be compatible with the major or trunk IDE. This applies to 'check-trunk-api' command only.")
+  var forceOfflineCompatibility: Boolean = false,
+
   @set:Argument("tc-grouping", alias = "g", description = "How to group the TeamCity presentation of the problems: either 'plugin' to group by each plugin or 'problem_type' to group by problem type")
   var teamCityGroupType: String? = null,
 
