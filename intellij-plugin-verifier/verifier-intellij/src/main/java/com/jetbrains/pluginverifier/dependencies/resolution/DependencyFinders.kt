@@ -46,7 +46,7 @@ internal fun getBundledPluginDetails(ide: Ide, plugin: IdePlugin): PluginDetails
   val classes = BundledPluginClassesFinder.findPluginClasses(
     plugin,
     additionalKeys = listOf(CompileServerExtensionKey),
-    searchContext = ClassSearchContext())
+    searchContext = ClassSearchContext.DEFAULT)
   val bundledInfo = BundledPluginInfo(ide.version, plugin)
   return PluginDetails(
     bundledInfo, plugin, warnings, classes, null
@@ -59,7 +59,7 @@ internal fun getNonBundledDependencyDetails(plugin: IdePlugin): PluginDetails {
   val classes = BundledPluginClassesFinder.findPluginClasses(
     plugin,
     additionalKeys = listOf(CompileServerExtensionKey),
-    searchContext = ClassSearchContext())
+    searchContext = ClassSearchContext.DEFAULT)
   val dependencyInfo = DependencyPluginInfo(LocalPluginInfo(plugin))
   return PluginDetails(
     dependencyInfo, plugin, warnings, classes, null

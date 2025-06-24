@@ -124,7 +124,7 @@ class IdePluginClassesFinder private constructor(
       idePlugin: IdePlugin,
       additionalKeys: List<LocationKey> = emptyList()
     ): IdePluginClassesLocations =
-      find(idePlugin, MAIN_CLASSES_KEYS + additionalKeys, Resolver.ReadMode.FULL, ClassSearchContext())
+      find(idePlugin, MAIN_CLASSES_KEYS + additionalKeys, Resolver.ReadMode.FULL, ClassSearchContext.DEFAULT)
 
     fun findPluginClasses(
       idePlugin: IdePlugin,
