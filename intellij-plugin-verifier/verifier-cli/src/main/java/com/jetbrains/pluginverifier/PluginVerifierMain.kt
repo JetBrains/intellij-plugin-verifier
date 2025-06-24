@@ -12,6 +12,9 @@ import com.jetbrains.pluginverifier.PluginVerifierMain.commandRunners
 import com.jetbrains.pluginverifier.PluginVerifierMain.main
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.options.repository.LocalPluginRepositoryProvider
+import com.jetbrains.pluginverifier.options.repository.LocalPluginRepositoryProvider.Result.Provided
+import com.jetbrains.pluginverifier.options.repository.LocalPluginRepositoryProvider.Result.Unavailable
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.plugin.DefaultPluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginFilesBank
@@ -22,7 +25,6 @@ import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceUnit
-import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepositoryFactory
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.MarketplaceRepository
 import com.jetbrains.pluginverifier.tasks.CommandRunner
 import com.jetbrains.pluginverifier.tasks.checkIde.CheckIdeRunner
@@ -109,11 +111,11 @@ object PluginVerifierMain {
     val runner = findTaskRunner(command)
     val outputOptions = OptionsParser.parseOutputOptions(opts)
 
-    val pluginRepository = if (opts.offlineMode) {
-      LocalPluginRepositoryFactory.createLocalPluginRepository(downloadDirectory, opts.forceOfflineCompatibility)
-    } else {
-      MarketplaceRepository(URL(pluginRepositoryUrl))
-    }
+    val pluginRepository =
+      when (val repositoryProvision = LocalPluginRepositoryProvider.getLocalPluginRepository(opts, downloadDirectory)) {
+        is Provided -> repositoryProvision.pluginRepository
+        Unavailable -> MarketplaceRepository(URL(pluginRepositoryUrl))
+      }
 
     val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5L * 1024)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
