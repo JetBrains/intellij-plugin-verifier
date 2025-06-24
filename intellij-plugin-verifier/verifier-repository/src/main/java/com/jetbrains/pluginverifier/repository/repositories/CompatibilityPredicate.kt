@@ -18,9 +18,5 @@ fun interface CompatibilityPredicate {
     val DEFAULT : CompatibilityPredicate = CompatibilityPredicate { pluginInfo, ideVersion ->
       pluginInfo.isCompatibleWith(ideVersion)
     }
-
-    fun of(ideVersion: IdeVersion) {
-
-    }
   }
 }
