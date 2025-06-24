@@ -107,7 +107,7 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
         description = descriptor.meta?.description,
         vendor = descriptor.meta?.vendor,
         humanVisible = descriptor.meta?.humanVisible ?: true,
-        supportedProducts = descriptor.meta?.supportedProducts ?: emptySet(),
+        supportedProducts = descriptor.meta?.getSupportedProductCodes() ?: emptySet(),
         icons = icons,
         descriptorFileName = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
         frontendOnly = descriptor.meta?.frontendOnly,

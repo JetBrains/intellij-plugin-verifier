@@ -7,7 +7,8 @@
     "readableName": "CSS",
     "description": "CSS language support",
     "vendor": "JetBrains",
-    "visible": "false"
+    "visible": "false",
+    "supportedProducts": "AIR,AINEXT"
   },
   "compatibleShipVersionRange": {
     "from": "1.1000.1",
