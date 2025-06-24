@@ -19,13 +19,13 @@ import java.nio.file.Path
 import kotlin.streams.toList
 
 /**
- * Utility class that [creates] [createLocalPluginRepository] the [LocalPluginRepository].
+ * Utility class that [creates][createLocalPluginRepository] the [LocalPluginRepository].
  */
 object LocalPluginRepositoryFactory {
 
   /**
    * Creates a [LocalPluginRepository] by parsing
-   * all [plugin] [com.jetbrains.plugin.structure.intellij.plugin.IdePlugin] files under the [repositoryRoot].
+   * all [plugin][com.jetbrains.plugin.structure.intellij.plugin.IdePlugin] files under the [repositoryRoot].
    */
   fun createLocalPluginRepository(
     repositoryRoot: Path,
