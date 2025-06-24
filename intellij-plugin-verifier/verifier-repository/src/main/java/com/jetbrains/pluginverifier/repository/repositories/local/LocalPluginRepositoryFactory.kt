@@ -26,10 +26,15 @@ object LocalPluginRepositoryFactory {
   /**
    * Creates a [LocalPluginRepository] by parsing
    * all [plugin][com.jetbrains.plugin.structure.intellij.plugin.IdePlugin] files under the [repositoryRoot].
+   *
+   * @param repositoryRoot a root of the local plugin repository that contains plugin artifacts.
+   * @param forcePluginCompatibility if `true`, plugins in this repository are compatible with any IDE.
+   * No _since build_ or _until build_ checks are made.
+   * @param problemRemapper plugin problem remapper used for plugin construction.
    */
   fun createLocalPluginRepository(
     repositoryRoot: Path,
-    forceOfflineCompatibility: Boolean,
+    forcePluginCompatibility: Boolean,
     problemRemapper: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
   ): PluginRepository {
     val pluginFiles = Files.list(repositoryRoot).use { stream ->
@@ -38,7 +43,7 @@ object LocalPluginRepositoryFactory {
         .toList()
     }
 
-    val localPluginRepository = LocalPluginRepository(compatibilityPredicate = forceOfflineCompatibility.asPredicate())
+    val localPluginRepository = LocalPluginRepository(compatibilityPredicate = forcePluginCompatibility.asPredicate())
     for (pluginFile in pluginFiles) {
       IdePluginManager
         .createManager()
