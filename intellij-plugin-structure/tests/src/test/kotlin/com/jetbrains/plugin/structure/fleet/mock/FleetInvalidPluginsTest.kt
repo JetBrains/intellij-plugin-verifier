@@ -80,27 +80,27 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `invalid supported product`() {
-    val supportedProducts = setOf("LOL")
+    val supportedProducts = "LOL"
     checkInvalidPlugin(
-      InvalidSupportedProductsListProblem("must contain only product codes from ${FleetProduct.values().map { it.productCode }}, got: $supportedProducts")
+      InvalidSupportedProductsListProblem("must contain only product codes from ${FleetProduct.values().map { it.productCode }}, got: [$supportedProducts]")
     ) { it.copy(meta = it.meta?.copy(supportedProducts = supportedProducts)) }
   }
 
   @Test
   fun `mix of legacy and unified versioning in supported product`() {
     checkInvalidPlugin(InvalidSupportedProductsListProblem("must contain either only legacy or only unified versioning products")) {
-      it.copy(meta = it.meta?.copy(supportedProducts = setOf("FL", "AIR")))
+      it.copy(meta = it.meta?.copy(supportedProducts = "FL,AIR"))
     }
   }
 
   @Test
   fun `legacy versioning product`() {
-    checkValidPlugin { it.copy(meta = it.meta?.copy(supportedProducts = setOf("FL"))) }
+    checkValidPlugin { it.copy(meta = it.meta?.copy(supportedProducts = "FL")) }
   }
 
   @Test
   fun `unified versioning product`() {
-    checkValidPlugin { it.copy(meta = it.meta?.copy(supportedProducts = setOf("AIR"))) }
+    checkValidPlugin { it.copy(meta = it.meta?.copy(supportedProducts = "AIR")) }
   }
 
   @Test
@@ -118,7 +118,7 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `legacy compatibility range is valid`() {
-    val supportedProducts = setOf("FL")
+    val supportedProducts = "FL"
     val legacyVersioningSpec = FleetDescriptorSpec.CompatibleShipVersion.LegacyVersioningSpec
 
     checkInvalidPlugin(InvalidSemverFormat(
@@ -236,7 +236,7 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `unified compatibility range is valid`() {
-    val supportedProducts = setOf("AIR")
+    val supportedProducts = "AIR"
     val legacyVersioningSpec = FleetDescriptorSpec.CompatibleShipVersion.UnifiedVersioningSpec
 
     checkInvalidPlugin(InvalidSemverFormat(

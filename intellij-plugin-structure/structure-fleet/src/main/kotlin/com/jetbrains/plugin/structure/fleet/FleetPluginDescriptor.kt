@@ -54,11 +54,8 @@ data class FleetPluginDescriptor(
       problems.add(PropertyNotSpecified(metaSpec.relativeFieldPath(metaSpec.VENDOR_FIELD_NAME)))
     }
 
-    val supportedProducts = meta?.supportedProducts ?: emptySet()
-    val products = meta
-      ?.supportedProducts
-      ?.mapNotNull { FleetProduct.fromProductCode(it) }
-      ?.toSet() ?: emptySet()
+    val supportedProducts = meta?.getSupportedProductCodes() ?: emptySet()
+    val products = supportedProducts.mapNotNull { FleetProduct.fromProductCode(it) }.toSet()
 
     if (products.size != supportedProducts.size) {
       problems.add(InvalidSupportedProductsListProblem(
@@ -159,7 +156,7 @@ data class FleetPluginDescriptor(
   private fun parseVersionOrNull(version: String): Semver? {
     return try {
       Semver(version)
-    } catch (e: SemverException) {
+    } catch (_: SemverException) {
       null
     }
   }
@@ -208,8 +205,15 @@ data class FleetMeta(
   @JsonProperty(FleetDescriptorSpec.Meta.HUMAN_VISIBLE_FIELD_NAME)
   val humanVisible: Boolean?,
   @JsonProperty(FleetDescriptorSpec.Meta.SUPPORTED_PRODUCTS_FIELD_NAME)
-  val supportedProducts: Set<String>? = emptySet(),
-)
+  private val supportedProducts: String? = null
+) {
+  fun getSupportedProductCodes(): Set<String> {
+    if (supportedProducts.isNullOrBlank()) return emptySet()
+    return supportedProducts
+      .split(",")
+      .toSet()
+  }
+}
 
 data class FleetShipVersionRange(
   @JsonProperty(FleetDescriptorSpec.CompatibleShipVersion.FROM_FIELD_NAME)
