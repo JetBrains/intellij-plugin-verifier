@@ -4,43 +4,59 @@
 
 package com.jetbrains.pluginverifier.repository.repositories.local
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.extension
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.pluginverifier.repository.PluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.CompatibilityPredicate.Companion.ALWAYS_COMPATIBLE
+import com.jetbrains.pluginverifier.repository.repositories.CompatibilityPredicate.Companion.DEFAULT
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepositoryFactory.createLocalPluginRepository
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.streams.toList
 
 /**
- * Utility class that [creates] [createLocalPluginRepository] the [LocalPluginRepository].
+ * Utility class that [creates][createLocalPluginRepository] the [LocalPluginRepository].
  */
 object LocalPluginRepositoryFactory {
 
   /**
    * Creates a [LocalPluginRepository] by parsing
-   * all [plugin] [com.jetbrains.plugin.structure.intellij.plugin.IdePlugin] files under the [repositoryRoot].
+   * all [plugin][com.jetbrains.plugin.structure.intellij.plugin.IdePlugin] files under the [repositoryRoot].
+   *
+   * @param repositoryRoot a root of the local plugin repository that contains plugin artifacts.
+   * @param forcePluginCompatibility if `true`, plugins in this repository are compatible with any IDE.
+   * No _since build_ or _until build_ checks are made.
+   * @param problemRemapper plugin problem remapper used for plugin construction.
    */
-  fun createLocalPluginRepository(repositoryRoot: Path): PluginRepository {
+  fun createLocalPluginRepository(
+    repositoryRoot: Path,
+    forcePluginCompatibility: Boolean,
+    problemRemapper: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
+  ): PluginRepository {
     val pluginFiles = Files.list(repositoryRoot).use { stream ->
       stream
         .filter { it.isDirectory || it.extension == "zip" || it.extension == "jar" }
         .toList()
     }
 
-    val localPluginRepository = LocalPluginRepository()
+    val localPluginRepository = LocalPluginRepository(compatibilityPredicate = forcePluginCompatibility.asPredicate())
     for (pluginFile in pluginFiles) {
-      with(IdePluginManager.createManager().createPlugin(pluginFile)) {
-        when (this) {
-          is PluginCreationSuccess -> localPluginRepository.addLocalPlugin(plugin)
-          is PluginCreationFail -> Unit
+      IdePluginManager
+        .createManager()
+        .createPlugin(pluginFile, validateDescriptor = true, problemResolver = problemRemapper)
+        .run {
+          if (this is PluginCreationSuccess) {
+            localPluginRepository.addLocalPlugin(plugin)
+          }
         }
-      }
     }
     return localPluginRepository
   }
 
+  private fun Boolean.asPredicate() =
+    if (this) ALWAYS_COMPATIBLE else DEFAULT
 }

@@ -12,8 +12,6 @@ import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
-import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.problems.remapping.JsonUrlProblemLevelRemappingManager
 import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
@@ -39,8 +37,6 @@ class PluginsParsing(
   private val pluginsSet: PluginsSet,
   private val configuration: PluginParsingConfiguration = PluginParsingConfiguration()
 ) {
-
-  private val pluginParsingConfigurationResolution = PluginParsingConfigurationResolution()
 
   /**
    * Parses command line options and add specified plugins compatible with [ideVersion].
@@ -225,7 +221,7 @@ class PluginsParsing(
       .createPlugin(
         pluginFile,
         validateDescriptor,
-        problemResolver = configuration.problemResolver,
+        problemResolver = PluginParsingConfigurationResolution.of(configuration),
         // No need to delete the directory, as it will be cached by 'extractedPluginCache'
         deleteExtractedDirectory = false
       )
@@ -248,9 +244,6 @@ class PluginsParsing(
   private fun reportLocalPluginTelemetry(plugin: IdePlugin, telemetry: PluginTelemetry) {
     reportage.reportTelemetry(LocalPluginInfo(plugin), telemetry)
   }
-
-  private val PluginParsingConfiguration.problemResolver: PluginCreationResultResolver
-    get() = pluginParsingConfigurationResolution.resolveProblemLevelMapping(this, JsonUrlProblemLevelRemappingManager.fromClassPathJson())
 
   private fun PluginCreationSuccess<IdePlugin>.cacheExtractedPlugins() {
     resources
