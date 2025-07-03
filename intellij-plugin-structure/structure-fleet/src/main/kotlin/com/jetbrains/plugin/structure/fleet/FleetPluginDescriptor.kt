@@ -224,15 +224,20 @@ data class FleetShipVersionRange(
 
   companion object {
     // For binary backward compatibility
-    fun fromStringToLong(version: String): Long = fromStringToLong(version, setOf(FleetProduct.FL.productCode))
+    fun fromStringToLong(version: String): Long = fromStringToLong(version, isLegacy = true)
+
+    fun fromStringToLong(version: String, isLegacy: Boolean): Long {
+      return if (isLegacy) {
+        resolveLegacyVersion(version) // legacy FL versioning number
+      } else {
+        IdeVersion.createIdeVersion(version).asLong() // unified version format for IntelliJ Products https://youtrack.jetbrains.com/articles/IJPL-A-109
+      }
+    }
 
     fun fromStringToLong(version: String, supportedProducts: Set<String>): Long {
       val products = supportedProducts.mapNotNull { FleetProduct.fromProductCode(it) }.toSet()
-
-      return when {
-        products.any { it.legacyVersioning.not() } -> IdeVersion.createIdeVersion(version).asLong() // unified version format for IntelliJ Products https://youtrack.jetbrains.com/articles/IJPL-A-109
-        else -> resolveLegacyVersion(version) // legacy FL versioning number
-      }
+      val isLegacy = products.all { it.legacyVersioning }
+      return fromStringToLong(version, isLegacy)
     }
 
     private fun resolveLegacyVersion(version: String): Long {
