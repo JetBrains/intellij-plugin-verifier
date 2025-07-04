@@ -326,8 +326,8 @@ class ParseInvalidRecipeTests(
   @Test
   fun `recipe with too long description`() {
     assertProblematicPlugin(
-      temporaryFolder.prepareRecipeYaml(someRecipe.copy(description = randomAlphanumeric(251))),
-      listOf(TooLongValueProblem("description", "recipe description", 251, 250)),
+      temporaryFolder.prepareRecipeYaml(someRecipe.copy(description = randomAlphanumeric(1001))),
+      listOf(TooLongValueProblem("description", "recipe description", 1001, 1000)),
     )
   }
 
