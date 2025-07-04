@@ -15,8 +15,8 @@ import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.base.utils.pluginSize
 import com.jetbrains.plugin.structure.base.utils.simpleName
+import com.jetbrains.plugin.structure.intellij.extractor.DefaultPluginExtractor
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
-import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor.extractPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.ContentModuleLoader
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarModuleLoader
@@ -91,6 +91,8 @@ class IdePluginManager private constructor(
     }
   })
 
+  private val pluginExtractor = DefaultPluginExtractor()
+
   private fun resolveOptionalDependencies(pluginFile: Path, pluginCreator: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver) {
     if (pluginCreator.isSuccess) {
       optionalDependencyResolver.resolveOptionalDependencies(pluginCreator, pluginFile, resourceResolver, problemResolver)
@@ -128,7 +130,7 @@ class IdePluginManager private constructor(
     deleteExtractedDirectory: Boolean
   ): PluginCreator {
     val extractorResult = try {
-      extractPlugin(pluginFile, extractDirectory)
+      pluginExtractor.extractPlugin(pluginFile, extractDirectory)
     } catch (e: Exception) {
       LOG.info("Unable to extract plugin zip ${pluginFile.simpleName}", e)
       return createInvalidPlugin(pluginFile.simpleName, descriptorPath, UnableToExtractZip())

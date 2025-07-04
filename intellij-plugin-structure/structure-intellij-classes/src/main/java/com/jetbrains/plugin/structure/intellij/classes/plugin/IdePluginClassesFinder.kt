@@ -17,8 +17,8 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.JarPluginKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.LibDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.LibModulesDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.LocationKey
+import com.jetbrains.plugin.structure.intellij.extractor.DefaultPluginExtractor
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
-import com.jetbrains.plugin.structure.intellij.extractor.PluginExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
 import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
@@ -43,6 +43,8 @@ class IdePluginClassesFinder private constructor(
   private val locatorKeys: List<LocationKey>,
   private val pluginResourceCache: PluginResourceCache
 ) {
+
+  private val pluginExtractor = DefaultPluginExtractor()
 
   private fun findPluginClasses(): IdePluginClassesLocations {
     val pluginFile = idePlugin.originalFile
@@ -87,7 +89,7 @@ class IdePluginClassesFinder private constructor(
 
   @Throws(IOException::class)
   private fun extractAndGetClasses(pluginZipPath: Path): Pair<Path, IdePluginClassesLocations> {
-    return when (val extractorResult = PluginExtractor.extractPlugin(pluginZipPath, extractDirectory)) {
+    return when (val extractorResult = pluginExtractor.extractPlugin(pluginZipPath, extractDirectory)) {
       is ExtractorResult.Success -> {
         extractorResult.extractedPlugin.closeOnException {
           val locations = findLocations(it.pluginFile)
