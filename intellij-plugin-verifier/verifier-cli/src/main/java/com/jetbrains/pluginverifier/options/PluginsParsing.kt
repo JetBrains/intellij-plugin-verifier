@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
+import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
@@ -32,7 +32,7 @@ import java.nio.file.Paths
  */
 class PluginsParsing(
   private val pluginRepository: PluginRepository,
-  private val extractedPluginCache: PluginResourceCache,
+  private val extractedPluginCache: PluginArchiveManager,
   private val reportage: PluginVerificationReportage,
   private val pluginsSet: PluginsSet,
   private val configuration: PluginParsingConfiguration = PluginParsingConfiguration()

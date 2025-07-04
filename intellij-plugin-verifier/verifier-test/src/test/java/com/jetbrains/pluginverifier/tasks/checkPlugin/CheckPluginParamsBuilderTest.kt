@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
-import com.jetbrains.plugin.structure.intellij.plugin.caches.SimplePluginResourceCache
+import com.jetbrains.plugin.structure.intellij.plugin.caches.SimplePluginArchiveManager
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.SubmissionType
@@ -46,7 +46,7 @@ class CheckPluginParamsBuilderTest {
       pluginRepository,
       pluginVerificationReportage,
       pluginDetailsCache,
-      SimplePluginResourceCache(),
+      SimplePluginArchiveManager(),
       ideDescriptorParser
     )
       .build(cmdOpts, freeArgs = listOf(somePluginZipFile.absolutePathString(), someIde.absolutePathString()))
@@ -69,7 +69,7 @@ class CheckPluginParamsBuilderTest {
       pluginRepository,
       pluginVerificationReportage,
       pluginDetailsCache,
-      SimplePluginResourceCache(),
+      SimplePluginArchiveManager(),
       ideDescriptorParser
     )
       .build(cmdOpts, freeArgs = listOf(somePluginZipFile.absolutePathString(), someIde.absolutePathString()))

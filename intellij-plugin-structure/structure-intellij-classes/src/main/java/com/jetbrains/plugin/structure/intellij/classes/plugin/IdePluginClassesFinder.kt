@@ -20,7 +20,7 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.LocationKey
 import com.jetbrains.plugin.structure.intellij.extractor.DefaultPluginExtractor
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
+import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource.Companion.matches
 import java.io.IOException
@@ -41,7 +41,7 @@ class IdePluginClassesFinder private constructor(
   private val extractDirectory: Path,
   private val readMode: Resolver.ReadMode,
   private val locatorKeys: List<LocationKey>,
-  private val pluginResourceCache: PluginResourceCache
+  private val pluginArchiveManager: PluginArchiveManager
 ) {
 
   private val pluginExtractor = DefaultPluginExtractor()
@@ -65,9 +65,9 @@ class IdePluginClassesFinder private constructor(
   }
 
   private fun findInZip(pluginZip: Path): IdePluginClassesLocations {
-    val cachedResult = pluginResourceCache.findFirst(pluginZip.matches())
+    val cachedResult = pluginArchiveManager.findFirst(pluginZip.matches())
     return when (cachedResult) {
-      is PluginResourceCache.Result.Found ->
+      is PluginArchiveManager.Result.Found ->
         cachedResult.pluginResource.let { it ->
           IdePluginClassesLocations(
             idePlugin,
@@ -76,9 +76,9 @@ class IdePluginClassesFinder private constructor(
           )
         }
 
-      is PluginResourceCache.Result.NotFound -> {
+      is PluginArchiveManager.Result.NotFound -> {
         extractAndGetClasses(pluginZip).let { (extractedPluginPath, locations) ->
-          pluginResourceCache += ZipPluginResource.of(pluginZip, extractedPluginPath, idePlugin)
+          pluginArchiveManager += ZipPluginResource.of(pluginZip, extractedPluginPath, idePlugin)
           locations
         }
       }

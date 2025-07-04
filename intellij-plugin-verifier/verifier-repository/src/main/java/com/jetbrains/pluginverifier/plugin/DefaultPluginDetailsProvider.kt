@@ -8,8 +8,8 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClass
 import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.caches.EmptyPluginResourceCache
-import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
+import com.jetbrains.plugin.structure.intellij.plugin.caches.EmptyPluginArchiveManager
+import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class DefaultPluginDetailsProvider(
   extractDirectory: Path,
-  private val pluginCache: PluginResourceCache = EmptyPluginResourceCache
+  private val pluginCache: PluginArchiveManager = EmptyPluginArchiveManager
 ) : AbstractPluginDetailsProvider(extractDirectory), AutoCloseable {
 
   private val nonBundledPluginDetailsProvider: PluginDetailsProviderImpl = PluginDetailsProviderImpl(extractDirectory, pluginCache)

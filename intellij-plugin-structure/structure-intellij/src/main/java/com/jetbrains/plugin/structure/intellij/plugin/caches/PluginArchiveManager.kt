@@ -9,7 +9,7 @@ import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import java.io.Closeable
 import java.nio.file.Path
 
-interface PluginResourceCache : Closeable, Deletable {
+interface PluginArchiveManager : Closeable, Deletable {
   fun getPluginResource(pluginArtifactPath: Path): Result
 
   fun findFirst(predicate: (ZipPluginResource) -> Boolean): Result

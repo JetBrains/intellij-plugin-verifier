@@ -7,9 +7,9 @@ package com.jetbrains.plugin.structure.intellij.plugin.caches
 import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import java.nio.file.Path
 
-object EmptyPluginResourceCache : PluginResourceCache {
-  override fun getPluginResource(pluginArtifactPath: Path) = PluginResourceCache.Result.NotFound
-  override fun findFirst(predicate: (ZipPluginResource) -> Boolean) = PluginResourceCache.Result.NotFound
+object EmptyPluginArchiveManager : PluginArchiveManager {
+  override fun getPluginResource(pluginArtifactPath: Path) = PluginArchiveManager.Result.NotFound
+  override fun findFirst(predicate: (ZipPluginResource) -> Boolean) = PluginArchiveManager.Result.NotFound
   override fun plusAssign(pluginResource: ZipPluginResource) = Unit
   override fun close() = Unit
   override fun delete() = Unit

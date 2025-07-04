@@ -4,7 +4,7 @@
 
 package com.jetbrains.pluginverifier.tasks.checkPlugin
 
-import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
+import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginArchiveManager
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.resolution.CompositeDependencyFinder
@@ -32,7 +32,7 @@ class CheckPluginParamsBuilder(
   val pluginRepository: PluginRepository,
   val reportage: PluginVerificationReportage,
   val pluginDetailsCache: PluginDetailsCache,
-  val extractedPluginCache: PluginResourceCache,
+  val extractedPluginCache: PluginArchiveManager,
   private val ideDescriptorParser: IdeDescriptorParser = DefaultIdeDescriptorParser(reportage)
 ) : TaskParametersBuilder {
 

@@ -10,19 +10,19 @@ import java.io.Closeable
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
-class SimplePluginResourceCache : PluginResourceCache, Deletable, Closeable {
+class SimplePluginArchiveManager : PluginArchiveManager, Deletable, Closeable {
   private val cache = ConcurrentHashMap.newKeySet<ZipPluginResource>()
 
-  override fun getPluginResource(pluginArtifactPath: Path): PluginResourceCache.Result {
+  override fun getPluginResource(pluginArtifactPath: Path): PluginArchiveManager.Result {
     return cache.find { it.pluginArtifactPath == pluginArtifactPath }
-      ?.let { PluginResourceCache.Result.Found(it) }
-      ?: PluginResourceCache.Result.NotFound
+      ?.let { PluginArchiveManager.Result.Found(it) }
+      ?: PluginArchiveManager.Result.NotFound
   }
 
-  override fun findFirst(predicate: (ZipPluginResource) -> Boolean): PluginResourceCache.Result {
+  override fun findFirst(predicate: (ZipPluginResource) -> Boolean): PluginArchiveManager.Result {
     return cache.find(predicate)
-      ?.let { PluginResourceCache.Result.Found(it) }
-      ?: PluginResourceCache.Result.NotFound
+      ?.let { PluginArchiveManager.Result.Found(it) }
+      ?: PluginArchiveManager.Result.NotFound
   }
 
   override fun plusAssign(pluginResource: ZipPluginResource) {
