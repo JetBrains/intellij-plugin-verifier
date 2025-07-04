@@ -124,7 +124,6 @@ class IdePluginManager private constructor(
     pluginFile: Path,
     descriptorPath: String,
     validateDescriptor: Boolean,
-    resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver,
     deleteExtractedDirectory: Boolean
   ): PluginCreator {
@@ -139,22 +138,22 @@ class IdePluginManager private constructor(
         val extractedPlugin = extractorResult.extractedPlugin
         if (deleteExtractedDirectory) {
           extractedPlugin.use { (extractedFile) ->
-            getPluginExtractorFromJarOrDirectory(
+            getPluginCreatorWithResult(
               extractedFile,
-              descriptorPath,
               validateDescriptor,
-              resourceResolver,
-              problemResolver
+              descriptorPath,
+              problemResolver,
+              deleteExtractedDirectory = true,
             )
           }
         } else {
           val extractedDir = extractedPlugin.pluginFile
-          getPluginExtractorFromJarOrDirectory(
+          getPluginCreatorWithResult(
             extractedDir,
-            descriptorPath,
             validateDescriptor,
-            resourceResolver,
-            problemResolver
+            descriptorPath,
+            problemResolver,
+            deleteExtractedDirectory = false,
           ).apply {
             resources += ZipPluginResource.of(pluginFile, extractedDir, plugin)
           }
@@ -162,20 +161,6 @@ class IdePluginManager private constructor(
       }
 
       is ExtractorResult.Fail -> createInvalidPlugin(pluginFile.simpleName, descriptorPath, extractorResult.pluginProblem)
-    }
-  }
-
-  private fun getPluginExtractorFromJarOrDirectory(
-    pluginFile: Path,
-    descriptorPath: String,
-    validateDescriptor: Boolean,
-    resourceResolver: ResourceResolver,
-    problemResolver: PluginCreationResultResolver
-  ): PluginCreator {
-    return if (pluginFile.isJar() || pluginFile.isDirectory) {
-      getPluginCreator(pluginFile, descriptorPath, validateDescriptor, resourceResolver, problemResolver)
-    } else {
-      getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
     }
   }
 
@@ -246,7 +231,6 @@ class IdePluginManager private constructor(
           pluginFile,
           descriptorPath,
           validateDescriptor,
-          myResourceResolver,
           problemResolver,
           deleteExtractedDirectory
         )

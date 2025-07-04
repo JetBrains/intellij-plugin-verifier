@@ -32,6 +32,7 @@ import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescri
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsSingleJarInRoot
+import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsUnknownFile
 import com.jetbrains.plugin.structure.intellij.problems.UnexpectedPluginZipStructure
 import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -99,6 +100,35 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
       }
     }
     assertProblematicPlugin(file, listOf(PluginZipContainsSingleJarInRoot(name)))
+  }
+
+  @Test
+  fun `ZIP file contains neither JAR nor directory, but two unexpected files`() {
+    val readme = "README.txt"
+    val codeOfConduct = "CODE_OF_CONDUCT.md"
+    val file = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      file(readme, "This is not an IDE plugin")
+      file(codeOfConduct, "## Code of Conduct")
+    }
+    val illegalFiles = listOf(readme, codeOfConduct).sorted()
+    assertProblematicPlugin(
+      file, listOf(
+        PluginZipContainsMultipleFiles(illegalFiles),
+      )
+    )
+  }
+
+  @Test
+  fun `ZIP file contains neither JAR nor directory`() {
+    val readme = "README.txt"
+    val file = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      file(readme, "This is not an IDE plugin")
+    }
+    assertProblematicPlugin(
+      file, listOf(
+        PluginZipContainsUnknownFile(readme),
+      )
+    )
   }
 
   @Test
