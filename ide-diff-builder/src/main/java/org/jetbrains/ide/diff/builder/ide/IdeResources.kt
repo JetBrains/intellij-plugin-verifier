@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
+import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -71,7 +72,7 @@ private fun readPluginClassesExceptionally(idePlugin: IdePlugin, readMode: Resol
     return null
   }
   LOG.debug("Reading class files of a bundled plugin $idePlugin  (${idePlugin.originalFile})")
-  return IdePluginClassesFinder.findPluginClasses(idePlugin, readMode, pluginClassesLocationsKeys)
+  return IdePluginClassesFinder.findPluginClasses(idePlugin, readMode, pluginClassesLocationsKeys, ClassSearchContext.DEFAULT)
 }
 
 private fun IdePluginClassesLocations.getPluginClassesResolver(): List<Resolver> =

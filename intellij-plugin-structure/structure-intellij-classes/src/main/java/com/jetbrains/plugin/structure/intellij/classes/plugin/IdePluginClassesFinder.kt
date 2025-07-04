@@ -133,6 +133,14 @@ class IdePluginClassesFinder private constructor(
     ): IdePluginClassesLocations =
       find(idePlugin, MAIN_CLASSES_KEYS + additionalKeys, Resolver.ReadMode.FULL, searchContext)
 
+    fun findPluginClasses(
+      idePlugin: IdePlugin,
+      readMode: Resolver.ReadMode,
+      additionalKeys: List<LocationKey>,
+      searchContext: ClassSearchContext
+    ): IdePluginClassesLocations =
+      find(idePlugin, MAIN_CLASSES_KEYS + additionalKeys, readMode, searchContext)
+
     fun fullyFindPluginClassesInExplicitLocations(
       idePlugin: IdePlugin,
       locations: List<LocationKey>,
