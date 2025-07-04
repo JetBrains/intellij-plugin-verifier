@@ -4,10 +4,12 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.loaders
 
+import com.jetbrains.plugin.structure.base.problems.IncorrectJarOrDirectory
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
+import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import org.slf4j.Logger
@@ -47,9 +49,12 @@ internal class JarOrDirectoryPluginLoader(private val pluginLoaderRegistry: Plug
         )
       )
 
-      else -> throw IllegalArgumentException("Plugin artifact path '${jarOrDirectory}' is neither a JAR file nor a directory.")
+      else -> createInvalidPlugin()
     }
   }
+
+  private fun Context.createInvalidPlugin() =
+    createInvalidPlugin(jarOrDirectory, descriptorPath, IncorrectJarOrDirectory(jarOrDirectory))
 
   internal data class Context(
     val jarOrDirectory: Path,

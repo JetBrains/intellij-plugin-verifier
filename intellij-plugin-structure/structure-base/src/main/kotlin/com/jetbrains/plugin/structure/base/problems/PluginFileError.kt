@@ -4,7 +4,10 @@
 
 package com.jetbrains.plugin.structure.base.problems
 
+import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.base.utils.isZip
 import org.apache.commons.io.FileUtils
+import java.nio.file.Path
 
 abstract class PluginFileError : PluginProblem() {
   override val level
@@ -24,6 +27,20 @@ class IncorrectZipOrJarFile(
 ) : PluginFileError() {
   override val message
     get() = "The plugin archive contains an unexpected file $fileName: it must be .zip, .jar or a directory."
+}
+
+class IncorrectJarOrDirectory(
+  private val path: Path
+) : PluginFileError() {
+  override val message: String
+    get() {
+      val type = when {
+        path.isZip() -> "ZIP file"
+        path.isDirectory -> "directory"
+        else -> "file"
+      }
+      return "The plugin artifact path must be a .jar archive or a directory, but was a $type at [$path]"
+    }
 }
 
 class UnableToExtractZip : PluginFileError() {
