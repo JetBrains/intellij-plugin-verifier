@@ -13,7 +13,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginArchiveManage
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
+import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.utils.DeletableOnClose
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
@@ -87,7 +87,7 @@ class DefaultPluginDetailsProvider(
   private fun PluginCreationResult<IdePlugin>.registerCloseableResources() = apply {
     if (this is PluginCreationSuccess) {
       resources.forEach {
-        if (it is ZipPluginResource) {
+        if (it is PluginArchiveResource) {
           pluginCache += it
         } else {
           closeableResources += DeletableOnClose.of(it)

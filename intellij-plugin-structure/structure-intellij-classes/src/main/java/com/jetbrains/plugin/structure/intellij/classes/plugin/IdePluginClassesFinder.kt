@@ -21,8 +21,8 @@ import com.jetbrains.plugin.structure.intellij.extractor.DefaultPluginExtractor
 import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginArchiveManager
-import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
-import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource.Companion.matches
+import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
+import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource.Companion.matches
 import java.io.IOException
 import java.nio.file.Path
 
@@ -72,20 +72,20 @@ class IdePluginClassesFinder private constructor(
           IdePluginClassesLocations(
             idePlugin,
             allocatedResource = it,
-            findLocations(it.extractedPluginPath)
+            findLocations(it.extractedPath)
           )
         }
 
       is PluginArchiveManager.Result.NotFound -> {
         extractAndGetClasses(pluginZip).let { (extractedPluginPath, locations) ->
-          pluginArchiveManager += ZipPluginResource.of(pluginZip, extractedPluginPath, idePlugin)
+          pluginArchiveManager += PluginArchiveResource.of(pluginZip, extractedPluginPath, idePlugin)
           locations
         }
       }
     }
   }
 
-  private fun Path.matches() = { zipResource: ZipPluginResource -> zipResource.matches(this, idePlugin) }
+  private fun Path.matches() = { zipResource: PluginArchiveResource -> zipResource.matches(this, idePlugin) }
 
   @Throws(IOException::class)
   private fun extractAndGetClasses(pluginZipPath: Path): Pair<Path, IdePluginClassesLocations> {

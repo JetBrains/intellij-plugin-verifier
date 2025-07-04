@@ -29,8 +29,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginLoaderProvid
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
+import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
-import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
@@ -157,7 +157,7 @@ class IdePluginManager private constructor(
             problemResolver,
             deleteExtractedDirectory = false,
           ).apply {
-            resources += ZipPluginResource.of(pluginFile, extractedDir, plugin)
+            resources += PluginArchiveResource.of(pluginFile, extractedDir, plugin)
           }
         }
       }

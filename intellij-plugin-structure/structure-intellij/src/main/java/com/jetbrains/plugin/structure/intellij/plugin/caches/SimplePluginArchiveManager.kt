@@ -5,27 +5,27 @@
 package com.jetbrains.plugin.structure.intellij.plugin.caches
 
 import com.jetbrains.plugin.structure.base.utils.Deletable
-import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
+import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import java.io.Closeable
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 class SimplePluginArchiveManager : PluginArchiveManager, Deletable, Closeable {
-  private val cache = ConcurrentHashMap.newKeySet<ZipPluginResource>()
+  private val cache = ConcurrentHashMap.newKeySet<PluginArchiveResource>()
 
   override fun getPluginResource(pluginArtifactPath: Path): PluginArchiveManager.Result {
-    return cache.find { it.pluginArtifactPath == pluginArtifactPath }
+    return cache.find { it.artifactPath == pluginArtifactPath }
       ?.let { PluginArchiveManager.Result.Found(it) }
       ?: PluginArchiveManager.Result.NotFound
   }
 
-  override fun findFirst(predicate: (ZipPluginResource) -> Boolean): PluginArchiveManager.Result {
+  override fun findFirst(predicate: (PluginArchiveResource) -> Boolean): PluginArchiveManager.Result {
     return cache.find(predicate)
       ?.let { PluginArchiveManager.Result.Found(it) }
       ?: PluginArchiveManager.Result.NotFound
   }
 
-  override fun plusAssign(pluginResource: ZipPluginResource) {
+  override fun plusAssign(pluginResource: PluginArchiveResource) {
     cache += pluginResource
   }
 

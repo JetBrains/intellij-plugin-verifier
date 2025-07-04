@@ -4,13 +4,13 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.caches
 
-import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
+import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import java.nio.file.Path
 
 object EmptyPluginArchiveManager : PluginArchiveManager {
   override fun getPluginResource(pluginArtifactPath: Path) = PluginArchiveManager.Result.NotFound
-  override fun findFirst(predicate: (ZipPluginResource) -> Boolean) = PluginArchiveManager.Result.NotFound
-  override fun plusAssign(pluginResource: ZipPluginResource) = Unit
+  override fun findFirst(predicate: (PluginArchiveResource) -> Boolean) = PluginArchiveManager.Result.NotFound
+  override fun plusAssign(pluginResource: PluginArchiveResource) = Unit
   override fun close() = Unit
   override fun delete() = Unit
 }

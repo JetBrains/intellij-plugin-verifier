@@ -32,8 +32,8 @@ import com.jetbrains.plugin.structure.intellij.problems.SinceBuildGreaterThanUnt
 import com.jetbrains.plugin.structure.intellij.problems.UnableToFindTheme
 import com.jetbrains.plugin.structure.intellij.problems.UnableToReadTheme
 import com.jetbrains.plugin.structure.intellij.problems.UnknownServiceClientValue
+import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
-import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
 import com.jetbrains.plugin.structure.intellij.verifiers.ExposedModulesVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.K2IdeModeCompatibilityVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
@@ -177,7 +177,7 @@ internal class PluginCreator private constructor(
         .add(telemetry)
     }
 
-  internal val resources = mutableListOf<ZipPluginResource>()
+  internal val resources = mutableListOf<PluginArchiveResource>()
 
   val telemetry: MutablePluginTelemetry = MutablePluginTelemetry()
 

@@ -12,7 +12,7 @@ import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginArchiveManager
-import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
+import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.dependencies.resolution.PluginVersionSelector
@@ -247,7 +247,7 @@ class PluginsParsing(
 
   private fun PluginCreationSuccess<IdePlugin>.cacheExtractedPlugins() {
     resources
-      .filterIsInstance<ZipPluginResource>()
+      .filterIsInstance<PluginArchiveResource>()
       .forEach { extractedPluginCache += it }
   }
 }
