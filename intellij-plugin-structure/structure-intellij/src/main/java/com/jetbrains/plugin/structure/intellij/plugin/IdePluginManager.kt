@@ -8,15 +8,14 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginManager
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.IncorrectZipOrJarFile
-import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.base.utils.pluginSize
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.intellij.extractor.DefaultPluginExtractor
-import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager.Result.Extracted
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager.Result.Failed
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.ContentModuleLoader
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarModuleLoader
@@ -91,7 +90,7 @@ class IdePluginManager private constructor(
     }
   })
 
-  private val pluginExtractor = DefaultPluginExtractor()
+  private val pluginArchiveManager = PluginArchiveManager(extractDirectory)
 
   private fun resolveOptionalDependencies(pluginFile: Path, pluginCreator: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver) {
     if (pluginCreator.isSuccess) {
@@ -122,47 +121,33 @@ class IdePluginManager private constructor(
     mergeContent(resolvedContentModule)
   }
 
-  private fun extractZipAndCreatePlugin(
+
+  private fun getPluginCreator(
     pluginFile: Path,
     descriptorPath: String,
     validateDescriptor: Boolean,
+    resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver,
     deleteExtractedDirectory: Boolean
   ): PluginCreator {
-    val extractorResult = try {
-      pluginExtractor.extractPlugin(pluginFile, extractDirectory)
-    } catch (e: Exception) {
-      LOG.info("Unable to extract plugin zip ${pluginFile.simpleName}", e)
-      return createInvalidPlugin(pluginFile.simpleName, descriptorPath, UnableToExtractZip())
-    }
-    return when (extractorResult) {
-      is ExtractorResult.Success -> {
-        val extractedPlugin = extractorResult.extractedPlugin
+    return when (val archive = pluginArchiveManager.extractArchive(pluginFile)) {
+      is Extracted -> {
+        val pluginCreator = lazy {
+          getPluginCreator(archive.extractedPath, descriptorPath, validateDescriptor, resourceResolver, problemResolver)
+        }
         if (deleteExtractedDirectory) {
-          extractedPlugin.use { (extractedFile) ->
-            getPluginCreatorWithResult(
-              extractedFile,
-              validateDescriptor,
-              descriptorPath,
-              problemResolver,
-              deleteExtractedDirectory = true,
-            )
-          }
+          archive.resourceToClose.use { pluginCreator.value }
         } else {
-          val extractedDir = extractedPlugin.pluginFile
-          getPluginCreatorWithResult(
-            extractedDir,
-            validateDescriptor,
-            descriptorPath,
-            problemResolver,
-            deleteExtractedDirectory = false,
-          ).apply {
-            resources += PluginArchiveResource.of(pluginFile, extractedDir, plugin)
+          pluginCreator.value.apply {
+            resources += PluginArchiveResource.of(pluginFile, archive.extractedPath, plugin)
           }
         }
       }
-
-      is ExtractorResult.Fail -> createInvalidPlugin(pluginFile.simpleName, descriptorPath, extractorResult.pluginProblem)
+      is Failed -> createInvalidPlugin(
+        pluginFile.simpleName,
+        descriptorPath,
+        archive.problem
+      )
     }
   }
 
@@ -229,13 +214,7 @@ class IdePluginManager private constructor(
     val pluginCreator: PluginCreator
     measureTimeMillis {
       if (pluginFile.isZip()) {
-        pluginCreator = extractZipAndCreatePlugin(
-          pluginFile,
-          descriptorPath,
-          validateDescriptor,
-          problemResolver,
-          deleteExtractedDirectory
-        )
+        pluginCreator = getPluginCreator(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, problemResolver, deleteExtractedDirectory)
       } else if (pluginFile.isJar() || pluginFile.isDirectory) {
         pluginCreator = getPluginCreator(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, problemResolver)
       } else {
