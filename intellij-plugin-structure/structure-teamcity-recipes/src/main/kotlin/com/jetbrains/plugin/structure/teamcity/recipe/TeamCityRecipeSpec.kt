@@ -58,7 +58,7 @@ object TeamCityRecipeSpec {
   object RecipeDescription {
     const val NAME = "description"
     const val DESCRIPTION = "recipe description"
-    const val MAX_LENGTH = 250
+    const val MAX_LENGTH = 1000
   }
 
   object RecipeInputs {
