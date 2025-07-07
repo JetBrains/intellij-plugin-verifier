@@ -275,6 +275,14 @@ class IdePluginManager private constructor(
     fun createManager(resourceResolver: ResourceResolver, extractDirectory: Path, fileSystemProvider: JarFileSystemProvider): IdePluginManager =
       IdePluginManager(resourceResolver, PluginArchiveManager(extractDirectory), fileSystemProvider)
 
+    @JvmStatic
+    fun createManager(
+      resourceResolver: ResourceResolver,
+      pluginArchiveManager: PluginArchiveManager,
+      fileSystemProvider: JarFileSystemProvider
+    ): IdePluginManager =
+      IdePluginManager(resourceResolver, pluginArchiveManager, fileSystemProvider)
+
     @Deprecated(
       message = "Use factory method with java.nio.Path",
       replaceWith = ReplaceWith("createManager(extractDirectory.toPath())")
