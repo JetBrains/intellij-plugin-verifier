@@ -55,6 +55,66 @@ class PluginArchiveManagerTest(fileSystemType: FileSystemType) : BaseFileSystemA
     assertEquals(0, extractedPluginsPath.listFiles().size)
   }
 
+  @Test
+  fun `archive is successfully cached`() {
+    val pluginArtifactPath = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml") { perfectXmlBuilder.modify { } }
+            }
+          }
+        }
+      }
+    }
+
+    val extractedPluginsPath = temporaryFolder.newFolder("extracted-plugins")
+    val pluginArchiveManager = PluginArchiveManager(extractedPluginsPath)
+
+    repeat(2) {
+      val archiveResult = pluginArchiveManager.extractArchive(pluginArtifactPath)
+      assertTrue(archiveResult is PluginArchiveManager.Result.Extracted)
+      archiveResult as PluginArchiveManager.Result.Extracted
+      assertEquals(1, extractedPluginsPath.listFiles().size)
+      assertTrue(extractedPluginsPath.contains(archiveResult))
+    }
+  }
+
+  @Test
+  fun `archive is successfully retrieved, its resource is closed but it is retrieved again`() {
+    val pluginArtifactPath = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml") { perfectXmlBuilder.modify { } }
+            }
+          }
+        }
+      }
+    }
+
+    val extractedPluginsPath = temporaryFolder.newFolder("extracted-plugins")
+    val pluginArchiveManager = PluginArchiveManager(extractedPluginsPath)
+
+    val firstArchiveResult = pluginArchiveManager.extractArchive(pluginArtifactPath)
+    assertTrue(firstArchiveResult is PluginArchiveManager.Result.Extracted)
+    firstArchiveResult as PluginArchiveManager.Result.Extracted
+    assertEquals(1, extractedPluginsPath.listFiles().size)
+    assertTrue(extractedPluginsPath.contains(firstArchiveResult))
+
+    firstArchiveResult.resourceToClose.close()
+
+    val secondArchive = pluginArchiveManager.extractArchive(pluginArtifactPath)
+    assertTrue(secondArchive is PluginArchiveManager.Result.Extracted)
+    secondArchive as PluginArchiveManager.Result.Extracted
+    assertEquals(1, extractedPluginsPath.listFiles().size)
+    assertTrue(extractedPluginsPath.contains(secondArchive))
+
+    secondArchive.resourceToClose.close()
+  }
+
   private fun Path.contains(result: PluginArchiveManager.Result.Extracted): Boolean {
     return Files.walk(this).use { stream: Stream<Path> ->
       stream.anyMatch { it == result.extractedPath }
