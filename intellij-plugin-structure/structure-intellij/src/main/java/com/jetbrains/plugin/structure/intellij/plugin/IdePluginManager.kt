@@ -47,7 +47,7 @@ import kotlin.system.measureTimeMillis
 @Suppress("UNCHECKED_CAST")
 class IdePluginManager private constructor(
   private val myResourceResolver: ResourceResolver,
-  private val extractDirectory: Path,
+  private val pluginArchiveManager: PluginArchiveManager,
   private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
 ) : PluginManager<IdePlugin> {
 
@@ -89,8 +89,6 @@ class IdePluginManager private constructor(
       )
     }
   })
-
-  private val pluginArchiveManager = PluginArchiveManager(extractDirectory)
 
   private fun resolveOptionalDependencies(pluginFile: Path, pluginCreator: PluginCreator, resourceResolver: ResourceResolver, problemResolver: PluginCreationResultResolver) {
     if (pluginCreator.isSuccess) {
@@ -271,11 +269,11 @@ class IdePluginManager private constructor(
 
     @JvmStatic
     fun createManager(resourceResolver: ResourceResolver, extractDirectory: Path): IdePluginManager =
-      IdePluginManager(resourceResolver, extractDirectory)
+      IdePluginManager(resourceResolver, PluginArchiveManager(extractDirectory))
 
     @JvmStatic
     fun createManager(resourceResolver: ResourceResolver, extractDirectory: Path, fileSystemProvider: JarFileSystemProvider): IdePluginManager =
-      IdePluginManager(resourceResolver, extractDirectory, fileSystemProvider)
+      IdePluginManager(resourceResolver, PluginArchiveManager(extractDirectory), fileSystemProvider)
 
     @Deprecated(
       message = "Use factory method with java.nio.Path",
