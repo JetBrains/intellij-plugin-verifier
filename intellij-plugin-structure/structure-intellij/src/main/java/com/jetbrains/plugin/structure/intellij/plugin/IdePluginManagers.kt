@@ -10,6 +10,10 @@ import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import java.nio.file.Path
 
+fun createIdePluginManager(archiveManager: PluginArchiveManager): IdePluginManager = createIdePluginManager {
+  this.pluginArchiveManager = archiveManager
+}
+
 fun createIdePluginManager(builder: IdePluginManagerConfiguration.Builder.() -> Unit): IdePluginManager {
   return IdePluginManagerConfiguration.Builder()
     .apply(builder)
