@@ -9,7 +9,7 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginArchiveManager
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import java.nio.file.Path
 
@@ -19,7 +19,7 @@ class DependencyDetailsProvider(extractDirectory: Path, private val pluginArchiv
     return IdePluginClassesFinder.findPluginClasses(
       idePlugin,
       additionalKeys = listOf(CompileServerExtensionKey),
-      ClassSearchContext(pluginArchiveManager, extractDirectory)
+      ClassSearchContext(extractDirectory, pluginArchiveManager)
     )
   }
 }

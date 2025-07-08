@@ -1,8 +1,9 @@
 package com.jetbrains.pluginverifier.options
 
+import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.intellij.plugin.caches.SimplePluginArchiveManager
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import com.jetbrains.pluginverifier.tests.mocks.TelemetryVerificationReportage
 import org.junit.Assert.*
@@ -22,8 +23,8 @@ class PluginsParsingTest {
   fun `telemetry is gathered in plugin parsing`() {
     val plugins = PluginsSet()
     val reportage = TelemetryVerificationReportage()
-    val pluginCache = SimplePluginArchiveManager()
-    val pluginsParsing = PluginsParsing(pluginRepository, pluginCache, reportage, plugins)
+    val archiveManager = PluginArchiveManager(Settings.EXTRACT_DIRECTORY.getAsPath())
+    val pluginsParsing = PluginsParsing(pluginRepository, archiveManager, reportage, plugins)
 
     val pluginZip = buildPluginZipWithXml {
       """

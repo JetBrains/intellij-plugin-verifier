@@ -8,7 +8,7 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExte
 import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginArchiveManager
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import java.nio.file.Path
 
@@ -17,5 +17,5 @@ class PluginDetailsProviderImpl(extractDirectory: Path, private val pluginArchiv
     IdePluginClassesFinder
       .findPluginClasses(idePlugin,
         additionalKeys = listOf(CompileServerExtensionKey),
-        searchContext = ClassSearchContext(pluginArchiveManager, extractDirectory))
+        searchContext = ClassSearchContext(extractDirectory, pluginArchiveManager))
 }

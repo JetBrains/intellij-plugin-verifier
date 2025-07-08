@@ -7,7 +7,7 @@ package com.jetbrains.pluginverifier
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.forceDeleteIfExists
 import com.jetbrains.plugin.structure.base.utils.formatDuration
-import com.jetbrains.plugin.structure.intellij.plugin.caches.SimplePluginArchiveManager
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.PluginVerifierMain.commandRunners
 import com.jetbrains.pluginverifier.PluginVerifierMain.main
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -119,8 +119,9 @@ object PluginVerifierMain {
 
     val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5L * 1024)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
-    SimplePluginArchiveManager().use { extractedPluginCache ->
-      DefaultPluginDetailsProvider(getPluginsExtractDirectory(), extractedPluginCache).use { pluginDetailsProvider ->
+    val pluginsExtractDirectory = getPluginsExtractDirectory()
+    PluginArchiveManager(pluginsExtractDirectory).use { extractedPluginCache ->
+      DefaultPluginDetailsProvider(pluginsExtractDirectory, extractedPluginCache).use { pluginDetailsProvider ->
         val reportageAggregator = LoggingPluginVerificationReportageAggregator()
         DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
           measurePluginVerification {

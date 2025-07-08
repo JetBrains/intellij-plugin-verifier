@@ -6,7 +6,6 @@ package com.jetbrains.plugin.structure.intellij.classes.plugin
 
 import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.plugin.structure.base.utils.closeLogged
-import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.isJar
@@ -18,11 +17,8 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.LibDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.LibModulesDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.LocationKey
 import com.jetbrains.plugin.structure.intellij.extractor.DefaultPluginExtractor
-import com.jetbrains.plugin.structure.intellij.extractor.ExtractorResult
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginArchiveManager
-import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
-import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource.Companion.matches
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import java.io.IOException
 import java.nio.file.Path
 
@@ -41,7 +37,7 @@ class IdePluginClassesFinder private constructor(
   private val extractDirectory: Path,
   private val readMode: Resolver.ReadMode,
   private val locatorKeys: List<LocationKey>,
-  private val pluginArchiveManager: PluginArchiveManager
+  private val archiveManager: PluginArchiveManager
 ) {
 
   private val pluginExtractor = DefaultPluginExtractor()
@@ -64,40 +60,15 @@ class IdePluginClassesFinder private constructor(
     }
   }
 
-  private fun findInZip(pluginZip: Path): IdePluginClassesLocations {
-    val cachedResult = pluginArchiveManager.findFirst(pluginZip.matches())
-    return when (cachedResult) {
-      is PluginArchiveManager.Result.Found ->
-        cachedResult.pluginResource.let { it ->
-          IdePluginClassesLocations(
-            idePlugin,
-            allocatedResource = it,
-            findLocations(it.extractedPath)
-          )
-        }
-
-      is PluginArchiveManager.Result.NotFound -> {
-        extractAndGetClasses(pluginZip).let { (extractedPluginPath, locations) ->
-          pluginArchiveManager += PluginArchiveResource.of(pluginZip, extractedPluginPath, idePlugin)
-          locations
-        }
-      }
-    }
-  }
-
-  private fun Path.matches() = { zipResource: PluginArchiveResource -> zipResource.matches(this, idePlugin) }
-
   @Throws(IOException::class)
-  private fun extractAndGetClasses(pluginZipPath: Path): Pair<Path, IdePluginClassesLocations> {
-    return when (val extractorResult = pluginExtractor.extractPlugin(pluginZipPath, extractDirectory)) {
-      is ExtractorResult.Success -> {
-        extractorResult.extractedPlugin.closeOnException {
-          val locations = findLocations(it.pluginFile)
-          it.pluginFile to IdePluginClassesLocations(idePlugin, it, locations)
-        }
-      }
-
-      is ExtractorResult.Fail -> throw IOException(extractorResult.pluginProblem.message)
+  private fun findInZip(pluginZip: Path): IdePluginClassesLocations {
+    return when (val archive = archiveManager.extractArchive(pluginZip)) {
+      is PluginArchiveManager.Result.Extracted -> IdePluginClassesLocations(
+        idePlugin,
+        allocatedResource = {},
+        findLocations(archive.extractedPath)
+      )
+      is PluginArchiveManager.Result.Failed -> throw IOException(archive.problem.message)
     }
   }
 
