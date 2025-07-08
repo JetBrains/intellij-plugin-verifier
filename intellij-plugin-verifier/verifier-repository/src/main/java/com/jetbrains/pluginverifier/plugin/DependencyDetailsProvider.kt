@@ -11,15 +11,14 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.repository.PluginInfo
-import java.nio.file.Path
 
-class DependencyDetailsProvider(extractDirectory: Path, private val pluginArchiveManager: PluginArchiveManager) :
-  AbstractPluginDetailsProvider(extractDirectory) {
+class DependencyDetailsProvider(archiveManager: PluginArchiveManager) :
+  AbstractPluginDetailsProvider(archiveManager) {
   override fun readPluginClasses(pluginInfo: PluginInfo, idePlugin: IdePlugin): IdePluginClassesLocations {
     return IdePluginClassesFinder.findPluginClasses(
       idePlugin,
       additionalKeys = listOf(CompileServerExtensionKey),
-      ClassSearchContext(pluginArchiveManager)
+      ClassSearchContext(archiveManager)
     )
   }
 }

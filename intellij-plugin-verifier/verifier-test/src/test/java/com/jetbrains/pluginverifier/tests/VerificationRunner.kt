@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin.IdeLibDirectory
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerifier
@@ -46,7 +47,9 @@ class VerificationRunner {
     val tempFolder = Files.createTempDirectory("")
     tempFolder.toFile().deleteOnExit()
 
-    val pluginDetailsProvider = DefaultPluginDetailsProvider(tempFolder)
+    val pluginArchiveManager = PluginArchiveManager(tempFolder)
+
+    val pluginDetailsProvider = DefaultPluginDetailsProvider(pluginArchiveManager)
     val pluginDetailsCache = SizeLimitedPluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
     return IdeDescriptor.create(ide.idePath, jdkPath, null).use { ideDescriptor ->
       val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())

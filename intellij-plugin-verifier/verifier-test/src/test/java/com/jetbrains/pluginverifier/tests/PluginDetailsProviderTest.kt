@@ -5,24 +5,25 @@
 package com.jetbrains.pluginverifier.tests
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.plugin.DefaultPluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.resolution.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.repositories.dependency.DependencyPluginInfo
+import com.jetbrains.pluginverifier.tests.mocks.createPluginArchiveManager
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.nio.file.Path
 
 class PluginDetailsProviderTest : BasePluginTest() {
 
-  private lateinit var extractedPath: Path
+  private lateinit var pluginArchiveManager: PluginArchiveManager
 
   @Before
   fun setUp() {
-    extractedPath = temporaryFolder.newFolder("extracted").toPath()
+    pluginArchiveManager = temporaryFolder.createPluginArchiveManager()
   }
 
   @Test
@@ -48,7 +49,7 @@ class PluginDetailsProviderTest : BasePluginTest() {
 
     val pluginInfo = DependencyPluginInfo(PluginInfo("com.example", "SomePlugin", "1"))
 
-    DefaultPluginDetailsProvider(extractedPath).use { provider ->
+    DefaultPluginDetailsProvider(pluginArchiveManager).use { provider ->
       repeat(2) {
         val pluginDetailsResult = provider.providePluginDetails(pluginInfo, IdleFileLock(pluginZipPath))
         assertTrue(pluginDetailsResult is PluginDetailsProvider.Result.Provided)

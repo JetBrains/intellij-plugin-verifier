@@ -29,13 +29,12 @@ import java.util.concurrent.ConcurrentHashMap
  * Non-bundled plugins that aren't dependencies are handled by the delegate [PluginDetailsProviderImpl].
  */
 class DefaultPluginDetailsProvider(
-  extractDirectory: Path,
-  private val archiveManager: PluginArchiveManager = PluginArchiveManager(extractDirectory)
-) : AbstractPluginDetailsProvider(extractDirectory), AutoCloseable {
+  archiveManager: PluginArchiveManager
+) : AbstractPluginDetailsProvider(archiveManager), AutoCloseable {
 
-  private val nonBundledPluginDetailsProvider: PluginDetailsProviderImpl = PluginDetailsProviderImpl(extractDirectory, archiveManager)
+  private val nonBundledPluginDetailsProvider: PluginDetailsProviderImpl = PluginDetailsProviderImpl(archiveManager)
 
-  private val dependencyDetailsProvider = DependencyDetailsProvider(extractDirectory, archiveManager)
+  private val dependencyDetailsProvider = DependencyDetailsProvider(archiveManager)
 
   private val dependencyProblemResolver: PluginCreationResultResolver =
     JetBrainsPluginCreationResultResolver.fromClassPathJson(IntelliJPluginCreationResultResolver())
@@ -48,7 +47,7 @@ class DefaultPluginDetailsProvider(
     return when (pluginInfo) {
       is BundledPluginInfo ->
         BundledPluginClassesFinder.findPluginClasses(idePlugin, additionalKeys = listOf(CompileServerExtensionKey),
-          ClassSearchContext(archiveManager = archiveManager))
+          ClassSearchContext(archiveManager))
 
       is DependencyPluginInfo ->
         dependencyDetailsProvider.readPluginClasses(pluginInfo, idePlugin)

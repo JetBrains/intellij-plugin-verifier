@@ -123,7 +123,7 @@ object PluginVerifierMain {
 
       val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
 
-      DefaultPluginDetailsProvider(pluginsExtractDirectory, pluginArchiveManager).use { pluginDetailsProvider ->
+      DefaultPluginDetailsProvider(pluginArchiveManager).use { pluginDetailsProvider ->
         val reportageAggregator = LoggingPluginVerificationReportageAggregator()
         DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
           measurePluginVerification {

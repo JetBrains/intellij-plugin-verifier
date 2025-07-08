@@ -12,19 +12,19 @@ import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.plugin.StructurallyValidated
+import com.jetbrains.plugin.structure.intellij.plugin.createIdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.UnableToReadPluginFile
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
-import java.nio.file.Path
 
 /**
  * Baseline implementation of the [PluginDetailsProvider] that
  * uses the [extractDirectory] for extracting `.zip`-ped plugins.
  */
-abstract class AbstractPluginDetailsProvider(protected val extractDirectory: Path) : PluginDetailsProvider {
-  protected val idePluginManager = IdePluginManager.createManager(extractDirectory)
+abstract class AbstractPluginDetailsProvider(protected val archiveManager: PluginArchiveManager) : PluginDetailsProvider {
+  protected val idePluginManager = createIdePluginManager(archiveManager)
 
   private val IdePlugin.problems: List<PluginProblem>
     get() = if (this is StructurallyValidated) this.problems else emptyList()
