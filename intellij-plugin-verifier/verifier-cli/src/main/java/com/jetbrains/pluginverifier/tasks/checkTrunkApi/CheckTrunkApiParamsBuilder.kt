@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.listPresentationInColumns
 import com.jetbrains.plugin.structure.ide.Ide
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
@@ -42,7 +43,8 @@ import java.nio.file.Paths
 class CheckTrunkApiParamsBuilder(
   private val pluginRepository: PluginRepository,
   private val reportage: PluginVerificationReportage,
-  private val pluginDetailsCache: PluginDetailsCache
+  private val pluginDetailsCache: PluginDetailsCache,
+  private val archiveManager: PluginArchiveManager
 ) : TaskParametersBuilder {
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckTrunkApiParams {
@@ -85,11 +87,11 @@ class CheckTrunkApiParamsBuilder(
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
     val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot
-      ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it), opts.forceOfflineCompatibility) }
+      ?.let { createRepository(it, opts) }
       ?: EmptyPluginRepository
 
     val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot
-      ?.let { LocalPluginRepositoryFactory.createLocalPluginRepository(Paths.get(it), opts.forceOfflineCompatibility) }
+      ?.let { createRepository(it, opts) }
       ?: EmptyPluginRepository
 
     val message = "Requesting a list of plugins compatible with the release IDE ${releaseIdeDescriptor.ideVersion}"
@@ -257,6 +259,14 @@ class CheckTrunkApiParamsBuilder(
       }
     }
     return latestCompatibleVersions
+  }
+
+  private fun createRepository(repositoryRoot: String, opts: CmdOpts): PluginRepository {
+    return LocalPluginRepositoryFactory.createLocalPluginRepository(
+      Paths.get(repositoryRoot),
+      opts.forceOfflineCompatibility,
+      archiveManager
+    )
   }
 
 }

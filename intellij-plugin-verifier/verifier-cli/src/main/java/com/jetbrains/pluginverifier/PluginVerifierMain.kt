@@ -111,17 +111,19 @@ object PluginVerifierMain {
     val runner = findTaskRunner(command)
     val outputOptions = OptionsParser.parseOutputOptions(opts)
 
-    val pluginRepository =
-      when (val repositoryProvision = LocalPluginRepositoryProvider.getLocalPluginRepository(opts, downloadDirectory)) {
-        is Provided -> repositoryProvision.pluginRepository
-        Unavailable -> MarketplaceRepository(URL(pluginRepositoryUrl))
-      }
-
-    val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5L * 1024)
-    val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
     val pluginsExtractDirectory = getPluginsExtractDirectory()
-    PluginArchiveManager(pluginsExtractDirectory).use { extractedPluginCache ->
-      DefaultPluginDetailsProvider(pluginsExtractDirectory, extractedPluginCache).use { pluginDetailsProvider ->
+    val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5L * 1024)
+
+    PluginArchiveManager(pluginsExtractDirectory).use { pluginArchiveManager ->
+      val pluginRepository =
+        when (val repositoryProvision = LocalPluginRepositoryProvider.getLocalPluginRepository(opts, downloadDirectory, pluginArchiveManager)) {
+          is Provided -> repositoryProvision.pluginRepository
+          Unavailable -> MarketplaceRepository(URL(pluginRepositoryUrl))
+        }
+
+      val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
+
+      DefaultPluginDetailsProvider(pluginsExtractDirectory, pluginArchiveManager).use { pluginDetailsProvider ->
         val reportageAggregator = LoggingPluginVerificationReportageAggregator()
         DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
           measurePluginVerification {
@@ -134,7 +136,7 @@ object PluginVerifierMain {
               runner.getParametersBuilder(
                 pluginRepository,
                 pluginDetailsCache,
-                extractedPluginCache,
+                pluginArchiveManager,
                 reportage
               ).build(opts, freeArgs).use { parameters ->
                 reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")

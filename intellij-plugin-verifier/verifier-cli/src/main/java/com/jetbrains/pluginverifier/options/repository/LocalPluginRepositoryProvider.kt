@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.options.repository
 
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.PluginParsingConfigurationResolution
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -12,13 +13,14 @@ import java.nio.file.Path
 
 object LocalPluginRepositoryProvider {
 
-  fun getLocalPluginRepository(opts: CmdOpts, downloadDirectory: Path): Result {
+  fun getLocalPluginRepository(opts: CmdOpts, downloadDirectory: Path, archiveManager: PluginArchiveManager): Result {
     return if (!opts.offlineMode) {
       Result.Unavailable
     } else {
       LocalPluginRepositoryFactory.createLocalPluginRepository(
         downloadDirectory,
         opts.forceOfflineCompatibility,
+        archiveManager,
         PluginParsingConfigurationResolution.of(opts)
       ).let { Result.Provided(it) }
     }

@@ -18,6 +18,6 @@ class CheckTrunkApiRunner : CommandRunner {
     pluginDetailsCache: PluginDetailsCache,
     archiveManager: PluginArchiveManager,
     reportage: PluginVerificationReportage
-  ) = CheckTrunkApiParamsBuilder(pluginRepository, reportage, pluginDetailsCache)
+  ) = CheckTrunkApiParamsBuilder(pluginRepository, reportage, pluginDetailsCache, archiveManager)
 
 }

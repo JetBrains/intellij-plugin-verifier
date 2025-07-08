@@ -38,7 +38,7 @@ class ProcessAllPluginsCommand : CommandRunner {
     override fun build(opts: CmdOpts, freeArgs: List<String>): TaskParameters {
       require(freeArgs.isNotEmpty()) { "Usage: java -jar verifier.jar processAllPlugins [goal name] <goal parameters (optional)>" }
       return when (val goalName = freeArgs[0]) {
-        "countUsagesOfExtensionPoints" -> parseCountUsagesOfExtensionPointsParameters(freeArgs, reportage, opts, pluginRepository)
+        "countUsagesOfExtensionPoints" -> parseCountUsagesOfExtensionPointsParameters(freeArgs, reportage, opts, pluginRepository, archiveManager)
         else -> error("Unknown goal '$goalName'")
       }
     }
@@ -48,7 +48,8 @@ class ProcessAllPluginsCommand : CommandRunner {
     freeArgs: List<String>,
     reportage: PluginVerificationReportage,
     opts: CmdOpts,
-    pluginRepository: PluginRepository
+    pluginRepository: PluginRepository,
+    archiveManager: PluginArchiveManager
   ): TaskParameters {
     require(freeArgs.size > 3) { "'countUsagesOfExtensionPoints' goal requires <ide path> <ide plugins path> <output.json>" }
     val idePath = freeArgs[1]
@@ -62,7 +63,8 @@ class ProcessAllPluginsCommand : CommandRunner {
       }
       val localPluginRepository = LocalPluginRepositoryFactory.createLocalPluginRepository(
         idePluginsRoot,
-        opts.forceOfflineCompatibility
+        opts.forceOfflineCompatibility,
+        archiveManager
       )
       val additionalIdePlugins = localPluginRepository.getLastCompatiblePlugins(ideDescriptor.ideVersion)
 
