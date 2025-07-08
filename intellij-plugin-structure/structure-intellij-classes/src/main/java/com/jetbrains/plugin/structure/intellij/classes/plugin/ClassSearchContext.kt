@@ -7,14 +7,14 @@ package com.jetbrains.plugin.structure.intellij.classes.plugin
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
-import java.nio.file.Path
 
 data class ClassSearchContext(
-  val extractDirectory: Path = Settings.EXTRACT_DIRECTORY.getAsPath().createDir(),
-  val pluginCache: PluginArchiveManager = PluginArchiveManager(extractDirectory = extractDirectory)
+  val archiveManager: PluginArchiveManager
 ) {
   companion object {
     @JvmStatic
-    val DEFAULT = ClassSearchContext()
+    val DEFAULT = ClassSearchContext(
+      archiveManager = PluginArchiveManager(extractDirectory = Settings.EXTRACT_DIRECTORY.getAsPath().createDir())
+    )
   }
 }

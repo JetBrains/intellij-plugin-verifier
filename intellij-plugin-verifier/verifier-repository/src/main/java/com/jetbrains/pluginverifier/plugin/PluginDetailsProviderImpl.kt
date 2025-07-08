@@ -17,5 +17,5 @@ class PluginDetailsProviderImpl(extractDirectory: Path, private val pluginArchiv
     IdePluginClassesFinder
       .findPluginClasses(idePlugin,
         additionalKeys = listOf(CompileServerExtensionKey),
-        searchContext = ClassSearchContext(extractDirectory, pluginArchiveManager))
+        searchContext = ClassSearchContext(pluginArchiveManager))
 }

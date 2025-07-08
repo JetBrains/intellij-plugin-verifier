@@ -48,7 +48,7 @@ class DefaultPluginDetailsProvider(
     return when (pluginInfo) {
       is BundledPluginInfo ->
         BundledPluginClassesFinder.findPluginClasses(idePlugin, additionalKeys = listOf(CompileServerExtensionKey),
-          ClassSearchContext(pluginCache = archiveManager))
+          ClassSearchContext(archiveManager = archiveManager))
 
       is DependencyPluginInfo ->
         dependencyDetailsProvider.readPluginClasses(pluginInfo, idePlugin)

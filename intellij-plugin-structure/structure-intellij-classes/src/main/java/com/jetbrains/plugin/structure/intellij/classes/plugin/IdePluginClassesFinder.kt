@@ -16,7 +16,6 @@ import com.jetbrains.plugin.structure.intellij.classes.locator.JarPluginKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.LibDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.LibModulesDirectoryKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.LocationKey
-import com.jetbrains.plugin.structure.intellij.extractor.DefaultPluginExtractor
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import java.io.IOException
@@ -28,19 +27,16 @@ import java.nio.file.Path
  * During this process, ZIP-packaged plugins are automatically decompressed to a dedicated [extractDirectory]
  * to enable the discovery of nested JAR files and directories.
  * @param idePlugin a descriptor of the plugin
- * @param extractDirectory a path that is used to deflate compressed plugins (ZIPs and JARs)
  * @param readMode a suggested level of granularity used to discover classes
  * @param locatorKeys a default set of locations that are available for class discovery
+ * @param archiveManager archive extractor for ZIP-packaged plugins
  */
 class IdePluginClassesFinder private constructor(
   private val idePlugin: IdePlugin,
-  private val extractDirectory: Path,
   private val readMode: Resolver.ReadMode,
   private val locatorKeys: List<LocationKey>,
   private val archiveManager: PluginArchiveManager
 ) {
-
-  private val pluginExtractor = DefaultPluginExtractor()
 
   private fun findPluginClasses(): IdePluginClassesLocations {
     val pluginFile = idePlugin.originalFile
@@ -129,10 +125,9 @@ class IdePluginClassesFinder private constructor(
     ): IdePluginClassesLocations =
       IdePluginClassesFinder(
         idePlugin,
-        searchContext.extractDirectory,
         readMode,
         explicitLocations,
-        searchContext.pluginCache
+        searchContext.archiveManager
       ).findPluginClasses()
   }
 }

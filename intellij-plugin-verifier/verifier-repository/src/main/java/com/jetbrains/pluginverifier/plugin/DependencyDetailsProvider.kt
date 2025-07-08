@@ -19,7 +19,7 @@ class DependencyDetailsProvider(extractDirectory: Path, private val pluginArchiv
     return IdePluginClassesFinder.findPluginClasses(
       idePlugin,
       additionalKeys = listOf(CompileServerExtensionKey),
-      ClassSearchContext(extractDirectory, pluginArchiveManager)
+      ClassSearchContext(pluginArchiveManager)
     )
   }
 }
