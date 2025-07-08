@@ -30,15 +30,10 @@ class PluginArchiveManager(private val extractDirectory: Path) : Deletable, Clos
   private val pluginExtractor = DefaultPluginExtractor()
 
   @Synchronized
-  fun extractArchive(path: Path): Result {
-    val maybeResult = cache.get(path)
-    return if (maybeResult != null && maybeResult is Extracted && maybeResult.resourceToClose.pluginFile.exists()) {
-      maybeResult
-    } else {
-      doExtractArchive(path)
-        .also { it.cache() }
-    }
-  }
+  fun extractArchive(path: Path): Result =
+    cache.get(path)
+      .takeIf { it is Extracted && it.resourceToClose.pluginFile.exists() }
+      ?: doExtractArchive(path).also { it.cache() }
 
   fun doExtractArchive(pluginFile: Path): Result {
     val extractorResult = try {
