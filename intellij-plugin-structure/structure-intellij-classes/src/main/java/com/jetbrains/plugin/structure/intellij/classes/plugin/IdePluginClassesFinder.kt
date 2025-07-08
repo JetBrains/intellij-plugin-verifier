@@ -24,7 +24,7 @@ import java.nio.file.Path
 /**
  * Discovers all classes that belong to the plugin.
  *
- * During this process, ZIP-packaged plugins are automatically decompressed to a dedicated [extractDirectory]
+ * During this process, ZIP-packaged plugins are automatically decompressed via [archiveManager]
  * to enable the discovery of nested JAR files and directories.
  * @param idePlugin a descriptor of the plugin
  * @param readMode a suggested level of granularity used to discover classes

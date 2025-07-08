@@ -21,7 +21,7 @@ import com.jetbrains.pluginverifier.repository.files.FileLock
 
 /**
  * Baseline implementation of the [PluginDetailsProvider] that
- * uses the [extractDirectory] for extracting `.zip`-ped plugins.
+ * uses the [PluginArchiveManager] for managing and extracting `.zip`-ped plugins.
  */
 abstract class AbstractPluginDetailsProvider(protected val archiveManager: PluginArchiveManager) : PluginDetailsProvider {
   protected val idePluginManager = createIdePluginManager(archiveManager)
