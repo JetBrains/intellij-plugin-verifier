@@ -23,16 +23,19 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val LOG: Logger = LoggerFactory.getLogger(PluginArchiveManager::class.java)
 
-class PluginArchiveManager(private val extractDirectory: Path) : Deletable, Closeable  {
+class PluginArchiveManager(private val extractDirectory: Path, private val isCollectingStats: Boolean = true) : Deletable, Closeable  {
 
   private val cache = ConcurrentHashMap<Path, Result>()
 
   private val pluginExtractor = DefaultPluginExtractor()
 
+  val stats: Stats? = if (isCollectingStats) Stats() else null
+
   @Synchronized
   fun extractArchive(path: Path): Result =
     cache.get(path)
       .takeIf { it is Extracted && it.resourceToClose.pluginFile.exists() }
+      ?.also { it.logCached() }
       ?: doExtractArchive(path).also { it.cache() }
 
   fun doExtractArchive(pluginFile: Path): Result {
@@ -54,7 +57,16 @@ class PluginArchiveManager(private val extractDirectory: Path) : Deletable, Clos
   private fun Result.cache() {
     if (this is Extracted) {
       cache[this.artifactPath] = this
+      logCreated()
     }
+  }
+
+  private fun Result.logCached() {
+    stats?.run { logCached(artifactPath) }
+  }
+
+  private fun Result.logCreated() {
+    stats?.run { logCreated(artifactPath) }
   }
 
   @Synchronized
@@ -78,5 +90,19 @@ class PluginArchiveManager(private val extractDirectory: Path) : Deletable, Clos
   sealed class Result(open val artifactPath: Path) {
     data class Extracted(override val artifactPath: Path, val extractedPath: Path, val resourceToClose: ExtractedPlugin) : Result(artifactPath)
     data class Failed(override val artifactPath: Path, val problem: PluginProblem) : Result(artifactPath)
+  }
+
+  class Stats {
+    class Event(val path: Path, var createdCount: Int = 0, var cacheHit: Int = 0)
+
+    val events = ConcurrentHashMap<Path, Event>()
+
+    fun logCreated(path: Path) {
+      events.computeIfAbsent(path) { Event(path) }.createdCount++
+    }
+
+    fun logCached(path: Path) {
+      events.computeIfAbsent(path) { Event(path) }.cacheHit++
+    }
   }
 }
