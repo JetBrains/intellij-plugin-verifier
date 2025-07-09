@@ -56,7 +56,7 @@ tasks.withType<KotlinCompile> {
         jvmTarget = "11"
         apiVersion = "1.4"
         languageVersion = "1.4"
-        freeCompilerArgs = listOf("-Xjvm-default=enable")
+        freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
     }
 }
 
