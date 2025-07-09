@@ -1,10 +1,9 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import jetbrains.sign.GpgSignSignatoryProvider
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
-import java.util.Base64
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.*
 
 plugins {
   `maven-publish`
@@ -203,11 +202,12 @@ publishing {
 signing {
   val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null
   if (isUnderTeamCity) {
-    signatories = GpgSignSignatoryProvider()
+//    signatories = GpgSignSignatoryProvider()
 
-//    val signingKey = findProperty("signingKey").toString()
-//    val signingPassword = findProperty("signingPassword").toString()
-//    useInMemoryPgpKeys(signingKey, signingPassword)
+    val signingKey = findProperty("signingKey").toString()
+    val signingPassword = findProperty("signingPassword").toString()
+    useInMemoryPgpKeys(signingKey, signingPassword)
+
     publicationConfigurations.keys.forEach {
       sign(publishing.publications[it])
     }
