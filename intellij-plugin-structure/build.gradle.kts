@@ -1,10 +1,25 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import jetbrains.sign.GpgSignSignatoryProvider
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.asRequestBody
+import java.util.Base64
 
 plugins {
   `maven-publish`
   signing
   alias(sharedLibs.plugins.kotlin.jvm)
-  alias(sharedLibs.plugins.nexus.publish)
+}
+
+buildscript {
+  repositories {
+    maven { url = uri("https://packages.jetbrains.team/maven/p/jcs/maven") }
+  }
+  dependencies {
+    classpath("com.jetbrains:jet-sign:45.47")
+    classpath("com.squareup.okhttp3:okhttp:4.12.0")
+  }
 }
 
 var intellijPluginStructureVersion = "dev"
@@ -64,24 +79,34 @@ allprojects {
   }
 }
 
-val mavenCentralOssrhToken: String? by project
-val mavenCentralOssrhTokenPassword: String? by project
-
-nexusPublishing {
-  repositories {
-    sonatype {
-      username = mavenCentralOssrhToken
-      password = mavenCentralOssrhTokenPassword
-    }
-  }
-}
+val publicationConfigurations = mapOf(
+  "BasePublication" to Triple("structure-base", "JetBrains Plugins Structure Base", "Base library for parsing JetBrains plugins. Used by other JetBrains Plugins structure libraries."),
+  "ClassesPublication" to Triple("structure-classes", "JetBrains Plugins Structure Classes", "Base library for resolving class files and resources. Used by other JetBrains Plugins Structure Classes libraries."),
+  "IntellijPublication" to Triple("structure-intellij", "JetBrains Plugins Structure IntelliJ", "Library for parsing JetBrains IDE plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements."),
+  "IntellijClassesPublication" to Triple("structure-intellij-classes", "JetBrains Plugins Structure IntelliJ Classes", "Library for resolving class files and resources of JetBrains plugins."),
+  "IdePublication" to Triple("structure-ide", "JetBrains Plugins Structure IntelliJ IDE", "Library for resolving class files and resources of IntelliJ Platform IDEs."),
+  "IdeClassesPublication" to Triple("structure-ide-classes", "JetBrains Plugins Structure IntelliJ IDE Classes", "Library for resolving class files and resources of IntelliJ Platform IDEs."),
+  "TeamCityPublication" to Triple("structure-teamcity", "JetBrains Plugins Structure TeamCity", "Library for parsing JetBrains TeamCity plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements."),
+  "DotNetPublication" to Triple("structure-dotnet", "JetBrains Plugins Structure DotNet", "Library for parsing JetBrains DotNet plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements."),
+  "HubPublication" to Triple("structure-hub", "JetBrains Plugins Structure Hub", "Library for parsing JetBrains Hub widgets. Can be used to verify that widget complies with JetBrains Marketplace requirements."),
+  "EduPublication" to Triple("structure-edu", "JetBrains Plugins Structure Edu", "Library for parsing JetBrains Edu plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements."),
+  "FleetPublication" to Triple("structure-fleet", "JetBrains Plugins Structure Fleet", "Library for parsing JetBrains Fleet plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements."),
+  "ToolboxPublication" to Triple("structure-toolbox", "JetBrains Plugins Structure Toolbox", "Library for parsing JetBrains Toolbox plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements."),
+  "TeamCityRecipesPublications" to Triple("structure-teamcity-recipes", "JetBrains Plugins Structure TeamCity Recipes", "Library for parsing JetBrains TeamCity recipes. Can be used to verify that plugin complies with JetBrains Marketplace requirements."),
+  "YoutrackPublication" to Triple("structure-youtrack", "JetBrains Plugins Structure YouTrack Apps", "Library for parsing JetBrains YouTrack Apps. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
+)
 
 publishing {
+  repositories {
+    maven {
+      name = "artifacts"
+      url = uri(layout.buildDirectory.dir("artifacts/maven"))
+    }
+  }
+
   publications {
-    fun configurePublication(publicationName: String,
-                           projectName: String,
-                           pubName: String,
-                           pubDesc: String): MavenPublication {
+    fun configurePublication(publicationName: String): MavenPublication {
+      val (projectName, pubName, pubDesc) = requireNotNull(publicationConfigurations[publicationName])
       return create<MavenPublication>(publicationName) {
         val proj = project(":$projectName")
         groupId = proj.group.toString()
@@ -169,45 +194,23 @@ publishing {
       }
     }
 
-    configurePublication("BasePublication", "structure-base", "JetBrains Plugins Structure Base", "Base library for parsing JetBrains plugins. Used by other JetBrains Plugins structure libraries.")
-    configurePublication("ClassesPublication", "structure-classes", "JetBrains Plugins Structure Classes", "Base library for resolving class files and resources. Used by other JetBrains Plugins Structure Classes libraries.")
-    configurePublication("IntellijPublication", "structure-intellij", "JetBrains Plugins Structure IntelliJ", "Library for parsing JetBrains IDE plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
-    configurePublication("IntellijClassesPublication", "structure-intellij-classes", "JetBrains Plugins Structure IntelliJ Classes", "Library for resolving class files and resources of JetBrains plugins.")
-    configurePublication("IdePublication", "structure-ide", "JetBrains Plugins Structure IntelliJ IDE", "Library for resolving class files and resources of IntelliJ Platform IDEs.")
-    configurePublication("IdeClassesPublication", "structure-ide-classes", "JetBrains Plugins Structure IntelliJ IDE Classes", "Library for resolving class files and resources of IntelliJ Platform IDEs.")
-    configurePublication("TeamCityPublication", "structure-teamcity", "JetBrains Plugins Structure TeamCity", "Library for parsing JetBrains TeamCity plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
-    configurePublication("DotNetPublication", "structure-dotnet", "JetBrains Plugins Structure DotNet", "Library for parsing JetBrains DotNet plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
-    configurePublication("HubPublication", "structure-hub", "JetBrains Plugins Structure Hub", "Library for parsing JetBrains Hub widgets. Can be used to verify that widget complies with JetBrains Marketplace requirements.")
-    configurePublication("EduPublication", "structure-edu", "JetBrains Plugins Structure Edu", "Library for parsing JetBrains Edu plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
-    configurePublication("FleetPublication", "structure-fleet", "JetBrains Plugins Structure Fleet", "Library for parsing JetBrains Fleet plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
-    configurePublication("ToolboxPublication", "structure-toolbox", "JetBrains Plugins Structure Toolbox", "Library for parsing JetBrains Toolbox plugins. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
-    configurePublication("TeamCityRecipesPublications", "structure-teamcity-recipes", "JetBrains Plugins Structure TeamCity Recipes", "Library for parsing JetBrains TeamCity recipes. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
-    configurePublication("YoutrackPublication", "structure-youtrack", "JetBrains Plugins Structure YouTrack Apps", "Library for parsing JetBrains YouTrack Apps. Can be used to verify that plugin complies with JetBrains Marketplace requirements.")
+    publicationConfigurations.keys.forEach {
+      configurePublication(it)
+    }
   }
 }
 
 signing {
-  isRequired = mavenCentralOssrhToken != null
-  if (isRequired) {
-    val signingKey = findProperty("signingKey").toString()
-    val signingPassword = findProperty("signingPassword").toString()
+  val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null
+  if (isUnderTeamCity) {
+    signatories = GpgSignSignatoryProvider()
 
-    useInMemoryPgpKeys(signingKey, signingPassword)
-
-    sign(publishing.publications["BasePublication"])
-    sign(publishing.publications["ClassesPublication"])
-    sign(publishing.publications["IntellijPublication"])
-    sign(publishing.publications["IntellijClassesPublication"])
-    sign(publishing.publications["IdePublication"])
-    sign(publishing.publications["IdeClassesPublication"])
-    sign(publishing.publications["TeamCityPublication"])
-    sign(publishing.publications["DotNetPublication"])
-    sign(publishing.publications["HubPublication"])
-    sign(publishing.publications["EduPublication"])
-    sign(publishing.publications["FleetPublication"])
-    sign(publishing.publications["ToolboxPublication"])
-    sign(publishing.publications["TeamCityRecipesPublications"])
-    sign(publishing.publications["YoutrackPublication"])
+//    val signingKey = findProperty("signingKey").toString()
+//    val signingPassword = findProperty("signingPassword").toString()
+//    useInMemoryPgpKeys(signingKey, signingPassword)
+    publicationConfigurations.keys.forEach {
+      sign(publishing.publications[it])
+    }
   }
 }
 
@@ -220,5 +223,57 @@ tasks {
   }
   publish {
     dependsOn(test)
+  }
+}
+
+tasks {
+  val packSonatypeCentralBundle by registering(Zip::class) {
+    group = "publishing"
+
+    dependsOn(":publishAllPublicationsToArtifactsRepository")
+
+    from(layout.buildDirectory.dir("artifacts/maven"))
+    archiveFileName.set("bundle.zip")
+    destinationDirectory.set(layout.buildDirectory)
+  }
+
+  val publishMavenToCentralPortal by registering {
+    group = "publishing"
+
+    dependsOn(packSonatypeCentralBundle)
+
+    doLast {
+      val uriBase = "https://central.sonatype.com/api/v1/publisher/upload"
+      val publishingType = "USER_MANAGED"
+      val deploymentName = "${project.name}-$version"
+      val uri = "$uriBase?name=$deploymentName&publishingType=$publishingType"
+
+      val userName = rootProject.extra["centralPortalUserName"] as String
+      val token = rootProject.extra["centralPortalToken"] as String
+      val base64Auth = Base64.getEncoder().encode("$userName:$token".toByteArray()).toString(Charsets.UTF_8)
+      val bundleFile = packSonatypeCentralBundle.get().archiveFile.get().asFile
+
+      println("Sending request to $uri...")
+
+      val client = OkHttpClient()
+      val request = Request.Builder()
+        .url(uri)
+        .header("Authorization", "Bearer $base64Auth")
+        .post(
+          MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("bundle", bundleFile.name, bundleFile.asRequestBody())
+            .build()
+        )
+        .build()
+      client.newCall(request).execute().use { response ->
+        val statusCode = response.code
+        println("Upload status code: $statusCode")
+        println("Upload result: ${response.body!!.string()}")
+        if (statusCode != 201) {
+          error("Upload error to Central repository. Status code $statusCode.")
+        }
+      }
+    }
   }
 }
