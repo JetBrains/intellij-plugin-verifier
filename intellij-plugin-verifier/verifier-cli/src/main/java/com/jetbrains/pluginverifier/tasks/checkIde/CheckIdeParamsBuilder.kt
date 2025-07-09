@@ -47,7 +47,8 @@ class CheckIdeParamsBuilder(
       val classResolverProvider = DefaultClassResolverProvider(
         dependencyFinder,
         ideDescriptor,
-        externalClassesPackageFilter
+        externalClassesPackageFilter,
+        archiveManager = archiveManager,
       )
 
       val verificationDescriptors = pluginsSet.pluginsToCheck.map {

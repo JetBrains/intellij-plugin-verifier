@@ -152,7 +152,8 @@ class CheckTrunkApiParamsBuilder(
     val releaseResolverProvider = DefaultClassResolverProvider(
       releaseFinder,
       releaseIdeDescriptor,
-      externalClassesPackageFilter
+      externalClassesPackageFilter,
+      archiveManager = archiveManager
     )
     val releaseVerificationDescriptors = releasePluginsSet.pluginsToCheck.map {
       PluginVerificationDescriptor.IDE(releaseIdeDescriptor, releaseResolverProvider, it)
@@ -162,7 +163,8 @@ class CheckTrunkApiParamsBuilder(
     val trunkResolverProvider = DefaultClassResolverProvider(
       trunkFinder,
       trunkIdeDescriptor,
-      externalClassesPackageFilter
+      externalClassesPackageFilter,
+      archiveManager = archiveManager
     )
     val trunkVerificationDescriptors = trunkPluginsSet.pluginsToCheck.map {
       PluginVerificationDescriptor.IDE(trunkIdeDescriptor, trunkResolverProvider, it)

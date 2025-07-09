@@ -73,7 +73,8 @@ class CheckPluginParamsBuilder(
         dependencyFinder,
         ideDescriptor,
         externalClassesPackageFilter,
-        downloadUnavailableBundledPlugins = true
+        downloadUnavailableBundledPlugins = true,
+        archiveManager = archiveManager
       )
 
       pluginsSet.pluginsToCheck.map {

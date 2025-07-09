@@ -19,20 +19,20 @@ import com.jetbrains.pluginverifier.repository.repositories.dependency.Dependenc
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 
 
-internal fun DependencyFinder.Result.resolvePlugin(ide: Ide): IdePlugin? {
+internal fun DependencyFinder.Result.resolvePlugin(ide: Ide, classSearchContext: ClassSearchContext): IdePlugin? {
   val pluginDetails = when (this) {
     is DependencyFinder.Result.DetailsProvided -> this.getDetails()
-    is DependencyFinder.Result.FoundPlugin -> this.getDetails(ide)
+    is DependencyFinder.Result.FoundPlugin -> this.getDetails(ide, classSearchContext)
     is DependencyFinder.Result.NotFound -> null
   }
   return pluginDetails?.idePlugin
 }
 
-internal fun DependencyFinder.Result.FoundPlugin.getDetails(ide: Ide): PluginDetails {
+internal fun DependencyFinder.Result.FoundPlugin.getDetails(ide: Ide, classSearchContext: ClassSearchContext): PluginDetails {
   return if (origin == Bundled) {
-    getBundledPluginDetails(ide, plugin)
+    getBundledPluginDetails(ide, plugin, classSearchContext)
   } else {
-    getNonBundledDependencyDetails(plugin)
+    getNonBundledDependencyDetails(plugin, classSearchContext)
   }
 }
 
@@ -40,26 +40,26 @@ internal fun DependencyFinder.Result.DetailsProvided.getDetails(): PluginDetails
   return (pluginDetailsCacheResult as? PluginDetailsCache.Result.Provided)?.pluginDetails
 }
 
-internal fun getBundledPluginDetails(ide: Ide, plugin: IdePlugin): PluginDetails {
+internal fun getBundledPluginDetails(ide: Ide, plugin: IdePlugin, classSearchContext: ClassSearchContext): PluginDetails {
   val warnings =
     (if (plugin is StructurallyValidated) plugin.problems else emptyList()).filter { it.level == PluginProblem.Level.WARNING }
   val classes = BundledPluginClassesFinder.findPluginClasses(
     plugin,
     additionalKeys = listOf(CompileServerExtensionKey),
-    searchContext = ClassSearchContext.DEFAULT)
+    searchContext = classSearchContext)
   val bundledInfo = BundledPluginInfo(ide.version, plugin)
   return PluginDetails(
     bundledInfo, plugin, warnings, classes, null
   )
 }
 
-internal fun getNonBundledDependencyDetails(plugin: IdePlugin): PluginDetails {
+internal fun getNonBundledDependencyDetails(plugin: IdePlugin, classSearchContext: ClassSearchContext): PluginDetails {
   val warnings =
     (if (plugin is StructurallyValidated) plugin.problems else emptyList()).filter { it.level == PluginProblem.Level.WARNING }
   val classes = BundledPluginClassesFinder.findPluginClasses(
     plugin,
     additionalKeys = listOf(CompileServerExtensionKey),
-    searchContext = ClassSearchContext.DEFAULT)
+    searchContext = classSearchContext)
   val dependencyInfo = DependencyPluginInfo(LocalPluginInfo(plugin))
   return PluginDetails(
     dependencyInfo, plugin, warnings, classes, null

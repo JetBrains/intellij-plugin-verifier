@@ -13,9 +13,11 @@ import com.jetbrains.plugin.structure.ide.ProductInfoAware
 import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider
 import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
+import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.plugin.CompositePluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.LegacyPluginAnalysis
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DefaultIdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.NegativeIdeModulePredicate
@@ -40,7 +42,8 @@ class DefaultClassResolverProvider(
   private val externalClassesPackageFilter: PackageFilter,
   private val additionalClassResolvers: List<Resolver> = emptyList(),
   private val pluginDetailsBasedResolverProvider: PluginDetailsBasedResolverProvider = DefaultPluginDetailsBasedResolverProvider(),
-  private val downloadUnavailableBundledPlugins: Boolean = false
+  private val downloadUnavailableBundledPlugins: Boolean = false,
+  archiveManager: PluginArchiveManager
 ) : ClassResolverProvider {
 
   private val secondaryResolver = ideDescriptor.ideResolver as? ProductInfoClassResolver
@@ -55,7 +58,7 @@ class DefaultClassResolverProvider(
   private val pluginResolverProvider = if (downloadUnavailableBundledPlugins) {
     CompositePluginProvider.of(
       ideDescriptor.ide,
-      DependencyFinderPluginProvider(dependencyFinder, ideDescriptor.ide)
+      DependencyFinderPluginProvider(dependencyFinder, ideDescriptor.ide, archiveManager)
     )
   } else {
     ideDescriptor.ide
@@ -69,6 +72,8 @@ class DefaultClassResolverProvider(
   private val legacyPluginAnalysis = LegacyPluginAnalysis()
 
   private val dependenciesGraphProvider = DependenciesGraphProvider()
+
+  private val classSearchContext = ClassSearchContext(archiveManager)
 
   override fun provide(checkedPluginDetails: PluginDetails): ClassResolverProvider.Result {
     val closeableResources = arrayListOf<Closeable>()
@@ -160,7 +165,7 @@ class DefaultClassResolverProvider(
       val pluginDetails = dependencies.mapNotNull {
         when (it) {
           is DependencyFinder.Result.DetailsProvided -> it.getDetails()
-          is DependencyFinder.Result.FoundPlugin -> it.getDetails(ideDescriptor.ide)
+          is DependencyFinder.Result.FoundPlugin -> it.getDetails(ideDescriptor.ide, classSearchContext)
           else -> null
         }
       }

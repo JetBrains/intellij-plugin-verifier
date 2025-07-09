@@ -60,7 +60,8 @@ class VerificationRunner {
         BundledPluginDependencyFinder(ide),
         ideDescriptor,
         externalClassesPackageFilter,
-        additionalResolvers
+        additionalResolvers,
+        archiveManager = pluginArchiveManager
       )
       val verificationDescriptor = PluginVerificationDescriptor.IDE(ideDescriptor, classResolverProvider, LocalPluginInfo(idePlugin))
 

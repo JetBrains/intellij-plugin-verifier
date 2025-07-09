@@ -91,6 +91,7 @@ class ServerContextConfiguration(
       ideDescriptorsCache,
       pluginFilesBank,
       pluginDetailsCache,
+      archiveManager,
       verificationResultsFilter
     )
   }
@@ -110,6 +111,7 @@ class ServerContextConfiguration(
         taskManager,
         verifierServiceProtocol,
         pluginDetailsCache,
+        archiveManager,
         ideDescriptorsCache,
         verificationResultsFilter,
         pluginRepository,

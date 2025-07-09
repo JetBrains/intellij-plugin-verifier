@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.jdk.DefaultJdkDescriptorProvider
@@ -24,10 +25,13 @@ import com.jetbrains.pluginverifier.tests.mocks.MockProductInfoAwareIde
 import com.jetbrains.pluginverifier.tests.mocks.RuleBasedDependencyFinder
 import com.jetbrains.pluginverifier.tests.mocks.RuleBasedDependencyFinder.Rule
 import com.jetbrains.pluginverifier.tests.mocks.asm.publicClass
+import com.jetbrains.pluginverifier.tests.mocks.createPluginArchiveManager
 import com.jetbrains.pluginverifier.tests.mocks.getDetails
 import org.intellij.lang.annotations.Language
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -47,12 +51,20 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
   private val pythonModuleDependency = PluginDependencyImpl("com.intellij.modules.python", false, true)
   private val platformModuleDependency = PluginDependencyImpl("com.intellij.modules.platform", false, true)
 
+  private lateinit var archiveManager: PluginArchiveManager
+
+  @Before
+  override fun setUp() {
+    super.setUp()
+    archiveManager = temporaryFolder.createPluginArchiveManager()
+  }
+
   @Test
   fun `legacy plugin without any dependencies resolves to IDEA Core plugin in Platform 192`() {
     val ide = buildIdeWithBundledPlugins()
     val ideDescriptor = IdeDescriptor.create(ide.idePath, defaultJdkPath = null, ideFileLock = null)
 
-    val resolverProvider = DefaultClassResolverProvider(dependencyFinder, ideDescriptor, packageFilter)
+    val resolverProvider = DefaultClassResolverProvider(dependencyFinder, ideDescriptor, packageFilter, archiveManager = archiveManager)
 
     val classResolver = resolverProvider.provide(plugin.getDetails())
     // class from app.jar from mock IDE
@@ -68,7 +80,8 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
     )
     val ideDescriptor = IdeDescriptor.create(ide.idePath, defaultJdkPath = null, ideFileLock = null)
 
-    val resolverProvider = DefaultClassResolverProvider(dependencyFinder, ideDescriptor, packageFilter)
+    val resolverProvider =
+      DefaultClassResolverProvider(dependencyFinder, ideDescriptor, packageFilter, archiveManager = archiveManager)
 
     val classResolver = resolverProvider.provide(plugin.getDetails())
     // class from app.jar from mock IDE
@@ -112,7 +125,8 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       ideDescriptor,
       packageFilter,
       pluginDetailsBasedResolverProvider = pluginDetailsResolverProvider,
-      downloadUnavailableBundledPlugins = true
+      downloadUnavailableBundledPlugins = true,
+      archiveManager = archiveManager
     )
 
     val plugin = this.plugin.copy(dependencies = listOf(pythonModuleDependency))
@@ -145,7 +159,8 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       dependencyFinder,
       ideDescriptor,
       packageFilter,
-      downloadUnavailableBundledPlugins = true
+      downloadUnavailableBundledPlugins = true,
+      archiveManager = archiveManager
     )
 
     val plugin = this.plugin.copy(dependencies = listOf(pythonModuleDependency))
@@ -178,7 +193,8 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       dependencyFinder,
       ideDescriptor,
       packageFilter,
-      downloadUnavailableBundledPlugins = true
+      downloadUnavailableBundledPlugins = true,
+      archiveManager = archiveManager
     )
 
     val plugin = this.plugin.copy(dependencies = listOf(pythonModuleDependency))
@@ -203,7 +219,9 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       ),
     )
 
-    val resolverProvider = DefaultClassResolverProvider(dependencyFinder, ideDescriptor, packageFilter)
+    val resolverProvider = DefaultClassResolverProvider(
+      dependencyFinder, ideDescriptor, packageFilter, archiveManager = archiveManager
+    )
 
     val plugin = plugin.copy(dependencies = listOf(pythonModuleDependency))
 
@@ -246,7 +264,8 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
     )
 
     val emptyDependencyFinder = RuleBasedDependencyFinder.create(ide)
-    val resolverProvider = DefaultClassResolverProvider(emptyDependencyFinder, ideDescriptor, packageFilter)
+    val resolverProvider =
+      DefaultClassResolverProvider(emptyDependencyFinder, ideDescriptor, packageFilter, archiveManager = archiveManager)
 
     val classResolver = resolverProvider.provide(mockPluginWithIdFromThePlatform.getDetails())
     with(classResolver.dependenciesGraph) {
@@ -326,4 +345,9 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       ]
     } 
   """.trimIndent()
+
+  @After
+  fun tearDown() {
+    archiveManager.close()
+  }
 }
