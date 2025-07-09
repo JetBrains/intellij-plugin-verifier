@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.tests.mocks.MockPluginDetailsCache
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginVerificationReportage
 import com.jetbrains.pluginverifier.tests.mocks.createPluginArchiveManager
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -95,5 +96,10 @@ class CheckPluginParamsBuilderTest {
 
     val pluginParsingConfiguration = OptionsParser.createPluginParsingConfiguration(cmdOpts)
     assertEquals(listOf("ForbiddenPluginIdPrefix", "TemplateWordInPluginId"), pluginParsingConfiguration.ignoredPluginProblems)
+  }
+
+  @After
+  fun tearDown() {
+    pluginArchiveManager.close()
   }
 }

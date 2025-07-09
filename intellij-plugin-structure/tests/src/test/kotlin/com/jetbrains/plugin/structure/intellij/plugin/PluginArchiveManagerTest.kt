@@ -11,14 +11,27 @@ import com.jetbrains.plugin.structure.mocks.BaseFileSystemAwareTest
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.stream.Stream
 
 class PluginArchiveManagerTest(fileSystemType: FileSystemType) : BaseFileSystemAwareTest(fileSystemType) {
+
+  private lateinit var extractedPluginsPath: Path
+
+  private lateinit var pluginArchiveManager: PluginArchiveManager
+
+  @Before
+  fun setUp() {
+    extractedPluginsPath = temporaryFolder.newFolder("extracted-plugins")
+    pluginArchiveManager = PluginArchiveManager(extractedPluginsPath)
+  }
+
   @Test
   fun `archive is successfully extracted`() {
     val pluginArtifactPath = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
@@ -33,8 +46,6 @@ class PluginArchiveManagerTest(fileSystemType: FileSystemType) : BaseFileSystemA
       }
     }
 
-    val extractedPluginsPath = temporaryFolder.newFolder("extracted-plugins")
-    val pluginArchiveManager = PluginArchiveManager(extractedPluginsPath)
     val archiveResult = pluginArchiveManager.extractArchive(pluginArtifactPath)
     assertTrue(archiveResult is PluginArchiveManager.Result.Extracted)
     archiveResult as PluginArchiveManager.Result.Extracted
@@ -47,8 +58,6 @@ class PluginArchiveManagerTest(fileSystemType: FileSystemType) : BaseFileSystemA
     val pluginArtifactPath = temporaryFolder.newFile("plugin.zip")
     pluginArtifactPath.writeBytes(ByteArray(10) { it.toByte() })
 
-    val extractedPluginsPath = temporaryFolder.newFolder("extracted-plugins")
-    val pluginArchiveManager = PluginArchiveManager(extractedPluginsPath)
     val archiveResult = pluginArchiveManager.extractArchive(pluginArtifactPath)
     assertTrue(archiveResult is PluginArchiveManager.Result.Failed)
     archiveResult as PluginArchiveManager.Result.Failed
@@ -68,9 +77,6 @@ class PluginArchiveManagerTest(fileSystemType: FileSystemType) : BaseFileSystemA
         }
       }
     }
-
-    val extractedPluginsPath = temporaryFolder.newFolder("extracted-plugins")
-    val pluginArchiveManager = PluginArchiveManager(extractedPluginsPath)
 
     repeat(2) {
       val archiveResult = pluginArchiveManager.extractArchive(pluginArtifactPath)
@@ -95,9 +101,6 @@ class PluginArchiveManagerTest(fileSystemType: FileSystemType) : BaseFileSystemA
       }
     }
 
-    val extractedPluginsPath = temporaryFolder.newFolder("extracted-plugins")
-    val pluginArchiveManager = PluginArchiveManager(extractedPluginsPath)
-
     val firstArchiveResult = pluginArchiveManager.extractArchive(pluginArtifactPath)
     assertTrue(firstArchiveResult is PluginArchiveManager.Result.Extracted)
     firstArchiveResult as PluginArchiveManager.Result.Extracted
@@ -119,5 +122,10 @@ class PluginArchiveManagerTest(fileSystemType: FileSystemType) : BaseFileSystemA
     return Files.walk(this).use { stream: Stream<Path> ->
       stream.anyMatch { it == result.extractedPath }
     }
+  }
+
+  @After
+  fun tearDown() {
+    pluginArchiveManager.close()
   }
 }

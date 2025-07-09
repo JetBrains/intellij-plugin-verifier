@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.plugin.resolution.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.repositories.dependency.DependencyPluginInfo
 import com.jetbrains.pluginverifier.tests.mocks.createPluginArchiveManager
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -62,5 +63,10 @@ class PluginDetailsProviderTest : BasePluginTest() {
         assertEquals("cached $pluginZipPath", this[1])
       }
     }
+  }
+
+  @After
+  fun tearDown() {
+    pluginArchiveManager.close()
   }
 }

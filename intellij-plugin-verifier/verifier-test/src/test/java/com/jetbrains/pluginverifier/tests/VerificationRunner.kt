@@ -47,35 +47,36 @@ class VerificationRunner {
     val tempFolder = Files.createTempDirectory("")
     tempFolder.toFile().deleteOnExit()
 
-    val pluginArchiveManager = PluginArchiveManager(tempFolder)
+    PluginArchiveManager(tempFolder).use { pluginArchiveManager ->
+      val pluginDetailsProvider = DefaultPluginDetailsProvider(pluginArchiveManager)
+      val pluginDetailsCache = SizeLimitedPluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
+      return IdeDescriptor.create(ide.idePath, jdkPath, null).use { ideDescriptor ->
+        val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
 
-    val pluginDetailsProvider = DefaultPluginDetailsProvider(pluginArchiveManager)
-    val pluginDetailsCache = SizeLimitedPluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
-    return IdeDescriptor.create(ide.idePath, jdkPath, null).use { ideDescriptor ->
-      val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
+        val additionalResolvers = getAdditionalClassResolvers(ide, includeKotlinStdLib)
 
-      val additionalResolvers = getAdditionalClassResolvers(ide, includeKotlinStdLib)
+        val classResolverProvider = DefaultClassResolverProvider(
+          BundledPluginDependencyFinder(ide),
+          ideDescriptor,
+          externalClassesPackageFilter,
+          additionalResolvers,
+          archiveManager = pluginArchiveManager
+        )
+        val verificationDescriptor =
+          PluginVerificationDescriptor.IDE(ideDescriptor, classResolverProvider, LocalPluginInfo(idePlugin))
 
-      val classResolverProvider = DefaultClassResolverProvider(
-        BundledPluginDependencyFinder(ide),
-        ideDescriptor,
-        externalClassesPackageFilter,
-        additionalResolvers,
-        archiveManager = pluginArchiveManager
-      )
-      val verificationDescriptor = PluginVerificationDescriptor.IDE(ideDescriptor, classResolverProvider, LocalPluginInfo(idePlugin))
+        val allApiUsagesFilters = apiUsageFilters + getAdditionalApiUsageFilters(includeKotlinStdLib)
 
-      val allApiUsagesFilters = apiUsageFilters + getAdditionalApiUsageFilters(includeKotlinStdLib)
-
-      val pluginVerifier = PluginVerifier(
-        verificationDescriptor,
-        problemsFilters,
-        pluginDetailsCache,
-        listOf(DynamicallyLoadedFilter()),
-        false,
-        allApiUsagesFilters
-      )
-      pluginVerifierHandler(pluginVerifier)
+        val pluginVerifier = PluginVerifier(
+          verificationDescriptor,
+          problemsFilters,
+          pluginDetailsCache,
+          listOf(DynamicallyLoadedFilter()),
+          false,
+          allApiUsagesFilters
+        )
+        pluginVerifierHandler(pluginVerifier)
+      }
     }
   }
 

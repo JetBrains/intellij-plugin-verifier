@@ -1,12 +1,14 @@
 package com.jetbrains.pluginverifier.options
 
-import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
 import com.jetbrains.pluginverifier.tests.mocks.TelemetryVerificationReportage
+import com.jetbrains.pluginverifier.tests.mocks.createPluginArchiveManager
+import org.junit.After
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -19,12 +21,18 @@ class PluginsParsingTest {
 
   private val pluginRepository = MockPluginRepositoryAdapter()
 
+  private lateinit var pluginArchiveManager: PluginArchiveManager
+
+  @Before
+  fun setUp() {
+    pluginArchiveManager = temporaryFolder.createPluginArchiveManager()
+  }
+
   @Test
   fun `telemetry is gathered in plugin parsing`() {
     val plugins = PluginsSet()
     val reportage = TelemetryVerificationReportage()
-    val archiveManager = PluginArchiveManager(Settings.EXTRACT_DIRECTORY.getAsPath())
-    val pluginsParsing = PluginsParsing(pluginRepository, archiveManager, reportage, plugins)
+    val pluginsParsing = PluginsParsing(pluginRepository, pluginArchiveManager, reportage, plugins)
 
     val pluginZip = buildPluginZipWithXml {
       """
@@ -77,4 +85,9 @@ class PluginsParsingTest {
       <change-notes>these change-notes are looooooooooong enough</change-notes>
       <idea-version since-build="131.1"/>
     """
+
+  @After
+  fun tearDown() {
+    pluginArchiveManager.close()
+  }
 }
