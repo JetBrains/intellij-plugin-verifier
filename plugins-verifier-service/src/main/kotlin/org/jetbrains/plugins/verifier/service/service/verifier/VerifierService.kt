@@ -6,6 +6,7 @@ package org.jetbrains.plugins.verifier.service.service.verifier
 
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.IgnoredProblemsFilter
@@ -34,6 +35,7 @@ class VerifierService(
   taskManager: TaskManager,
   private val verifierServiceProtocol: VerifierServiceProtocol,
   private val pluginDetailsCache: PluginDetailsCache,
+  private val archiveManager: PluginArchiveManager,
   private val ideDescriptorsCache: IdeDescriptorsCache,
   private val verificationResultsFilter: VerificationResultFilter,
   private val pluginRepository: PluginRepository,
@@ -86,6 +88,7 @@ class VerifierService(
     val task = VerifyPluginTask(
       scheduledVerification,
       pluginDetailsCache,
+      archiveManager,
       ideDescriptorsCache,
       pluginRepository,
       ignoreProblemsFilters

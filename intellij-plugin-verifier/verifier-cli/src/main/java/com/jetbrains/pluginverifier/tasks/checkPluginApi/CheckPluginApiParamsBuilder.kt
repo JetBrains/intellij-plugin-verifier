@@ -8,8 +8,8 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.readLines
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
+import com.jetbrains.plugin.structure.intellij.plugin.createIdePluginManager
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.jdk.JdkDescriptorCreator
@@ -35,13 +35,15 @@ import java.nio.file.Paths
 class CheckPluginApiParamsBuilder(
   private val pluginRepository: PluginRepository,
   private val pluginDetailsCache: PluginDetailsCache,
-  private val extractedPluginCache: PluginResourceCache,
+  private val archiveManager: PluginArchiveManager,
   private val reportage: PluginVerificationReportage
 ) : TaskParametersBuilder {
   private companion object {
     const val USAGE = """Expected exactly 3 arguments: <base plugin version> <new plugin version> <plugins to check>.
 Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip kotlin-depends.txt"""
   }
+
+  private val pluginManager = createIdePluginManager(archiveManager)
 
   override fun build(opts: CmdOpts, freeArgs: List<String>): CheckPluginApiParams {
     val apiOpts = CheckPluginApiOpts()
@@ -121,7 +123,7 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
 
 
   private fun providePluginDetails(pluginFile: Path): PluginDetails {
-    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
+    val pluginCreationResult = pluginManager.createPlugin(pluginFile)
     check(pluginCreationResult is PluginCreationSuccess) { pluginCreationResult.toString() }
     val localPluginInfo = LocalPluginInfo(pluginCreationResult.plugin)
     val cacheEntry = pluginDetailsCache.getPluginDetailsCacheEntry(localPluginInfo)
@@ -141,7 +143,7 @@ Example: java -jar verifier.jar check-plugin-api Kotlin-old.zip Kotlin-new.zip k
    */
   private fun parsePluginsToCheck(pluginsToCheckFile: Path): PluginsSet {
     val pluginsSet = PluginsSet()
-    val pluginsParsing = PluginsParsing(pluginRepository, extractedPluginCache, reportage, pluginsSet)
+    val pluginsParsing = PluginsParsing(pluginRepository, archiveManager, reportage, pluginsSet)
 
     for (line in pluginsToCheckFile.readLines()) {
       val validateDescriptor = !line.endsWith("!!")

@@ -5,6 +5,7 @@
 package org.jetbrains.plugins.verifier.service.server
 
 import com.jetbrains.plugin.structure.base.utils.closeLogged
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
 import com.jetbrains.pluginverifier.ide.repositories.IdeRepository
@@ -32,6 +33,7 @@ class ServerContext(
   val ideDescriptorsCache: IdeDescriptorsCache,
   val pluginFilesBank: PluginFilesBank,
   val pluginDetailsCache: PluginDetailsCache,
+  val archiveManager: PluginArchiveManager,
   val verificationResultsFilter: VerificationResultFilter
 ) {
   @Autowired

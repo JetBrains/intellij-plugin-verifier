@@ -4,15 +4,27 @@
 
 package com.jetbrains.pluginverifier.dependencies.resolution
 
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.tests.BaseBytecodeTest
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.RuleBasedDependencyFinder
 import com.jetbrains.pluginverifier.tests.mocks.RuleBasedDependencyFinder.Rule
+import com.jetbrains.pluginverifier.tests.mocks.createPluginArchiveManager
 import org.intellij.lang.annotations.Language
+import org.junit.After
 import org.junit.Assert.assertNotNull
+import org.junit.Before
 import org.junit.Test
 
 class DependencyFinderPluginProviderTest : BaseBytecodeTest() {
+  private lateinit var archiveManager: PluginArchiveManager
+
+  @Before
+  override fun setUp() {
+    super.setUp()
+    archiveManager = temporaryFolder.createPluginArchiveManager()
+  }
+
   @Test
   fun `plugin is resolved as a dependency`() {
     val ide = buildIdeWithBundledPlugins(
@@ -25,7 +37,7 @@ class DependencyFinderPluginProviderTest : BaseBytecodeTest() {
       Rule("com.intellij.modules.python", mockPythonPlugin),
     )
 
-    val pluginProvider = DependencyFinderPluginProvider(dependencyFinder, ide)
+    val pluginProvider = DependencyFinderPluginProvider(dependencyFinder, ide, archiveManager)
     val plugin = pluginProvider.findPluginById("com.intellij.modules.python")
     assertNotNull(plugin)
   }
@@ -74,4 +86,9 @@ class DependencyFinderPluginProviderTest : BaseBytecodeTest() {
     pluginVersion = "243.21565.193",
     definedModules = setOf("com.intellij.modules.python")
   )
+
+  @After
+  fun tearDown() {
+    archiveManager.close()
+  }
 }

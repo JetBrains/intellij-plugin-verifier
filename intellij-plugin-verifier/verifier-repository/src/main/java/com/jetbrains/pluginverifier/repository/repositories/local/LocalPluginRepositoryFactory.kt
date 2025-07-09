@@ -7,7 +7,8 @@ package com.jetbrains.pluginverifier.repository.repositories.local
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.extension
 import com.jetbrains.plugin.structure.base.utils.isDirectory
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
+import com.jetbrains.plugin.structure.intellij.plugin.createIdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -30,11 +31,13 @@ object LocalPluginRepositoryFactory {
    * @param repositoryRoot a root of the local plugin repository that contains plugin artifacts.
    * @param forcePluginCompatibility if `true`, plugins in this repository are compatible with any IDE.
    * No _since build_ or _until build_ checks are made.
+   * @param archiveManager manager for ZIP-based plugin artifacts
    * @param problemRemapper plugin problem remapper used for plugin construction.
    */
   fun createLocalPluginRepository(
     repositoryRoot: Path,
     forcePluginCompatibility: Boolean,
+    archiveManager: PluginArchiveManager,
     problemRemapper: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
   ): PluginRepository {
     val pluginFiles = Files.list(repositoryRoot).use { stream ->
@@ -45,8 +48,7 @@ object LocalPluginRepositoryFactory {
 
     val localPluginRepository = LocalPluginRepository(compatibilityPredicate = forcePluginCompatibility.asPredicate())
     for (pluginFile in pluginFiles) {
-      IdePluginManager
-        .createManager()
+      createIdePluginManager(archiveManager)
         .createPlugin(pluginFile, validateDescriptor = true, problemResolver = problemRemapper)
         .run {
           if (this is PluginCreationSuccess) {

@@ -4,6 +4,7 @@
 
 package org.jetbrains.plugins.verifier.service.service.verifier
 
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerifier
@@ -25,6 +26,7 @@ import org.jetbrains.plugins.verifier.service.tasks.Task
 class VerifyPluginTask(
   private val scheduledVerification: ScheduledVerification,
   private val pluginDetailsCache: PluginDetailsCache,
+  private val archiveManager: PluginArchiveManager,
   private val ideDescriptorsCache: IdeDescriptorsCache,
   private val pluginRepository: PluginRepository,
   private val problemsFilters: List<ProblemsFilter>
@@ -59,7 +61,8 @@ class VerifyPluginTask(
     val classResolverProvider = DefaultClassResolverProvider(
       dependencyFinder,
       ideDescriptor,
-      DefaultPackageFilter(emptyList())
+      DefaultPackageFilter(emptyList()),
+      archiveManager = archiveManager
     )
     val verificationDescriptor = PluginVerificationDescriptor.IDE(ideDescriptor, classResolverProvider, scheduledVerification.updateInfo)
     return PluginVerifier(

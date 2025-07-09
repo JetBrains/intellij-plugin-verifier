@@ -49,7 +49,7 @@ abstract class BaseBytecodeTest {
   private lateinit var byteBuddy: ByteBuddy
 
   @Before
-  fun setUp() {
+  open fun setUp() {
     byteBuddy = ByteBuddy()
   }
 

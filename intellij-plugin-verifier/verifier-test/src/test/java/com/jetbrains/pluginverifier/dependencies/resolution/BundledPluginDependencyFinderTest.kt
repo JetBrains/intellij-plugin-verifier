@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.plugin.DefaultPluginDetailsProvider
 import com.jetbrains.pluginverifier.tests.BaseBytecodeTest
 import com.jetbrains.pluginverifier.tests.mocks.MockSinglePluginDetailsCache
 import com.jetbrains.pluginverifier.tests.mocks.bundledPlugin
+import com.jetbrains.pluginverifier.tests.mocks.createPluginArchiveManager
 import com.jetbrains.pluginverifier.tests.mocks.ideaPlugin
 import com.jetbrains.pluginverifier.tests.mocks.withRootElement
 import org.junit.Assert.assertEquals
@@ -32,7 +33,7 @@ class BundledPluginDependencyFinderTest : BaseBytecodeTest() {
 
   @Test
   fun `plugin that declares itself as a module is resolved`() {
-    val detailsProvider = DefaultPluginDetailsProvider(temporaryFolder.newFolder("extracted-plugins").toPath())
+    val detailsProvider = DefaultPluginDetailsProvider(temporaryFolder.createPluginArchiveManager())
     val cache = MockSinglePluginDetailsCache(supportedPluginId = JSON_PLUGIN_ID, pluginDetailsProvider = detailsProvider)
 
     val ide = buildIdeWithBundledPlugins(bundledPlugins = listOf(jsonPlugin))

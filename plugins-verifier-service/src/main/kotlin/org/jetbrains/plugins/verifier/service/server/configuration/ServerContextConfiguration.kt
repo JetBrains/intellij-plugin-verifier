@@ -7,6 +7,7 @@ package org.jetbrains.plugins.verifier.service.server.configuration
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.ide.IdeDescriptorsCache
 import com.jetbrains.pluginverifier.ide.IdeFilesBank
@@ -68,7 +69,8 @@ class ServerContextConfiguration(
 
     val pluginDownloadDirSpaceSetting = getPluginDownloadDirDiskSpaceSetting()
 
-    val pluginDetailsProvider = DefaultPluginDetailsProvider(extractedPluginsDir)
+    val archiveManager = PluginArchiveManager(extractedPluginsDir)
+    val pluginDetailsProvider = DefaultPluginDetailsProvider(archiveManager)
     val pluginFilesBank = PluginFilesBank.create(pluginRepository, loadedPluginsDir, pluginDownloadDirSpaceSetting)
     val pluginDetailsCache = SizeLimitedPluginDetailsCache(PLUGIN_DETAILS_CACHE_SIZE, pluginFilesBank, pluginDetailsProvider)
 
@@ -89,6 +91,7 @@ class ServerContextConfiguration(
       ideDescriptorsCache,
       pluginFilesBank,
       pluginDetailsCache,
+      archiveManager,
       verificationResultsFilter
     )
   }
@@ -108,6 +111,7 @@ class ServerContextConfiguration(
         taskManager,
         verifierServiceProtocol,
         pluginDetailsCache,
+        archiveManager,
         ideDescriptorsCache,
         verificationResultsFilter,
         pluginRepository,

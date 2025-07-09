@@ -8,12 +8,11 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClass
 import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.caches.EmptyPluginResourceCache
-import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
+import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.utils.DeletableOnClose
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
@@ -30,13 +29,12 @@ import java.util.concurrent.ConcurrentHashMap
  * Non-bundled plugins that aren't dependencies are handled by the delegate [PluginDetailsProviderImpl].
  */
 class DefaultPluginDetailsProvider(
-  extractDirectory: Path,
-  private val pluginCache: PluginResourceCache = EmptyPluginResourceCache
-) : AbstractPluginDetailsProvider(extractDirectory), AutoCloseable {
+  archiveManager: PluginArchiveManager
+) : AbstractPluginDetailsProvider(archiveManager), AutoCloseable {
 
-  private val nonBundledPluginDetailsProvider: PluginDetailsProviderImpl = PluginDetailsProviderImpl(extractDirectory, pluginCache)
+  private val nonBundledPluginDetailsProvider: PluginDetailsProviderImpl = PluginDetailsProviderImpl(archiveManager)
 
-  private val dependencyDetailsProvider = DependencyDetailsProvider(extractDirectory, pluginCache)
+  private val dependencyDetailsProvider = DependencyDetailsProvider(archiveManager)
 
   private val dependencyProblemResolver: PluginCreationResultResolver =
     JetBrainsPluginCreationResultResolver.fromClassPathJson(IntelliJPluginCreationResultResolver())
@@ -49,7 +47,7 @@ class DefaultPluginDetailsProvider(
     return when (pluginInfo) {
       is BundledPluginInfo ->
         BundledPluginClassesFinder.findPluginClasses(idePlugin, additionalKeys = listOf(CompileServerExtensionKey),
-          ClassSearchContext(pluginCache))
+          ClassSearchContext(archiveManager))
 
       is DependencyPluginInfo ->
         dependencyDetailsProvider.readPluginClasses(pluginInfo, idePlugin)
@@ -87,9 +85,7 @@ class DefaultPluginDetailsProvider(
   private fun PluginCreationResult<IdePlugin>.registerCloseableResources() = apply {
     if (this is PluginCreationSuccess) {
       resources.forEach {
-        if (it is ZipPluginResource) {
-          pluginCache += it
-        } else {
+        if (it !is PluginArchiveResource) {
           closeableResources += DeletableOnClose.of(it)
         }
       }
@@ -103,7 +99,7 @@ class DefaultPluginDetailsProvider(
   }
 
   override fun close() {
-    pluginCache.delete()
+    archiveManager.delete()
     eventLog.clear()
     closeableResources.closeAll()
   }

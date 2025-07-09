@@ -7,7 +7,7 @@ package com.jetbrains.pluginverifier
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.forceDeleteIfExists
 import com.jetbrains.plugin.structure.base.utils.formatDuration
-import com.jetbrains.plugin.structure.intellij.plugin.caches.SimplePluginResourceCache
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.pluginverifier.PluginVerifierMain.commandRunners
 import com.jetbrains.pluginverifier.PluginVerifierMain.main
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -111,16 +111,19 @@ object PluginVerifierMain {
     val runner = findTaskRunner(command)
     val outputOptions = OptionsParser.parseOutputOptions(opts)
 
-    val pluginRepository =
-      when (val repositoryProvision = LocalPluginRepositoryProvider.getLocalPluginRepository(opts, downloadDirectory)) {
-        is Provided -> repositoryProvision.pluginRepository
-        Unavailable -> MarketplaceRepository(URL(pluginRepositoryUrl))
-      }
-
+    val pluginsExtractDirectory = getPluginsExtractDirectory()
     val pluginDownloadDirDiskSpaceSetting = getDiskSpaceSetting("plugin.verifier.cache.dir.max.space", 5L * 1024)
-    val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
-    SimplePluginResourceCache().use { extractedPluginCache ->
-      DefaultPluginDetailsProvider(getPluginsExtractDirectory(), extractedPluginCache).use { pluginDetailsProvider ->
+
+    PluginArchiveManager(pluginsExtractDirectory).use { pluginArchiveManager ->
+      val pluginRepository =
+        when (val repositoryProvision = LocalPluginRepositoryProvider.getLocalPluginRepository(opts, downloadDirectory, pluginArchiveManager)) {
+          is Provided -> repositoryProvision.pluginRepository
+          Unavailable -> MarketplaceRepository(URL(pluginRepositoryUrl))
+        }
+
+      val pluginFilesBank = PluginFilesBank.create(pluginRepository, downloadDirectory, pluginDownloadDirDiskSpaceSetting)
+
+      DefaultPluginDetailsProvider(pluginArchiveManager).use { pluginDetailsProvider ->
         val reportageAggregator = LoggingPluginVerificationReportageAggregator()
         DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
           measurePluginVerification {
@@ -133,7 +136,7 @@ object PluginVerifierMain {
               runner.getParametersBuilder(
                 pluginRepository,
                 pluginDetailsCache,
-                extractedPluginCache,
+                pluginArchiveManager,
                 reportage
               ).build(opts, freeArgs).use { parameters ->
                 reportage.logVerificationStage("Task ${runner.commandName} parameters:\n${parameters.presentableText}")

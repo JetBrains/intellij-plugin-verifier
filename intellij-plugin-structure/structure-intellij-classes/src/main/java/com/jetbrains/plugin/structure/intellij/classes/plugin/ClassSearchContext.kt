@@ -6,16 +6,15 @@ package com.jetbrains.plugin.structure.intellij.classes.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.utils.createDir
-import com.jetbrains.plugin.structure.intellij.plugin.caches.EmptyPluginResourceCache
-import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
-import java.nio.file.Path
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 
 data class ClassSearchContext(
-  val pluginCache: PluginResourceCache = EmptyPluginResourceCache,
-  val extractDirectory: Path = Settings.EXTRACT_DIRECTORY.getAsPath().createDir()
+  val archiveManager: PluginArchiveManager
 ) {
   companion object {
     @JvmStatic
-    val DEFAULT = ClassSearchContext()
+    val DEFAULT = ClassSearchContext(
+      archiveManager = PluginArchiveManager(extractDirectory = Settings.EXTRACT_DIRECTORY.getAsPath().createDir())
+    )
   }
 }

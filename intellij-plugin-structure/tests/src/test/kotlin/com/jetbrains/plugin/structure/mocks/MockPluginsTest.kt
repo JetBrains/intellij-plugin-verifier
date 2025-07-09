@@ -34,7 +34,7 @@ import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipl
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsSingleJarInRoot
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsUnknownFile
 import com.jetbrains.plugin.structure.intellij.problems.UnexpectedPluginZipStructure
-import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
+import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
@@ -683,11 +683,11 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     val successResult = createPluginSuccessfully(pluginArtifactPath, pluginFactory)
     assertEquals(1, successResult.resources.size)
     val resource = successResult.resources.first()
-    assertTrue(resource is ZipPluginResource)
-    resource as ZipPluginResource
-    assertTrue(resource.extractedPluginPath.isDirectory)
+    assertTrue(resource is PluginArchiveResource)
+    resource as PluginArchiveResource
+    assertTrue(resource.extractedPath.isDirectory)
     resource.delete()
-    assertFalse(resource.extractedPluginPath.isDirectory)
+    assertFalse(resource.extractedPath.isDirectory)
   }
 
   @Test

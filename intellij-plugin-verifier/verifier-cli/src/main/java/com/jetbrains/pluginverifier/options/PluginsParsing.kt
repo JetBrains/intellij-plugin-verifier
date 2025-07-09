@@ -10,9 +10,8 @@ import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.readLines
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.caches.PluginResourceCache
-import com.jetbrains.plugin.structure.intellij.resources.ZipPluginResource
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
+import com.jetbrains.plugin.structure.intellij.plugin.createIdePluginManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
 import com.jetbrains.pluginverifier.dependencies.resolution.PluginVersionSelector
@@ -32,11 +31,13 @@ import java.nio.file.Paths
  */
 class PluginsParsing(
   private val pluginRepository: PluginRepository,
-  private val extractedPluginCache: PluginResourceCache,
+  private val archiveManager: PluginArchiveManager,
   private val reportage: PluginVerificationReportage,
   private val pluginsSet: PluginsSet,
   private val configuration: PluginParsingConfiguration = PluginParsingConfiguration()
 ) {
+
+  private val pluginManager = createIdePluginManager(archiveManager)
 
   /**
    * Parses command line options and add specified plugins compatible with [ideVersion].
@@ -216,9 +217,8 @@ class PluginsParsing(
     }
 
     reportage.logVerificationStage(READING_PLUGIN_FROM.format(pluginFile))
-    val pluginCreationResult = IdePluginManager
-      .createManager()
-      .createPlugin(
+    val pluginCreationResult =
+        pluginManager.createPlugin(
         pluginFile,
         validateDescriptor,
         problemResolver = PluginParsingConfigurationResolution.of(configuration),
@@ -230,7 +230,6 @@ class PluginsParsing(
         is PluginCreationSuccess -> {
           pluginsSet.scheduleLocalPlugin(plugin).also {
             reportLocalPluginTelemetry(plugin, telemetry)
-            cacheExtractedPlugins()
           }
         }
         is PluginCreationFail -> {
@@ -243,11 +242,5 @@ class PluginsParsing(
 
   private fun reportLocalPluginTelemetry(plugin: IdePlugin, telemetry: PluginTelemetry) {
     reportage.reportTelemetry(LocalPluginInfo(plugin), telemetry)
-  }
-
-  private fun PluginCreationSuccess<IdePlugin>.cacheExtractedPlugins() {
-    resources
-      .filterIsInstance<ZipPluginResource>()
-      .forEach { extractedPluginCache += it }
   }
 }

@@ -13,6 +13,7 @@ import com.jetbrains.pluginverifier.plugin.DefaultPluginDetailsProvider
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.tests.mocks.createPluginArchiveManager
 import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
@@ -63,7 +64,7 @@ class DependencyDiscoveryTest {
       this[pluginV2] = pluginV2JarPath
       this[dependency] = dependencyPath
     }
-    val detailsProvider = DefaultPluginDetailsProvider(temporaryFolder.newFolder("plugin-cache").toPath())
+    val detailsProvider = DefaultPluginDetailsProvider(temporaryFolder.createPluginArchiveManager())
     val detailsCache = SizeLimitedPluginDetailsCache(Int.MAX_VALUE, fileProvider, detailsProvider)
 
     val dependencyFinder = RepositoryDependencyFinder(repository, versionSelector, detailsCache)
