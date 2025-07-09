@@ -16,7 +16,7 @@ buildscript {
     maven { url = uri("https://packages.jetbrains.team/maven/p/jcs/maven") }
   }
   dependencies {
-    classpath("com.jetbrains:jet-sign:45.47")
+    classpath("com.jetbrains:jet-sign:45.66")
     classpath("com.squareup.okhttp3:okhttp:4.12.0")
   }
 }
