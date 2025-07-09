@@ -11,7 +11,7 @@ import com.jetbrains.pluginverifier.filtering.KeepOnlyProblemsFilter
 import com.jetbrains.pluginverifier.tests.VerificationRunner
 import com.jetbrains.pluginverifier.tests.findMockIdePath
 import com.jetbrains.pluginverifier.tests.findMockPluginJarPath
-import org.junit.Assert.*
+import org.junit.Assert.assertArrayEquals
 import org.junit.BeforeClass
 import org.junit.Test
 
@@ -52,11 +52,10 @@ class ProblemFilterTest {
 
         assertArrayEquals("Compatibility problems by keep-only-filter '$filterRegex' are not as expected",
             listOf(
-                "Abstract method defaults.kotlin.I.noDefault() : int is not implemented",
                 "Invocation of unresolved method kotlinDefault.KotlinDefault.bar\$default(KotlinDefault, int, int, Object) : void",
                 "Invocation of unresolved method kotlinDefault.KotlinDefault.bar(int) : void",
                 "Invocation of unresolved method kotlinDefault.KotlinDefault.foo\$default(KotlinDefault, int, int, Object) : void",
-                "Invocation of unresolved method kotlinDefault.KotlinDefault.foo(int) : void"
+                "Invocation of unresolved method kotlinDefault.KotlinDefault.foo(int) : void",
             ).toTypedArray(),
             compProblemsDescriptions.sorted().toTypedArray()
         )

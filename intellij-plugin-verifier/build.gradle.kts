@@ -46,7 +46,7 @@ allprojects {
       jvmTarget = "11"
       apiVersion = "1.5"
       languageVersion = "1.5"
-      freeCompilerArgs = listOf("-Xjvm-default=enable")
+      freeCompilerArgs += listOf("-Xjvm-default=all-compatibility")
     }
   }
 
