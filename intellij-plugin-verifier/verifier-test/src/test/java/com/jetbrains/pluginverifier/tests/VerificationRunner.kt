@@ -47,10 +47,10 @@ class VerificationRunner {
     val tempFolder = Files.createTempDirectory("")
     tempFolder.toFile().deleteOnExit()
 
-    PluginArchiveManager(tempFolder).use { pluginArchiveManager ->
+    return PluginArchiveManager(tempFolder).use { pluginArchiveManager ->
       val pluginDetailsProvider = DefaultPluginDetailsProvider(pluginArchiveManager)
       val pluginDetailsCache = SizeLimitedPluginDetailsCache(10, pluginFilesBank, pluginDetailsProvider)
-      return IdeDescriptor.create(ide.idePath, jdkPath, null).use { ideDescriptor ->
+      IdeDescriptor.create(ide.idePath, jdkPath, null).use { ideDescriptor ->
         val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(CmdOpts())
 
         val additionalResolvers = getAdditionalClassResolvers(ide, includeKotlinStdLib)
