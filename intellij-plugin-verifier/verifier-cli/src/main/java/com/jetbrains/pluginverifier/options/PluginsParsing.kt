@@ -37,9 +37,7 @@ class PluginsParsing(
   private val configuration: PluginParsingConfiguration = PluginParsingConfiguration()
 ) {
 
-  private val pluginManager = createIdePluginManager {
-    pluginArchiveManager = archiveManager
-  }
+  private val pluginManager = createIdePluginManager(archiveManager)
 
   /**
    * Parses command line options and add specified plugins compatible with [ideVersion].
