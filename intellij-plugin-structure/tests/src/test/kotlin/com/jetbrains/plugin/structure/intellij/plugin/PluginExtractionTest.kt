@@ -17,6 +17,7 @@ import com.jetbrains.plugin.structure.mocks.IdePluginManagerTest
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
 import java.nio.file.Path
@@ -82,7 +83,12 @@ class PluginExtractionTest(fileSystemType: FileSystemType) : IdePluginManagerTes
         }
       }
     }
-    val creationResult = assertProblematicPlugin(pluginArtifactPath, emptyList(), pluginFactory)
+    assertProblematicPlugin(pluginArtifactPath, emptyList(), pluginFactory)
     assertEquals(emptyList<Path>(), extractedDirectory.listFiles())
+  }
+
+  @After
+  fun tearDown() {
+    close()
   }
 }

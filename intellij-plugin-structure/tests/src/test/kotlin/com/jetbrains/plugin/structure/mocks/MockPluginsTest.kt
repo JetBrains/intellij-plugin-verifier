@@ -30,6 +30,7 @@ import com.jetbrains.plugin.structure.intellij.problems.UnexpectedPluginZipStruc
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
 import java.nio.file.Paths
@@ -922,6 +923,10 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     )
   }
 
+  @After
+  fun tearDown() {
+    close()
+  }
 }
 
 typealias IdePluginFactory = PluginFactory<IdePlugin, IdePluginManager>
