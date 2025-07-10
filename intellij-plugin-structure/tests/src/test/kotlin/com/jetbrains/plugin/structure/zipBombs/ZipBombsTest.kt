@@ -1,11 +1,16 @@
 package com.jetbrains.plugin.structure.zipBombs
 
-import com.jetbrains.plugin.structure.base.plugin.*
+import com.jetbrains.plugin.structure.base.plugin.Plugin
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginManager
+import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.PluginFileSizeIsTooLarge
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.dotnet.ReSharperPluginManager
 import com.jetbrains.plugin.structure.hub.HubPluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
+import com.jetbrains.plugin.structure.intellij.plugin.createIdePluginManager
 import com.jetbrains.plugin.structure.mocks.BaseFileSystemAwareTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager
@@ -58,6 +63,9 @@ class ZipBombsTest(fileSystemType: FileSystemType) : BaseFileSystemAwareTest(fil
 
     checkTooLargeProblem(IdePluginManager.createManager(), zipBomb)
     checkTooLargeProblem(IdePluginManager.createManager(temporaryFolder.newFolder()), zipBomb)
+    PluginArchiveManager(temporaryFolder.newFolder()).use {
+      checkTooLargeProblem(createIdePluginManager(it), zipBomb)
+    }
     checkTooLargeProblem(TeamcityPluginManager.createManager(), zipBomb)
     checkTooLargeProblem(TeamcityPluginManager.createManager(temporaryFolder.newFolder()), zipBomb)
     checkTooLargeProblem(HubPluginManager.createManager(), zipBomb)

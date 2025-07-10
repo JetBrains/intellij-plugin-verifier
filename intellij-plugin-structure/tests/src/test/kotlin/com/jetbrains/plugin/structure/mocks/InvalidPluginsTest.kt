@@ -17,12 +17,12 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.verifiers.PRODUCT_ID_RESTRICTED_WORDS
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import org.junit.After
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -33,7 +33,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlin.random.Random
 
-class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
+class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fileSystemType) {
   private val DEFAULT_TEMPLATE_NAMES = setOf("Plugin display name here", "My Framework Support", "Template", "Demo")
   private val PLUGIN_NAME_RESTRICTED_WORDS = setOf(
     "plugin", "JetBrains", "IDEA", "PyCharm", "CLion", "AppCode", "DataGrip", "Fleet", "GoLand", "PhpStorm", "WebStorm",
@@ -44,9 +44,6 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
   )
 
   private val LONG_LATIN_DESCRIPTION = "Latin description, 1234 &amp; ;,.!-–— () long enough"
-
-  override fun createManager(extractDirectory: Path): IdePluginManager =
-    IdePluginManager.createManager(extractDirectory)
 
   @Test
   fun `incorrect plugin file type`() {
@@ -1269,5 +1266,10 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       },
       listOf(UnknownServiceClientValue("plugin.xml", "xxx"))
     )
+  }
+
+  @After
+  fun tearDown() {
+    close()
   }
 }

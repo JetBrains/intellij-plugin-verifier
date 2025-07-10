@@ -2,9 +2,10 @@ package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.nio.file.Paths
-import org.junit.Assert.assertEquals
 
 class DefinedModulesTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fileSystemType) {
 
@@ -185,5 +186,10 @@ class DefinedModulesTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         expectedModules.forEach {
             assert(modules.contains(it)) { "There is no module $it" }
         }
+    }
+
+    @After
+    fun tearDown() {
+        close()
     }
 }

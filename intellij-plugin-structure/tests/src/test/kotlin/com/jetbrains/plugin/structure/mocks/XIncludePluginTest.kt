@@ -1,18 +1,15 @@
 package com.jetbrains.plugin.structure.mocks
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.xinclude.withConditionalXIncludes
 import com.jetbrains.plugin.structure.xinclude.withSystemProperty
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.nio.file.Path
 
-class XIncludePluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType) {
+class XIncludePluginTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fileSystemType) {
 
   @Test
   fun `xinclude includeUnless with system property being set to false`() {
@@ -213,18 +210,6 @@ class XIncludePluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest
     assert(plugin.extensions.isEmpty())
   }
 
-  override fun createManager(extractDirectory: Path): IdePluginManager =
-    IdePluginManager.createManager(extractDirectory)
-
-  private fun buildPluginSuccess(expectedWarnings: List<PluginProblem>, pluginFactory: IdePluginFactory = ::defaultPluginFactory, pluginFileBuilder: () -> Path): IdePlugin {
-    val pluginFile = pluginFileBuilder()
-    val successResult = createPluginSuccessfully(pluginFile, pluginFactory)
-    val (plugin, warnings) = successResult
-    assertEquals(expectedWarnings.toSet().sortedBy { it.message }, warnings.toSet().sortedBy { it.message })
-    assertEquals(pluginFile, plugin.originalFile)
-    return plugin
-  }
-
   private val optionalDependencyXml = """
     <idea-plugin>
       <extensions defaultExtensionNs="com.intellij">
@@ -232,4 +217,9 @@ class XIncludePluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest
       </extensions>
     </idea-plugin>
     """.trimIndent()
+
+  @After
+  fun tearDown() {
+    close()
+  }
 }

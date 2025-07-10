@@ -22,6 +22,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
 import java.nio.file.Paths
@@ -296,5 +297,10 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
       setOf("org.jetbrains.vuejs2.optionalUpdaterV2Ultimate"),
       module.appContainerDescriptor.extensionPoints.map { it.extensionPointName }.toSet()
     )
+  }
+
+  @After
+  fun tearDown() {
+    close()
   }
 }

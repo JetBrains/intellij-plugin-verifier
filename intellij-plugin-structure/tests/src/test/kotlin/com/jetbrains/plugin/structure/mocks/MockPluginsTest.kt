@@ -1,15 +1,10 @@
 package com.jetbrains.plugin.structure.mocks
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.base.utils.isDirectory
-import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.classes.resolvers.AbstractJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.classes.resolvers.DirectoryFileOrigin
@@ -26,21 +21,18 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
-import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
-import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsSingleJarInRoot
 import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsUnknownFile
 import com.jetbrains.plugin.structure.intellij.problems.UnexpectedPluginZipStructure
-import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import org.junit.After
 import org.junit.Assert.*
 import org.junit.Test
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate
 import java.util.*
@@ -658,70 +650,6 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     assertTrue(plugin.hasDotNetPart)
   }
 
-  @Test
-  fun `plugin is extracted, successfully constructed and the extraction directory is not deleted`() {
-    val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->
-      pluginManager.createPlugin(
-        pluginArtifactPath,
-        validateDescriptor = true,
-        problemResolver = AnyProblemToWarningPluginCreationResultResolver,
-        deleteExtractedDirectory = false
-      )
-    }
-
-    val pluginArtifactPath = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
-      dir("plugin") {
-        dir("lib") {
-          zip("plugin.jar") {
-            dir("META-INF") {
-              file("plugin.xml") { perfectXmlBuilder.modify { } }
-            }
-          }
-        }
-      }
-    }
-    val successResult = createPluginSuccessfully(pluginArtifactPath, pluginFactory)
-    assertEquals(1, successResult.resources.size)
-    val resource = successResult.resources.first()
-    assertTrue(resource is PluginArchiveResource)
-    resource as PluginArchiveResource
-    assertTrue(resource.extractedPath.isDirectory)
-    resource.delete()
-    assertFalse(resource.extractedPath.isDirectory)
-  }
-
-  @Test
-  fun `plugin is extracted, intentionally failed on construction, but the extraction directory is automatically deleted`() {
-    val failingProblemRemapper = object : PluginCreationResultResolver {
-      override fun resolve(plugin: IdePlugin, problems: List<PluginProblem> ): PluginCreationResult<IdePlugin> {
-        return PluginCreationFail(problems)
-      }
-    }
-
-    val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->
-      pluginManager.createPlugin(
-        pluginArtifactPath,
-        validateDescriptor = true,
-        problemResolver = failingProblemRemapper,
-        deleteExtractedDirectory = false
-      )
-    }
-
-    val pluginArtifactPath = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
-      dir("plugin") {
-        dir("lib") {
-          zip("plugin.jar") {
-            dir("META-INF") {
-              file("plugin.xml") { perfectXmlBuilder.modify { } }
-            }
-          }
-        }
-      }
-    }
-    val creationResult = assertProblematicPlugin(pluginArtifactPath, emptyList(), pluginFactory)
-    assertEquals(emptyList<Path>(), extractedDirectory.listFiles())
-  }
-
   private fun checkPluginValues(plugin: IdePlugin, isDirectoryBasedPlugin: Boolean) {
     assertEquals("https://kotlinlang.org", plugin.url)
     assertEquals("Kotlin", plugin.pluginName)
@@ -995,6 +923,10 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     )
   }
 
+  @After
+  fun tearDown() {
+    close()
+  }
 }
 
 typealias IdePluginFactory = PluginFactory<IdePlugin, IdePluginManager>

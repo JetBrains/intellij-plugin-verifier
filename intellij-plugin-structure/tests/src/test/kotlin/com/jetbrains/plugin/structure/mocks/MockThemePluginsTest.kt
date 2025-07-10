@@ -2,17 +2,14 @@ package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
 import com.jetbrains.plugin.structure.rules.FileSystemType
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.nio.file.Path
 
-class MockThemePluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType)  {
-
-  override fun createManager(extractDirectory: Path): IdePluginManager =
-    IdePluginManager.createManager(extractDirectory)
+class MockThemePluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fileSystemType)  {
 
   @Test
   fun `jar file packed in zip`() {
@@ -71,5 +68,10 @@ class MockThemePluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTe
       setOf(IdeTheme("theme", true), IdeTheme("relativeTheme", false)),
       plugin.declaredThemes.toSet()
     )
+  }
+
+  @After
+  fun tearDown() {
+    close()
   }
 }
