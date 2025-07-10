@@ -222,8 +222,6 @@ class PluginsParsing(
         pluginFile,
         validateDescriptor,
         problemResolver = PluginParsingConfigurationResolution.of(configuration),
-        // No need to delete the directory, as it will be cached by 'extractedPluginCache'
-        deleteExtractedDirectory = false
       )
     with(pluginCreationResult) {
       when (this) {
