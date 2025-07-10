@@ -168,7 +168,6 @@ internal class PluginCreator private constructor(
       val invalidPlugin = invalidPlugin
       if (invalidPlugin != null) {
         return PluginCreationFail<IdePlugin>(invalidPlugin.problems)
-          .also { deleteResources() }
       }
 
       return problemResolver.resolve(resolvePlugin(), problems)
@@ -693,7 +692,7 @@ internal class PluginCreator private constructor(
   private fun PluginCreationResult<IdePlugin>.propagateResources() =
     when (this) {
       is PluginCreationSuccess -> copy(resources = this@PluginCreator.resources)
-      is PluginCreationFail -> also { deleteResources() }
+      is PluginCreationFail -> this
     }
 
   private val PluginCreationSuccess<IdePlugin>.problems: List<PluginProblem>
@@ -704,10 +703,6 @@ internal class PluginCreator private constructor(
       optionalDependenciesConfigFiles[pluginDependency] =
         if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
     }
-  }
-
-  private fun deleteResources() {
-    resources.forEach { it.delete() }
   }
 }
 
