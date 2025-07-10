@@ -15,7 +15,7 @@ import java.io.Closeable
 import java.nio.file.Path
 
 abstract class IdePluginManagerTest(fileSystemType: FileSystemType) : BasePluginManagerTest<IdePlugin, IdePluginManager>(fileSystemType), Closeable {
-  private val closeables = mutableListOf<Closeable>()
+  protected val closeables = mutableListOf<Closeable>()
 
   override fun createManager(extractDirectory: Path): IdePluginManager {
     val archiveManager = createArchiveManager(extractDirectory)

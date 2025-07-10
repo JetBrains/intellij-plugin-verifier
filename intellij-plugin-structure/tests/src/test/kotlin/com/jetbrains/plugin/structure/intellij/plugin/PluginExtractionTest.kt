@@ -24,13 +24,12 @@ import java.nio.file.Path
 
 class PluginExtractionTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fileSystemType) {
   @Test
-  fun `plugin is extracted, successfully constructed and the extraction directory is not deleted`() {
+  fun `plugin is extracted, successfully constructed and the extraction directory remains undeleted`() {
     val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->
       pluginManager.createPlugin(
         pluginArtifactPath,
         validateDescriptor = true,
         problemResolver = AnyProblemToWarningPluginCreationResultResolver,
-        deleteExtractedDirectory = false
       )
     }
 
@@ -56,7 +55,7 @@ class PluginExtractionTest(fileSystemType: FileSystemType) : IdePluginManagerTes
   }
 
   @Test
-  fun `plugin is extracted, intentionally failed on construction, but the extraction directory is automatically deleted`() {
+  fun `plugin is extracted, intentionally failed on construction, but the extraction directory remains undeleted`() {
     val failingProblemRemapper = object : PluginCreationResultResolver {
       override fun resolve(plugin: IdePlugin, problems: List<PluginProblem> ): PluginCreationResult<IdePlugin> {
         return PluginCreationFail(problems)
@@ -68,7 +67,6 @@ class PluginExtractionTest(fileSystemType: FileSystemType) : IdePluginManagerTes
         pluginArtifactPath,
         validateDescriptor = true,
         problemResolver = failingProblemRemapper,
-        deleteExtractedDirectory = false
       )
     }
 
@@ -84,7 +82,7 @@ class PluginExtractionTest(fileSystemType: FileSystemType) : IdePluginManagerTes
       }
     }
     assertProblematicPlugin(pluginArtifactPath, emptyList(), pluginFactory)
-    assertEquals(emptyList<Path>(), extractedDirectory.listFiles())
+    assertEquals(1, extractedDirectory.listFiles().size)
   }
 
   @After

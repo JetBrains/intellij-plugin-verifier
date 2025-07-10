@@ -69,7 +69,6 @@ class DefaultPluginDetailsProvider(
               pluginArtifactPath,
               validateDescriptor = false,
               problemResolver = dependencyProblemResolver,
-              deleteExtractedDirectory = false
             ).also {
               eventLog.logExtracted(pluginArtifactPath)
               it.registerCloseableResources()
