@@ -24,7 +24,7 @@ import java.nio.file.Path
 
 class PluginExtractionTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fileSystemType) {
   @Test
-  fun `plugin is extracted, successfully constructed and the extraction directory is remains undeleted`() {
+  fun `plugin is extracted, successfully constructed and the extraction directory remains undeleted`() {
     val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->
       pluginManager.createPlugin(
         pluginArtifactPath,
