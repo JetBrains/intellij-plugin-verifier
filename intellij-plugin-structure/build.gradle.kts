@@ -18,7 +18,7 @@ buildscript {
   }
   dependencies {
     classpath("com.jetbrains:jet-sign:45.47")
-    classpath("com.squareup.okhttp3:okhttp:4.12.0")
+    classpath("com.squareup.okhttp3:okhttp:5.1.0")
   }
 }
 
