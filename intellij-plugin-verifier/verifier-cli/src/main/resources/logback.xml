@@ -22,6 +22,8 @@
     <logger name="com.jetbrains.plugin.structure.jar.CachingJarFileSystemProvider" level="${intellij.structure.jar.logger.level:-WARN}"/>
     <logger name="com.jetbrains.plugin.structure.jar.PluginJar" level="${intellij.structure.jar.logger.level:-WARN}"/>
 
+    <logger name="com.jetbrains.plugin.structure.intellij.plugin.dependencies" level="${intellij.structure.dependencies.logger.level:-WARN}"/>
+
     <root level="${plugin.verifier.logger.root.level:-INFO}">
         <appender-ref ref="STDOUT"/>
     </root>
