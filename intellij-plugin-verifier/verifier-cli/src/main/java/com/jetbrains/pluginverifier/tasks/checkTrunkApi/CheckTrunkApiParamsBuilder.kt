@@ -24,6 +24,7 @@ import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.PluginFilter
+import com.jetbrains.pluginverifier.options.repository.LocalPluginRepositoryProvider
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -32,12 +33,12 @@ import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.repositories.empty.EmptyPluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
-import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepositoryFactory
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
+import java.nio.file.Path
 import java.nio.file.Paths
 
 class CheckTrunkApiParamsBuilder(
@@ -86,13 +87,8 @@ class CheckTrunkApiParamsBuilder(
     val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(opts)
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
-    val releaseLocalRepository = apiOpts.releaseLocalPluginRepositoryRoot
-      ?.let { createRepository(it, opts) }
-      ?: EmptyPluginRepository
-
-    val trunkLocalRepository = apiOpts.trunkLocalPluginRepositoryRoot
-      ?.let { createRepository(it, opts) }
-      ?: EmptyPluginRepository
+    val releaseLocalRepository = createRepository(apiOpts.releaseLocalPluginRepositoryRoot, opts)
+    val trunkLocalRepository = createRepository(apiOpts.trunkLocalPluginRepositoryRoot, opts)
 
     val message = "Requesting a list of plugins compatible with the release IDE ${releaseIdeDescriptor.ideVersion}"
     reportage.logVerificationStage(message)
@@ -263,14 +259,15 @@ class CheckTrunkApiParamsBuilder(
     return latestCompatibleVersions
   }
 
-  private fun createRepository(repositoryRoot: String, opts: CmdOpts): PluginRepository {
-    return LocalPluginRepositoryFactory.createLocalPluginRepository(
-      Paths.get(repositoryRoot),
-      opts.forceOfflineCompatibility,
-      archiveManager
-    )
+  private fun createRepository(repositoryRoot: String?, opts: CmdOpts): PluginRepository {
+    if (repositoryRoot == null) return EmptyPluginRepository
+    val repositoryRootPath = Path.of(repositoryRoot)
+    val provision = LocalPluginRepositoryProvider.getLocalPluginRepository(opts, repositoryRootPath, archiveManager)
+    return when (provision) {
+      is LocalPluginRepositoryProvider.Result.Provided -> provision.pluginRepository
+      LocalPluginRepositoryProvider.Result.Unavailable -> EmptyPluginRepository
+    }
   }
-
 }
 
 class CheckTrunkApiOpts {
