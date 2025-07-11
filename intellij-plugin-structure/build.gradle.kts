@@ -1,3 +1,4 @@
+import jetbrains.sign.GpgSignSignatoryProvider
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -16,6 +17,7 @@ buildscript {
     maven { url = uri("https://packages.jetbrains.team/maven/p/jcs/maven") }
   }
   dependencies {
+    classpath("com.jetbrains:jet-sign:45.47")
     classpath("com.squareup.okhttp3:okhttp:4.12.0")
   }
 }
@@ -201,11 +203,7 @@ publishing {
 signing {
   val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null
   if (isUnderTeamCity) {
-//    signatories = GpgSignSignatoryProvider()
-
-    val signingKey: String? by project
-    val signingPassword: String? by project
-    useInMemoryPgpKeys(signingKey, signingPassword)
+    signatories = GpgSignSignatoryProvider()
 
     publicationConfigurations.keys.forEach {
       sign(publishing.publications[it])
