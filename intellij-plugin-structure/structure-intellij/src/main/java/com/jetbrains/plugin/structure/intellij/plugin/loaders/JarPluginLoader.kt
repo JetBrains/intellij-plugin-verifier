@@ -17,6 +17,7 @@ import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultReso
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.jar.JarArchiveCannotBeOpenException
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.PluginDescriptorResult
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
 import com.jetbrains.plugin.structure.jar.PluginJar
 import org.jdom2.input.JDOMParseException
@@ -49,7 +50,19 @@ internal class JarPluginLoader(private val fileSystemProvider: JarFileSystemProv
               createInvalidPlugin(jarPath, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
             }
           }
-          else -> createInvalidPlugin(jarPath, descriptorPath, PluginDescriptorIsNotFound(descriptorPath)).also {
+          PluginDescriptorResult.NotFound -> createInvalidPlugin(
+            jarPath,
+            descriptorPath,
+            PluginDescriptorIsNotFound(descriptorPath)
+          ).also {
+            LOG.debug("Descriptor [{}] not found in [{}]", descriptorPath, jarPath)
+          }
+
+          is PluginDescriptorResult.Failed -> createInvalidPlugin(
+            jarPath,
+            descriptorPath,
+            PluginDescriptorIsNotFound(descriptorPath)
+          ).also {
             LOG.debug("Unable to resolve descriptor [{}] from [{}] ({})", descriptorPath, jarPath, descriptor)
           }
         }
