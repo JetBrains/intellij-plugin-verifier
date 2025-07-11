@@ -203,8 +203,8 @@ signing {
   if (isUnderTeamCity) {
 //    signatories = GpgSignSignatoryProvider()
 
-    val signingKey: String? = System.getProperty("signingKey")
-    val signingPassword: String? = System.getProperty("signingPassword")
+    val signingKey: String? by project
+    val signingPassword: String? by project
     useInMemoryPgpKeys(signingKey, signingPassword)
 
     publicationConfigurations.keys.forEach {
