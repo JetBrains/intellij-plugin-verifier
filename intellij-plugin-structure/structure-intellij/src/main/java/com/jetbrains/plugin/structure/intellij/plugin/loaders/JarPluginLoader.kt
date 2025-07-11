@@ -19,6 +19,7 @@ import com.jetbrains.plugin.structure.jar.JarArchiveCannotBeOpenException
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
 import com.jetbrains.plugin.structure.jar.PluginJar
+import org.jdom2.input.JDOMParseException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
@@ -38,6 +39,10 @@ internal class JarPluginLoader(private val fileSystemProvider: JarFileSystemProv
                 setThirdPartyDependencies(jar.getThirdPartyDependencies())
                 setHasDotNetPart(hasDotNetDirectory)
               }
+            } catch (e: JDOMParseException) {
+              val message = e.localizedMessage
+              LOG.warn("Unable to read descriptor [$descriptorPath] from [$jarPath]: $message")
+              createInvalidPlugin(jarPath, descriptorPath, UnableToReadDescriptor(descriptorPath, message))
             } catch (e: Exception) {
               LOG.warn("Unable to read descriptor [$descriptorPath] from [$jarPath]", e)
               val message = e.localizedMessage
