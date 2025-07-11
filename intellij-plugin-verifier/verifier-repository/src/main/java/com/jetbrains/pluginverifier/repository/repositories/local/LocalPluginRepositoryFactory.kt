@@ -15,10 +15,13 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.CompatibilityPredicate.Companion.ALWAYS_COMPATIBLE
 import com.jetbrains.pluginverifier.repository.repositories.CompatibilityPredicate.Companion.DEFAULT
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepositoryFactory.createLocalPluginRepository
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.streams.toList
 
+private val LOG: Logger = LoggerFactory.getLogger(LocalPluginRepositoryFactory::class.java)
 /**
  * Utility class that [creates][createLocalPluginRepository] the [LocalPluginRepository].
  */
@@ -47,7 +50,9 @@ object LocalPluginRepositoryFactory {
     }
 
     val localPluginRepository = LocalPluginRepository(compatibilityPredicate = forcePluginCompatibility.asPredicate())
-    for (pluginFile in pluginFiles) {
+    LOG.debug("Found {} plugins in {}", pluginFiles.size, repositoryRoot)
+    pluginFiles.forEachIndexed { index, pluginFile ->
+      LOG.debug("Reading plugin [{}] ({}/{})", pluginFile, index + 1, pluginFiles.size)
       createIdePluginManager(archiveManager)
         .createPlugin(pluginFile, validateDescriptor = true, problemResolver = problemRemapper)
         .run {
