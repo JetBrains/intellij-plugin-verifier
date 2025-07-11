@@ -45,7 +45,7 @@ class KtClassResolver {
   private fun readMetadata(classNode: ClassNode, metadataAnnotation: Metadata): KotlinClassMetadata.Class? {
     return try {
       if (metadataAnnotation.metadataVersion.isNotEmpty()) {
-        KotlinClassMetadata.readStrict(metadataAnnotation) as? KotlinClassMetadata.Class
+        KotlinClassMetadata.readLenient(metadataAnnotation) as? KotlinClassMetadata.Class
       } else {
         LOG.debug("Class [${classNode.name}] has @kotlin.Metadata annotation without 'metadataVersion' attribute. It cannot be read")
         null
