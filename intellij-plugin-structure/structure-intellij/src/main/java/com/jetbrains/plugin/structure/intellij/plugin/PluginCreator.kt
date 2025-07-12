@@ -618,7 +618,7 @@ internal class PluginCreator private constructor(
     plugin.underlyingDocument = document
     plugin.setInfoFromBean(bean, document)
 
-    val themeResolution = themeLoader.load(plugin, documentPath, descriptorPath, pathResolver, ::registerProblem)
+    val themeResolution = themeLoader.load(plugin, documentPath, pathResolver, ::registerProblem)
     when (themeResolution) {
       is PluginThemeLoader.Result.Found -> plugin.declaredThemes.addAll(themeResolution.themes)
       PluginThemeLoader.Result.NotFound -> return

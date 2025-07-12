@@ -20,7 +20,7 @@ private const val INTELLIJ_THEME_EXTENSION = "com.intellij.themeProvider"
 class PluginThemeLoader {
   private val json = jacksonObjectMapper()
 
-  fun load(plugin: IdePlugin, document: Path, descriptorPath: String, resolver: ResourceResolver, problemRegistrar: ProblemRegistrar): Result {
+  fun load(plugin: IdePlugin, descriptorPath: Path, resolver: ResourceResolver, problemRegistrar: ProblemRegistrar): Result {
     val themePaths = plugin.extensions[INTELLIJ_THEME_EXTENSION]?.mapNotNull {
       it.getAttribute("path")?.value
     } ?: emptyList()
@@ -29,29 +29,38 @@ class PluginThemeLoader {
 
     for (themePath in themePaths) {
       val absolutePath = if (themePath.startsWith("/")) themePath else "/$themePath"
-      when (val resolvedTheme = resolver.resolveResource(absolutePath, document)) {
+      when (val resolvedTheme = resolver.resolveResource(absolutePath, descriptorPath)) {
         is ResourceResolver.Result.Found -> resolvedTheme.use {
           val theme = try {
             val themeJson = it.resourceStream.reader().readText()
             json.readValue(themeJson, IdeTheme::class.java)
-          } catch (e: Exception) {
-            problemRegistrar.registerProblem(UnableToReadTheme(descriptorPath, themePath))
+          } catch (_: Exception) {
+            problemRegistrar.unableToRead(descriptorPath, themePath)
             return NotFound
           }
           themes.add(theme)
         }
 
         is ResourceResolver.Result.NotFound -> {
-          problemRegistrar.registerProblem(UnableToFindTheme(descriptorPath, themePath))
+          problemRegistrar.unableToFind(descriptorPath, themePath)
         }
 
         is ResourceResolver.Result.Failed -> {
-          problemRegistrar.registerProblem(UnableToReadTheme(descriptorPath, themePath))
+          problemRegistrar.unableToRead(descriptorPath, themePath)
         }
       }
     }
     return Found(themes)
   }
+
+  private fun ProblemRegistrar.unableToRead(descriptorPath: Path, themePath: String) {
+    registerProblem(UnableToReadTheme(descriptorPath.fileName.toString(), themePath))
+  }
+
+  private fun ProblemRegistrar.unableToFind(descriptorPath: Path, themePath: String) {
+    registerProblem(UnableToFindTheme(descriptorPath.fileName.toString(), themePath))
+  }
+
 
   sealed class Result {
     class Found(val themes: List<IdeTheme>) : Result()
