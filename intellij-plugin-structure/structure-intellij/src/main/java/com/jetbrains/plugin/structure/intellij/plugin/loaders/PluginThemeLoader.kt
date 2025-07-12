@@ -33,8 +33,7 @@ class PluginThemeLoader {
         is ResourceResolver.Result.Found -> resolvedTheme.use {
           val theme = resolvedTheme.use {
             runCatching {
-              val themeJson = it.resourceStream.reader().readText()
-              json.readValue(themeJson, IdeTheme::class.java)
+              json.readValue(it.resourceStream, IdeTheme::class.java)
             }.getOrElse {
               problemRegistrar.unableToRead(descriptorPath, themePath)
               return NotFound
