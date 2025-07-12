@@ -21,7 +21,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDescriptorParser.Par
 import com.jetbrains.plugin.structure.intellij.plugin.ValidationContext.ValidationResult
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
 import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
-import com.jetbrains.plugin.structure.intellij.problems.ElementAvailableOnlySinceNewerVersion
 import com.jetbrains.plugin.structure.intellij.problems.ElementMissingAttribute
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
@@ -36,6 +35,7 @@ import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.verifiers.ExposedModulesVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.K2IdeModeCompatibilityVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.ProjectAndApplicationListenerAvailabilityVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.StatusBarWidgetFactoryExtensionPointVerifier
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -566,30 +566,7 @@ internal class PluginCreator private constructor(
       registerProblem(SinceBuildGreaterThanUntilBuild(descriptorPath, sinceBuild, untilBuild))
     }
 
-    val listenersAvailableSinceBuild = IdeVersion.createIdeVersion("193")
-    if (sinceBuild != null && sinceBuild < listenersAvailableSinceBuild) {
-      if (plugin.appContainerDescriptor.listeners.isNotEmpty()) {
-        registerProblem(
-          ElementAvailableOnlySinceNewerVersion(
-            "applicationListeners",
-            listenersAvailableSinceBuild,
-            sinceBuild,
-            untilBuild
-          )
-        )
-      }
-      if (plugin.projectContainerDescriptor.listeners.isNotEmpty()) {
-        registerProblem(
-          ElementAvailableOnlySinceNewerVersion(
-            "projectListeners",
-            listenersAvailableSinceBuild,
-            sinceBuild,
-            untilBuild
-          )
-        )
-      }
-    }
-
+    ProjectAndApplicationListenerAvailabilityVerifier().verify(plugin, ::registerProblem)
     ServiceExtensionPointPreloadVerifier().verify(plugin, ::registerProblem)
     StatusBarWidgetFactoryExtensionPointVerifier().verify(plugin, ::registerProblem)
     K2IdeModeCompatibilityVerifier().verify(plugin, ::registerProblem, descriptorPath)
