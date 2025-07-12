@@ -154,7 +154,7 @@ class MockThemePluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTes
       )
     }
 
-    assertProblematicPlugin(pluginFile, listOf(UnableToFindTheme( "plugin.xml", "/nonexistent.theme.json")))
+    assertProblematicPlugin(pluginFile, listOf(UnableToFindTheme("plugin.xml", "/nonexistent.theme.json")))
   }
 
   @Suppress("SameParameterValue")

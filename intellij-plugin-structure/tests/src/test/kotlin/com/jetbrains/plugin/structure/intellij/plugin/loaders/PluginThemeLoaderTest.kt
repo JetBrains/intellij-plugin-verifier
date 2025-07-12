@@ -34,8 +34,8 @@ class PluginThemeLoaderTest {
 
     val problemRegistrar = SimpleProblemRegistrar()
     val result = loader.load(plugin, Path.of("META-INF/plugin.xml"), DefaultResourceResolver, problemRegistrar)
-    assertTrue(result is PluginThemeLoader.Result.NotFound)
-    result as PluginThemeLoader.Result.NotFound
+    assertTrue(result is PluginThemeLoader.Result.Failed)
+    result as PluginThemeLoader.Result.Failed
 
     assertEquals(2, problemRegistrar.problems.size)
   }
