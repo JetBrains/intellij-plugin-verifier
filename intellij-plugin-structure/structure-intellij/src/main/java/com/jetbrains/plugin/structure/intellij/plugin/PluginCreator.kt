@@ -4,7 +4,6 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
@@ -56,11 +55,7 @@ internal class PluginCreator private constructor(
   companion object {
     private val LOG = LoggerFactory.getLogger(PluginCreator::class.java)
 
-    private const val INTELLIJ_THEME_EXTENSION = "com.intellij.themeProvider"
-
     val v2ModulePrefix = Regex("^intellij\\..*")
-
-    private val json = jacksonObjectMapper()
 
     private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
