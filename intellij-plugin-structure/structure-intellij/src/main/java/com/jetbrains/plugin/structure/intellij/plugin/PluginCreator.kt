@@ -20,6 +20,7 @@ import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDescriptorParser.ParseResult.Parsed
 import com.jetbrains.plugin.structure.intellij.plugin.ValidationContext.ValidationResult
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginThemeLoader
 import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
 import com.jetbrains.plugin.structure.intellij.problems.ElementMissingAttribute
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
@@ -28,8 +29,6 @@ import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorCycleProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.SinceBuildGreaterThanUntilBuild
-import com.jetbrains.plugin.structure.intellij.problems.UnableToFindTheme
-import com.jetbrains.plugin.structure.intellij.problems.UnableToReadTheme
 import com.jetbrains.plugin.structure.intellij.problems.UnknownServiceClientValue
 import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
@@ -66,6 +65,8 @@ internal class PluginCreator private constructor(
     private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
     private val pluginModuleResolver = PluginModuleResolver()
+
+    private val themeLoader = PluginThemeLoader()
 
     @JvmStatic
     fun createPlugin(
@@ -617,44 +618,15 @@ internal class PluginCreator private constructor(
     plugin.underlyingDocument = document
     plugin.setInfoFromBean(bean, document)
 
-    val themeFiles = readPluginThemes(plugin, documentPath, pathResolver) ?: return
-    plugin.declaredThemes.addAll(themeFiles)
+    val themeResolution = themeLoader.load(plugin, documentPath, descriptorPath, pathResolver, ::registerProblem)
+    when (themeResolution) {
+      is PluginThemeLoader.Result.Found -> plugin.declaredThemes.addAll(themeResolution.themes)
+      PluginThemeLoader.Result.NotFound -> return
+    }
 
     validatePlugin(plugin)
   }
 
-  private fun readPluginThemes(plugin: IdePlugin, document: Path, pathResolver: ResourceResolver): List<IdeTheme>? {
-    val themePaths = plugin.extensions[INTELLIJ_THEME_EXTENSION]?.mapNotNull {
-      it.getAttribute("path")?.value
-    } ?: emptyList()
-
-    val themes = arrayListOf<IdeTheme>()
-
-    for (themePath in themePaths) {
-      val absolutePath = if (themePath.startsWith("/")) themePath else "/$themePath"
-      when (val resolvedTheme = pathResolver.resolveResource(absolutePath, document)) {
-        is ResourceResolver.Result.Found -> resolvedTheme.use {
-          val theme = try {
-            val themeJson = it.resourceStream.reader().readText()
-            json.readValue(themeJson, IdeTheme::class.java)
-          } catch (e: Exception) {
-            registerProblem(UnableToReadTheme(descriptorPath, themePath))
-            return null
-          }
-          themes.add(theme)
-        }
-
-        is ResourceResolver.Result.NotFound -> {
-          registerProblem(UnableToFindTheme(descriptorPath, themePath))
-        }
-
-        is ResourceResolver.Result.Failed -> {
-          registerProblem(UnableToReadTheme(descriptorPath, themePath))
-        }
-      }
-    }
-    return themes
-  }
 
   internal fun registerProblem(problem: PluginProblem) {
     problems += problem
