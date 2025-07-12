@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.system.measureTimeMillis
 
 private val LOG: Logger = LoggerFactory.getLogger(PluginArchiveManager::class.java)
 
@@ -36,37 +37,40 @@ class PluginArchiveManager(private val extractDirectory: Path, private val isCol
     cache.get(path)
       .takeIf { it is Extracted && it.resourceToClose.pluginFile.exists() }
       ?.also { it.logCached() }
-      ?: doExtractArchive(path).also { it.cache() }
+      ?: doExtractArchive(path)
 
-  fun doExtractArchive(pluginFile: Path): Result {
-    val extractorResult = try {
-      pluginExtractor.extractPlugin(pluginFile, extractDirectory)
-    } catch (e: Exception) {
-      LOG.info("Unable to extract plugin zip ${pluginFile.simpleName}", e)
-      return Failed(pluginFile, UnableToExtractZip())
-    }
-    return when (extractorResult) {
-      is ExtractorResult.Success -> {
-        val extractedPlugin = extractorResult.extractedPlugin
-        return Extracted(pluginFile, extractedPlugin.pluginFile, extractedPlugin)
+  private fun doExtractArchive(pluginFile: Path): Result {
+    lateinit var extractorResult: ExtractorResult
+    val extractionDuration = measureTimeMillis {
+      extractorResult = runCatching {
+        pluginExtractor.extractPlugin(pluginFile, extractDirectory)
+      }.getOrElse {
+        LOG.info("Unable to extract plugin zip ${pluginFile.simpleName}", it)
+        Fail(UnableToExtractZip())
       }
-      is Fail -> Failed(pluginFile, extractorResult.pluginProblem)
+    }
+    return when (val extraction = extractorResult) {
+      is ExtractorResult.Success -> {
+        val extractedPlugin = extraction.extractedPlugin
+        return Extracted(pluginFile, extractedPlugin.pluginFile, extractedPlugin).also {
+          it.cache(extractionDuration)
+        }
+      }
+      is Fail -> Failed(pluginFile, extraction.pluginProblem)
     }
   }
 
-  private fun Result.cache() {
-    if (this is Extracted) {
-      cache[this.artifactPath] = this
-      logCreated()
-    }
+  private fun Extracted.cache(extractionDuration: Long) {
+    cache[this.artifactPath] = this
+    logCreated(extractionDuration)
   }
 
   private fun Result.logCached() {
     stats?.run { logCached(artifactPath) }
   }
 
-  private fun Result.logCreated() {
-    stats?.run { logCreated(artifactPath) }
+  private fun Result.logCreated(extractionDuration: Long) {
+    stats?.run { logCreated(artifactPath, extractionDuration) }
   }
 
   @Synchronized
@@ -93,16 +97,20 @@ class PluginArchiveManager(private val extractDirectory: Path, private val isCol
   }
 
   class Stats {
-    class Event(val path: Path, var createdCount: Int = 0, var cacheHit: Int = 0)
+    class Event(val path: Path, var createdCount: Int = 0, var cacheHit: Int = 0, val duration: Long) {
+      override fun toString(): String {
+        return "$path hit cache: $cacheHit, created: $createdCount in $duration ms)"
+      }
+    }
 
     val events = ConcurrentHashMap<Path, Event>()
 
-    fun logCreated(path: Path) {
-      events.computeIfAbsent(path) { Event(path) }.createdCount++
+    fun logCreated(path: Path, extractionDuration: Long) {
+      events.computeIfAbsent(path) { Event(path, duration = extractionDuration) }.createdCount++
     }
 
     fun logCached(path: Path) {
-      events.computeIfAbsent(path) { Event(path) }.cacheHit++
+      events.computeIfAbsent(path) { Event(path, duration = 0) }.cacheHit++
     }
   }
 }
