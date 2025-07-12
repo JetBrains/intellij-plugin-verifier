@@ -242,8 +242,6 @@ class IdePluginManager private constructor(
     }
   }
 
-  internal data class CreationResult(val artifact: Path, val creator: PluginCreator)
-
   companion object {
     private val LOG = LoggerFactory.getLogger(IdePluginManager::class.java)
     const val PLUGIN_XML = "plugin.xml"
