@@ -42,7 +42,6 @@ class DefaultClassResolverProvider(
   private val externalClassesPackageFilter: PackageFilter,
   private val additionalClassResolvers: List<Resolver> = emptyList(),
   private val pluginDetailsBasedResolverProvider: PluginDetailsBasedResolverProvider = DefaultPluginDetailsBasedResolverProvider(),
-  private val downloadUnavailableBundledPlugins: Boolean = false,
   archiveManager: PluginArchiveManager
 ) : ClassResolverProvider {
 
@@ -55,14 +54,10 @@ class DefaultClassResolverProvider(
     NegativeIdeModulePredicate
   }
 
-  private val pluginResolverProvider = if (downloadUnavailableBundledPlugins) {
-    CompositePluginProvider.of(
+  private val pluginResolverProvider = CompositePluginProvider.of(
       ideDescriptor.ide,
       DependencyFinderPluginProvider(dependencyFinder, ideDescriptor.ide, archiveManager)
-    )
-  } else {
-    ideDescriptor.ide
-  }.let { pluginProvider ->
+    ).let { pluginProvider ->
     val dependenciesModifier = LegacyPluginDependencyContributor(ideDescriptor.ide)
     CachingPluginDependencyResolverProvider(pluginProvider, secondaryResolver, ideModulePredicate, dependenciesModifier)
   }

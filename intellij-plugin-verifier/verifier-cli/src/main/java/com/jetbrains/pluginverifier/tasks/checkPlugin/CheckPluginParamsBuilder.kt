@@ -73,7 +73,6 @@ class CheckPluginParamsBuilder(
         dependencyFinder,
         ideDescriptor,
         externalClassesPackageFilter,
-        downloadUnavailableBundledPlugins = true,
         archiveManager = archiveManager
       )
 

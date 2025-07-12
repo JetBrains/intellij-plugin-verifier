@@ -125,7 +125,6 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       ideDescriptor,
       packageFilter,
       pluginDetailsBasedResolverProvider = pluginDetailsResolverProvider,
-      downloadUnavailableBundledPlugins = true,
       archiveManager = archiveManager
     )
 
@@ -159,7 +158,6 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       dependencyFinder,
       ideDescriptor,
       packageFilter,
-      downloadUnavailableBundledPlugins = true,
       archiveManager = archiveManager
     )
 
@@ -193,7 +191,6 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       dependencyFinder,
       ideDescriptor,
       packageFilter,
-      downloadUnavailableBundledPlugins = true,
       archiveManager = archiveManager
     )
 
