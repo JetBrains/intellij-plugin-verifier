@@ -25,7 +25,7 @@ class PluginThemeLoader {
       it.getAttribute("path")?.value
     } ?: emptyList()
 
-    val themes = arrayListOf<IdeTheme>()
+    val themes = mutableListOf<IdeTheme>()
 
     for (themePath in themePaths) {
       val absolutePath = if (themePath.startsWith("/")) themePath else "/$themePath"
