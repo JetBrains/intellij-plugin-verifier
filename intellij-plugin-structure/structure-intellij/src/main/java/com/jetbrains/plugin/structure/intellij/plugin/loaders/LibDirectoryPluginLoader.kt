@@ -14,7 +14,6 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.base.utils.listFiles
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.CreationResult
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleScanner
@@ -61,8 +60,7 @@ internal class LibDirectoryPluginLoader(
       //Use the composite resource resolver, which can resolve resources in lib's jar files.
       val jarContext = getJarContext(jarPath, compositeResolver, hasDotNetDirectory)
       if (jarLoader.isLoadable(jarContext)) {
-        val jarCreator = jarLoader.loadPlugin(jarContext)
-        CreationResult(libDirectoryParent, jarCreator).also {
+        jarLoader.loadPlugin(jarContext).also {
           logFoundDescriptor(libDirectoryParent, jarPath, descriptorPath)
         }
       } else {
@@ -71,7 +69,7 @@ internal class LibDirectoryPluginLoader(
     }
     val dirResults = files.filter { it.isDirectory }.map { dirPath ->
       //Use the common resource resolver, which is unaware of lib's jar files.
-      val dirCreator = directoryLoader.loadPlugin(PluginDirectoryLoader.Context(
+      directoryLoader.loadPlugin(PluginDirectoryLoader.Context(
         pluginDirectory = dirPath,
         descriptorPath = descriptorPath,
         validateDescriptor = validateDescriptor,
@@ -80,19 +78,18 @@ internal class LibDirectoryPluginLoader(
         problemResolver = problemResolver,
         hasDotNetDirectory = hasDotNetDirectory
       ))
-      CreationResult(libDirectoryParent, dirCreator)
     }
 
     val results = jarResults + dirResults
 
     val possibleResults = results
-      .filter { (_, r: PluginCreator)  -> r.isSuccess || hasOnlyInvalidDescriptorErrors(r) }
+      .filter { it.isSuccess || hasOnlyInvalidDescriptorErrors(it) }
     return when(possibleResults.size) {
       0 -> createInvalidPlugin(libDirectoryParent, descriptorPath, PluginDescriptorIsNotFound(descriptorPath))
-      1 -> possibleResults[0].withResolvedClasspath().creator
+      1 -> possibleResults.single().withResolvedClasspath(libDirectoryParent)
       else -> {
-        val first = possibleResults[0].creator
-        val second = possibleResults[1].creator
+        val first = possibleResults[0]
+        val second = possibleResults[1]
         val multipleDescriptorsProblem: PluginProblem = MultiplePluginDescriptors(
           first.descriptorPath,
           first.pluginFileName,
@@ -104,10 +101,10 @@ internal class LibDirectoryPluginLoader(
     }
   }
 
-  private fun CreationResult.withResolvedClasspath(): CreationResult = apply {
-    val contentModules = contentModuleScanner.getContentModules(artifact)
+  private fun PluginCreator.withResolvedClasspath(path: Path): PluginCreator = apply {
+    val contentModules = contentModuleScanner.getContentModules(path)
     val classpath = contentModules.asClasspath()
-    creator.setClasspath(classpath.getUnique())
+    setClasspath(classpath.getUnique())
   }
 
   private fun hasOnlyInvalidDescriptorErrors(creator: PluginCreator): Boolean {
