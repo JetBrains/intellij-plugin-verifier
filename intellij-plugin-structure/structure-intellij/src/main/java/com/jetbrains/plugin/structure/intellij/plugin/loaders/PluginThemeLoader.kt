@@ -30,7 +30,7 @@ class PluginThemeLoader {
     for (themePath in themePaths) {
       val absolutePath = if (themePath.startsWith("/")) themePath else "/$themePath"
       when (val resolvedTheme = resolver.resolveResource(absolutePath, descriptorPath)) {
-        is ResourceResolver.Result.Found -> resolvedTheme.use {
+        is ResourceResolver.Result.Found -> {
           val theme = resolvedTheme.use {
             runCatching {
               json.readValue(it.resourceStream, IdeTheme::class.java)
