@@ -78,7 +78,12 @@ internal class JarPluginLoader(private val fileSystemProvider: JarFileSystemProv
   fun isLoadable(pluginLoadingContext: Context): Boolean {
     val descriptorPath = FilenameUtils.normalize("$META_INF/${pluginLoadingContext.descriptorPath}")
     return pluginLoadingContext.jarPath.newZipHandler()
-      .handleEntry(descriptorPath) { _, _ -> true } ?: false
+      .runCatching {
+        handleEntry(descriptorPath) { _, _ -> true } ?: false
+      }.getOrElse {
+        LOG.debug(it.message)
+        false
+      }
   }
 
   internal data class Context(

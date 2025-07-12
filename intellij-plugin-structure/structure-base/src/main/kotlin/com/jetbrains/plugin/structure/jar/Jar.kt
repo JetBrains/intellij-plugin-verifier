@@ -6,6 +6,8 @@ import com.jetbrains.plugin.structure.base.utils.charseq.CharReplacingCharSequen
 import com.jetbrains.plugin.structure.base.utils.getBundleBaseName
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.base.utils.occurrences
+import com.jetbrains.plugin.structure.base.zip.MalformedZipArchiveException
+import com.jetbrains.plugin.structure.base.zip.ZipArchiveIOException
 import com.jetbrains.plugin.structure.base.zip.newZipHandler
 import com.jetbrains.plugin.structure.jar.Jar.DescriptorType.*
 import com.jetbrains.plugin.structure.jar.JarEntryResolver.Key
@@ -93,6 +95,10 @@ class Jar(
             scan(zipEntry)
           }
         }
+    } catch (e: MalformedZipArchiveException) {
+      throw JarArchiveException("JAR archive malformed at [$jarPath]: ${e.message} ", e)
+    } catch (e: ZipArchiveIOException) {
+      throw JarArchiveException("JAR archive cannot be read at [$jarPath]: ${e.message} ", e)
     } catch (e: NoSuchElementException) {
       throw JarArchiveException("JAR archive is not found at [$jarPath]: ${e.message} ", e)
     } catch (e: IOException) {
