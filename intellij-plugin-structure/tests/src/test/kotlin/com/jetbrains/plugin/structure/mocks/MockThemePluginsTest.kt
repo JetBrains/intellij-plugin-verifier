@@ -125,6 +125,38 @@ class MockThemePluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTes
     assertProblematicPlugin(pluginFile, listOf(UnableToReadTheme( "plugin.xml", "/syntax-error.theme.json")))
   }
 
+  @Test
+  fun `one theme is found, the other is not available`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            additionalContent = """
+              <extensions defaultExtensionNs="com.intellij">
+                  <themeProvider id="id0" path="/nonexistent.theme.json"/>
+                  <themeProvider id="id1" path="/theme.theme.json"/>                  
+              </extensions>
+            """.trimIndent()
+          }
+        }
+      }
+
+      file(
+        "theme.theme.json", """
+        {
+          "name": "theme",
+          "dark": true,
+          "author": "",
+          "editorScheme": "/theme.xml",
+          "ui": {}
+        }
+      """.trimIndent()
+      )
+    }
+
+    assertProblematicPlugin(pluginFile, listOf(UnableToFindTheme( "plugin.xml", "/nonexistent.theme.json")))
+  }
+
   @Suppress("SameParameterValue")
   private fun testMockPluginStructureAndConfiguration(pluginFile: Path) {
     val pluginCreationSuccess = createPluginSuccessfully(pluginFile)

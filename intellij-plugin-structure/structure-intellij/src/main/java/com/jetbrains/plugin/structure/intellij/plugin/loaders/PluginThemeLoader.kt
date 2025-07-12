@@ -30,16 +30,8 @@ class PluginThemeLoader {
     for (themePath in themePaths) {
       val absolutePath = if (themePath.startsWith("/")) themePath else "/$themePath"
       when (val resolvedTheme = resolver.resolveResource(absolutePath, descriptorPath)) {
-        is ResourceResolver.Result.Found -> {
-          val theme = resolvedTheme.use {
-            runCatching {
-              json.readValue(it.resourceStream, IdeTheme::class.java)
-            }.getOrElse {
-              problemRegistrar.unableToRead(descriptorPath, themePath)
-              return Result.Failed
-            }
-          }
-          themes.add(theme)
+        is ResourceResolver.Result.Found -> resolvedTheme.load(descriptorPath, themePath, problemRegistrar)?.let {
+          themes += it
         }
 
         is ResourceResolver.Result.NotFound -> {
@@ -52,6 +44,17 @@ class PluginThemeLoader {
       }
     }
     return if (themes.isNotEmpty()) Found(themes) else NotFound
+  }
+
+  private fun ResourceResolver.Result.Found.load(descriptorPath: Path, themePath: String, problemRegistrar: ProblemRegistrar): IdeTheme? {
+    return use {
+      runCatching {
+        json.readValue(it.resourceStream, IdeTheme::class.java)
+      }.getOrElse {
+        problemRegistrar.unableToRead(descriptorPath, themePath)
+        null
+      }
+    }
   }
 
   private fun ProblemRegistrar.unableToRead(descriptorPath: Path, themePath: String) {
