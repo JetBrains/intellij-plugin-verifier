@@ -616,7 +616,8 @@ internal class PluginCreator private constructor(
     val themeResolution = themeLoader.load(plugin, documentPath, pathResolver, ::registerProblem)
     when (themeResolution) {
       is PluginThemeLoader.Result.Found -> plugin.declaredThemes.addAll(themeResolution.themes)
-      PluginThemeLoader.Result.NotFound -> return
+      PluginThemeLoader.Result.NotFound -> Unit
+      PluginThemeLoader.Result.Failed -> return
     }
 
     validatePlugin(plugin)

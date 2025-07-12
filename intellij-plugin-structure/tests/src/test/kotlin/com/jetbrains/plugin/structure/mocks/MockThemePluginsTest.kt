@@ -79,6 +79,30 @@ class MockThemePluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTes
   }
 
   @Test
+  fun `two themes not found`() {
+    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            additionalContent = """
+              <extensions defaultExtensionNs="com.intellij">
+                  <themeProvider id="id0" path="/nonexistent.theme.json"/>
+                  <themeProvider id="id1" path="/another-nonexistent.theme.json"/>
+              </extensions>
+            """.trimIndent()
+          }
+        }
+      }
+    }
+
+    val expectedProblems = listOf(
+      UnableToFindTheme("plugin.xml", "/nonexistent.theme.json"),
+      UnableToFindTheme("plugin.xml", "/another-nonexistent.theme.json")
+    )
+    assertProblematicPlugin(pluginFile, expectedProblems)
+  }
+
+  @Test
   fun `theme JSON has syntax errors`() {
     val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.jar")) {
       dir("META-INF") {

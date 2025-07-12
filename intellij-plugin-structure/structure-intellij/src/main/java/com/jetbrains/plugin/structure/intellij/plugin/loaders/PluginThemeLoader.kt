@@ -23,7 +23,7 @@ class PluginThemeLoader {
   fun load(plugin: IdePlugin, descriptorPath: Path, resolver: ResourceResolver, problemRegistrar: ProblemRegistrar): Result {
     val themePaths = plugin.extensions[INTELLIJ_THEME_EXTENSION]?.mapNotNull {
       it.getAttribute("path")?.value
-    } ?: emptyList()
+    } ?: return NotFound
 
     val themes = mutableListOf<IdeTheme>()
 
@@ -36,7 +36,7 @@ class PluginThemeLoader {
               json.readValue(it.resourceStream, IdeTheme::class.java)
             }.getOrElse {
               problemRegistrar.unableToRead(descriptorPath, themePath)
-              return NotFound
+              return Result.Failed
             }
           }
           themes.add(theme)
@@ -51,7 +51,7 @@ class PluginThemeLoader {
         }
       }
     }
-    return Found(themes)
+    return if (themes.isNotEmpty()) Found(themes) else NotFound
   }
 
   private fun ProblemRegistrar.unableToRead(descriptorPath: Path, themePath: String) {
@@ -65,6 +65,7 @@ class PluginThemeLoader {
 
   sealed class Result {
     data class Found(val themes: List<IdeTheme>) : Result()
+    object Failed : Result()
     object NotFound : Result()
   }
 }
