@@ -14,7 +14,9 @@ interface ZipHandler<Z: ZipResource> {
    * All results of the [handler] invocations are collected and returned.
    * @param handler a handler to be invoked for each ZIP entry
    * @return a list of results produced by the [handler] function,
+   * @throws ZipArchiveException when a ZIP archive is malformed or an I/O error occurred while reading it
    */
+  @Throws(ZipArchiveException::class)
   fun <T> iterate(handler: (ZipEntry, Z) -> T?): List<T>
 
   /**
@@ -23,7 +25,9 @@ interface ZipHandler<Z: ZipResource> {
    *
    * @param entryName the name of the ZIP entry, usually a filename, to find in the ZIP
    * @param handler a handler to invoke on the encountered entry
+   * @throws ZipArchiveException when a ZIP archive is malformed or an I/O error occurred while reading it
    */
+  @Throws(ZipArchiveException::class)
   fun <T> handleEntry(entryName: CharSequence, handler: (ZipEntry, Z) -> T?): T?
 }
 

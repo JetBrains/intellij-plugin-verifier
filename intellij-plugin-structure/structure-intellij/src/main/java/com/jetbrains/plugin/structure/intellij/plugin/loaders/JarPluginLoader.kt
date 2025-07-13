@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.Companion
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarPluginLoader.Loadability.*
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.jar.JarArchiveCannotBeOpenException
@@ -75,10 +76,21 @@ internal class JarPluginLoader(private val fileSystemProvider: JarFileSystemProv
     }
   }
 
-  fun isLoadable(pluginLoadingContext: Context): Boolean {
+  fun getLoadability(pluginLoadingContext: Context): Loadability {
     val descriptorPath = FilenameUtils.normalize("$META_INF/${pluginLoadingContext.descriptorPath}")
     return pluginLoadingContext.jarPath.newZipHandler()
-      .handleEntry(descriptorPath) { _, _ -> true } ?: false
+      .runCatching {
+        handleEntry(descriptorPath) { _, _ -> Loadable } ?: NotLoadable
+      }.getOrElse {
+        LOG.debug(it.message)
+        Failed(it)
+      }
+  }
+
+  sealed class Loadability {
+    object Loadable : Loadability()
+    object NotLoadable : Loadability()
+    class Failed(val exception: Throwable) : Loadability()
   }
 
   internal data class Context(

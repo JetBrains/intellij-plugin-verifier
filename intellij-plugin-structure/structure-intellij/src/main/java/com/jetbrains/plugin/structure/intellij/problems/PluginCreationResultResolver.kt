@@ -90,6 +90,7 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
 
     IncorrectPluginFile::class,
     IncorrectZipOrJarFile::class,
+    UnreadableZipOrJarFile::class,
     IncorrectJarOrDirectory::class,
     PluginFileSizeIsTooLarge::class,
     UnableToExtractZip::class,

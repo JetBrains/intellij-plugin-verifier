@@ -9,13 +9,18 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.UnreadableZipOrJarFile
 import com.jetbrains.plugin.structure.base.problems.isInvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarPluginLoader.Loadability.*
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.LibDirectoryPluginLoader.LoadResult.NotLoadable.failed
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.LibDirectoryPluginLoader.LoadResult.NotLoadable.loaded
 import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleScanner
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty
@@ -56,15 +61,15 @@ internal class LibDirectoryPluginLoader(
     val libResourceResolver: ResourceResolver = JarsResourceResolver(jarFiles, fileSystemProvider)
     val compositeResolver: ResourceResolver = CompositeResourceResolver(listOf(libResourceResolver, resourceResolver))
 
-    val jarResults = jarFiles.mapNotNull { jarPath ->
+    val archivePaths = jarFiles + files.filter { it.isZip() }
+    val archiveResults = archivePaths.mapNotNull { archivePath ->
       //Use the composite resource resolver, which can resolve resources in lib's jar files.
-      val jarContext = getJarContext(jarPath, compositeResolver, hasDotNetDirectory)
-      if (jarLoader.isLoadable(jarContext)) {
-        jarLoader.loadPlugin(jarContext).also {
-          logFoundDescriptor(libDirectoryParent, jarPath, descriptorPath)
-        }
-      } else {
-        null
+      val loadResult = getArchiveContext(archivePath, compositeResolver, hasDotNetDirectory)
+        .loadArchive(pluginLoadingContext)
+      when (loadResult) {
+        is LoadResult.Loaded -> loadResult.creator
+        is LoadResult.Failed -> return loadResult.creator
+        LoadResult.NotLoadable -> null
       }
     }
     val dirResults = files.filter { it.isDirectory }.map { dirPath ->
@@ -80,7 +85,7 @@ internal class LibDirectoryPluginLoader(
       ))
     }
 
-    val results = jarResults + dirResults
+    val results = archiveResults + dirResults
 
     val possibleResults = results
       .filter { it.isSuccess || hasOnlyInvalidDescriptorErrors(it) }
@@ -101,6 +106,26 @@ internal class LibDirectoryPluginLoader(
     }
   }
 
+  private fun JarPluginLoader.Context.loadArchive(parentContext: Context): LoadResult {
+    val parentArtifactPath = parentContext.libDirectoryParent
+    val loadability = jarLoader.getLoadability(pluginLoadingContext = this)
+    return when (loadability) {
+      Loadable -> {
+        jarLoader.loadPlugin(pluginLoadingContext = this).also {
+          logFoundDescriptor(parentArtifactPath, jarPath, descriptorPath)
+        }.loaded()
+      }
+      NotLoadable -> LoadResult.NotLoadable
+      is Failed -> {
+        createInvalidPlugin(
+          parentArtifactPath,
+          descriptorPath,
+          UnreadableZipOrJarFile.of(jarPath, loadability.exception)
+        ).failed()
+      }
+    }
+  }
+
   private fun PluginCreator.withResolvedClasspath(path: Path): PluginCreator = apply {
     val contentModules = contentModuleScanner.getContentModules(path)
     val classpath = contentModules.asClasspath()
@@ -117,7 +142,7 @@ internal class LibDirectoryPluginLoader(
     }
   }
 
-  private fun Context.getJarContext(jarPath: Path, resolver: ResourceResolver, hasDotNetDirectory: Boolean): JarPluginLoader.Context {
+  private fun Context.getArchiveContext(jarPath: Path, resolver: ResourceResolver, hasDotNetDirectory: Boolean): JarPluginLoader.Context {
     return JarPluginLoader.Context(
       jarPath,
       descriptorPath,
@@ -135,6 +160,15 @@ internal class LibDirectoryPluginLoader(
     descriptorPath: String
   ) {
     LOG.debug("Found plugin descriptor [{}] in [{}/{}]", descriptorPath, libDir, jar)
+  }
+
+  private sealed class LoadResult {
+    data class Loaded(val creator: PluginCreator) : LoadResult()
+    object NotLoadable : LoadResult()
+    data class Failed(val creator: PluginCreator): LoadResult()
+
+    fun PluginCreator.loaded(): Loaded = Loaded(this)
+    fun PluginCreator.failed(): Failed = Failed(this)
   }
 
   internal data class Context(
