@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.base.problems.isInvalidDescriptorProblem
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
@@ -60,10 +61,11 @@ internal class LibDirectoryPluginLoader(
     val libResourceResolver: ResourceResolver = JarsResourceResolver(jarFiles, fileSystemProvider)
     val compositeResolver: ResourceResolver = CompositeResourceResolver(listOf(libResourceResolver, resourceResolver))
 
-    val jarResults = jarFiles.mapNotNull { jarPath ->
+    val archivePaths = jarFiles + files.filter { it.isZip() }
+    val archiveResults = archivePaths.mapNotNull { archivePath ->
       //Use the composite resource resolver, which can resolve resources in lib's jar files.
-      val loadResult = getJarContext(jarPath, compositeResolver, hasDotNetDirectory)
-        .loadJar(pluginLoadingContext)
+      val loadResult = getArchiveContext(archivePath, compositeResolver, hasDotNetDirectory)
+        .loadArchive(pluginLoadingContext)
       when (loadResult) {
         is LoadResult.Loaded -> loadResult.creator
         is LoadResult.Failed -> return loadResult.creator
@@ -83,7 +85,7 @@ internal class LibDirectoryPluginLoader(
       ))
     }
 
-    val results = jarResults + dirResults
+    val results = archiveResults + dirResults
 
     val possibleResults = results
       .filter { it.isSuccess || hasOnlyInvalidDescriptorErrors(it) }
@@ -104,7 +106,7 @@ internal class LibDirectoryPluginLoader(
     }
   }
 
-  private fun JarPluginLoader.Context.loadJar(parentContext: Context): LoadResult {
+  private fun JarPluginLoader.Context.loadArchive(parentContext: Context): LoadResult {
     val parentArtifactPath = parentContext.libDirectoryParent
     val loadability = jarLoader.isLoadable(pluginLoadingContext = this)
     return when (loadability) {
@@ -140,7 +142,7 @@ internal class LibDirectoryPluginLoader(
     }
   }
 
-  private fun Context.getJarContext(jarPath: Path, resolver: ResourceResolver, hasDotNetDirectory: Boolean): JarPluginLoader.Context {
+  private fun Context.getArchiveContext(jarPath: Path, resolver: ResourceResolver, hasDotNetDirectory: Boolean): JarPluginLoader.Context {
     return JarPluginLoader.Context(
       jarPath,
       descriptorPath,
