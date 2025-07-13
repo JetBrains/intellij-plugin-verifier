@@ -99,7 +99,7 @@ class PluginArchiveManager(private val extractDirectory: Path, private val isCol
   class Stats {
     class Event(val path: Path, var createdCount: Int = 0, var cacheHit: Int = 0, val duration: Long) {
       override fun toString(): String {
-        return "$path hit cache: $cacheHit, created: $createdCount in $duration ms)"
+        return "$path hit cache: $cacheHit, created: $createdCount in $duration ms"
       }
     }
 
