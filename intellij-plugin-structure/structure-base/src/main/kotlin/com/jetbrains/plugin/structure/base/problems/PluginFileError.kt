@@ -29,6 +29,21 @@ class IncorrectZipOrJarFile(
     get() = "The plugin archive contains an unexpected file $fileName: it must be .zip, .jar or a directory."
 }
 
+class UnreadableZipOrJarFile(
+  private val fileName: String,
+  private val reason: String
+) : PluginFileError() {
+  override val message
+    get() = "The plugin archive contains an unreadable or malformed file $fileName: $reason"
+
+  companion object {
+    fun of(zipOrJar: Path, throwable: Throwable) = UnreadableZipOrJarFile(
+      zipOrJar.fileName.toString(),
+      throwable.message ?: ""
+    )
+  }
+}
+
 class IncorrectJarOrDirectory(
   private val path: Path
 ) : PluginFileError() {
