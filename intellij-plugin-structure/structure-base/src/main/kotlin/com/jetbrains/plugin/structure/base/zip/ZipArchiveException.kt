@@ -6,7 +6,13 @@ package com.jetbrains.plugin.structure.base.zip
 
 import java.io.File
 
-sealed class ZipArchiveException(zipFile: File, reason: String, cause: Throwable) : RuntimeException("$reason ZIP archive [$zipFile]: ${cause.message}", cause)
-
+sealed class ZipArchiveException(zipFile: File, reason: String, cause: Throwable) : RuntimeException("$reason ${zipFile.type} archive [$zipFile]: ${cause.message}", cause)
 class MalformedZipArchiveException(zipFile: File, cause: Throwable) : ZipArchiveException(zipFile, "Malformed", cause)
 class ZipArchiveIOException(zipFile: File, cause: Throwable) : ZipArchiveException(zipFile, "Unreadable or I/O error in", cause)
+
+private val File.type: String
+  get() = when (extension.toLowerCase()) {
+    "zip" -> "ZIP"
+    "jar" -> "JAR"
+    else -> extension.toUpperCase() + " Archive"
+  }
