@@ -108,7 +108,7 @@ internal class LibDirectoryPluginLoader(
 
   private fun JarPluginLoader.Context.loadArchive(parentContext: Context): LoadResult {
     val parentArtifactPath = parentContext.libDirectoryParent
-    val loadability = jarLoader.isLoadable(pluginLoadingContext = this)
+    val loadability = jarLoader.getLoadability(pluginLoadingContext = this)
     return when (loadability) {
       Loadable -> {
         jarLoader.loadPlugin(pluginLoadingContext = this).also {

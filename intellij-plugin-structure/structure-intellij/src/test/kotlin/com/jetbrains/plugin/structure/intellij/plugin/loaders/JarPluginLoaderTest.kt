@@ -5,6 +5,8 @@
 package com.jetbrains.plugin.structure.intellij.plugin.loaders
 
 import com.jetbrains.plugin.structure.intellij.plugin.createZip
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarPluginLoader.Loadability.Loadable
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarPluginLoader.Loadability.NotLoadable
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
 import com.jetbrains.plugin.structure.jar.CachingJarFileSystemProvider
@@ -45,7 +47,7 @@ class JarPluginLoaderTest {
       problemResolver = IntelliJPluginCreationResultResolver()
     )
 
-    assertTrue(loader.isLoadable(context))
+    assertTrue(loader.getLoadability(context) is Loadable)
   }
 
   @Test
@@ -64,7 +66,7 @@ class JarPluginLoaderTest {
       problemResolver = IntelliJPluginCreationResultResolver()
     )
 
-    assertFalse(loader.isLoadable(context))
+    assertFalse(loader.getLoadability(context) is Loadable)
   }
 
   @Test
@@ -85,7 +87,7 @@ class JarPluginLoaderTest {
       problemResolver = IntelliJPluginCreationResultResolver()
     )
 
-    assertTrue(loader.isLoadable(context))
+    assertTrue(loader.getLoadability(context) is Loadable)
   }
 
   @Test
@@ -106,7 +108,7 @@ class JarPluginLoaderTest {
       problemResolver = IntelliJPluginCreationResultResolver()
     )
 
-    assertTrue(loader.isLoadable(context))
+    assertTrue(loader.getLoadability(context) is Loadable)
   }
 
   @Test
@@ -124,7 +126,7 @@ class JarPluginLoaderTest {
       problemResolver = IntelliJPluginCreationResultResolver()
     )
 
-    assertFalse(loader.isLoadable(context))
+    assertTrue(loader.getLoadability(context) is NotLoadable)
   }
 
   private fun newJar(jarName: String = "plugin.jar"): Path {
