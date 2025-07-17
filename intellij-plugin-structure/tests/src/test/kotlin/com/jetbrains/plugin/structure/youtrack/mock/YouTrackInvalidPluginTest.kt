@@ -59,7 +59,7 @@ class YouTrackInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginMana
   }
 
   @Test
-  fun `name contains unallowed symbols`() {
+  fun `title contains unallowed symbols`() {
     for (i in 1..10) {
       val name = getRandomNotAllowedNameSymbols(i)
       checkInvalidPlugin(InvalidPluginName("manifest.json", name)) {
@@ -69,11 +69,11 @@ class YouTrackInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginMana
   }
 
   @Test
-  fun `name contains only allowed symbols`() {
+  fun `title contains only allowed symbols`() {
     for (i in 1..10) {
       val name = getRandomAllowedNameSymbols(i)
       checkValidPlugin {
-        it.copy(name = name)
+        it.copy(title = name)
       }
     }
   }

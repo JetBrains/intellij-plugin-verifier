@@ -96,7 +96,7 @@ class PluginBeanValidator {
         }
         validatePropertyLength("name", name, MAX_NAME_LENGTH)
         verifyNewlines("name", name, descriptorPath, ::registerProblem)
-        validatePluginNameIsCorrect(descriptorPath, name)?.let {
+        validatePluginNameIsCorrect(descriptorPath, name.trim())?.let {
           registerProblem(it)
         }
       }

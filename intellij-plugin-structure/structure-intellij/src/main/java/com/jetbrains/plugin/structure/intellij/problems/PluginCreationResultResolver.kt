@@ -99,6 +99,7 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     UnexpectedDescriptorElements::class,
     PropertyNotSpecified::class,
     NotBoolean::class,
+    InvalidPluginName::class,
 
     NotNumber::class,
     UnableToReadDescriptor::class,
