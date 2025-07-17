@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.teamcity.mock
 
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
@@ -77,7 +78,6 @@ class TeamcityInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMan
     )
   }
 
-
   @Test
   fun `plugin display name is not specified`() {
     `test invalid plugin xml`(
@@ -106,6 +106,19 @@ class TeamcityInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMan
       },
       listOf(ForbiddenWordInPluginName(PLUGIN_NAME_FORBIDDEN_WORDS))
     )
+  }
+
+  @Test
+  fun `plugin display name name contains unallowed symbols`() {
+    for (i in 1..10) {
+      val name = getRandomNotAllowedNameSymbols(i)
+      `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          displayName = "<display-name>$name</display-name>"
+        },
+        listOf(InvalidPluginName("teamcity-plugin.xml", name))
+      )
+    }
   }
 
   @Test

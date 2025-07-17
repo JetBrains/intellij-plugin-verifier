@@ -58,17 +58,24 @@ data class FleetPluginDescriptor(
     val products = supportedProducts.mapNotNull { FleetProduct.fromProductCode(it) }.toSet()
 
     if (products.size != supportedProducts.size) {
-      problems.add(InvalidSupportedProductsListProblem(
-        constraint = "must contain only product codes from ${FleetProduct.values().map { it.productCode }}, got: $supportedProducts"
-      ))
+      problems.add(
+        InvalidSupportedProductsListProblem(
+          constraint = "must contain only product codes from ${
+            FleetProduct.values().map { it.productCode }
+          }, got: $supportedProducts"
+        )
+      )
     }
-    val (isLegacyVersioning, isUnifiedVersioning) = products.partition { it.legacyVersioning }.let { (legacy, unified) ->
-      Pair(legacy.isNotEmpty(), unified.isNotEmpty())
-    }
+    val (isLegacyVersioning, isUnifiedVersioning) = products.partition { it.legacyVersioning }
+      .let { (legacy, unified) ->
+        Pair(legacy.isNotEmpty(), unified.isNotEmpty())
+      }
     if (isLegacyVersioning && isUnifiedVersioning) {
-      problems.add(InvalidSupportedProductsListProblem(
-        constraint = "must contain either only legacy or only unified versioning products"
-      ))
+      problems.add(
+        InvalidSupportedProductsListProblem(
+          constraint = "must contain either only legacy or only unified versioning products"
+        )
+      )
     }
 
     val shipVersionSpec = FleetDescriptorSpec.CompatibleShipVersion
@@ -91,27 +98,33 @@ data class FleetPluginDescriptor(
           val toSemver = parseVersionOrNull(compatibleShipVersionRange.to)
           when {
             fromSemver == null -> {
-              problems.add(InvalidSemverFormat(
-                descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
-                versionName = shipVersionSpec.relativeFieldPath(shipVersionSpec.FROM_FIELD_NAME),
-                version = compatibleShipVersionRange.from
-              ))
+              problems.add(
+                InvalidSemverFormat(
+                  descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+                  versionName = shipVersionSpec.relativeFieldPath(shipVersionSpec.FROM_FIELD_NAME),
+                  version = compatibleShipVersionRange.from
+                )
+              )
             }
 
             toSemver == null -> {
-              problems.add(InvalidSemverFormat(
-                descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
-                versionName = shipVersionSpec.relativeFieldPath(shipVersionSpec.TO_FIELD_NAME),
-                version = compatibleShipVersionRange.to
-              ))
+              problems.add(
+                InvalidSemverFormat(
+                  descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+                  versionName = shipVersionSpec.relativeFieldPath(shipVersionSpec.TO_FIELD_NAME),
+                  version = compatibleShipVersionRange.to
+                )
+              )
             }
 
             fromSemver.isGreaterThan(toSemver) -> {
-              problems.add(InvalidVersionRange(
-                descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
-                since = compatibleShipVersionRange.from,
-                until = compatibleShipVersionRange.to
-              ))
+              problems.add(
+                InvalidVersionRange(
+                  descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+                  since = compatibleShipVersionRange.from,
+                  until = compatibleShipVersionRange.to
+                )
+              )
             }
 
             else -> {
@@ -122,11 +135,13 @@ data class FleetPluginDescriptor(
               )
               problems.addAll(fromVersionProblems)
               if (fromVersionProblems.isEmpty()) {
-                problems.addAll(validateVersion(
-                  fieldName = shipVersionSpec.relativeFieldPath(shipVersionSpec.TO_FIELD_NAME),
-                  semver = toSemver,
-                  isLegacy = isLegacyVersioning
-                ))
+                problems.addAll(
+                  validateVersion(
+                    fieldName = shipVersionSpec.relativeFieldPath(shipVersionSpec.TO_FIELD_NAME),
+                    semver = toSemver,
+                    isLegacy = isLegacyVersioning
+                  )
+                )
               }
             }
           }
@@ -146,6 +161,11 @@ data class FleetPluginDescriptor(
           propertyName = metaSpec.relativeFieldPath(metaSpec.NAME_FIELD_NAME),
           propertyValue = readableName,
           maxLength = MAX_NAME_LENGTH,
+          problems = problems
+        )
+        validatePluginNameIsCorrect(
+          descriptor = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+          name = readableName,
           problems = problems
         )
       }

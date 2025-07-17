@@ -97,6 +97,16 @@ class HubInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
   }
 
   @Test
+  fun `name contains unallowed symbols`() {
+    for (i in 1..10) {
+      val pluginName = getRandomNotAllowedNameSymbols(i)
+      checkInvalidPlugin(InvalidPluginName("manifest.json", pluginName)) {
+        name = pluginName
+      }
+    }
+  }
+
+  @Test
   fun `version is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified("version")) { version = null }
     checkInvalidPlugin(PropertyNotSpecified("version")) { version = "" }

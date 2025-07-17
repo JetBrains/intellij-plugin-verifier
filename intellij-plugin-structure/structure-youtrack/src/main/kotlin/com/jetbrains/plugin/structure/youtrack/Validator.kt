@@ -16,13 +16,7 @@ fun validateYouTrackManifest(manifest: YouTrackAppManifest): List<PluginProblem>
 
   validateManifestName(manifest.name, problems)
 
-  if (manifest.title.isNullOrBlank()) {
-    problems.add(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.TITLE))
-  }
-
-  if (manifest.title != null) {
-    validatePropertyLength(DESCRIPTOR_NAME, YouTrackAppFields.Manifest.TITLE, manifest.title, MAX_NAME_LENGTH, problems)
-  }
+  validateTitle(manifest.title, problems)
 
   if (manifest.description.isNullOrBlank()) {
     problems.add(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.DESCRIPTION))
@@ -52,6 +46,18 @@ fun validateYouTrackManifest(manifest: YouTrackAppManifest): List<PluginProblem>
   return problems
 }
 
+private fun validateTitle(title: String?, problems: MutableList<PluginProblem>) {
+  when {
+    (title.isNullOrBlank()) -> {
+      problems.add(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.TITLE))
+    }
+    else -> {
+      validatePropertyLength(DESCRIPTOR_NAME, YouTrackAppFields.Manifest.TITLE, title, MAX_NAME_LENGTH, problems)
+      validatePluginNameIsCorrect(descriptor = DESCRIPTOR_NAME, name = title, problems = problems)
+    }
+  }
+}
+
 private fun validateManifestName(name: String?, problems: MutableList<PluginProblem>) {
   if (name == null) {
     problems.add(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.NAME))
@@ -63,7 +69,13 @@ private fun validateManifestName(name: String?, problems: MutableList<PluginProb
     return
   }
 
-  validatePropertyLength(DESCRIPTOR_NAME, YouTrackAppFields.Manifest.NAME, name, MAX_NAME_LENGTH, problems)
+  validatePropertyLength(
+      descriptor = DESCRIPTOR_NAME,
+      propertyName = YouTrackAppFields.Manifest.NAME,
+      propertyValue = name,
+      maxLength = MAX_NAME_LENGTH,
+      problems = problems
+  )
 
   if (!ID_REGEX.matches(name)) {
     problems.add(UnsupportedSymbolsAppNameProblem())

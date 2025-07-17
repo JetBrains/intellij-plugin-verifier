@@ -70,8 +70,16 @@ internal fun validateHubPluginBean(manifest: HubPluginManifest): List<PluginProb
   } else if (manifest.products.isEmpty()) {
     problems.add(HubProductsNotSpecified())
   }
-  if (manifest.pluginName != null) {
-    validatePropertyLength(DESCRIPTOR_NAME, "name", manifest.pluginName, MAX_NAME_LENGTH, problems)
+  val pluginName = manifest.pluginName
+  if (pluginName != null) {
+    validatePropertyLength(
+        descriptor = DESCRIPTOR_NAME,
+        propertyName = "name",
+        propertyValue = pluginName,
+        maxLength = MAX_NAME_LENGTH,
+        problems = problems
+    )
+    validatePluginNameIsCorrect(descriptor = DESCRIPTOR_NAME, name = pluginName, problems = problems)
   }
   return problems
 }

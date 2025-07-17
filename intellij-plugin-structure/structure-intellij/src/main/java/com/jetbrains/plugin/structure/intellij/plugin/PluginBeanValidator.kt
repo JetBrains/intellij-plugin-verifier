@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.base.problems.NotBoolean
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.base.problems.VendorCannotBeEmpty
+import com.jetbrains.plugin.structure.base.problems.validatePluginNameIsCorrect
 import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
@@ -95,6 +96,9 @@ class PluginBeanValidator {
         }
         validatePropertyLength("name", name, MAX_NAME_LENGTH)
         verifyNewlines("name", name, descriptorPath, ::registerProblem)
+        validatePluginNameIsCorrect(descriptorPath, name)?.let {
+          registerProblem(it)
+        }
       }
     }
   }
