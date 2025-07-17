@@ -100,11 +100,15 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
 
   @Test
   fun `plugin name contains newline`() {
+    val name = "Some\nname"
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
-        name = "<name>Some\nname</name>"
+        this.name = "<name>$name</name>"
       },
-      listOf(ContainsNewlines("name", "plugin.xml"))
+      listOf(
+        ContainsNewlines("name", "plugin.xml"),
+        InvalidPluginName("plugin.xml", name)
+      )
     )
   }
 
