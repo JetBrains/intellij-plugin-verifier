@@ -88,6 +88,15 @@ class NotNumber(
     get() = Level.ERROR
 }
 
+class InvalidPluginName(descriptorPath: String? = null, val name: String) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage =  "Name '$name' contains invalid characters. Only the following characters are allowed: " +
+          "letters, digits, spaces, and .,+_-/:()#'&[]|"
+) {
+  override val level
+    get() = Level.ERROR
+}
+
 class UnableToReadDescriptor(
   descriptorPath: String,
   exceptionMessage: String?

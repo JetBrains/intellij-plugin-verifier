@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.mocks
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
 import com.jetbrains.plugin.structure.base.problems.IncorrectZipOrJarFile
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
 import com.jetbrains.plugin.structure.base.problems.NotBoolean
 import com.jetbrains.plugin.structure.base.problems.NotNumber
@@ -195,6 +196,41 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
       ).warnings.single()
       assertEquals(TemplateWordInPluginName("plugin.xml", pluginName, templateWord), warning)
     }
+  }
+
+  @Test
+  fun `plugin name contains unallowed symbols`() {
+    for (i in 1..10) {
+      val pluginName = "bla ${getRandomNotAllowedNameSymbols(i)}bla"
+      `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          name = "<name>$pluginName</name>"
+        },
+        listOf(InvalidPluginName("plugin.xml", pluginName))
+      )
+    }
+  }
+
+  @Test
+  fun `plugin name contains only allowed symbols`() {
+      (1..10).forEach { _ ->
+          val pluginName = getRandomAllowedNameSymbols(5)
+          val result = `test valid plugin xml`(
+              perfectXmlBuilder.modify {
+                  name = "<name>$pluginName</name>"
+              }
+          )
+          assertTrue(result.warnings.isEmpty())
+          assertTrue(result.unacceptableWarnings.isEmpty())
+      }
+    val nameWithAmpersand = "${getRandomAllowedNameSymbols(2)} &amp; ${getRandomAllowedNameSymbols(3)}"
+    val result = `test valid plugin xml`(
+      perfectXmlBuilder.modify {
+        name = "<name>$nameWithAmpersand</name>"
+      }
+    )
+    assertTrue(result.warnings.isEmpty())
+    assertTrue(result.unacceptableWarnings.isEmpty())
   }
 
   @Test

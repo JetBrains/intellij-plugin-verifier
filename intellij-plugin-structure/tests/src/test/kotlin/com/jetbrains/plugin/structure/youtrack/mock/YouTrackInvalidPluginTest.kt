@@ -59,6 +59,26 @@ class YouTrackInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginMana
   }
 
   @Test
+  fun `name contains unallowed symbols`() {
+    for (i in 1..10) {
+      val name = getRandomNotAllowedNameSymbols(i)
+      checkInvalidPlugin(InvalidPluginName("manifest.json", name)) {
+        it.copy(title = name)
+      }
+    }
+  }
+
+  @Test
+  fun `name contains only allowed symbols`() {
+    for (i in 1..10) {
+      val name = getRandomAllowedNameSymbols(i)
+      checkValidPlugin {
+        it.copy(name = name)
+      }
+    }
+  }
+
+  @Test
   fun `invalid app title`() {
     checkInvalidPlugin(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.TITLE)) { it.copy(title = null) }
     checkInvalidPlugin(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.TITLE)) { it.copy(title = "") }

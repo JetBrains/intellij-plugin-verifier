@@ -77,7 +77,18 @@ data class ToolboxPluginDescriptor(
       }
 
       else -> {
-        validatePropertyLength(ToolboxPluginManager.DESCRIPTOR_NAME, "meta.name", readableName, MAX_NAME_LENGTH, problems)
+        validatePropertyLength(
+          descriptor = ToolboxPluginManager.DESCRIPTOR_NAME,
+          propertyName = "meta.name",
+          propertyValue = readableName,
+          maxLength = MAX_NAME_LENGTH,
+          problems = problems
+        )
+        validatePluginNameIsCorrect(
+          descriptor = ToolboxPluginManager.DESCRIPTOR_NAME,
+          name = readableName,
+          problems = problems
+        )
       }
     }
     val metaUrl = meta?.url
