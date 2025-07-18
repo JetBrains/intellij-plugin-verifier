@@ -29,9 +29,9 @@ object FleetDescriptorSpec {
     }
 
     object UnifiedVersioningSpec {
-      const val MAJOR_PART_MAX_VALUE = CompatibilityUtils.MAX_BRANCH_VALUE
-      const val MINOR_PART_MAX_VALUE = CompatibilityUtils.MAX_BUILD_VALUE
-      const val PATCH_PART_MAX_VALUE = CompatibilityUtils.MAX_COMPONENT_VALUE
+      const val MAJOR_PART_MAX_VALUE = CompatibilityUtils.MAX_BRANCH_VALUE - 1
+      const val MINOR_PART_MAX_VALUE = CompatibilityUtils.MAX_BUILD_VALUE - 1
+      const val PATCH_PART_MAX_VALUE = CompatibilityUtils.MAX_COMPONENT_VALUE - 1
     }
 
     fun getVersionConstraints(isLegacy: Boolean): Triple<Int, Int, Int> {

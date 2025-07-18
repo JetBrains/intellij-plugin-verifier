@@ -264,11 +264,11 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
       descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "major",
       versionName = "compatibleShipVersionRange.from",
-      version = "1001.99999.9999",
+      version = "1000.99999.9999",
       limit = legacyVersioningSpec.MAJOR_PART_MAX_VALUE
     )) {
       it.copy(
-        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1001.99999.9999", to = "1002.1.1"),
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1000.99999.9999", to = "1002.1.1"),
         meta = it.meta?.copy(supportedProducts = supportedProducts)
       )
     }
@@ -276,11 +276,11 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
       descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "major",
       versionName = "compatibleShipVersionRange.to",
-      version = "1001.99999.9999",
+      version = "1000.99999.9999",
       limit = legacyVersioningSpec.MAJOR_PART_MAX_VALUE
     )) {
       it.copy(
-        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "123.1.1", to = "1001.99999.9999"),
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "123.1.1", to = "1000.99999.9999"),
         meta = it.meta?.copy(supportedProducts = supportedProducts)
       )
     }
@@ -288,11 +288,11 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
       descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "minor",
       versionName = "compatibleShipVersionRange.from",
-      version = "1.100001.9999",
+      version = "1.100000.9999",
       limit = legacyVersioningSpec.MINOR_PART_MAX_VALUE
     )) {
       it.copy(
-        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.100001.9999", to = "202.123.123"),
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.100000.9999", to = "202.123.123"),
         meta = it.meta?.copy(supportedProducts = supportedProducts)
       )
     }
@@ -300,11 +300,11 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
       descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "minor",
       versionName = "compatibleShipVersionRange.to",
-      version = "1.100001.9999",
+      version = "1.100000.9999",
       limit = legacyVersioningSpec.MINOR_PART_MAX_VALUE
     )) {
       it.copy(
-        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1.1", to = "1.100001.9999"),
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1.1", to = "1.100000.9999"),
         meta = it.meta?.copy(supportedProducts = supportedProducts)
       )
     }
@@ -312,11 +312,11 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
       descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "patch",
       versionName = "compatibleShipVersionRange.from",
-      version = "1.2.10001",
+      version = "1.2.10000",
       limit = legacyVersioningSpec.PATCH_PART_MAX_VALUE
     )) {
       it.copy(
-        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.2.10001"),
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.2.10000"),
         meta = it.meta?.copy(supportedProducts = supportedProducts)
       )
     }
@@ -324,11 +324,11 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
       descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
       componentName = "patch",
       versionName = "compatibleShipVersionRange.to",
-      version = "1.2.10001",
+      version = "1.2.10000",
       limit = legacyVersioningSpec.PATCH_PART_MAX_VALUE
     )) {
       it.copy(
-        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1.1", to = "1.2.10001"),
+        compatibleShipVersionRange = it.compatibleShipVersionRange!!.copy(from = "1.1.1", to = "1.2.10000"),
         meta = it.meta?.copy(supportedProducts = supportedProducts)
       )
     }
