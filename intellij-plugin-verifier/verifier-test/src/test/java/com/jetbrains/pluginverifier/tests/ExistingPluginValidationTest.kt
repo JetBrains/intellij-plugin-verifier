@@ -3,6 +3,7 @@ package com.jetbrains.pluginverifier.tests
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
@@ -564,6 +565,27 @@ class ExistingPluginValidationTest : BasePluginTest() {
       "The <release-version> parameter (03) format is invalid. " +
       "Ensure it is an integer with at least two digits.")
   }
+
+    @Test
+    fun `existing paid plugin name contains unallowed symbols`() {
+        val name = "Japanese Language Pack / 日本語言語パック"
+        val ideaPlugin = ideaPlugin(pluginName = name)
+        val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
+        val result = buildPluginWithResult(problemResolver) {
+            dir("META-INF") {
+                file("plugin.xml") {
+                    """
+            <idea-plugin>
+              $ideaPlugin
+            </idea-plugin>
+          """
+                }
+            }
+        }
+        assertSuccess(result)
+        result.assertContainsWarning<InvalidPluginName>("Invalid plugin descriptor 'plugin.xml'. " +
+                "Name '$name' contains invalid characters. Only the following characters are allowed: letters, digits, spaces, and .,+_-/:()#'&[]|")
+    }
 
   private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
     dir("META-INF") {

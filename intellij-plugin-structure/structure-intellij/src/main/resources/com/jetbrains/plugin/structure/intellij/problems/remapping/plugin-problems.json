@@ -5,7 +5,8 @@
     "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName": "ignore",
     "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithJustBranch": "unacceptable-warning",
     "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithMagicNumber": "unacceptable-warning",
-    "com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat": "warning"
+    "com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat": "warning",
+    "com.jetbrains.plugin.structure.base.problems.InvalidPluginName": "warning"
   },
   "new-plugin": {
     "com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix": "error",
