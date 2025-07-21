@@ -70,9 +70,12 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
   }
 
   private fun parse(yamlPath: Path): PluginCreationResult<TeamCityRecipePlugin> {
-    val descriptor = try {
-      val yamlContent = yamlPath.readText()
-      objectMapper.readValue(yamlContent, TeamCityRecipeDescriptor::class.java)
+    val yamlContent: String
+    val descriptor: TeamCityRecipeDescriptor
+
+    try {
+      yamlContent = yamlPath.readText()
+      descriptor = objectMapper.readValue(yamlContent, TeamCityRecipeDescriptor::class.java)
     } catch (e: UnrecognizedPropertyException) {
       LOG.warn("Failed to parse TeamCity Recipe. Encountered unknown property '${e.propertyName}'", e)
       return PluginCreationFail(UnknownPropertyProblem(e.propertyName))
@@ -90,6 +93,7 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
     if (validationResult.any { it.isError }) {
       return PluginCreationFail(validationResult)
     }
+
     val plugin = with(descriptor) {
       TeamCityRecipePlugin(
         // All the fields are expected to be non-null due to the validations above
@@ -97,7 +101,7 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
         pluginName = this.title!!,
         description = this.description!!,
         pluginVersion = this.version!!,
-        specVersion = getSpecVersion(),
+        specVersion = getSpecVersion(yamlContent),
         yamlFile = PluginFile(yamlPath.fileName.toString(), yamlPath.readBytes()),
         namespace = TeamCityRecipeSpec.RecipeCompositeName.getNamespace(this.name)!!,
         dependencies = getDependencies(this),
@@ -121,7 +125,13 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
   }
 }
 
-// Always 1.0.0 for now
-private fun getSpecVersion(): String = "1.0.0"
+private fun getSpecVersion(recipeContent: String): String {
+  val recipeUsesPathPrefixVariable = recipeContent.contains("TEAMCITY_PATH_PREFIX")
+  if (recipeUsesPathPrefixVariable) {
+    return "1.1.0"
+  }
+
+  return "1.0.0"
+}
 
 private fun Path.isYaml(): Boolean = this.hasExtension("yaml") || this.hasExtension("yml")
