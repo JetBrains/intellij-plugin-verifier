@@ -3,7 +3,6 @@ package com.jetbrains.pluginverifier.tests
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
@@ -583,8 +582,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
             }
         }
         assertSuccess(result)
-        result.assertContainsWarning<InvalidPluginName>("Invalid plugin descriptor 'plugin.xml'. " +
-                "Name '$name' contains invalid characters. Only the following characters are allowed: letters, digits, spaces, and .,+_-/:()#'&[]|")
+        assertNoProblems((result as PluginCreationSuccess).warnings)
     }
 
   private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
