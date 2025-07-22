@@ -201,8 +201,8 @@ publishing {
 signing {
   val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null
   if (isUnderTeamCity) {
-    val signingKey = findProperty("signingKey").toString()
-    val signingPassword = findProperty("signingPassword").toString()
+    val signingKey: String? by project
+    val signingPassword: String? by project
 
     useInMemoryPgpKeys(signingKey, signingPassword)
 
