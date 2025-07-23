@@ -23,7 +23,7 @@ class JsonUrlProblemLevelRemappingManagerTest {
     Assert.assertNotNull(existingPluginLevelRemapping)
     existingPluginLevelRemapping?.let {
       val ignoredProblems = it.findProblemsByLevel(IgnoredLevel)
-      assertThat(ignoredProblems.size, `is`(3))
+      assertThat(ignoredProblems.size, `is`(4))
     }
 
     val newPluginProblemSet = levelRemappings[RemappingSet.NEW_PLUGIN_REMAPPING_SET]
