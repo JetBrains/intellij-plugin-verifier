@@ -1,15 +1,26 @@
+import org.gradle.kotlin.dsl.get
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.ChangelogPluginExtension
 import org.jetbrains.changelog.tasks.BaseChangelogTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.Base64
 import org.gradle.api.publish.Publication as GradlePublication
+import okhttp3.MultipartBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.asRequestBody
 
 plugins {
   `maven-publish`
   signing
   alias(sharedLibs.plugins.kotlin.jvm)
   alias(sharedLibs.plugins.changelog)
-  alias(sharedLibs.plugins.nexus.publish)
+}
+
+buildscript {
+  dependencies {
+    classpath("com.squareup.okhttp3:okhttp:4.12.0")
+  }
 }
 
 val projectVersion: String by extra {
@@ -100,18 +111,6 @@ subprojects {
   }
 }
 
-val mavenCentralOssrhToken: String? by project
-val mavenCentralOssrhTokenPassword: String? by project
-
-nexusPublishing {
-  repositories {
-    sonatype {
-      username = mavenCentralOssrhToken
-      password = mavenCentralOssrhTokenPassword
-    }
-  }
-}
-
 data class Publication(val project: String, val name: String, val readableName: String, val description: String) {
   companion object {
     val cli = Publication("verifier-cli", "VerifierCli",
@@ -130,14 +129,12 @@ data class Publication(val project: String, val name: String, val readableName: 
 }
 
 publishing {
-  publications {
-    publish(Publication.cli)
-    publish(Publication.core)
-    publish(Publication.intellij)
-    publish(Publication.repository)
-  }
-
   repositories {
+    maven {
+      name = "artifacts"
+      url = uri(layout.buildDirectory.dir("artifacts/maven"))
+    }
+
     maven {
       url = uri("https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier")
       credentials {
@@ -146,11 +143,18 @@ publishing {
       }
     }
   }
+
+  publications {
+    configurePublication(Publication.cli)
+    configurePublication(Publication.core)
+    configurePublication(Publication.intellij)
+    configurePublication(Publication.repository)
+  }
 }
 
 signing {
-  isRequired = mavenCentralOssrhToken != null
-  if (isRequired) {
+  val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null
+  if (isUnderTeamCity) {
     val signingKey: String? by project
     val signingPassword: String? by project
 
@@ -170,9 +174,63 @@ tasks {
   publish {
     dependsOn(test)
   }
+
+  val packSonatypeCentralBundle by registering(Zip::class) {
+    group = "publishing"
+
+    dependsOn(":publishAllPublicationsToArtifactsRepository")
+
+    from(layout.buildDirectory.dir("artifacts/maven"))
+    archiveFileName.set("bundle.zip")
+    destinationDirectory.set(layout.buildDirectory)
+  }
+
+  val publishMavenToCentralPortal by registering {
+    group = "publishing"
+
+    dependsOn(packSonatypeCentralBundle)
+
+    doLast {
+      val uriBase = "https://central.sonatype.com/api/v1/publisher/upload"
+      val publishingType = "USER_MANAGED"
+      val deploymentName = "${project.name}-$version"
+      val uri = "$uriBase?name=$deploymentName&publishingType=$publishingType"
+
+      val centralPortalUserName: String? by project
+      val centralPortalToken: String? by project
+
+      val base64Auth = Base64
+        .getEncoder()
+        .encode("$centralPortalUserName:$centralPortalToken".toByteArray())
+        .toString(Charsets.UTF_8)
+      val bundleFile = packSonatypeCentralBundle.get().archiveFile.get().asFile
+
+      println("Sending request to $uri...")
+
+      val client = OkHttpClient()
+      val request = Request.Builder()
+        .url(uri)
+        .header("Authorization", "Bearer $base64Auth")
+        .post(
+          MultipartBody.Builder()
+            .setType(MultipartBody.FORM)
+            .addFormDataPart("bundle", bundleFile.name, bundleFile.asRequestBody())
+            .build()
+        )
+        .build()
+      client.newCall(request).execute().use { response ->
+        val statusCode = response.code
+        println("Upload status code: $statusCode")
+        println("Upload result: ${response.body!!.string()}")
+        if (statusCode != 201) {
+          error("Upload error to Central repository. Status code $statusCode.")
+        }
+      }
+    }
+  }
 }
 
-fun PublicationContainer.publish(publication: Publication) {
+fun PublicationContainer.configurePublication(publication: Publication) {
   val (projectName, publicationName) = publication
   create<MavenPublication>(publicationName) {
     val proj = project(":$projectName")

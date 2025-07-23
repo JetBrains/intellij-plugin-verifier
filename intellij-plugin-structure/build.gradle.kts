@@ -246,9 +246,13 @@ tasks {
       val deploymentName = "${project.name}-$version"
       val uri = "$uriBase?name=$deploymentName&publishingType=$publishingType"
 
-      val userName = rootProject.extra["centralPortalUserName"] as String
-      val token = rootProject.extra["centralPortalToken"] as String
-      val base64Auth = Base64.getEncoder().encode("$userName:$token".toByteArray()).toString(Charsets.UTF_8)
+      val centralPortalUserName: String? by project
+      val centralPortalToken: String? by project
+
+      val base64Auth = Base64
+        .getEncoder()
+        .encode("$centralPortalUserName:$centralPortalToken".toByteArray())
+        .toString(Charsets.UTF_8)
       val bundleFile = packSonatypeCentralBundle.get().archiveFile.get().asFile
 
       println("Sending request to $uri...")
