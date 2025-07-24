@@ -46,5 +46,9 @@ internal fun getRandomInvalidXmlBasedPluginName(length: Int): String {
   }
 }
 
+/**
+ * Normalize new-lines according to [XML 1.0 Specification](https://www.w3.org/TR/xml/#sec-line-ends)
+ */
+internal fun String.normalizeNewLines(): String = replace("\r\n", "\n").replace("\r", "\n")
 
 private fun Int.range() = IntRange(this, this)

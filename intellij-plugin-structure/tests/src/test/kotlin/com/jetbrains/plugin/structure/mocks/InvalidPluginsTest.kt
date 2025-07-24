@@ -17,6 +17,7 @@ import com.jetbrains.plugin.structure.base.problems.VendorCannotBeEmpty
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.getRandomInvalidXmlBasedPluginName
+import com.jetbrains.plugin.structure.base.utils.normalizeNewLines
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.problems.*
@@ -221,7 +222,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         perfectXmlBuilder.modify {
           name = "<name>$pluginName</name>"
         },
-        listOf(InvalidPluginName("plugin.xml", pluginName))
+        listOf(InvalidPluginName("plugin.xml", pluginName.normalizeNewLines()))
       )
     }
   }
