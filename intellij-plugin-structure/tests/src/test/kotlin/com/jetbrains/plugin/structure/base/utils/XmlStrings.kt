@@ -19,7 +19,7 @@ private val xml10BMPCharRanges = listOf(
  *
  * Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
  *
- * @see https://www.w3.org/TR/xml/#charsets
+ * See [XML 1.0 Specification](https://www.w3.org/TR/xml/#charsets).
  */
 internal fun getRandomXmlChar(): Char {
   val range = xml10BMPCharRanges.random()
