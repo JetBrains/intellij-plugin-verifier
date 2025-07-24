@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.base.utils
 
+import com.jetbrains.plugin.structure.base.problems.ALLOWED_NAME_SYMBOLS
 import kotlin.random.Random
 
 private val xml10BMPCharRanges = listOf(
@@ -27,5 +28,23 @@ internal fun getRandomXmlChar(): Char {
 
   return codePoint.toChar()
 }
+
+/**
+ * Get a random plugin name composed solely of invalid plugin name characters
+ * for plugins based on the XML format.
+ */
+internal fun getRandomInvalidXmlBasedPluginName(length: Int): String {
+  val invalidPluginName = StringBuilder()
+  while (true) {
+    val randomXmlCharacter = getRandomXmlChar()
+    if (!ALLOWED_NAME_SYMBOLS.matches(randomXmlCharacter.toString())) {
+      invalidPluginName.append(randomXmlCharacter)
+      if (invalidPluginName.length == length) {
+        return invalidPluginName.toString()
+      }
+    }
+  }
+}
+
 
 private fun Int.range() = IntRange(this, this)

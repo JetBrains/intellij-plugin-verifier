@@ -16,6 +16,7 @@ import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
 import com.jetbrains.plugin.structure.base.problems.VendorCannotBeEmpty
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.getRandomInvalidXmlBasedPluginName
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.problems.*
@@ -202,9 +203,20 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
   }
 
   @Test
+  fun `plugin name contains a newline`() {
+    val pluginName = "Foo\nBar"
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        name = "<name>$pluginName</name>"
+      },
+      listOf(InvalidPluginName("plugin.xml", pluginName))
+    )
+  }
+
+  @Test
   fun `plugin name contains unallowed symbols`() {
     for (i in 1..10) {
-      val pluginName = "bla ${getRandomNotAllowedNameSymbols(i)}bla"
+      val pluginName = "bla ${getRandomInvalidXmlBasedPluginName(i)}bla"
       `test invalid plugin xml`(
         perfectXmlBuilder.modify {
           name = "<name>$pluginName</name>"
@@ -213,6 +225,20 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
       )
     }
   }
+
+  @Test
+  fun `plugin name contains unallowed unicode symbols`() {
+    val pluginNames = listOf("\u001C", "\u0016")
+    pluginNames.forEach { pluginName ->
+      `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          name = "<name>$pluginName</name>"
+        },
+        listOf(UnexpectedDescriptorElements(4, PLUGIN_XML))
+      )
+    }
+  }
+
 
   @Test
   fun `plugin name contains only allowed symbols`() {
