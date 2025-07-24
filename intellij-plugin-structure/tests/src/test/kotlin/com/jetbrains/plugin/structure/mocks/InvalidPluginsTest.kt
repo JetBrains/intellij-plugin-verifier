@@ -106,7 +106,6 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         this.name = "<name>$name</name>"
       },
       listOf(
-        ContainsNewlines("name", "plugin.xml"),
         InvalidPluginName("plugin.xml", name)
       )
     )
