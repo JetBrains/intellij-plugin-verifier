@@ -1,10 +1,11 @@
 package com.jetbrains.plugin.structure.teamcity.mock
 
 import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.utils.getRandomInvalidXmlBasedPluginName
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
@@ -111,7 +112,7 @@ class TeamcityInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMan
   @Test
   fun `plugin display name name contains unallowed symbols`() {
     for (i in 1..10) {
-      val name = getRandomNotAllowedNameSymbols(i)
+      val name = getRandomInvalidXmlBasedPluginName(i)
       `test invalid plugin xml`(
         perfectXmlBuilder.modify {
           displayName = "<display-name>$name</display-name>"
