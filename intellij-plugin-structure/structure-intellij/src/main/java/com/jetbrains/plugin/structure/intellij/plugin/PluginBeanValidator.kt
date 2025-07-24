@@ -21,7 +21,6 @@ import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.PluginUntilBuildVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ProductReleaseVersionVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.verifyNewlines
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jsoup.Jsoup
 import java.time.LocalDate
@@ -95,7 +94,6 @@ class PluginBeanValidator {
           registerProblem(TemplateWordInPluginName(descriptorPath, name, templateWord))
         }
         validatePropertyLength("name", name, MAX_NAME_LENGTH)
-        verifyNewlines("name", name, descriptorPath, ::registerProblem)
         validatePluginNameIsCorrect(descriptorPath, name.trim())?.let {
           registerProblem(it)
         }
