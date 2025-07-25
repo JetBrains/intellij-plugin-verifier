@@ -153,18 +153,17 @@ publishing {
 }
 
 signing {
-  val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null
-  if (isUnderTeamCity) {
-    val signingKey: String? by project
-    val signingPassword: String? by project
+  isRequired = System.getenv("TEAMCITY_VERSION") != null
 
-    useInMemoryPgpKeys(signingKey, signingPassword)
+  val signingKey: String? by project
+  val signingPassword: String? by project
 
-    sign(Publication.cli)
-    sign(Publication.core)
-    sign(Publication.intellij)
-    sign(Publication.repository)
-  }
+  useInMemoryPgpKeys(signingKey, signingPassword)
+
+  sign(Publication.cli)
+  sign(Publication.core)
+  sign(Publication.intellij)
+  sign(Publication.repository)
 }
 
 tasks {
