@@ -40,6 +40,26 @@ class ToolboxInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMana
   }
 
   @Test
+  fun `name contains unallowed symbols`() {
+    for (i in 1..10) {
+      val name = getRandomNotAllowedNameSymbols(i)
+      checkInvalidPlugin(InvalidPluginName("extension.json", name)) {
+        it.copy(meta = it.meta?.copy(name = name))
+      }
+    }
+  }
+
+  @Test
+  fun `name contains only allowed symbols`() {
+    for (i in 1..10) {
+      val name = getRandomAllowedNameSymbols(i)
+      checkValidPlugin {
+        it.copy(meta = it.meta?.copy(name = name))
+      }
+    }
+  }
+
+  @Test
   fun `id is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified("id")) { it.copy(id = null) }
     checkInvalidPlugin(PropertyNotSpecified("id")) { it.copy(id = "") }

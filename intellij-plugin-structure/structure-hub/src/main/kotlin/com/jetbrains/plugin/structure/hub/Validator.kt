@@ -42,8 +42,18 @@ internal fun validateHubPluginBean(manifest: HubPluginManifest): List<PluginProb
     }
   }
 
-  if (manifest.pluginName.isNullOrBlank()) {
+  val pluginName = manifest.pluginName
+  if (pluginName.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("name"))
+  } else {
+    validatePropertyLength(
+      descriptor = DESCRIPTOR_NAME,
+      propertyName = "name",
+      propertyValue = pluginName,
+      maxLength = MAX_NAME_LENGTH,
+      problems = problems
+    )
+    validatePluginNameIsCorrect(descriptor = DESCRIPTOR_NAME, name = pluginName, problems = problems)
   }
 
   if (manifest.author == null) {
@@ -69,9 +79,6 @@ internal fun validateHubPluginBean(manifest: HubPluginManifest): List<PluginProb
     problems.add(PropertyNotSpecified("products"))
   } else if (manifest.products.isEmpty()) {
     problems.add(HubProductsNotSpecified())
-  }
-  if (manifest.pluginName != null) {
-    validatePropertyLength(DESCRIPTOR_NAME, "name", manifest.pluginName, MAX_NAME_LENGTH, problems)
   }
   return problems
 }

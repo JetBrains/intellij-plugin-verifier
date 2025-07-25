@@ -41,6 +41,25 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
     ) { it.copy(meta = it.meta?.copy(name = "a".repeat(65))) }
   }
 
+  @Test
+  fun `name contains unallowed symbols`() {
+    for (i in 1..10) {
+      val name = getRandomNotAllowedNameSymbols(i)
+      checkInvalidPlugin(InvalidPluginName("extension.json", name)) {
+        it.copy(meta = it.meta?.copy(name = name))
+      }
+    }
+  }
+
+  @Test
+  fun `name contains only allowed symbols`() {
+    for (i in 1..10) {
+      val name = getRandomAllowedNameSymbols(i)
+      checkValidPlugin {
+        it.copy(meta = it.meta?.copy(name = name))
+      }
+    }
+  }
 
   @Test
   fun `id is not specified`() {

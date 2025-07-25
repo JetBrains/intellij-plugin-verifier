@@ -1,9 +1,12 @@
 package com.jetbrains.plugin.structure.teamcity.mock
 
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
+import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.utils.getRandomInvalidXmlBasedPluginName
+import com.jetbrains.plugin.structure.base.utils.normalizeNewLines
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.base.utils.writeText
 import com.jetbrains.plugin.structure.mocks.BasePluginManagerTest
@@ -77,7 +80,6 @@ class TeamcityInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMan
     )
   }
 
-
   @Test
   fun `plugin display name is not specified`() {
     `test invalid plugin xml`(
@@ -106,6 +108,24 @@ class TeamcityInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMan
       },
       listOf(ForbiddenWordInPluginName(PLUGIN_NAME_FORBIDDEN_WORDS))
     )
+  }
+
+  @Test
+  fun `plugin display name name contains unallowed symbols`() {
+    for (i in 1..10) {
+      val name = getRandomInvalidXmlBasedPluginName(i)
+      val expectedProblems = if (name.isBlank()) {
+        PropertyNotSpecified("display-name")
+      } else {
+        InvalidPluginName("teamcity-plugin.xml", name.normalizeNewLines())
+      }
+      `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          displayName = "<display-name>$name</display-name>"
+        },
+        listOf(expectedProblems)
+      )
+    }
   }
 
   @Test

@@ -565,6 +565,26 @@ class ExistingPluginValidationTest : BasePluginTest() {
       "Ensure it is an integer with at least two digits.")
   }
 
+    @Test
+    fun `existing paid plugin name contains unallowed symbols`() {
+        val name = "Japanese Language Pack / 日本語言語パック"
+        val ideaPlugin = ideaPlugin(pluginName = name)
+        val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
+        val result = buildPluginWithResult(problemResolver) {
+            dir("META-INF") {
+                file("plugin.xml") {
+                    """
+            <idea-plugin>
+              $ideaPlugin
+            </idea-plugin>
+          """
+                }
+            }
+        }
+        assertSuccess(result)
+        assertNoProblems((result as PluginCreationSuccess).warnings)
+    }
+
   private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
     dir("META-INF") {
       file("plugin.xml") {
