@@ -38,7 +38,32 @@ class ParseInvalidRecipeTests(
 
     assertProblematicPlugin(
       temporaryFolder.prepareRecipeYaml(recipeYaml),
-      listOf(DuplicatePropertiesProblem),
+      listOf(DuplicatePropertiesProblem()),
+    )
+  }
+
+  @Test
+  fun `recipe YAML with duplicate inputs`() {
+    val recipeYaml = """
+        name: namespace/recipe
+        version: 1.2.3
+        title: abc
+        description: abc
+        inputs:
+          - name:
+              type: text
+              required: true
+          - name:
+              type: text
+              required: true
+        steps:
+          - name: step
+            script: echo abc
+        """.trimIndent()
+
+    assertProblematicPlugin(
+      temporaryFolder.prepareRecipeYaml(recipeYaml),
+      listOf(DuplicatePropertiesProblem(listOf("name"))),
     )
   }
 

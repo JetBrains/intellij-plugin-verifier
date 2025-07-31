@@ -52,10 +52,7 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
       return PluginCreationFail(FileTooBig(recipePath.simpleName, sizeLimit))
     }
 
-    return when {
-      recipePath.isYaml() -> parseYaml(recipePath)
-      else -> PluginCreationFail(NotYamlFileProblem)
-    }
+    return parseYaml(recipePath)
   }
 
   private fun parseYaml(yamlPath: Path): PluginCreationResult<TeamCityRecipePlugin> {
@@ -83,7 +80,7 @@ private constructor(private val extractDirectory: Path) : PluginManager<TeamCity
       LOG.warn("Failed to parse TeamCity Recipe", e)
 
       if (e.message?.startsWith("Duplicate field") == true) {
-        return PluginCreationFail(DuplicatePropertiesProblem)
+        return PluginCreationFail(DuplicatePropertiesProblem())
       }
 
       return PluginCreationFail(ParseYamlProblem)

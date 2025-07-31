@@ -44,6 +44,7 @@ internal fun validateTeamCityRecipe(descriptor: TeamCityRecipeDescriptor) = sequ
 
   validateContainer(descriptor.container)
   validateExistsAndNotEmpty(descriptor.steps, RecipeSteps.NAME, RecipeSteps.DESCRIPTION)
+  validateNoDuplicateInputs(descriptor.inputs.flatMap { it.keys })
   for (input in descriptor.inputs) validateRecipeInput(input)
   descriptor.steps?.let { for (step in it) validateRecipeStep(step) }
 }.toList()
@@ -102,6 +103,13 @@ private suspend fun SequenceScope<PluginProblem>.validateName(name: String?) {
       "should only contain latin letters, numbers, dashes and underscores. " +
           "The property cannot start or end with a dash or underscore, and cannot contain several consecutive dashes and underscores.",
     )
+  }
+}
+
+private suspend fun SequenceScope<PluginProblem>.validateNoDuplicateInputs(inputs: List<String>) {
+  val duplicates = inputs.groupingBy { it }.eachCount().filter { it.value > 1 }
+  if (duplicates.isNotEmpty()) {
+    yield(DuplicatePropertiesProblem(duplicates.keys))
   }
 }
 

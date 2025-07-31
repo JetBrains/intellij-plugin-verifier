@@ -15,8 +15,12 @@ object ParseYamlProblem : InvalidPropertyProblem() {
   override val message = "The recipe specification should follow valid YAML syntax."
 }
 
-object DuplicatePropertiesProblem : InvalidPropertyProblem() {
-  override val message = "The recipe YAML has duplicate properties."
+data class DuplicatePropertiesProblem(val properties: Collection<String> = emptyList()) : InvalidPropertyProblem() {
+  override val message = when {
+    properties.isEmpty() -> "The recipe YAML has duplicate properties."
+    properties.size == 1 -> "The recipe YAML has duplicate property <${properties.single()}>."
+    else -> "The recipe YAML has duplicate properties: ${properties.joinToString()}."
+  }
 }
 
 data class UnknownPropertyProblem(val propertyName: String) : InvalidPropertyProblem() {
