@@ -1,7 +1,7 @@
 [versions]
 bcpkix-jdk15on = "1.70"
 byteBuddy = "1.17.6"
-commons-compress = "1.27.1"
+commons-compress = "1.28.0"
 jgrapht-core = "1.5.2"
 jetbrains-pluginRepositoryRestClient = "2.0.47"
 kotlinx-metadata = "0.9.0"
