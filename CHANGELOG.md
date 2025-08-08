@@ -6,9 +6,34 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Increase unpacked IntelliJ plugin size to 5GB
+- IntelliJ Structure: TeamCity Recipes: Add validation for duplicated recipe inputs ([TW-94970](https://youtrack.jetbrains.com/issue/TW-94970))
+- IntelliJ Structure: TeamCity Recipes: Return a higher compatibility version if the recipe uses `TEAMCITY_PATH_PREFIX` ([#1321](https://github.com/JetBrains/intellij-plugin-verifier/pull/1321), [TW-94809](https://youtrack.jetbrains.com/issue/TW-94809))
+- IntelliJ Structure: TeamCity Recipes: Increase the maximum length of the recipe description ([TW-92950](https://youtrack.jetbrains.com/issue/TW-92950), [#1301](https://github.com/JetBrains/intellij-plugin-verifier/pull/1301))
+- IntelliJ Structure: Put dependency-related debug level logging into separate configurable family. Introduce `intellij.structure.dependencies.logger.level` property in Logback 
+- IntelliJ Structure: Put JAR-related debug level logging into separate configurable family. Introduce `intellij.structure.jar.logger.level` property in Logback 
+- IntelliJ Structure: Make the local plugin repository honor plugin problem remapping provided by the CLI. `Introduce the -force-offline-compatibility` CLI parameter. When enabled, the `check-plugin-api` command in `-offline` mode will treat any plugin in the local repository as compatible with the major or trunk IDE. This is used for local investigations or tracing API compatibility checks for batches of plugins. ([#1299](https://github.com/JetBrains/intellij-plugin-verifier/pull/1299))
+- Add an explicit `jackson-dataformat-yaml` dependency version to Gradle catalog
+
 ### Changed
 
+- Do not delete extracted resources outside of Plugin Archive Manager. Do not delete resources of failed plugin creations. Such resources might contain dependencies which defeats the purpose of shared cache. ([#1311](https://github.com/JetBrains/intellij-plugin-verifier/pull/1311))
+- Load Kotlin JVM metadata leniently. There might be newer metadata produced by Kotlin compiler that is newer than `kotlinx-metadata-jvm` library ([f7d2d60](https://github.com/JetBrains/intellij-plugin-verifier/commit/f7d2d600da671e980c23af86cd15a1d06572bf53)) 
+- Remove the ability to disable downloading of unavailable optional dependencies ([#1314](https://github.com/JetBrains/intellij-plugin-verifier/pull/1314))
+- Distinguish between failed plugin descriptor and unavailable plugin descriptor. Log different exception when plugin is not found. On JDOM issues, do not log verbose stack trace, as this is an internal issue that cannot be actioned. ([#1313](https://github.com/JetBrains/intellij-plugin-verifier/pull/1313))
+- Migrate Maven Central publication process from OSSRH to Central Publisher Portal
+- Update Kotlin to 1.9.20
+- Update Apache Commons Compress to 1.28.0
+- Update Jimfs to 1.3.1
+- Update IntelliJ Plugin Repository REST Client to 2.0.49
+- Update Gradle to 8.14.3
+- GitHub Actions: Update `actions/cache` to 4.2.4
+- GitHub Actions: Update `gradle/actions` to 4.4.2
+
 ### Fixed
+
+- Fix the `supportedProducts` field in the Fleet plugin descriptor ([#1298](https://github.com/JetBrains/intellij-plugin-verifier/pull/1298))
+- Fix Fleet compatibility limits in versioning schema. ([b62cd45](https://github.com/JetBrains/intellij-plugin-verifier/commit/b62cd45))
 
 ## 1.387 - 2025-06-18
 
