@@ -1,4 +1,4 @@
-rootProject.name = "intellij-plugin-verifier-parent"
+rootProject.name = "IntelliJ Plugin Verifier"
 
 includeBuild("intellij-plugin-structure")
 includeBuild("intellij-plugin-verifier")
