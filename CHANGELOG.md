@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.392 - 2025-08-11
+
+### Added
+
 - Increase unpacked IntelliJ plugin size to 5GB
 - IntelliJ Structure: TeamCity Recipes: Add validation for duplicated recipe inputs ([TW-94970](https://youtrack.jetbrains.com/issue/TW-94970))
 - IntelliJ Structure: TeamCity Recipes: Return a higher compatibility version if the recipe uses `TEAMCITY_PATH_PREFIX` ([#1321](https://github.com/JetBrains/intellij-plugin-verifier/pull/1321), [TW-94809](https://youtrack.jetbrains.com/issue/TW-94809))
