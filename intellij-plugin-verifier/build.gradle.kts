@@ -138,8 +138,11 @@ publishing {
     maven {
       url = uri("https://packages.jetbrains.team/maven/p/intellij-plugin-verifier/intellij-plugin-verifier")
       credentials {
-        username = if (project.hasProperty("publishUser")) project.properties["publishUser"].toString() else System.getenv("PUBLISH_USER")
-        password = if (project.hasProperty("publishPassword")) project.properties["publishPassword"].toString() else System.getenv("PUBLISH_PASSWORD")
+        val spacePackagesClientId: String? by project
+        val spacePackagesSecret: String? by project
+
+        username = spacePackagesClientId
+        password = spacePackagesSecret
       }
     }
   }
