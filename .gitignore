@@ -4,7 +4,6 @@ plugins-verifier-service/src/generated
 .idea/libraries
 .idea/artifacts
 .idea/inspectionProfiles
-.idea/codeStyleSettings.xml
 .idea/modules/*
 .idea/gradle.xml
 .idea/modules.xml
@@ -15,3 +14,6 @@ classes/*
 **/build
 verification-*
 .idea/shelf
+/.idea/compiler.xml
+/.idea/kotlinc.xml
+/.idea/misc.xml
