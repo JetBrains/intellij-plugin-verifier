@@ -38,6 +38,10 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
     }
   }
 
+  override fun containsEntry(entryName: CharSequence): Boolean = withZip { zip ->
+    zip.getEntry(entryName.toString()) != null
+  }
+
   private inline fun <R> withZip(block: (ZipFile) -> R): R {
     return try {
       ZipFile(zipFile).use { block(it) }

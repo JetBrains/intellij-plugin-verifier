@@ -35,6 +35,14 @@ class ZipInputStreamHandler(private val zipPath: Path) : ZipHandler<ZipResource.
     }
   }
 
+  override fun containsEntry(entryName: CharSequence): Boolean {
+    return zipPath.useZipInputStream { zipInputStream ->
+      zipInputStream
+        .asSequence()
+        .any { (zipEntry, _) -> zipEntry.name.contentEquals(entryName) }
+    }
+  }
+
   private fun ZipInputStream.asSequence() = sequence<Pair<ZipEntry, ZipInputStream>> {
     val zip = this@asSequence
     while (true) {
