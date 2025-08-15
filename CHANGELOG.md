@@ -10,6 +10,10 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
+## 1.394 - 2025-08-15
+
+### Fixed
+
 - Fix plugin descriptors not being found on Windows ([MP-7673](https://youtrack.jetbrains.com/issue/MP-7673/Plugin-Verifier-The-plugin-descriptor-plugin.xml-is-not-found-on-Windows)).
 - Revert JAR and ZIP parsing algorithm as this has a performance impact on Jimfs-based artifacts ([MP-7682](https://youtrack.jetbrains.com/issue/MP-7682/Plugin-Verifier-Performance-regression-on-large-plugins)).
 
