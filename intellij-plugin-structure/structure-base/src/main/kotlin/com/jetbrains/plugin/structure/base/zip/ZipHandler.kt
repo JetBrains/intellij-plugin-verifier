@@ -29,6 +29,15 @@ interface ZipHandler<Z: ZipResource> {
    */
   @Throws(ZipArchiveException::class)
   fun <T> handleEntry(entryName: CharSequence, handler: (ZipEntry, Z) -> T?): T?
+
+  /**
+   * Indicates if the ZIP file contains an entry with the corresponding filename.
+   *
+   * @param entryName the name of the ZIP entry, usually a filename, to find in the ZIP
+   * @throws ZipArchiveException when a ZIP archive is malformed or an I/O error occurred while reading it
+   */
+  @Throws(ZipArchiveException::class)
+  fun containsEntry(entryName: CharSequence): Boolean
 }
 
 fun Path.newZipHandler(): ZipHandler<out ZipResource> {

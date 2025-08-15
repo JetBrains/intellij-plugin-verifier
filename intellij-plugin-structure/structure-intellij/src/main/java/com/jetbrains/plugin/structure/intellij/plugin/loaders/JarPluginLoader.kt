@@ -9,12 +9,10 @@ import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.getShortExceptionMessage
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.base.zip.newZipHandler
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.Companion.META_INF
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
-import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarPluginLoader.Loadability.*
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.jar.JarArchiveCannotBeOpenException
@@ -22,7 +20,6 @@ import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
 import com.jetbrains.plugin.structure.jar.PluginJar
-import org.apache.commons.io.FilenameUtils
 import org.jdom2.input.JDOMParseException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -74,23 +71,6 @@ internal class JarPluginLoader(private val fileSystemProvider: JarFileSystemProv
       LOG.warn("Unable to extract {} (searching for {}): {}", jarPath, descriptorPath, e.getShortExceptionMessage())
       createInvalidPlugin(jarPath, descriptorPath, UnableToExtractZip())
     }
-  }
-
-  fun getLoadability(pluginLoadingContext: Context): Loadability {
-    val descriptorPath = FilenameUtils.normalize("$META_INF/${pluginLoadingContext.descriptorPath}")
-    return pluginLoadingContext.jarPath.newZipHandler()
-      .runCatching {
-        handleEntry(descriptorPath) { _, _ -> Loadable } ?: NotLoadable
-      }.getOrElse {
-        LOG.debug(it.message)
-        Failed(it)
-      }
-  }
-
-  sealed class Loadability {
-    object Loadable : Loadability()
-    object NotLoadable : Loadability()
-    class Failed(val exception: Throwable) : Loadability()
   }
 
   internal data class Context(
