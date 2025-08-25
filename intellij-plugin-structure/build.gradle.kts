@@ -9,6 +9,7 @@ plugins {
   `maven-publish`
   signing
   alias(sharedLibs.plugins.kotlin.jvm)
+  alias(sharedLibs.plugins.versions)
 }
 
 buildscript {
@@ -33,6 +34,7 @@ allprojects {
   apply {
     plugin("java")
     plugin("kotlin")
+    plugin("com.github.ben-manes.versions")
   }
 
   java {
