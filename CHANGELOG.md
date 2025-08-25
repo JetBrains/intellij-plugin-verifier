@@ -8,6 +8,10 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 
+- IntelliJ Structure: Align Apache Commons IO version with transitive dependency in the Apache Commons Compress. 
+- Update ByteBuddy to 1.17.7
+- GitHub Actions: Update `actions/setup-java` to 5.
+
 ### Fixed
 
 ## 1.394 - 2025-08-15
