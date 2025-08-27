@@ -228,6 +228,17 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
   }
 
   @Test
+  fun `plugin name contains emoji`() {
+    val pluginName = "My best cat 😺"
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        name = "<name>$pluginName</name>"
+      },
+      listOf(InvalidPluginName("plugin.xml", pluginName))
+    )
+  }
+
+  @Test
   fun `plugin name contains unallowed unicode symbols`() {
     val pluginNames = listOf("\u001C", "\u0016")
     pluginNames.forEach { pluginName ->

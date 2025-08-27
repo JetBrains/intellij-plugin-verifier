@@ -50,6 +50,14 @@ class ToolboxInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMana
   }
 
   @Test
+  fun `name contains emoji`() {
+    val name = "My best cat 😺"
+    checkInvalidPlugin(InvalidPluginName("extension.json", name)) {
+      it.copy(meta = it.meta?.copy(name = name))
+    }
+  }
+
+  @Test
   fun `name contains only allowed symbols`() {
     for (i in 1..10) {
       val name = getRandomAllowedNameSymbols(i)
