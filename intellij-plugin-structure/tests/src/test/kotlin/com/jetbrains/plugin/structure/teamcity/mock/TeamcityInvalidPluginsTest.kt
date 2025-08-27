@@ -111,7 +111,7 @@ class TeamcityInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMan
   }
 
   @Test
-  fun `plugin display name name contains unallowed symbols`() {
+  fun `plugin display name contains unallowed symbols`() {
     for (i in 1..10) {
       val name = getRandomInvalidXmlBasedPluginName(i)
       val expectedProblems = if (name.isBlank()) {
@@ -126,6 +126,17 @@ class TeamcityInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMan
         listOf(expectedProblems)
       )
     }
+  }
+
+  @Test
+  fun `plugin display name contains emoji`() {
+    val name = "My best cat 😺"
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        displayName = "<display-name>$name</display-name>"
+      },
+      listOf(InvalidPluginName("teamcity-plugin.xml", name))
+    )
   }
 
   @Test

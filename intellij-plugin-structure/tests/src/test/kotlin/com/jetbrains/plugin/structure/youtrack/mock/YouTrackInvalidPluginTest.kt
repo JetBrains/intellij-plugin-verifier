@@ -69,6 +69,14 @@ class YouTrackInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginMana
   }
 
   @Test
+  fun `title name contains emoji`() {
+    val name = "My best cat 😺"
+    checkInvalidPlugin(InvalidPluginName("manifest.json", name)) {
+      it.copy(title = name)
+    }
+  }
+
+  @Test
   fun `title contains only allowed symbols`() {
     for (i in 1..10) {
       val name = getRandomAllowedNameSymbols(i)

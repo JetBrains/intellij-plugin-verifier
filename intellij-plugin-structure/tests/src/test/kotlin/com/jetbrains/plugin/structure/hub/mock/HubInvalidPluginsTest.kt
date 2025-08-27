@@ -107,6 +107,14 @@ class HubInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerT
   }
 
   @Test
+  fun `name contains emoji`() {
+    val pluginName = "My best cat 😺"
+    checkInvalidPlugin(InvalidPluginName("manifest.json", pluginName)) {
+      name = pluginName
+    }
+  }
+
+  @Test
   fun `version is not specified`() {
     checkInvalidPlugin(PropertyNotSpecified("version")) { version = null }
     checkInvalidPlugin(PropertyNotSpecified("version")) { version = "" }
