@@ -29,7 +29,7 @@ public class PluginBean {
   @XmlElement(name = "depends") public List<PluginDependencyBean> dependencies = new ArrayList<>();
   @XmlElement(name = "dependencies") public PluginDependenciesBean dependenciesV2;
   @XmlElement(name = "content") public List<PluginContentBean> pluginContent = new ArrayList<>();
-  @XmlElement(name = "incompatible-with") public List<String> incompatibleModules = new ArrayList<>();
+  @XmlElement(name = "incompatible-with") public List<String> incompatibleWith = new ArrayList<>();
   @XmlElement(name = "helpset") public List<PluginHelpSetBean> helpSets = new ArrayList<>();
   @XmlElement(name = "category") public String category;
   @XmlElement(name = "resource-bundle") public String resourceBundle;
