@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@XmlSeeAlso(ListItemBean.class)
+@XmlSeeAlso(PluginAliasBean.class)
 @XmlRootElement(name = "idea-plugin")
 public class PluginBean {
 
@@ -40,8 +40,8 @@ public class PluginBean {
   @XmlAttribute(name = "package") public String packageName;
 
   @XmlElement(name = "module")
-  @XmlJavaTypeAdapter(ListItemAdapter.class)
-  public List<String> modules = new ArrayList<>();
+  @XmlJavaTypeAdapter(PluginAliasItemAdapter.class)
+  public List<String> pluginAliases = new ArrayList<>();
 
   @XmlTransient public Map<String, List<Element>> extensions;
   @XmlTransient public List<Element> applicationListeners;

@@ -282,8 +282,8 @@ class PluginBeanValidator {
   }
 
   private fun ValidationContext.validateModules(bean: PluginBean) {
-    if (bean.modules?.any { it.isEmpty() } == true) {
-      registerProblem(InvalidModuleBean(descriptorPath))
+    if (bean.pluginAliases?.any { it.isEmpty() } == true) {
+      registerProblem(InvalidModuleBean(descriptorPath)) // TODO rename
     }
   }
 }

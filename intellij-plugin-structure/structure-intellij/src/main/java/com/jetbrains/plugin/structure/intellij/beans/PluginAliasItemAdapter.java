@@ -6,15 +6,15 @@ package com.jetbrains.plugin.structure.intellij.beans;
 
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-public class ListItemAdapter extends XmlAdapter<ListItemBean, String> {
+public class PluginAliasItemAdapter extends XmlAdapter<PluginAliasBean, String> {
   @Override
-  public String unmarshal(ListItemBean item) {
+  public String unmarshal(PluginAliasBean item) {
     return item.value;
   }
 
   @Override
-  public ListItemBean marshal(String item) {
-    ListItemBean result = new ListItemBean();
+  public PluginAliasBean marshal(String item) {
+    PluginAliasBean result = new PluginAliasBean();
     result.value = item;
     return result;
   }
