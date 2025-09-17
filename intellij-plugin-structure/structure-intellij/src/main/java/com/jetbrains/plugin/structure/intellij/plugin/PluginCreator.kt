@@ -288,7 +288,7 @@ internal class PluginCreator private constructor(
     }
 
     bean.incompatibleWith?.filter { it?.startsWith(modulePrefix) ?: false }?.let {
-      incompatibleModules += it // TODO rename
+      incompatibleWith += it
     }
 
     val vendorBean = bean.vendor

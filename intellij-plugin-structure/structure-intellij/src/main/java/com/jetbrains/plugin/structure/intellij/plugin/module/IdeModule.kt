@@ -56,7 +56,7 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
   override val untilBuild = null
   override val icons = emptyList<PluginIcon>()
   override val declaredThemes = emptyList<IdeTheme>()
-  override val incompatibleModules = emptyList<String>()
+  override val incompatibleWith = emptyList<String>()
   override val isImplementationDetail = false
   override val hasDotNetPart = false
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()

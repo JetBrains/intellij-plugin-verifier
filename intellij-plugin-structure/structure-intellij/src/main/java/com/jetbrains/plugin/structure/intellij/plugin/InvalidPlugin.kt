@@ -36,7 +36,7 @@ class InvalidPlugin(override val underlyingDocument: Document) : IdePlugin, Stru
   override val projectContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor()
   override val moduleContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor()
   override val dependencies: List<PluginDependency> = emptyList()
-  override val incompatibleModules: List<String> = emptyList()
+  override val incompatibleWith: List<String> = emptyList()
   override val definedModules: Set<String> = emptySet()
   override val optionalDescriptors: List<OptionalPluginDescriptor> = emptyList()
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList()

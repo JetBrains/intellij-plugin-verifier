@@ -67,7 +67,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   override val dependencies: MutableList<PluginDependency> = arrayListOf()
 
-  override val incompatibleModules: MutableList<String> = arrayListOf()
+  override val incompatibleWith: MutableList<String> = arrayListOf()
 
   override val extensions: MutableMap<String, MutableList<Element>> = HashMap()
 
@@ -133,7 +133,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         declaredThemes.addAll(old.declaredThemes)
         definedModules.addAll(old.definedModules)
         dependencies.addAll(old.dependencies)
-        incompatibleModules.addAll(old.incompatibleModules)
+        incompatibleWith.addAll(old.incompatibleWith)
         if (old is IdePluginImpl) {
           extensions.putAll(old.extensions)
           actions.addAll(old.actions)

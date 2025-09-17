@@ -35,7 +35,13 @@ interface IdePlugin : Plugin {
 
   val dependencies: List<PluginDependency>
 
-  val incompatibleModules: List<String>
+  /**
+   * Contains plugin ids
+   */
+  val incompatibleWith: List<String>
+
+  @Deprecated("use incompatibleWith", ReplaceWith("incompatibleWith"))
+  val incompatibleModules: List<String> get() = incompatibleWith
 
   /**
    * Plugin aliases.
