@@ -580,9 +580,9 @@ class PluginXmlValidationTest {
       assertContains<ProhibitedModuleExposed>(
         "Invalid plugin descriptor 'plugin.xml'. " +
           "Plugin declares 3 modules with prohibited names: " +
-          "'intellij.fullLine.java' has prefix 'intellij', " +
           "'com.intellij.modules.json' has prefix 'com.intellij', " +
-          "'org.jetbrains.plugins.vue' has prefix 'org.jetbrains'. " +
+          "'org.jetbrains.plugins.vue' has prefix 'org.jetbrains', " +
+          "'intellij.fullLine.java' has prefix 'intellij'. " +
           "Such modules cannot be declared by third party plugins."
       )
     }
