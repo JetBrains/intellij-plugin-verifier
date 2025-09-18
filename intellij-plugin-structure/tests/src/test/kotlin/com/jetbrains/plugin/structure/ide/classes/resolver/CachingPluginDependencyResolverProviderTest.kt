@@ -105,7 +105,7 @@ class CachingPluginDependencyResolverProviderTest {
       pluginId = "com.intellij",
       pluginName = "IDEA CORE",
       originalFile = ideaCorePluginFile,
-      definedModules = setOf(
+      pluginAliases = setOf(
         "com.intellij.modules.platform",
         "com.intellij.modules.lang"
       ),
@@ -121,7 +121,7 @@ class CachingPluginDependencyResolverProviderTest {
       pluginId = "com.intellij.java",
       pluginName = "Java",
       originalFile = javaPluginFile,
-      definedModules = setOf(
+      pluginAliases = setOf(
         "com.intellij.modules.java",
       ),
       dependencies = listOf(
@@ -397,7 +397,7 @@ class CachingPluginDependencyResolverProviderTest {
       dependencies = listOf(
         ModuleV2Dependency("com.intellij.modules.lang")
       ),
-      definedModules = setOf("intellij.json", "intellij.json.split"),
+      pluginAliases = setOf("intellij.json", "intellij.json.split"),
       classpath = Classpath.of(listOf(ideRoot.resolve("plugins/json/lib/json.jar"), ideRoot.resolve("plugins/json/lib/modules/intellij.json.split.jar")))
     )
 

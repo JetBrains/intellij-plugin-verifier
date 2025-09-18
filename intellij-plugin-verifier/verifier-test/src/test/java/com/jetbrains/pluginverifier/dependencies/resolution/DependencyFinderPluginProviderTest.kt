@@ -84,7 +84,7 @@ class DependencyFinderPluginProviderTest : BaseBytecodeTest() {
   private val mockPythonPlugin = MockIdePlugin(
     pluginId = "Pythonid",
     pluginVersion = "243.21565.193",
-    definedModules = setOf("com.intellij.modules.python")
+    pluginAliases = setOf("com.intellij.modules.python")
   )
 
   @After

@@ -60,16 +60,19 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   override val declaredThemes: MutableList<IdeTheme> = arrayListOf()
 
-  private val _definedModules: MutableSet<String> = mutableSetOf()
+  private val _pluginAliases = mutableSetOf<String>()
 
-  fun addDefinedModule(moduleId: String) {
-    _definedModules += moduleId
+  fun addPluginAlias(pluginId: String) {
+    _pluginAliases += pluginId
   }
 
-  /**
-   * Plugin aliases mapped from the `idea-plugin/module` element.
-   */
-  override val definedModules: Set<String> get() = _definedModules
+  override val pluginAliases: Set<String> get() = _pluginAliases
+
+  private val _definedModules: MutableSet<String> = mutableSetOf()
+
+  @Deprecated("use either pluginAliases or contentModules")
+  override val definedModules: Set<String> get() =
+    _definedModules + pluginAliases + modulesDescriptors.flatMapTo(mutableSetOf()) { it.module.definedModules }
 
   override val dependencies: MutableList<PluginDependency> = arrayListOf()
 
@@ -137,7 +140,8 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         hasDotNetPart = old.hasDotNetPart
         underlyingDocument = old.underlyingDocument
         declaredThemes.addAll(old.declaredThemes)
-        old.definedModules.forEach { addDefinedModule(it) }
+        _pluginAliases.addAll(old.pluginAliases)
+        _definedModules.addAll(old.definedModules)
         dependencies.addAll(old.dependencies)
         incompatibleWith.addAll(old.incompatibleWith)
         if (old is IdePluginImpl) {

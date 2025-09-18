@@ -37,7 +37,7 @@ data class MockIdePlugin(
   override val extensions: Map<String, List<Element>> = hashMapOf(),
   override val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1"),
   override val untilBuild: IdeVersion? = null,
-  override val definedModules: Set<String> = emptySet(),
+  override val pluginAliases: Set<String> = emptySet(),
   override val originalFile: Path? = null,
   override val appContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
   override val projectContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
@@ -55,6 +55,8 @@ data class MockIdePlugin(
   override val useIdeClassLoader = false
   override val isImplementationDetail = false
   override val hasDotNetPart: Boolean = false
+  @Deprecated("use either pluginAliases or contentModules")
+  override val definedModules: Set<String> = pluginAliases
   override val declaredThemes = emptyList<IdeTheme>()
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =

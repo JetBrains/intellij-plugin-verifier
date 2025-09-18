@@ -44,8 +44,14 @@ interface IdePlugin : Plugin {
   val incompatibleModules: List<String> get() = incompatibleWith
 
   /**
-   * Plugin aliases.
+   * From `<module value="..."/>` statements in plugin.xml. Item value is a plugin id
    */
+  val pluginAliases: Set<String>
+
+  /**
+   * A mix of plugin aliases and content module names
+   */
+  @Deprecated("use either pluginAliases or contentModules")
   val definedModules: Set<String>
 
   val optionalDescriptors: List<OptionalPluginDescriptor>

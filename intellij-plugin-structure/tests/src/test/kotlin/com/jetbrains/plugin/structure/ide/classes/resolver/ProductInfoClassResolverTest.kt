@@ -210,7 +210,7 @@ class ProductInfoClassResolverTest {
 
   private fun corePlugin(): IdePlugin = MockIdePlugin(
     pluginId = "com.intellij",
-    definedModules = setOf("com.intellij.platform.ide.provisioner")
+    pluginAliases = setOf("com.intellij.platform.ide.provisioner")
   )
 
   private val ideFiles = mapOf<PluginId, List<String>>(

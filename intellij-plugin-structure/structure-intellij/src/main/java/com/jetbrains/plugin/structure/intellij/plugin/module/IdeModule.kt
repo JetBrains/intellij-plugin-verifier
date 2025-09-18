@@ -34,13 +34,13 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
   override val contentModules: List<Module> = emptyList()
   override val dependencies = mutableListOf<PluginDependency>()
 
+  private val _pluginAliases: MutableSet<String> = mutableSetOf()
+  override val pluginAliases: Set<String> get() = _pluginAliases
+
   private val _definedModules = mutableSetOf<String>()
 
-  fun addDefinedModule(moduleId: String) {
-    _definedModules += moduleId
-  }
-
-  override val definedModules: Set<String> get() = _definedModules + setOf(pluginId)
+  @Deprecated("use either pluginAliases or contentModules")
+  override val definedModules: Set<String> get() = _definedModules + pluginAliases + setOf(pluginId)
 
   override val optionalDescriptors = emptyList<OptionalPluginDescriptor>()
   override val modulesDescriptors = emptyList<ModuleDescriptor>()
@@ -79,7 +79,8 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
 
         extensions.putAll(plugin.extensions)
         dependencies += plugin.dependencies
-        plugin.definedModules.forEach { addDefinedModule(it) }
+        _pluginAliases.addAll(plugin.pluginAliases)
+        _definedModules.addAll(plugin.definedModules)
 
         appContainerDescriptor.copyFrom(plugin.appContainerDescriptor)
         projectContainerDescriptor.copyFrom(plugin.projectContainerDescriptor)

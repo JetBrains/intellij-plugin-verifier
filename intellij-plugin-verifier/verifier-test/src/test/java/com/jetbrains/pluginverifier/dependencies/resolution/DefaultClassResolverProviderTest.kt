@@ -295,13 +295,13 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
     pluginId = "Pythonid",
     pluginVersion = "243.21565.193",
     dependencies = listOf(platformModuleDependency),
-    definedModules = setOf("com.intellij.modules.python")
+    pluginAliases = setOf("com.intellij.modules.python")
   )
 
   private val mockIdeaCorePlugin = MockIdePlugin(
     pluginId = "com.intellij",
     pluginVersion = "243.21565.193",
-    definedModules = setOf("com.intellij.modules.platform")
+    pluginAliases = setOf("com.intellij.modules.platform")
   )
 
   @Language("JSON")

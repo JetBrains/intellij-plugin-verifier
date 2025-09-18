@@ -251,7 +251,7 @@ internal class PluginCreator private constructor(
     pluginId = bean.id?.trim() ?: pluginName
     url = bean.url?.trim()
     pluginVersion = if (bean.pluginVersion != null) bean.pluginVersion.trim() else null
-    bean.pluginAliases.forEach { pluginId -> addDefinedModule(pluginId) } // TODO rename
+    bean.pluginAliases.forEach { pluginId -> addPluginAlias(pluginId) }
     useIdeClassLoader = bean.useIdeaClassLoader == true
     isImplementationDetail = bean.implementationDetail == true
 

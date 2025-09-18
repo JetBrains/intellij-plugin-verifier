@@ -37,12 +37,14 @@ data class MockIdePlugin(
   override val productDescriptor: ProductDescriptor? = null
   override val dependencies: List<PluginDependency> = emptyList()
   override val incompatibleWith: List<String> = emptyList()
+  override val pluginAliases: Set<String> = emptySet()
   override val underlyingDocument: Document = Document(Element("idea-plugin"))
   override val optionalDescriptors: List<OptionalPluginDescriptor> = emptyList()
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList()
   override val sinceBuild: IdeVersion = IdeVersion.createIdeVersion("IU-163.1")
   override val untilBuild: IdeVersion? = null
-  override val definedModules: Set<String> = emptySet()
+  @Deprecated("use either pluginAliases or contentModules")
+  override val definedModules: Set<String> = pluginAliases
   override val contentModules: List<Module> = emptyList<Module>()
   override val originalFile: Path? = null
   override val useIdeClassLoader = false

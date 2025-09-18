@@ -75,7 +75,7 @@ class IdeDependencyFinderTest {
     val moduleContainer = MockIdePlugin(
       pluginId = "moduleContainer",
       pluginVersion = "1.0",
-      definedModules = setOf("someModule")
+      pluginAliases = setOf("someModule")
     )
 
     val ideVersion = IdeVersion.createIdeVersion("IU-144")
@@ -86,7 +86,7 @@ class IdeDependencyFinderTest {
           pluginId = "com.intellij",
           pluginName = "IDEA CORE",
           originalFile = tempFolder.newFolder("idea.core").toPath(),
-          definedModules = setOf(
+          pluginAliases = setOf(
             "com.intellij.modules.platform",
             "com.intellij.modules.lang",
             "com.intellij.modules.vcs",
