@@ -62,7 +62,10 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
   @Test
   fun `name contains only allowed symbols`() {
     for (i in 1..10) {
-      val name = getRandomAllowedNameSymbols(i)
+      var name: String
+      do {
+        name = getRandomAllowedNameSymbols(i)
+      } while (name.isBlank())
       checkValidPlugin {
         it.copy(meta = it.meta?.copy(name = name))
       }
