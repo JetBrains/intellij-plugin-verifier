@@ -60,10 +60,16 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   override val declaredThemes: MutableList<IdeTheme> = arrayListOf()
 
+  private val _definedModules: MutableSet<String> = mutableSetOf()
+
+  fun addDefinedModule(moduleId: String) {
+    _definedModules += moduleId
+  }
+
   /**
    * Plugin aliases mapped from the `idea-plugin/module` element.
    */
-  override val definedModules: MutableSet<String> = hashSetOf()
+  override val definedModules: Set<String> get() = _definedModules
 
   override val dependencies: MutableList<PluginDependency> = arrayListOf()
 
@@ -131,7 +137,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         hasDotNetPart = old.hasDotNetPart
         underlyingDocument = old.underlyingDocument
         declaredThemes.addAll(old.declaredThemes)
-        definedModules.addAll(old.definedModules)
+        old.definedModules.forEach { addDefinedModule(it) }
         dependencies.addAll(old.dependencies)
         incompatibleWith.addAll(old.incompatibleWith)
         if (old is IdePluginImpl) {
