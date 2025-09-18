@@ -40,7 +40,7 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
     _definedModules += moduleId
   }
 
-  override val definedModules: Set<String> get() = _definedModules
+  override val definedModules: Set<String> get() = _definedModules + setOf(pluginId)
 
   override val optionalDescriptors = emptyList<OptionalPluginDescriptor>()
   override val modulesDescriptors = emptyList<ModuleDescriptor>()
