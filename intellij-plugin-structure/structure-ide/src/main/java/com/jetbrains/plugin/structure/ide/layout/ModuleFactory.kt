@@ -38,7 +38,7 @@ internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, pr
         IdeModule
           .clone(moduleLoadingResult.plugin, moduleName, classpath = getClasspath(moduleName, idePath))
           .apply {
-            definedModules += moduleName
+            addDefinedModule(moduleName)
             moduleDependencies += moduleDescriptor.dependencies
             resources += moduleDescriptor.resources
           }

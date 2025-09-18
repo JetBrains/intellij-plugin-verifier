@@ -33,7 +33,15 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
   override val moduleContainerDescriptor = MutableIdePluginContentDescriptor()
   override val contentModules: List<Module> = emptyList()
   override val dependencies = mutableListOf<PluginDependency>()
-  override val definedModules = mutableSetOf<String>()
+
+  private val _definedModules = mutableSetOf<String>()
+
+  fun addDefinedModule(moduleId: String) {
+    _definedModules += moduleId
+  }
+
+  override val definedModules: Set<String> get() = _definedModules
+
   override val optionalDescriptors = emptyList<OptionalPluginDescriptor>()
   override val modulesDescriptors = emptyList<ModuleDescriptor>()
 
@@ -71,7 +79,7 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
 
         extensions.putAll(plugin.extensions)
         dependencies += plugin.dependencies
-        definedModules += plugin.definedModules
+        plugin.definedModules.forEach { addDefinedModule(it) }
 
         appContainerDescriptor.copyFrom(plugin.appContainerDescriptor)
         projectContainerDescriptor.copyFrom(plugin.projectContainerDescriptor)
