@@ -9,12 +9,13 @@ import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorReso
 data class ModuleDescriptor(
   val name: String,
   val loadingRule: ModuleLoadingRule,
-  val dependencies: List<PluginDependency>,
   val module: IdePlugin,
   val configurationFilePath: String
 ) {
   companion object {
     fun of(moduleId: String, loadingRule: ModuleLoadingRule, module: IdePlugin, moduleDescriptorResource: DescriptorResource): ModuleDescriptor =
-      ModuleDescriptor(moduleId, loadingRule,module.dependencies, module, moduleDescriptorResource.uri.toString())
+      ModuleDescriptor(moduleId, loadingRule, module, moduleDescriptorResource.uri.toString())
   }
 }
+
+val ModuleDescriptor.dependencies: List<PluginDependency> get() = module.dependencies

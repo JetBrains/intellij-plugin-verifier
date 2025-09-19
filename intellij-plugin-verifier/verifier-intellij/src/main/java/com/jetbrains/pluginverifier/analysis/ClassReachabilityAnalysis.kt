@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies
 import com.jetbrains.pluginverifier.analysis.Location.Annotation
 import com.jetbrains.pluginverifier.analysis.Location.Field
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
