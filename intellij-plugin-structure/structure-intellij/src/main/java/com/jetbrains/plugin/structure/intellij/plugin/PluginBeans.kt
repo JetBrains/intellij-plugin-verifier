@@ -12,10 +12,10 @@ internal val PluginBean.dependenciesV1: List<PluginDependencyBean>
     ?.filter { it.dependencyId != null }
     ?: emptyList()
 
-internal val PluginBean.dependentModules: List<PluginModuleBean>
+internal val PluginBean.moduleDependencies: List<PluginModuleBean>
   get() = dependenciesV2?.modules?.filter { it.moduleName != null } ?: emptyList()
 
-internal val PluginBean.dependentPlugins: List<PluginDependenciesPluginBean>
+internal val PluginBean.pluginMainModuleDependencies: List<PluginDependenciesPluginBean>
   get() = dependenciesV2?.plugins?.filter { it.dependencyId != null } ?: emptyList()
 
 internal val PluginDependencyBean.isOptional: Boolean

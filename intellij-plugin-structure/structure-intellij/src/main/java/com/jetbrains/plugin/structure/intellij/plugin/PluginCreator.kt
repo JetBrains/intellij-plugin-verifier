@@ -280,8 +280,8 @@ internal class PluginCreator private constructor(
       }
     }
     // dependencies from `<dependencies>`
-    dependencies += bean.dependentModules.map { ModuleV2Dependency(it.moduleName) }
-    dependencies += bean.dependentPlugins.map { PluginV2Dependency(it.dependencyId) }
+    dependencies += bean.moduleDependencies.map { ModuleV2Dependency(it.moduleName) }
+    dependencies += bean.pluginMainModuleDependencies.map { PluginV2Dependency(it.dependencyId) }
 
     if (pluginModuleResolver.supports(bean)) {
       contentModules += pluginModuleResolver.resolvePluginModules(bean)
