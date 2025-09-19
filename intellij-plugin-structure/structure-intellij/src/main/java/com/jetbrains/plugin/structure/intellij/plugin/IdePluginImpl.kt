@@ -70,9 +70,18 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   private val _definedModules: MutableSet<String> = mutableSetOf()
 
+  @OptIn(ExperimentalStdlibApi::class)
   @Deprecated("use either pluginAliases or contentModules")
-  override val definedModules: Set<String> get() =
-    _definedModules + pluginAliases + modulesDescriptors.flatMapTo(mutableSetOf()) { it.module.definedModules }
+  override val definedModules: Set<String> get() = buildSet {
+    addAll(_definedModules)
+    addAll(pluginAliases)
+    modulesDescriptors.forEach {
+      // FIXME content modules can have plugin aliases
+      // addAll(it.module.definedModules)
+      // addAll(it.module.pluginAliases)
+      add(it.name)
+    }
+  }
 
   override val dependencies: MutableList<PluginDependency> = arrayListOf()
 
