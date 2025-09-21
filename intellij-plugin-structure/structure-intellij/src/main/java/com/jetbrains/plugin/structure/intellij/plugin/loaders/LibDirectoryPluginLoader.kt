@@ -15,6 +15,7 @@ import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.base.utils.isZip
 import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.intellij.plugin.LibDirJarsClasspathProvider
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleScanner
@@ -38,6 +39,8 @@ internal class LibDirectoryPluginLoader(
     get() = pluginLoaderRegistry.get<PluginDirectoryLoader.Context, PluginDirectoryLoader>()
 
   private val contentModuleScanner = ContentModuleScanner(fileSystemProvider)
+
+  private val libDirClasspathProvider = LibDirJarsClasspathProvider()
 
   override fun loadPlugin(pluginLoadingContext: Context): PluginCreator = with(pluginLoadingContext) {
     val libDir = libDirectoryParent.resolve("lib")
@@ -108,7 +111,12 @@ internal class LibDirectoryPluginLoader(
 
   private fun PluginCreator.withResolvedClasspath(path: Path): PluginCreator = apply {
     val contentModules = contentModuleScanner.getContentModules(path)
-    val classpath = contentModules.asClasspath()
+    val contentModuleClasspath = contentModules.asClasspath()
+
+    val libDirClasspath = libDirClasspathProvider.getClasspath(path)
+
+    val classpath = contentModuleClasspath.mergeWith(libDirClasspath)
+
     setClasspath(classpath.getUnique())
   }
 
