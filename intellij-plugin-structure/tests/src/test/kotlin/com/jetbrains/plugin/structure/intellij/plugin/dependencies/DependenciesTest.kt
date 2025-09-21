@@ -834,6 +834,7 @@ class DependenciesTest {
 
     val expectedClassPath = """
       plugins/java-coverage/lib/java-coverage.jar
+      plugins/java-coverage/lib/jacoco.jar
       plugins/testng/lib/testng-plugin.jar
       plugins/java/lib/java-impl.jar
       plugins/java/lib/java-frontback.jar
@@ -841,6 +842,11 @@ class DependenciesTest {
       plugins/java/lib/modules/intellij.java.featuresTrainer.jar
       plugins/java/lib/modules/intellij.java.vcs.jar
       plugins/java/lib/modules/intellij.java.structuralSearch.jar
+      plugins/java/lib/maven-resolver-transport-http.jar
+      plugins/java/lib/maven-resolver-transport-file.jar
+      plugins/java/lib/netty-codec-protobuf.jar
+      plugins/java/lib/jps-builders.jar
+      plugins/java/lib/maven-resolver-connector-basic.jar
       plugins/copyright/lib/copyright.jar
       lib/product.jar
       lib/testFramework.jar
@@ -892,6 +898,15 @@ class DependenciesTest {
       lib/modules/intellij.platform.ide.newUiOnboarding.jar
       lib/modules/intellij.libraries.microba.jar
       lib/modules/intellij.execution.process.mediator.common.jar
+      lib/app.jar
+      lib/lib-client.jar
+      lib/groovy.jar
+      lib/protobuf.jar
+      lib/lib.jar
+      lib/opentelemetry.jar
+      lib/jsch-agent.jar
+      lib/util-8.jar
+      lib/util.jar
       plugins/platform-images/lib/platform-images.jar
       plugins/featuresTrainer/lib/featuresTrainer.jar
       plugins/vcs-git/lib/vcs-git.jar
@@ -902,14 +917,16 @@ class DependenciesTest {
       plugins/markdown/lib/modules/intellij.markdown.compose.preview.jar
       plugins/platform-langInjection/lib/platform-langInjection.jar
       plugins/xpath/lib/xpath.jar
-      plugins/Kotlin/lib/kotlin-plugin-shared.jar
-      plugins/Kotlin/lib/kotlin-plugin.jar
       plugins/json/lib/json.jar
       plugins/yaml/lib/yaml-editing.jar
       plugins/yaml/lib/yaml.jar
       plugins/toml/lib/toml.jar
       plugins/grazie/lib/grazie.jar
       plugins/properties/lib/properties.jar
+      plugins/Kotlin/lib/kotlin-plugin-shared.jar
+      plugins/Kotlin/lib/kotlin-plugin.jar
+      plugins/Kotlin/lib/kotlin-gradle-tooling.jar
+      plugins/Kotlin/lib/kotlinc.kotlin-compiler-common.jar
       plugins/junit/lib/junit.jar
     """.trimIndent().split("\\s".toRegex()).toSet()
 

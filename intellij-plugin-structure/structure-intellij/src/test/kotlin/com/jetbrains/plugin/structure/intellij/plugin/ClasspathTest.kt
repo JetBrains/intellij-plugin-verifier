@@ -46,4 +46,48 @@ class ClasspathTest {
       assertTrue("Classpath paths must contain the module artifact", any { it == modulePath })
     }
   }
+
+  @Test
+  fun `classpaths are merged`() {
+    val pluginPath = Path.of("lib", "plugin.jar")
+    val modulePath = Path.of("lib", "modules", "module.jar")
+
+    val pluginCp = Classpath.of(listOf(pluginPath))
+    val moduleCp = Classpath.of(listOf(modulePath))
+
+    val mergedCp = pluginCp.mergeWith(moduleCp)
+    with(mergedCp.paths) {
+      assertEquals(2, size)
+      assertTrue("Classpath paths must contain the plugin artifact",any { it == pluginPath })
+      assertTrue("Classpath paths must contain the module artifact", any { it == modulePath })
+    }
+  }
+
+  @Test
+  fun `classpaths are merged and origins have proper override rules`() {
+    val pluginPath = Path.of("lib", "plugin.jar")
+    val modulePath = Path.of("lib", "modules", "module.jar")
+
+    val cp = Classpath.of(listOf(pluginPath, modulePath))
+
+    val duplicateModulePath = Path.of("lib", "modules", "module.jar")
+    val anotherCp = Classpath.of(listOf(duplicateModulePath), ClasspathOrigin.PLUGIN_ARTIFACT)
+
+    val mergedClasspath = cp.mergeWith(anotherCp)
+    assertEquals(2, mergedClasspath.size)
+    with(mergedClasspath.paths) {
+      assertEquals(2, size)
+      assertTrue("Classpath paths must contain the plugin artifact",any { it == pluginPath })
+      assertTrue("Classpath paths must contain the module artifact", any { it == modulePath })
+    }
+    val mergedEntries = mergedClasspath.entries.sortedBy { it.path.toString() }
+    with(mergedEntries[0]) {
+      assertEquals(modulePath, path)
+      assertEquals(ClasspathOrigin.PLUGIN_ARTIFACT, origin)
+    }
+    with(mergedEntries[1]) {
+      assertEquals(pluginPath, path)
+      assertEquals(ClasspathOrigin.IMPLICIT, origin)
+    }
+  }
 }
