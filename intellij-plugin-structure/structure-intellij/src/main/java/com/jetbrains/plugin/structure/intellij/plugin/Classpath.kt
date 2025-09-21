@@ -26,6 +26,26 @@ class Classpath private constructor(val entries: List<ClasspathEntry> = emptyLis
     }
   }
 
+  fun mergeWith(other: Classpath): Classpath {
+    if (other.entries.isEmpty()) return this
+    if (this.entries.isEmpty()) return other
+
+    val pathToEntry = mutableMapOf<Path, ClasspathEntry>()
+
+    for (cpEntry in this.entries + other.entries) {
+      val path = cpEntry.path
+      val existingCpEntry = pathToEntry[path]
+      if (existingCpEntry == null) {
+        pathToEntry[path] = cpEntry
+      } else if (existingCpEntry.origin == IMPLICIT && cpEntry.origin != IMPLICIT) {
+        pathToEntry[path] = cpEntry
+      }
+    }
+
+    return Classpath(pathToEntry.values.toList())
+  }
+
+
   override fun toString(): String = entries.joinToString(separator = ":", prefix = "[", postfix = "]")
 }
 
