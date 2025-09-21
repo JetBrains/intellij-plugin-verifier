@@ -8,6 +8,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 
+- Add JARs in the 'lib' directory to the plugin classpath ([#1343](https://github.com/JetBrains/intellij-plugin-verifier/pull/1343), [MP-7742](https://youtrack.jetbrains.com/issue/MP-7742))
+
 ### Fixed
 
 ## 1.395 - 2025-08-25
