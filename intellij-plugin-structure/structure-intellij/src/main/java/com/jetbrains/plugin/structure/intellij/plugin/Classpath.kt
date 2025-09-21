@@ -39,5 +39,10 @@ enum class ClasspathOrigin {
   /**
    * Declared in `product-info.json`
    */
-  PRODUCT_INFO
+  PRODUCT_INFO,
+
+  /**
+   * Available in the artifact - usually in the 'lib' directory
+   */
+  PLUGIN_ARTIFACT
 }
