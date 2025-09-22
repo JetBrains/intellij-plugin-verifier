@@ -271,8 +271,6 @@ internal class PluginCreator private constructor(
 
     hasPackagePrefix = bean.packageName != null
 
-    val modulePrefix = "com.intellij.modules."
-
     // dependencies from `<depends>`
     bean.dependenciesV1.forEach {
       addDepends(DependsPluginDependency(it.dependencyId, it.isOptional, it.configFile))
@@ -296,7 +294,7 @@ internal class PluginCreator private constructor(
       contentModules += pluginModuleResolver.resolvePluginModules(bean)
     }
 
-    bean.incompatibleWith?.filter { it?.startsWith(modulePrefix) ?: false }?.let {
+    bean.incompatibleWith?.let {
       incompatibleWith += it
     }
 

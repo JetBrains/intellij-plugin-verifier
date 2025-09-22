@@ -49,7 +49,7 @@ interface IdePlugin : Plugin {
   val incompatibleWith: List<String>
 
   @Deprecated("use incompatibleWith", ReplaceWith("incompatibleWith"))
-  val incompatibleModules: List<String> get() = incompatibleWith
+  val incompatibleModules: List<String> get() = incompatibleWith.filter { it.startsWith("com.intellij.modules.") }
 
   /**
    * From `<module value="..."/>` statements in plugin.xml. Item value is a plugin id
