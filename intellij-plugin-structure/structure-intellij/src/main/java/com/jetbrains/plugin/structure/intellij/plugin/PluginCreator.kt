@@ -283,10 +283,10 @@ internal class PluginCreator private constructor(
       }
     }
     // dependencies from `<dependencies>`
-    bean.moduleDependencies.forEach {
+    bean.contentModuleDependencies.forEach {
       addContentModuleDependency(ContentModuleDependency(it.moduleName))
     }
-    dependencies += bean.moduleDependencies.map { ModuleV2Dependency(it.moduleName) }
+    dependencies += bean.contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) }
     bean.pluginMainModuleDependencies.forEach {
       addPluginMainModuleDependency(PluginMainModuleDependency(it.dependencyId))
     }
