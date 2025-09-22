@@ -83,6 +83,21 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
     }
   }
 
+  private val _dependsList = mutableListOf<DependsPluginDependency>()
+  override val dependsList: List<DependsPluginDependency> get() = _dependsList
+
+  fun addDepends(depends: DependsPluginDependency) = _dependsList.add(depends)
+
+  private val _contentModuleDependencies = mutableListOf<ContentModuleDependency>()
+  override val contentModuleDependencies: List<ContentModuleDependency> get() = _contentModuleDependencies
+
+  fun addContentModuleDependency(moduleDependency: ContentModuleDependency) = _contentModuleDependencies.add(moduleDependency)
+
+  private val _pluginMainModuleDependencies = mutableListOf<PluginMainModuleDependency>()
+  override val pluginMainModuleDependencies: List<PluginMainModuleDependency> get() = _pluginMainModuleDependencies
+
+  fun addPluginMainModuleDependency(pluginMainModuleDependency: PluginMainModuleDependency) = _pluginMainModuleDependencies.add(pluginMainModuleDependency)
+
   override val dependencies: MutableList<PluginDependency> = arrayListOf()
 
   override val incompatibleWith: MutableList<String> = arrayListOf()
@@ -151,6 +166,9 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         declaredThemes.addAll(old.declaredThemes)
         _pluginAliases.addAll(old.pluginAliases)
         _definedModules.addAll(old.definedModules)
+        _dependsList.addAll(old.dependsList)
+        _contentModuleDependencies.addAll(old.contentModuleDependencies)
+        _pluginMainModuleDependencies.addAll(old.pluginMainModuleDependencies)
         dependencies.addAll(old.dependencies)
         incompatibleWith.addAll(old.incompatibleWith)
         if (old is IdePluginImpl) {

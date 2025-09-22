@@ -3,15 +3,18 @@ package com.jetbrains.plugin.structure.mocks
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.intellij.plugin.Classpath
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
 import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.plugin.Module
+import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.MutableIdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginMainModuleDependency
 import com.jetbrains.plugin.structure.intellij.plugin.ProductDescriptor
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
@@ -51,6 +54,11 @@ data class MockIdePlugin(
   override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit,
   override val classpath: Classpath = Classpath.EMPTY
 ) : IdePlugin {
+
+  // FIXME [dependencies] should be built from these three
+  override val dependsList: List<DependsPluginDependency> = emptyList()
+  override val pluginMainModuleDependencies: List<PluginMainModuleDependency> = emptyList()
+  override val contentModuleDependencies: List<ContentModuleDependency> = emptyList()
 
   override val useIdeClassLoader = false
   override val isImplementationDetail = false

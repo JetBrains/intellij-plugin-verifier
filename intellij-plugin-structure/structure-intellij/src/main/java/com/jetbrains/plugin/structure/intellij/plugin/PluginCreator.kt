@@ -274,13 +274,22 @@ internal class PluginCreator private constructor(
     val modulePrefix = "com.intellij.modules."
 
     // dependencies from `<depends>`
+    bean.dependenciesV1.forEach {
+      addDepends(DependsPluginDependency(it.dependencyId, it.isOptional, it.configFile))
+    }
     dependencies += bean.dependenciesV1.map { depBean ->
       PluginDependencyImpl(depBean.dependencyId, depBean.isOptional, depBean.isModule).also { it ->
         registerIfOptionalDependency(it, depBean)
       }
     }
     // dependencies from `<dependencies>`
+    bean.moduleDependencies.forEach {
+      addContentModuleDependency(ContentModuleDependency(it.moduleName))
+    }
     dependencies += bean.moduleDependencies.map { ModuleV2Dependency(it.moduleName) }
+    bean.pluginMainModuleDependencies.forEach {
+      addPluginMainModuleDependency(PluginMainModuleDependency(it.dependencyId))
+    }
     dependencies += bean.pluginMainModuleDependencies.map { PluginV2Dependency(it.dependencyId) }
 
     if (pluginModuleResolver.supports(bean)) {

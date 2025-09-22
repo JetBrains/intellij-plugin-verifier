@@ -33,6 +33,14 @@ interface IdePlugin : Plugin {
 
   val moduleContainerDescriptor: IdePluginContentDescriptor
 
+  val dependsList: List<DependsPluginDependency>
+  val pluginMainModuleDependencies: List<PluginMainModuleDependency>
+  val contentModuleDependencies: List<ContentModuleDependency>
+
+  /**
+   * Includes dependencies from content modules
+   */
+  // TODO bad api, deprecate
   val dependencies: List<PluginDependency>
 
   /**
