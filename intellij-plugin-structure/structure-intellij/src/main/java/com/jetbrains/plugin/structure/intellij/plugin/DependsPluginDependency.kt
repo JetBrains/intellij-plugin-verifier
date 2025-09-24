@@ -5,7 +5,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
 /**
- * Represents a `<depends>` element from the plugin.xml
+ * Represents a `<depends>` element from the plugin.xml (v1-style dependency)
  */
 class DependsPluginDependency(val pluginId: String, val isOptional: Boolean, val configFile: String? = null) {
   override fun toString(): String {
