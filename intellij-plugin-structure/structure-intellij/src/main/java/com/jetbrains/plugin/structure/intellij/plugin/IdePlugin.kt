@@ -44,7 +44,7 @@ interface IdePlugin : Plugin {
   val dependencies: List<PluginDependency>
 
   /**
-   * Contains plugin ids
+   * From `<incompatible-with>...</incompatible-with>` statements in plugin configuration file. Item value is a plugin id
    */
   val incompatibleWith: List<String>
 
@@ -52,7 +52,7 @@ interface IdePlugin : Plugin {
   val incompatibleModules: List<String> get() = incompatibleWith.filter { it.startsWith("com.intellij.modules.") }
 
   /**
-   * From `<module value="..."/>` statements in plugin.xml. Item value is a plugin id
+   * From `<module value="..."/>` statements in plugin configuration file. Item value is a plugin id
    */
   val pluginAliases: Set<String>
 
