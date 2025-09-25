@@ -8,8 +8,7 @@ package com.jetbrains.plugin.structure.intellij.plugin
  * Represents a dependency on a content module (`<dependencies><module name=""/>` statement)
  */
 class ContentModuleDependency(
-  /** It's called name in the xml, but we want to refer to it as id now */
-  val moduleId: String
+  val moduleName: String
 ) {
-  override fun toString(): String = "ModuleDependency(moduleId='$moduleId')"
+  override fun toString(): String = "ModuleDependency(name='$moduleName')"
 }

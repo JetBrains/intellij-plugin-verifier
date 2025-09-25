@@ -5,20 +5,12 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.base.utils.isDirectory
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.assertSetsEqual
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.IdePluginManagerTest
-import com.jetbrains.plugin.structure.mocks.modify
-import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
 import com.jetbrains.plugin.structure.rules.FileSystemType
-import org.intellij.lang.annotations.Language
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Path
 
@@ -123,7 +115,7 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     assertEquals("from.main", plugin.pluginMainModuleDependencies[0].pluginId)
 
     assertEquals(1, plugin.contentModuleDependencies.size)
-    assertEquals("from.main.module", plugin.contentModuleDependencies[0].moduleId)
+    assertEquals("from.main.module", plugin.contentModuleDependencies[0].moduleName)
 
     val dependsSubDescriptor = plugin.optionalDescriptors.single().optionalPlugin
     assertEquals(1, dependsSubDescriptor.dependsList.size)
@@ -136,8 +128,8 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
       assertEquals(1, module.pluginMainModuleDependencies.size)
       assertEquals("from.opt", module.pluginMainModuleDependencies[0].pluginId)
       assertEquals(2, module.contentModuleDependencies.size)
-      assertEquals("from.opt.module", module.contentModuleDependencies[0].moduleId)
-      assertEquals("someId.req", module.contentModuleDependencies[1].moduleId)
+      assertEquals("from.opt.module", module.contentModuleDependencies[0].moduleName)
+      assertEquals("someId.req", module.contentModuleDependencies[1].moduleName)
 
       assertEquals(1, module.pluginAliases.size)
       assertEquals("opt.alias", module.pluginAliases.first())
@@ -148,7 +140,7 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
       assertEquals(1, module.pluginMainModuleDependencies.size)
       assertEquals("from.req", module.pluginMainModuleDependencies[0].pluginId)
       assertEquals(1, module.contentModuleDependencies.size)
-      assertEquals("from.req.module", module.contentModuleDependencies[0].moduleId)
+      assertEquals("from.req.module", module.contentModuleDependencies[0].moduleName)
 
       assertEquals(1, module.incompatibleWith.size)
       assertEquals("incompatible.id.req", module.incompatibleWith.first())
