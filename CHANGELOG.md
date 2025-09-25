@@ -17,6 +17,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - IntelliJ Structure API: `PluginBean`: rename `incompatibleModules` to `incompatibleWith`, `modules` to `pluginAliases` 
 - IntelliJ Structure API: `IdePlugin`: deprecate `incompatibleModules`, use `incompatibleWith` instead
 - IntelliJ Structure API: `IdePlugin`: deprecate `definedModules`. It is composed as a concatenation of `pluginAliases` and `contentModules`, use them explicitly instead
+- IntelliJ Structure API: `IdePlugin`: deprecate `dependencies`. It contains mixed dependencies, including ones from the content modules. Migrate to `dependsList`, `pluginMainModuleDependencies`, `contentModuleDependencies` where possible 
 - IntelliJ Structure API: `ModuleDescriptor`: property `dependencies` is removed in favor of an extension property with the same name 
 
 ### Fixed

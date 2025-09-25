@@ -33,14 +33,16 @@ interface IdePlugin : Plugin {
 
   val moduleContainerDescriptor: IdePluginContentDescriptor
 
+  /** Holds declared `<depends>`-type dependencies from plugin.xml (including optional) */
   val dependsList: List<DependsPluginDependency>
+
+  /** Holds declared module dependencies on implicit main plugin modules (`<dependencies><plugin>` elements) */
   val pluginMainModuleDependencies: List<PluginMainModuleDependency>
+
+  /** Holds declared module dependencies on content modules (`<dependencies><module>` elements) */
   val contentModuleDependencies: List<ContentModuleDependency>
 
-  /**
-   * Includes dependencies from content modules
-   */
-  // TODO bad api, deprecate
+  @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
   val dependencies: List<PluginDependency>
 
   /**
