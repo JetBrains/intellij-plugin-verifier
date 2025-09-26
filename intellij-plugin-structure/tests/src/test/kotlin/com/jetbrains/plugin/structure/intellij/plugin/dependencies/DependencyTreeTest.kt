@@ -142,10 +142,10 @@ class DependencyTreeTest {
     val javaPlugin = MockIdePlugin(
       pluginName = "Java",
       pluginId = "com.intellij.java",
-      definedModules = setOf("com.intellij.modules.java")
+      pluginAliases = setOf("com.intellij.modules.java")
     )
     val bundledPlugins = listOf(
-      MockIdePlugin(pluginId = "com.intellij", definedModules = setOf("com.intellij.modules.all")),
+      MockIdePlugin(pluginId = "com.intellij", pluginAliases = setOf("com.intellij.modules.all")),
       javaPlugin
     )
     val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, bundledPlugins)
@@ -167,8 +167,8 @@ class DependencyTreeTest {
   @Test
   fun `standard plugin has no Java plugin contributed from to legacy rule`() {
     val javaModuleName = "com.intellij.modules.java"
-    val javaPlugin = MockIdePlugin(pluginId = "Java", definedModules = setOf(javaModuleName))
-    val platformPlugin = MockIdePlugin(pluginId = "com.intellij", definedModules = setOf("com.intellij.modules.all", "com.intellij.modules.platform"))
+    val javaPlugin = MockIdePlugin(pluginId = "Java", pluginAliases = setOf(javaModuleName))
+    val platformPlugin = MockIdePlugin(pluginId = "com.intellij", pluginAliases = setOf("com.intellij.modules.all", "com.intellij.modules.platform"))
     val bundledPlugins = listOf(platformPlugin, javaPlugin)
     val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, bundledPlugins)
 

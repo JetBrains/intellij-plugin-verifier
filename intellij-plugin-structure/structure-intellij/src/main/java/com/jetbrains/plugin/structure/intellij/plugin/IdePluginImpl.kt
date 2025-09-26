@@ -60,14 +60,47 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   override val declaredThemes: MutableList<IdeTheme> = arrayListOf()
 
-  /**
-   * Plugin aliases mapped from the `idea-plugin/module` element.
-   */
-  override val definedModules: MutableSet<String> = hashSetOf()
+  private val _pluginAliases = mutableSetOf<String>()
+
+  fun addPluginAlias(pluginId: String) {
+    _pluginAliases += pluginId
+  }
+
+  override val pluginAliases: Set<String> get() = _pluginAliases
+
+  private val _definedModules: MutableSet<String> = mutableSetOf()
+
+  @OptIn(ExperimentalStdlibApi::class)
+  @Deprecated("use either pluginAliases or contentModules")
+  override val definedModules: Set<String> get() = buildSet {
+    addAll(_definedModules)
+    addAll(pluginAliases)
+    modulesDescriptors.forEach {
+      // FIXME content modules can have plugin aliases
+      // addAll(it.module.definedModules)
+      // addAll(it.module.pluginAliases)
+      add(it.name)
+    }
+  }
+
+  private val _dependsList = mutableListOf<DependsPluginDependency>()
+  override val dependsList: List<DependsPluginDependency> get() = _dependsList
+
+  fun addDepends(depends: DependsPluginDependency) = _dependsList.add(depends)
+
+  private val _contentModuleDependencies = mutableListOf<ContentModuleDependency>()
+  override val contentModuleDependencies: List<ContentModuleDependency> get() = _contentModuleDependencies
+
+  fun addContentModuleDependency(moduleDependency: ContentModuleDependency) = _contentModuleDependencies.add(moduleDependency)
+
+  private val _pluginMainModuleDependencies = mutableListOf<PluginMainModuleDependency>()
+  override val pluginMainModuleDependencies: List<PluginMainModuleDependency> get() = _pluginMainModuleDependencies
+
+  fun addPluginMainModuleDependency(pluginMainModuleDependency: PluginMainModuleDependency) = _pluginMainModuleDependencies.add(pluginMainModuleDependency)
 
   override val dependencies: MutableList<PluginDependency> = arrayListOf()
 
-  override val incompatibleModules: MutableList<String> = arrayListOf()
+  override val incompatibleWith: MutableList<String> = arrayListOf()
 
   override val extensions: MutableMap<String, MutableList<Element>> = HashMap()
 
@@ -131,9 +164,13 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         hasDotNetPart = old.hasDotNetPart
         underlyingDocument = old.underlyingDocument
         declaredThemes.addAll(old.declaredThemes)
-        definedModules.addAll(old.definedModules)
+        _pluginAliases.addAll(old.pluginAliases)
+        _definedModules.addAll(old.definedModules)
+        _dependsList.addAll(old.dependsList)
+        _contentModuleDependencies.addAll(old.contentModuleDependencies)
+        _pluginMainModuleDependencies.addAll(old.pluginMainModuleDependencies)
         dependencies.addAll(old.dependencies)
-        incompatibleModules.addAll(old.incompatibleModules)
+        incompatibleWith.addAll(old.incompatibleWith)
         if (old is IdePluginImpl) {
           extensions.putAll(old.extensions)
           actions.addAll(old.actions)

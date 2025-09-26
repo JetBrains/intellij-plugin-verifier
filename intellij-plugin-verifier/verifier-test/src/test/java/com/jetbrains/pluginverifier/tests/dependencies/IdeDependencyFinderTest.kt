@@ -42,9 +42,7 @@ class IdeDependencyFinderTest {
   @Before
   fun setUp() {
     lock = IdleFileLock(tempFolder.newFile().toPath())
-    ideModule = IdeModule(MOCK_IDE_MODULE_ID, hasPackagePrefix = false).apply {
-      definedModules += MOCK_IDE_MODULE_ID
-    }
+    ideModule = IdeModule(MOCK_IDE_MODULE_ID, hasPackagePrefix = false)
   }
 
   @Test
@@ -77,7 +75,7 @@ class IdeDependencyFinderTest {
     val moduleContainer = MockIdePlugin(
       pluginId = "moduleContainer",
       pluginVersion = "1.0",
-      definedModules = setOf("someModule")
+      pluginAliases = setOf("someModule")
     )
 
     val ideVersion = IdeVersion.createIdeVersion("IU-144")
@@ -88,7 +86,7 @@ class IdeDependencyFinderTest {
           pluginId = "com.intellij",
           pluginName = "IDEA CORE",
           originalFile = tempFolder.newFolder("idea.core").toPath(),
-          definedModules = setOf(
+          pluginAliases = setOf(
             "com.intellij.modules.platform",
             "com.intellij.modules.lang",
             "com.intellij.modules.vcs",

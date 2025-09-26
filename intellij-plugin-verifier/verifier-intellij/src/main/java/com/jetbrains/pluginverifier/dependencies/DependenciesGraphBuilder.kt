@@ -49,7 +49,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
     if (!graph.containsVertex(vertex)) {
       graph.addVertex(vertex)
 
-      for (moduleId in vertex.plugin.incompatibleModules) {
+      for (moduleId in vertex.plugin.incompatibleModules) { // TODO migrate: moduleId is pluginId
         val result = dependencyFinder.findPluginDependency(moduleId, true)
         if (result is DependencyFinder.Result.DetailsProvided && result.pluginDetailsCacheResult is PluginDetailsCache.Result.Provided ||
                 result is DependencyFinder.Result.FoundPlugin) {

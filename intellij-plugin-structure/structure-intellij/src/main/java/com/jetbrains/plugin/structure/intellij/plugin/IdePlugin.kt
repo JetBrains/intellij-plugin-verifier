@@ -33,13 +33,35 @@ interface IdePlugin : Plugin {
 
   val moduleContainerDescriptor: IdePluginContentDescriptor
 
+  /** Holds declared `<depends>`-type dependencies from plugin.xml (including optional) */
+  val dependsList: List<DependsPluginDependency>
+
+  /** Holds declared module dependencies on implicit main plugin modules (`<dependencies><plugin>` elements) */
+  val pluginMainModuleDependencies: List<PluginMainModuleDependency>
+
+  /** Holds declared module dependencies on content modules (`<dependencies><module>` elements) */
+  val contentModuleDependencies: List<ContentModuleDependency>
+
+  @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
   val dependencies: List<PluginDependency>
 
-  val incompatibleModules: List<String>
+  /**
+   * From `<incompatible-with>...</incompatible-with>` statements in plugin configuration file. Item value is a plugin id
+   */
+  val incompatibleWith: List<String>
+
+  @Deprecated("use incompatibleWith", ReplaceWith("incompatibleWith"))
+  val incompatibleModules: List<String> get() = incompatibleWith.filter { it.startsWith("com.intellij.modules.") }
 
   /**
-   * Plugin aliases.
+   * From `<module value="..."/>` statements in plugin configuration file. Item value is a plugin id
    */
+  val pluginAliases: Set<String>
+
+  /**
+   * A mix of plugin aliases and content module names
+   */
+  @Deprecated("use either pluginAliases or contentModules")
   val definedModules: Set<String>
 
   val optionalDescriptors: List<OptionalPluginDescriptor>

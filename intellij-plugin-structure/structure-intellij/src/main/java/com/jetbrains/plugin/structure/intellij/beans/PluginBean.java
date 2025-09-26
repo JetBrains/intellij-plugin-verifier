@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@XmlSeeAlso(ListItemBean.class)
+@XmlSeeAlso(PluginAliasBean.class)
 @XmlRootElement(name = "idea-plugin")
 public class PluginBean {
 
@@ -29,7 +29,7 @@ public class PluginBean {
   @XmlElement(name = "depends") public List<PluginDependencyBean> dependencies = new ArrayList<>();
   @XmlElement(name = "dependencies") public PluginDependenciesBean dependenciesV2;
   @XmlElement(name = "content") public List<PluginContentBean> pluginContent = new ArrayList<>();
-  @XmlElement(name = "incompatible-with") public List<String> incompatibleModules = new ArrayList<>();
+  @XmlElement(name = "incompatible-with") public List<String> incompatibleWith = new ArrayList<>();
   @XmlElement(name = "helpset") public List<PluginHelpSetBean> helpSets = new ArrayList<>();
   @XmlElement(name = "category") public String category;
   @XmlElement(name = "resource-bundle") public String resourceBundle;
@@ -40,8 +40,8 @@ public class PluginBean {
   @XmlAttribute(name = "package") public String packageName;
 
   @XmlElement(name = "module")
-  @XmlJavaTypeAdapter(ListItemAdapter.class)
-  public List<String> modules = new ArrayList<>();
+  @XmlJavaTypeAdapter(PluginAliasItemAdapter.class)
+  public List<String> pluginAliases = new ArrayList<>();
 
   @XmlTransient public Map<String, List<Element>> extensions;
   @XmlTransient public List<Element> applicationListeners;

@@ -6,9 +6,19 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- IntelliJ Structure API: introduce 3 new specialized dependency classes: `ContentModuleDependency`, `DependsPluginDependency`, `PluginMainModuleDependency`. They are used to store precise information about plugin dependencies
+- IntelliJ Structure API: `IdePlugin`: add three new properties that store dependency information: `dependsList`, `pluginMainModuleDependencies`, `contentModuleDependencies`
+- IntelliJ Structure API: `IdePlugin`: add `pluginAliases` property (built from `<module value="..."/>` elements in the plugin descriptor; naming in xml is confusing, and is so due to historic reasons)
+
 ### Changed
 
 - Add JARs in the 'lib' directory to the plugin classpath ([#1343](https://github.com/JetBrains/intellij-plugin-verifier/pull/1343), [MP-7742](https://youtrack.jetbrains.com/issue/MP-7742))
+- IntelliJ Structure API: rename `ListItemBean` to `PluginAliasBean`, `ListItemAdapter` to `PluginAliasItemAdapter`
+- IntelliJ Structure API: `PluginBean`: rename `incompatibleModules` to `incompatibleWith`, `modules` to `pluginAliases` 
+- IntelliJ Structure API: `IdePlugin`: deprecate `incompatibleModules`, use `incompatibleWith` instead
+- IntelliJ Structure API: `IdePlugin`: deprecate `definedModules`. It is composed as a concatenation of `pluginAliases` and `contentModules`, use them explicitly instead
+- IntelliJ Structure API: `IdePlugin`: deprecate `dependencies`. It contains mixed dependencies, including ones from the content modules. Migrate to `dependsList`, `pluginMainModuleDependencies`, `contentModuleDependencies` where possible 
+- IntelliJ Structure API: `ModuleDescriptor`: property `dependencies` is removed in favor of an extension property with the same name 
 
 ### Fixed
 

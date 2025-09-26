@@ -28,7 +28,7 @@ class ExposedModuleVerifierTest {
     val pluginId = "com.example.SomePlugin"
     val plugin = MockIdePlugin(
       pluginId = pluginId,
-      definedModules = setOf("com.example.someModule", "com.intellij.someModule")
+      pluginAliases = setOf("com.example.someModule", "com.intellij.someModule")
     )
 
     verifier.verify(plugin, problemRegistrar, PLUGIN_XML)

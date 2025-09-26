@@ -77,7 +77,7 @@ class DependencyFilteringResolutionTest {
       pluginId = "com.intellij",
       pluginName = "IDEA CORE",
       originalFile = ideaCorePluginFile,
-      definedModules = setOf(
+      pluginAliases = setOf(
         "com.intellij.modules.platform",
         "com.intellij.modules.lang",
         "com.intellij.modules.java",
@@ -91,7 +91,7 @@ class DependencyFilteringResolutionTest {
       pluginId = "com.intellij.java",
       pluginName = "Java",
       originalFile = temporaryFolder.newTemporaryFile("idea/plugins/java/lib/java-impl.jar"),
-      definedModules = setOf(
+      pluginAliases = setOf(
         "com.intellij.modules.java",
       ),
       dependencies = listOf(

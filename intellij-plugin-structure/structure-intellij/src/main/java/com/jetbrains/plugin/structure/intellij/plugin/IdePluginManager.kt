@@ -114,7 +114,6 @@ class IdePluginManager private constructor(
 
   private fun PluginCreator.addContentModule(resolvedContentModule: IdePlugin, moduleDescriptor: ModuleDescriptor) {
     plugin.modulesDescriptors.add(moduleDescriptor)
-    plugin.definedModules.add(moduleDescriptor.name)
 
     mergeContent(resolvedContentModule)
   }

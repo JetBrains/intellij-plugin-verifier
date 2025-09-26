@@ -66,9 +66,14 @@ abstract class BasePluginManagerTest<P : Plugin, M : PluginManager<P>>(fileSyste
 
   protected fun getRandomAllowedNameSymbols(length: Int): String {
     val allowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 .,+_-/:()#'[]|"
-    return (1..length)
-      .map { allowedCharacters.random() }
-      .joinToString("")
+    while (true) {
+      val name = (1..length)
+        .map { allowedCharacters.random() }
+        .joinToString("")
+      if (name.isNotBlank()) {
+        return name
+      }
+    }
   }
 }
 

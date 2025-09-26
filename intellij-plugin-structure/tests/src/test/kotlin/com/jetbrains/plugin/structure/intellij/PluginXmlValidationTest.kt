@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
@@ -580,9 +581,9 @@ class PluginXmlValidationTest {
       assertContains<ProhibitedModuleExposed>(
         "Invalid plugin descriptor 'plugin.xml'. " +
           "Plugin declares 3 modules with prohibited names: " +
-          "'intellij.fullLine.java' has prefix 'intellij', " +
           "'com.intellij.modules.json' has prefix 'com.intellij', " +
-          "'org.jetbrains.plugins.vue' has prefix 'org.jetbrains'. " +
+          "'org.jetbrains.plugins.vue' has prefix 'org.jetbrains', " +
+          "'intellij.fullLine.java' has prefix 'intellij'. " +
           "Such modules cannot be declared by third party plugins."
       )
     }

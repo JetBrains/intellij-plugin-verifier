@@ -251,7 +251,7 @@ internal class PluginCreator private constructor(
     pluginId = bean.id?.trim() ?: pluginName
     url = bean.url?.trim()
     pluginVersion = if (bean.pluginVersion != null) bean.pluginVersion.trim() else null
-    definedModules.addAll(bean.modules)
+    bean.pluginAliases.forEach { pluginId -> addPluginAlias(pluginId) }
     useIdeClassLoader = bean.useIdeaClassLoader == true
     isImplementationDetail = bean.implementationDetail == true
 
@@ -271,24 +271,31 @@ internal class PluginCreator private constructor(
 
     hasPackagePrefix = bean.packageName != null
 
-    val modulePrefix = "com.intellij.modules."
-
     // dependencies from `<depends>`
+    bean.dependenciesV1.forEach {
+      addDepends(DependsPluginDependency(it.dependencyId, it.isOptional, it.configFile))
+    }
     dependencies += bean.dependenciesV1.map { depBean ->
       PluginDependencyImpl(depBean.dependencyId, depBean.isOptional, depBean.isModule).also { it ->
         registerIfOptionalDependency(it, depBean)
       }
     }
     // dependencies from `<dependencies>`
-    dependencies += bean.dependentModules.map { ModuleV2Dependency(it.moduleName) }
-    dependencies += bean.dependentPlugins.map { PluginV2Dependency(it.dependencyId) }
+    bean.contentModuleDependencies.forEach {
+      addContentModuleDependency(ContentModuleDependency(it.moduleName))
+    }
+    dependencies += bean.contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) }
+    bean.pluginMainModuleDependencies.forEach {
+      addPluginMainModuleDependency(PluginMainModuleDependency(it.dependencyId))
+    }
+    dependencies += bean.pluginMainModuleDependencies.map { PluginV2Dependency(it.dependencyId) }
 
     if (pluginModuleResolver.supports(bean)) {
       contentModules += pluginModuleResolver.resolvePluginModules(bean)
     }
 
-    bean.incompatibleModules?.filter { it?.startsWith(modulePrefix) ?: false }?.let {
-      incompatibleModules += it
+    bean.incompatibleWith?.let {
+      incompatibleWith += it
     }
 
     val vendorBean = bean.vendor
