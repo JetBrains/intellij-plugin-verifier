@@ -54,6 +54,7 @@ class InvalidPlugin(override val underlyingDocument: Document) : IdePlugin, Stru
   override val isImplementationDetail: Boolean = false
   @Deprecated("See IdePlugin::isV2")
   override val isV2: Boolean = false
+  override val moduleVisibility: ModuleVisibility = ModuleVisibility.PRIVATE
   override val hasPackagePrefix: Boolean = false
   override val kotlinPluginMode: KotlinPluginMode = Implicit
   override fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean = false

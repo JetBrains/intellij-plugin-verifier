@@ -41,6 +41,7 @@ class InlineModuleDescriptorResolverTest {
 
     val thymeleafSpringElInlineModule = InlineModule(
       "intellij.thymeleaf/spring-el",
+      namespace = null,
       loadingRule = ModuleLoadingRule.OPTIONAL,
       thymeleafSpringElPluginXml
     )
@@ -95,6 +96,7 @@ class InlineModuleDescriptorResolverTest {
 
     val intellijTomJsonInlineModule = InlineModule(
       name = "intellij.toml.json",
+      namespace = null,
       loadingRule = ModuleLoadingRule.OPTIONAL,
       textContent = intellijTomJsonPluginXml
     )

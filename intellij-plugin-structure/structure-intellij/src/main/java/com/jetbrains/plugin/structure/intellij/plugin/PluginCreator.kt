@@ -270,6 +270,11 @@ internal class PluginCreator private constructor(
     }
 
     hasPackagePrefix = bean.packageName != null
+    moduleVisibility = when (bean.visibility) {
+      "public" -> ModuleVisibility.PUBLIC
+      "internal" -> ModuleVisibility.INTERNAL
+      else -> ModuleVisibility.PRIVATE
+    }
 
     // dependencies from `<depends>`
     bean.dependenciesV1.forEach {
@@ -281,8 +286,9 @@ internal class PluginCreator private constructor(
       }
     }
     // dependencies from `<dependencies>`
-    bean.contentModuleDependencies.forEach {
-      addContentModuleDependency(ContentModuleDependency(it.moduleName))
+    bean.contentModuleDependencies.forEach { dep ->
+      val namespace = dep.namespace ?: parentPlugin?.plugin?.contentModules?.find { it.name == dep.moduleName }?.namespace ?: "jetbrains"
+      addContentModuleDependency(ContentModuleDependency(dep.moduleName, namespace))
     }
     dependencies += bean.contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) }
     bean.pluginMainModuleDependencies.forEach {

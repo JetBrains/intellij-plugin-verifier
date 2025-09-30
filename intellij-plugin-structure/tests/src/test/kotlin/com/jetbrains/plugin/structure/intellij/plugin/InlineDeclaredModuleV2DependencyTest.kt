@@ -35,7 +35,7 @@ class InlineDeclaredModuleV2DependencyTest {
       moduleLoadingRule,
       contentModuleOwner = tomlPlugin,
       contentModuleReference = Module.InlineModule("intellij.toml.json",
-        moduleLoadingRule, contentModuleContent)
+        namespace = null, moduleLoadingRule, contentModuleContent)
       )
     with(dependency) {
       assertEquals("com.intellij.modules.json", id)
@@ -64,7 +64,7 @@ class InlineDeclaredModuleV2DependencyTest {
       moduleLoadingRule,
       contentModuleOwner = thymeleafPlugin,
       contentModuleReference = Module.InlineModule("intellij.thymeleaf/spring-el",
-        moduleLoadingRule, contentModuleContent)
+        namespace = null, moduleLoadingRule, contentModuleContent)
     )
     with(dependency) {
       assertEquals("intellij.spring.el", id)

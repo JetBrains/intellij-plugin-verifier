@@ -13,6 +13,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.plugin.Module
 import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleVisibility
 import com.jetbrains.plugin.structure.intellij.plugin.MutableIdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
@@ -57,6 +58,7 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
   override val pluginAliases: Set<String> get() = _pluginAliases
 
   private val _definedModules = mutableSetOf<String>()
+  override var moduleVisibility: ModuleVisibility = ModuleVisibility.PRIVATE
 
   @Deprecated("use either pluginAliases or contentModules")
   override val definedModules: Set<String> get() = _definedModules + pluginAliases + setOf(pluginId)
@@ -100,6 +102,7 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
         plugin.dependsList.forEach { addDepends(it) }
         plugin.contentModuleDependencies.forEach { addContentModuleDependency(it) }
         plugin.pluginMainModuleDependencies.forEach { addPluginMainModuleDependency(it) }
+        moduleVisibility = plugin.moduleVisibility
         dependencies += plugin.dependencies
         _pluginAliases.addAll(plugin.pluginAliases)
         _definedModules.addAll(plugin.definedModules)

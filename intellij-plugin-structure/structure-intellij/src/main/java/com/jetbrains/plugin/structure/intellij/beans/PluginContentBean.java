@@ -4,10 +4,12 @@
 
 package com.jetbrains.plugin.structure.intellij.beans;
 
+import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PluginContentBean {
+  @XmlAttribute(name = "namespace") public String namespace;
   @XmlElement(name = "module") public List<PluginModuleBean> modules = new ArrayList<>();
 }

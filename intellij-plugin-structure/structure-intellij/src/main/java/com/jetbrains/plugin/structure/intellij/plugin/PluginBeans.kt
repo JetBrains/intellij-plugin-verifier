@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.jetbrains.plugin.structure.intellij.beans.ContentModuleDependencyBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependenciesPluginBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
@@ -12,7 +13,7 @@ internal val PluginBean.dependenciesV1: List<PluginDependencyBean>
     ?.filter { it.dependencyId != null }
     ?: emptyList()
 
-internal val PluginBean.contentModuleDependencies: List<PluginModuleBean>
+internal val PluginBean.contentModuleDependencies: List<ContentModuleDependencyBean>
   get() = dependenciesV2?.modules?.filter { it.moduleName != null } ?: emptyList()
 
 internal val PluginBean.pluginMainModuleDependencies: List<PluginDependenciesPluginBean>

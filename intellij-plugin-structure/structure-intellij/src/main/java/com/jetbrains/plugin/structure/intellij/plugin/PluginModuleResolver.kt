@@ -12,16 +12,18 @@ import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 internal class PluginModuleResolver {
   fun resolvePluginModules(pluginBean: PluginBean): List<Module> {
     val modules = pluginBean.pluginContent.flatMap { it.modules }
+    //for now, it's supposed that all modules in a plugin have the same namespace
+    val namespace = pluginBean.pluginContent.asSequence().mapNotNull { it.namespace }.firstOrNull()
     return modules.filter { it.moduleName != null }
       .map {
         val name = it.moduleName!!
         val loadingRule = ModuleLoadingRule.create(it.loadingRule)
         if (it.value.isNullOrBlank()) {
           val configFile = "../${name.replace("/", ".")}.xml"
-          Module.FileBasedModule(name, loadingRule, configFile)
+          Module.FileBasedModule(name, namespace, loadingRule, configFile)
         } else {
           val cDataContent = it.value!!
-          Module.InlineModule(name, loadingRule, cDataContent)
+          Module.InlineModule(name, namespace, loadingRule, cDataContent)
         }
       }
       .toList()
