@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -11,6 +12,7 @@ import com.jetbrains.plugin.structure.mocks.IdePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.nio.file.Path
 
@@ -18,14 +20,7 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
 
   @Test
   fun `IdePlugin is correctly built from file`() {
-    val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->
-      pluginManager.createPlugin(
-        pluginArtifactPath,
-        validateDescriptor = true,
-        problemResolver = AnyProblemToWarningPluginCreationResultResolver,
-      )
-    }
-    val pluginArtifactPath = buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+    val plugin = createPlugin {
       dir("plugin") {
         dir("lib") {
           zip("plugin.jar") {
@@ -85,9 +80,6 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
         }
       }
     }
-    val successResult = createPluginSuccessfully(pluginArtifactPath, pluginFactory)
-    val plugin = successResult.plugin
-
     assertEquals("someId", plugin.pluginId)
     assertEquals("someName", plugin.pluginName)
     assertEquals("2.1", plugin.pluginVersion)
@@ -145,6 +137,130 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
       assertEquals(1, module.incompatibleWith.size)
       assertEquals("incompatible.id.req", module.incompatibleWith.first())
     }
+  }
+
+  @Test
+  fun `namespaces and visibility of content modules is handled properly`() {
+    val plugin = createPlugin {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml") { """
+                <idea-plugin>
+                  <id>someId</id>
+                  <content namespace="my_namespace">
+                    <module name="module.private"/>
+                    <module name="module.internal"/>
+                    <module name="module.public"/>
+                    <module name="module.default"/>
+                  </content>
+                </idea-plugin>  
+              """.trimIndent()
+              }
+            }
+            file("module.private.xml") { """
+                <idea-plugin visibility="private">
+                  <dependencies>
+                    <module name="module.internal"/>
+                    <module name="another" namespace="another_namespace"/>
+                    <module name="platform.module"/>
+                  </dependencies>
+                </idea-plugin>
+              """.trimIndent()
+            }
+            file("module.internal.xml") {
+              """<idea-plugin visibility="internal"/>"""
+            }
+            file("module.public.xml") {
+              """<idea-plugin visibility="public"/>"""
+            }
+            file("module.default.xml") {
+              """<idea-plugin/>"""
+            }
+          }
+        }
+      }
+    }
+    assertEquals("my_namespace", plugin.contentModules[0].namespace)
+    assertEquals("my_namespace", plugin.contentModules[0].actualNamespace)
+    assertEquals(4, plugin.modulesDescriptors.size)
+    val modulePrivate = plugin.modulesDescriptors[0]
+    assertEquals("module.private", modulePrivate.name)
+    assertEquals(ModuleVisibility.PRIVATE, modulePrivate.module.moduleVisibility)
+    assertEquals(3, modulePrivate.module.contentModuleDependencies.size)
+    val dependencies = modulePrivate.module.contentModuleDependencies
+    assertEquals("module.internal", dependencies[0].moduleName)
+    assertEquals("my_namespace", dependencies[0].namespace)
+    assertEquals("another", dependencies[1].moduleName)
+    assertEquals("another_namespace", dependencies[1].namespace)
+    assertEquals("platform.module", dependencies[2].moduleName)
+    assertEquals("jetbrains", dependencies[2].namespace)
+    val moduleInternal = plugin.modulesDescriptors[1]
+    assertEquals("module.internal", moduleInternal.name)
+    assertEquals(ModuleVisibility.INTERNAL, moduleInternal.module.moduleVisibility)
+    val modulePublic = plugin.modulesDescriptors[2]
+    assertEquals("module.public", modulePublic.name)
+    assertEquals(ModuleVisibility.PUBLIC, modulePublic.module.moduleVisibility)
+    val moduleDefault = plugin.modulesDescriptors[3]
+    assertEquals("module.default", moduleDefault.name)
+    assertEquals(ModuleVisibility.PRIVATE, moduleDefault.module.moduleVisibility)
+  }
+
+  @Test
+  fun `implicit namespace for private modules`() {
+    val plugin = createPlugin {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml") { """
+                <idea-plugin>
+                  <id>someId</id>
+                  <content>
+                    <module name="module1"/>
+                    <module name="module2"/>
+                  </content>
+                </idea-plugin>  
+              """.trimIndent()
+              }
+            }
+            file("module1.xml") { """
+                <idea-plugin>
+                  <dependencies>
+                    <module name="module2"/>
+                  </dependencies>
+                </idea-plugin>
+              """.trimIndent()
+            }
+            file("module2.xml") {
+              """<idea-plugin/>"""
+            }
+          }
+        }
+      }
+    }
+    assertNull(plugin.contentModules[0].namespace)
+    assertEquals("someId_\$implicit", plugin.contentModules[0].actualNamespace)
+    assertEquals(2, plugin.modulesDescriptors.size)
+    val module1 = plugin.modulesDescriptors[0]
+    assertEquals("module1", module1.name)
+    val dependency = module1.module.contentModuleDependencies.single()
+    assertEquals("module2", dependency.moduleName)
+    assertEquals("someId_\$implicit", dependency.namespace)
+  }
+
+  private fun createPlugin(content: ContentBuilder.() -> Unit): IdePlugin {
+    val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->
+      pluginManager.createPlugin(
+        pluginArtifactPath,
+        validateDescriptor = true,
+        problemResolver = AnyProblemToWarningPluginCreationResultResolver,
+      )
+    }
+    val pluginArtifactPath = buildZipFile(temporaryFolder.newFile("plugin.zip"), content)
+    val successResult = createPluginSuccessfully(pluginArtifactPath, pluginFactory)
+    return successResult.plugin
   }
 
   @After

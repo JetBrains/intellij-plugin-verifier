@@ -38,6 +38,7 @@ public class PluginBean {
   @XmlAttribute(name = "allow-bundled-update") public Boolean allowBundledUpdate;
   @XmlAttribute(name = "implementation-detail") public Boolean implementationDetail;
   @XmlAttribute(name = "package") public String packageName;
+  @XmlAttribute(name = "visibility") public String visibility;
 
   @XmlElement(name = "module")
   @XmlJavaTypeAdapter(PluginAliasItemAdapter.class)

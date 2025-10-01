@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.plugin.Module
 import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleVisibility
 import com.jetbrains.plugin.structure.intellij.plugin.MutableIdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
@@ -62,6 +63,7 @@ data class MockIdePlugin(
 
   override val useIdeClassLoader = false
   override val isImplementationDetail = false
+  override val moduleVisibility: ModuleVisibility = ModuleVisibility.PRIVATE
   override val hasDotNetPart: Boolean = false
   @Deprecated("use either pluginAliases or contentModules")
   override val definedModules: Set<String> = pluginAliases

@@ -51,7 +51,9 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
     get() = hasPackagePrefix
 
   override var hasPackagePrefix: Boolean = false
-    
+
+  override var moduleVisibility: ModuleVisibility = ModuleVisibility.PRIVATE
+
   override var kotlinPluginMode: KotlinPluginMode = Implicit
 
   override var hasDotNetPart: Boolean = false
@@ -159,6 +161,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         useIdeClassLoader = old.useIdeClassLoader
         classpath = old.classpath
         isImplementationDetail = old.isImplementationDetail
+        moduleVisibility = old.moduleVisibility
         hasPackagePrefix = old.hasPackagePrefix
         kotlinPluginMode = old.kotlinPluginMode
         hasDotNetPart = old.hasDotNetPart

@@ -111,6 +111,12 @@ interface IdePlugin : Plugin {
    */
   val hasPackagePrefix: Boolean
 
+  /**
+   * Specifies visibility of the plugin module if this instance represents a module ([ModuleDescriptor.module]).
+   * If this instance represents a plugin, the returned value is always [ModuleVisibility.PRIVATE].
+   */
+  val moduleVisibility: ModuleVisibility
+
   val kotlinPluginMode: KotlinPluginMode
 
   val hasDotNetPart: Boolean

@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.plugin.Module
 import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleVisibility
 import com.jetbrains.plugin.structure.intellij.plugin.MutableIdePluginContentDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
@@ -58,6 +59,7 @@ data class MockIdePlugin(
   override val isImplementationDetail = false
   @Deprecated("See IdePlugin::isV2")
   override val isV2: Boolean = false
+  override val moduleVisibility: ModuleVisibility = ModuleVisibility.PRIVATE
   override val hasPackagePrefix: Boolean = false
   override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit
   override val hasDotNetPart: Boolean = false

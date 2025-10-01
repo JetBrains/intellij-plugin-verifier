@@ -5,10 +5,14 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
 /**
- * Represents a dependency on a content module (`<dependencies><module name=""/>` statement)
+ * Represents a dependency on a content module (`<dependencies><module name=""/>` statement).
+ * If `namespace` attribute isn't specified, [namespace] of the referenced module is computed automatically (the
+ * namespace of the parent plugin is used if the module from the same plugin is referenced, otherwise the default
+ * `jetbrains` namespace is used).
  */
 class ContentModuleDependency(
-  val moduleName: String
+  val moduleName: String,
+  val namespace: String,
 ) {
   override fun toString(): String = "ModuleDependency(name='$moduleName')"
 }
