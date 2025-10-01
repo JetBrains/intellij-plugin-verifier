@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.mocks.IdePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.nio.file.Path
 
@@ -182,6 +183,7 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
       }
     }
     assertEquals("my_namespace", plugin.contentModules[0].namespace)
+    assertEquals("my_namespace", plugin.contentModules[0].actualNamespace)
     assertEquals(4, plugin.modulesDescriptors.size)
     val modulePrivate = plugin.modulesDescriptors[0]
     assertEquals("module.private", modulePrivate.name)
@@ -203,6 +205,49 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     val moduleDefault = plugin.modulesDescriptors[3]
     assertEquals("module.default", moduleDefault.name)
     assertEquals(ModuleVisibility.PRIVATE, moduleDefault.module.moduleVisibility)
+  }
+
+  @Test
+  fun `implicit namespace for private modules`() {
+    val plugin = createPlugin {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml") { """
+                <idea-plugin>
+                  <id>someId</id>
+                  <content>
+                    <module name="module1"/>
+                    <module name="module2"/>
+                  </content>
+                </idea-plugin>  
+              """.trimIndent()
+              }
+            }
+            file("module1.xml") { """
+                <idea-plugin>
+                  <dependencies>
+                    <module name="module2"/>
+                  </dependencies>
+                </idea-plugin>
+              """.trimIndent()
+            }
+            file("module2.xml") {
+              """<idea-plugin/>"""
+            }
+          }
+        }
+      }
+    }
+    assertNull(plugin.contentModules[0].namespace)
+    assertEquals("someId_\$implicit", plugin.contentModules[0].actualNamespace)
+    assertEquals(2, plugin.modulesDescriptors.size)
+    val module1 = plugin.modulesDescriptors[0]
+    assertEquals("module1", module1.name)
+    val dependency = module1.module.contentModuleDependencies.single()
+    assertEquals("module2", dependency.moduleName)
+    assertEquals("someId_\$implicit", dependency.namespace)
   }
 
   private fun createPlugin(content: ContentBuilder.() -> Unit): IdePlugin {

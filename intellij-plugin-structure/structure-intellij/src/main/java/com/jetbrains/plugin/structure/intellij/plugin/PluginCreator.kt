@@ -287,7 +287,7 @@ internal class PluginCreator private constructor(
     }
     // dependencies from `<dependencies>`
     bean.contentModuleDependencies.forEach { dep ->
-      val namespace = dep.namespace ?: parentPlugin?.plugin?.contentModules?.find { it.name == dep.moduleName }?.namespace ?: "jetbrains"
+      val namespace = dep.namespace ?: parentPlugin?.plugin?.contentModules?.find { it.name == dep.moduleName }?.actualNamespace ?: "jetbrains"
       addContentModuleDependency(ContentModuleDependency(dep.moduleName, namespace))
     }
     dependencies += bean.contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) }
