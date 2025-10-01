@@ -22,7 +22,7 @@ jobs:
 
       # Validate wrapper
       - name: Gradle Wrapper Validation
-        uses: gradle/actions/wrapper-validation@v4.4.4
+        uses: gradle/actions/wrapper-validation@v5.0.0
 
   # Run tests
   test:
