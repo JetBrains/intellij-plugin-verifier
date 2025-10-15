@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.396 - 2025-10-15
+
+### Added
+
 - IntelliJ Structure API: introduce 3 new specialized dependency classes: `ContentModuleDependency`, `DependsPluginDependency`, `PluginMainModuleDependency`. They are used to store precise information about plugin dependencies
 - IntelliJ Structure API: `IdePlugin`: add three new properties that store dependency information: `dependsList`, `pluginMainModuleDependencies`, `contentModuleDependencies`
 - IntelliJ Structure API: `IdePlugin`: add `pluginAliases` property (built from `<module value="..."/>` elements in the plugin descriptor; naming in xml is confusing, and is so due to historic reasons)
