@@ -26,9 +26,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - IntelliJ Structure API: `IdePlugin`: deprecate `incompatibleModules`, use `incompatibleWith` instead
 - IntelliJ Structure API: `IdePlugin`: deprecate `definedModules`. It is composed as a concatenation of `pluginAliases` and `contentModules`, use them explicitly instead
 - IntelliJ Structure API: `IdePlugin`: deprecate `dependencies`. It contains mixed dependencies, including ones from the content modules. Migrate to `dependsList`, `pluginMainModuleDependencies`, `contentModuleDependencies` where possible 
-- IntelliJ Structure API: `ModuleDescriptor`: property `dependencies` is removed in favor of an extension property with the same name 
-
-### Fixed
+- IntelliJ Structure API: `ModuleDescriptor`: property `dependencies` is removed in favor of an extension property with the same name
 
 ## 1.395 - 2025-08-25
 
@@ -547,14 +545,14 @@ This fixes false positives connected with indexes and `DataIndexer`s.
 - Support all variants of `ClientKind` for services  ([MP-4881](https://youtrack.jetbrains.com/issue/MP-4881/Plugin-Verifier-support-all-variants-of-com.intellij.openapi.client.ClientKind-for-services))
 
 [Unreleased]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.307...HEAD
-[1.289]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.288...v1.289
-[1.294]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.289...v1.294
-[1.297]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.294...v1.297
-[1.299]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.297...v1.299
-[1.300]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.299...v1.300
-[1.301]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.300...v1.301
-[1.303]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.301...v1.303
-[1.304]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.303...v1.304
-[1.305]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.304...v1.305
-[1.306]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.305...v1.306
 [1.307]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.306...v1.307
+[1.306]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.305...v1.306
+[1.305]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.304...v1.305
+[1.304]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.303...v1.304
+[1.303]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.301...v1.303
+[1.301]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.300...v1.301
+[1.300]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.299...v1.300
+[1.299]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.297...v1.299
+[1.297]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.294...v1.297
+[1.294]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.289...v1.294
+[1.289]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.288...v1.289
