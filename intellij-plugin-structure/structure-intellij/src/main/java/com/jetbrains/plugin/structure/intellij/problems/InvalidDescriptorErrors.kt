@@ -304,3 +304,12 @@ class OptionalDependencyConfigFileIsEmpty(optionalDependencyId: String, descript
   override val level
     get() = Level.ERROR
 }
+
+class DependencyConstraintsDuplicates(descriptorPath: String, modules: List<String>) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The plugin configuration file includes multiple module constraints of the same type. " +
+    "Please remove the duplicate constraints: " + modules.joinToString(", ")
+) {
+  override val level
+    get() = Level.ERROR
+}

@@ -8,6 +8,8 @@ import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode.Implicit
+import com.jetbrains.plugin.structure.intellij.plugin.enums.CpuArch
+import com.jetbrains.plugin.structure.intellij.plugin.enums.OS
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -45,6 +47,10 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
   override var classpath: Classpath = Classpath.EMPTY
 
   override var isImplementationDetail: Boolean = false
+
+  override var osConstraint: OS? = null
+
+  override var archConstraint: CpuArch? = null
 
   @Deprecated("See IdePlugin::isV2")
   override val isV2: Boolean
@@ -186,6 +192,8 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         modulesDescriptors.addAll(old.modulesDescriptors)
         contentModules.addAll(old.contentModules)
         thirdPartyDependencies = old.thirdPartyDependencies.toMutableList()
+        osConstraint = old.osConstraint
+        archConstraint = old.archConstraint
         if (old is StructurallyValidated) {
           problems.addAll(overriddenProblems)
         }
