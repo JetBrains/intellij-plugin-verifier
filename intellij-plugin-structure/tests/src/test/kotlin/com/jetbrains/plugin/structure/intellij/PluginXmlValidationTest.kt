@@ -13,6 +13,9 @@ import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies
+import com.jetbrains.plugin.structure.intellij.plugin.enums.CpuArch
+import com.jetbrains.plugin.structure.intellij.plugin.enums.OS
+import com.jetbrains.plugin.structure.intellij.problems.DependencyConstraintsDuplicates
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
@@ -187,6 +190,134 @@ class PluginXmlValidationTest {
 
     assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.unacceptableWarnings)
     assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.warnings.filterIsInstance<NoModuleDependencies>())
+  }
+
+  @Test
+  fun `plugin with os and arch constraints dependencies`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <depends>com.intellij.modules.arch.x86_64</depends>
+              <depends>com.intellij.modules.os.macos</depends>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.unacceptableWarnings)
+    assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.warnings)
+
+    assertEquals(CpuArch.X86_64, pluginCreationSuccess.plugin.archConstraint)
+    assertEquals(OS.MacOS, pluginCreationSuccess.plugin.osConstraint)
+  }
+
+  @Test
+  fun `plugin with os and arch optional constraints dependencies`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <depends optional="true" config-file="test.xml">com.intellij.modules.arch.x86_64</depends>
+              <depends optional="true" config-file="test2.xml">com.intellij.modules.os.macos</depends>
+            </idea-plugin>
+          """
+        }
+        file("test.xml") {
+          """
+            <idea-plugin>
+            </idea-plugin>
+          """.trimIndent()
+        }
+        file("test2.xml") {
+          """
+            <idea-plugin>
+            </idea-plugin>
+          """.trimIndent()
+        }
+      }
+    }
+
+    assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.unacceptableWarnings)
+    assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.warnings)
+
+    assertNull(pluginCreationSuccess.plugin.archConstraint)
+    assertNull(pluginCreationSuccess.plugin.osConstraint)
+  }
+
+  @Test
+  fun `plugin with os and arch v2 constraints dependencies`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              
+              <dependencies>
+                <module name="com.intellij.modules.arch.x86_64" />
+                <module name="com.intellij.modules.os.macos" />
+              </dependencies>
+             
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.unacceptableWarnings)
+    assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.warnings)
+
+    assertEquals(CpuArch.X86_64, pluginCreationSuccess.plugin.archConstraint)
+    assertEquals(OS.MacOS, pluginCreationSuccess.plugin.osConstraint)
+  }
+
+  @Test
+  fun `plugin with duplicate arch constraint dependencies`() {
+    val pluginCreationFailed = buildMalformedPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+              <depends>com.intellij.modules.arch.x86_64</depends>
+              <depends>com.intellij.modules.arch.x86</depends>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    assertEquals(listOf<PluginProblem>(
+      DependencyConstraintsDuplicates("plugin.xml", listOf(CpuArch.X86_64.moduleName, CpuArch.X86.moduleName)),
+    ), pluginCreationFailed.errorsAndWarnings)
+  }
+
+  @Test
+  fun `plugin with duplicate os constraint dependencies`() {
+    val pluginCreationFailed = buildMalformedPlugin {
+      dir("META-INF") {
+        file("plugin.xml") {
+          """
+            <idea-plugin>
+              $HEADER
+         
+              <depends>com.intellij.modules.os.macos</depends>
+              <depends>com.intellij.modules.os.windows</depends>
+            </idea-plugin>
+          """
+        }
+      }
+    }
+
+    assertEquals(listOf<PluginProblem>(
+      DependencyConstraintsDuplicates("plugin.xml", listOf(OS.MacOS.moduleName, OS.Windows.moduleName)),
+    ), pluginCreationFailed.errorsAndWarnings)
   }
 
   @Test

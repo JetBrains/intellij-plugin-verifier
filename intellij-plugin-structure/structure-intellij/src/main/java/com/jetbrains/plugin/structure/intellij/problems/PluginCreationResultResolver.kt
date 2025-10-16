@@ -79,6 +79,7 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     UnableToReadTheme::class,
     OptionalDependencyDescriptorCycleProblem::class,
     OptionalDependencyConfigFileIsEmpty::class,
+    DependencyConstraintsDuplicates::class,
 
     PluginLibDirectoryIsEmpty::class,
     PluginZipContainsMultipleFiles::class,
