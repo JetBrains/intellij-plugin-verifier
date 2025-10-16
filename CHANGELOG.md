@@ -6,6 +6,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- IntelliJ Structure API: introduce `OS` and `CpuArch` plugin constraints based on `com.intellij.modules.os.*` and `com.intellij.modules.arch.*` modules declaration.
+
 ### Changed
 
 ### Fixed
