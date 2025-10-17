@@ -4,23 +4,19 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.enums
 
+private const val ARCH_MODULE_PREFIX = "com.intellij.modules.arch."
+
 enum class CpuArch(private val suffix: String) {
   X86("x86"),
   X86_64("x86_64"),
   ARM32("arm32"),
   ARM64("arm64");
 
-  val pluginAlias: String
-    get() = ARCH_MODULE_PREFIX + suffix
+  val pluginAlias = ARCH_MODULE_PREFIX + suffix
 
   companion object {
-    private const val ARCH_MODULE_PREFIX = "com.intellij.modules.arch."
-
-    fun getByModule(moduleName: String): CpuArch? = moduleName
-      .removePrefix(ARCH_MODULE_PREFIX)
-      .toLowerCase()
-      .let { suffix ->
-        values().find { it.suffix == suffix }
-      }
+    fun getByModule(moduleName: String): CpuArch? = values().find {
+      it.pluginAlias.equals(moduleName, ignoreCase = true)
+    }
   }
 }
