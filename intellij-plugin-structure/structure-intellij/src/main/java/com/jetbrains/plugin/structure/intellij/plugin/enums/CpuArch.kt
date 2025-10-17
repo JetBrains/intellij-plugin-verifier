@@ -10,7 +10,7 @@ enum class CpuArch(private val suffix: String) {
   ARM32("arm32"),
   ARM64("arm64");
 
-  val moduleName: String
+  val pluginAlias: String
     get() = ARCH_MODULE_PREFIX + suffix
 
   companion object {

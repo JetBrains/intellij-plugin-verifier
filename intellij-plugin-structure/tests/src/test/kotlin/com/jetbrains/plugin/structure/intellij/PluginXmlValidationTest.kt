@@ -296,7 +296,7 @@ class PluginXmlValidationTest {
     }
 
     assertEquals(listOf<PluginProblem>(
-      DependencyConstraintsDuplicates("plugin.xml", listOf(CpuArch.X86_64.moduleName, CpuArch.X86.moduleName)),
+      DependencyConstraintsDuplicates("plugin.xml", listOf(CpuArch.X86_64.pluginAlias, CpuArch.X86.pluginAlias)),
     ), pluginCreationFailed.errorsAndWarnings)
   }
 
@@ -318,7 +318,7 @@ class PluginXmlValidationTest {
     }
 
     assertEquals(listOf<PluginProblem>(
-      DependencyConstraintsDuplicates("plugin.xml", listOf(OS.MacOS.moduleName, OS.Windows.moduleName)),
+      DependencyConstraintsDuplicates("plugin.xml", listOf(OS.MacOS.pluginAlias, OS.Windows.pluginAlias)),
     ), pluginCreationFailed.errorsAndWarnings)
   }
 
