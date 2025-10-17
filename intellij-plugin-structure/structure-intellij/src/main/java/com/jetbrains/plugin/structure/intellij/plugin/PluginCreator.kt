@@ -573,13 +573,13 @@ internal class PluginCreator private constructor(
     if (plugin.osConstraints.size > 1) {
       registerProblem(DependencyConstraintsDuplicates(
         descriptorPath = descriptorPath,
-        modules = plugin.osConstraints.map { it.moduleName }
+        modules = plugin.osConstraints.map { it.pluginAlias }
       ))
     }
     if (plugin.archConstraints.size > 1) {
       registerProblem(DependencyConstraintsDuplicates(
         descriptorPath = descriptorPath,
-        modules = plugin.archConstraints.map { it.moduleName }
+        modules = plugin.archConstraints.map { it.pluginAlias }
       ))
     }
 

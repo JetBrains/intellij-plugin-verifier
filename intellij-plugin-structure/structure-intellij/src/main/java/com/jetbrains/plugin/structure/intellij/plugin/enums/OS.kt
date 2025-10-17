@@ -12,7 +12,7 @@ enum class OS(private val suffix: String, val parents: Set<OS> = emptySet()) {
   Linux("linux", parents = setOf(Unix)),
   FreeBSD("freebsd", parents = setOf(Unix));
 
-  val moduleName: String
+  val pluginAlias: String
     get() = OS_MODULE_PREFIX + suffix
 
   companion object {
