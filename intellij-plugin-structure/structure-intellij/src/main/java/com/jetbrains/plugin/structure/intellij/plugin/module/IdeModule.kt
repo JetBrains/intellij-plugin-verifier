@@ -18,8 +18,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.MutableIdePluginContentDes
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginMainModuleDependency
-import com.jetbrains.plugin.structure.intellij.plugin.enums.CpuArch
-import com.jetbrains.plugin.structure.intellij.plugin.enums.OS
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -73,8 +71,6 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
   override val originalFile = null
   override val productDescriptor = null
   override val useIdeClassLoader = false
-  override val osConstraint: OS? = null
-  override val archConstraint: CpuArch? = null
   @Deprecated("See IdePlugin::isV2")
   override val isV2 = true
   override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit

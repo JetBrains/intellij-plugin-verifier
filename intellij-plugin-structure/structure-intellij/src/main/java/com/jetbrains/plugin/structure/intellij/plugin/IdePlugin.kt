@@ -5,8 +5,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
-import com.jetbrains.plugin.structure.intellij.plugin.enums.CpuArch
-import com.jetbrains.plugin.structure.intellij.plugin.enums.OS
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -122,14 +120,6 @@ interface IdePlugin : Plugin {
   val kotlinPluginMode: KotlinPluginMode
 
   val hasDotNetPart: Boolean
-
-  /**
-   * Specifies the operating system and cpu architecture constraints based on the `com.intellij.modules.os.*` and
-   * `com.intellij.modules.arch.*` non-optional modules. If the value is null, no restriction is applied on the
-   * Marketplace side.
-   */
-  val osConstraint: OS?
-  val archConstraint: CpuArch?
 
   fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean
 }

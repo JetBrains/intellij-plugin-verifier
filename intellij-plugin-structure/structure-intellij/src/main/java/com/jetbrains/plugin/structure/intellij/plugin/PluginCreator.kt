@@ -19,8 +19,6 @@ import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDescriptorParser.ParseResult.Parsed
 import com.jetbrains.plugin.structure.intellij.plugin.ValidationContext.ValidationResult
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
-import com.jetbrains.plugin.structure.intellij.plugin.enums.CpuArch
-import com.jetbrains.plugin.structure.intellij.plugin.enums.OS
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginThemeLoader
 import com.jetbrains.plugin.structure.intellij.problems.DependencyConstraintsDuplicates
 import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
@@ -326,8 +324,6 @@ internal class PluginCreator private constructor(
     changeNotes = bean.changeNotes
     description = bean.description
 
-    this.addConstraints(dependencies)
-
     val rootElement = document.rootElement
     readActions(rootElement, this)
 
@@ -376,29 +372,6 @@ internal class PluginCreator private constructor(
         }
       }
     }
-  }
-
-  private fun IdePluginImpl.addConstraints(dependencies: List<PluginDependency>) {
-    val mandatoryDependencies = dependencies.filter { it.isOptional.not() }
-
-    val osConstraints = mandatoryDependencies.mapNotNull { OS.getByModule(it.id) }.toSet()
-    val archConstraints = mandatoryDependencies.mapNotNull { CpuArch.getByModule(it.id) }.toSet()
-
-    if (osConstraints.size > 1) {
-      registerProblem(DependencyConstraintsDuplicates(
-        descriptorPath = descriptorPath,
-        modules = osConstraints.map { it.moduleName }
-      ))
-    }
-    if (archConstraints.size > 1) {
-      registerProblem(DependencyConstraintsDuplicates(
-        descriptorPath = descriptorPath,
-        modules = archConstraints.map { it.moduleName }
-      ))
-    }
-
-    this.osConstraint = osConstraints.firstOrNull()
-    this.archConstraint = archConstraints.firstOrNull()
   }
 
   private fun IdePluginImpl.addExtension(epName: String, extensionElement: Element) {
@@ -596,6 +569,19 @@ internal class PluginCreator private constructor(
       .filterValues { it > 1 }
       .map { it.key }
       .forEach { duplicatedDependencyId -> registerProblem(DuplicatedDependencyWarning(duplicatedDependencyId)) }
+
+    if (plugin.osConstraints.size > 1) {
+      registerProblem(DependencyConstraintsDuplicates(
+        descriptorPath = descriptorPath,
+        modules = plugin.osConstraints.map { it.moduleName }
+      ))
+    }
+    if (plugin.archConstraints.size > 1) {
+      registerProblem(DependencyConstraintsDuplicates(
+        descriptorPath = descriptorPath,
+        modules = plugin.archConstraints.map { it.moduleName }
+      ))
+    }
 
     val sinceBuild = plugin.sinceBuild
     val untilBuild = plugin.untilBuild
