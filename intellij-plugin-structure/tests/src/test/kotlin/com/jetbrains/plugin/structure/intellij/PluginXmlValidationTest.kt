@@ -262,8 +262,8 @@ class PluginXmlValidationTest {
               $HEADER
               
               <dependencies>
-                <plugin name="com.intellij.modules.arch.x86_64" />
-                <plugin name="com.intellij.modules.os.macos" />
+                <plugin id="com.intellij.modules.arch.x86_64" />
+                <plugin id="com.intellij.modules.os.macos" />
               </dependencies>
              
             </idea-plugin>
