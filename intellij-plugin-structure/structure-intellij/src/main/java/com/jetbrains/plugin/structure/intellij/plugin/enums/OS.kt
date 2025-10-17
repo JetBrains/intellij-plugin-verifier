@@ -5,7 +5,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin.enums
 
 
-enum class OS(private val suffix: String, private val parents: Set<OS> = emptySet()) {
+enum class OS(private val suffix: String, val parents: Set<OS> = emptySet()) {
   Windows("windows"),
   Unix("unix"),
   MacOS("macos", parents = setOf(Unix)),
