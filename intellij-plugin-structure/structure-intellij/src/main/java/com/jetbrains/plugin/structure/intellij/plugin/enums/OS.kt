@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.enums
 
+private const val OS_MODULE_PREFIX = "com.intellij.modules.os."
 
 enum class OS(
   private val suffix: String,
@@ -15,17 +16,11 @@ enum class OS(
   Linux("linux", parents = setOf(Unix)),
   FreeBSD("freebsd", parents = setOf(Unix));
 
-  val pluginAlias: String
-    get() = OS_MODULE_PREFIX + suffix
+  val pluginAlias = OS_MODULE_PREFIX + suffix
 
   companion object {
-    private const val OS_MODULE_PREFIX = "com.intellij.modules.os."
-
-    fun getByModule(moduleName: String) = moduleName
-      .removePrefix(OS_MODULE_PREFIX)
-      .toLowerCase()
-      .let { suffix ->
-        values().find { it.suffix == suffix }
-      }
+    fun getByModule(moduleName: String): OS? = values().find {
+      it.pluginAlias.equals(moduleName, ignoreCase = true)
+    }
   }
 }
