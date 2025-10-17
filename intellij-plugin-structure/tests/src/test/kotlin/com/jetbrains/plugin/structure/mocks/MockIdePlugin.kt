@@ -17,8 +17,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginMainModuleDependency
 import com.jetbrains.plugin.structure.intellij.plugin.ProductDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.enums.CpuArch
-import com.jetbrains.plugin.structure.intellij.plugin.enums.OS
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -50,9 +48,6 @@ data class MockIdePlugin(
   override val moduleContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
-  override val osConstraint: OS? = null,
-  override val archConstraint: CpuArch? = null,
-
   @Deprecated("See IdePlugin::isV2")
   override val isV2: Boolean = false,
   override val hasPackagePrefix: Boolean = false,

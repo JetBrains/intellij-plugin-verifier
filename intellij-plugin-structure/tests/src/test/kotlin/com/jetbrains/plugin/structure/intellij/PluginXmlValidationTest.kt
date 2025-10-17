@@ -12,9 +12,11 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.archConstraints
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies
 import com.jetbrains.plugin.structure.intellij.plugin.enums.CpuArch
 import com.jetbrains.plugin.structure.intellij.plugin.enums.OS
+import com.jetbrains.plugin.structure.intellij.plugin.osConstraints
 import com.jetbrains.plugin.structure.intellij.problems.DependencyConstraintsDuplicates
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
@@ -211,8 +213,8 @@ class PluginXmlValidationTest {
     assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.unacceptableWarnings)
     assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.warnings)
 
-    assertEquals(CpuArch.X86_64, pluginCreationSuccess.plugin.archConstraint)
-    assertEquals(OS.MacOS, pluginCreationSuccess.plugin.osConstraint)
+    assertEquals(CpuArch.X86_64, pluginCreationSuccess.plugin.archConstraints.single())
+    assertEquals(OS.MacOS, pluginCreationSuccess.plugin.osConstraints.single())
   }
 
   @Test
@@ -246,8 +248,8 @@ class PluginXmlValidationTest {
     assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.unacceptableWarnings)
     assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.warnings)
 
-    assertNull(pluginCreationSuccess.plugin.archConstraint)
-    assertNull(pluginCreationSuccess.plugin.osConstraint)
+    assertTrue(pluginCreationSuccess.plugin.archConstraints.isEmpty())
+    assertTrue(pluginCreationSuccess.plugin.osConstraints.isEmpty())
   }
 
   @Test
@@ -273,8 +275,8 @@ class PluginXmlValidationTest {
     assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.unacceptableWarnings)
     assertEquals(emptyList<PluginProblem>(), pluginCreationSuccess.warnings)
 
-    assertEquals(CpuArch.X86_64, pluginCreationSuccess.plugin.archConstraint)
-    assertEquals(OS.MacOS, pluginCreationSuccess.plugin.osConstraint)
+    assertEquals(CpuArch.X86_64, pluginCreationSuccess.plugin.archConstraints.single())
+    assertEquals(OS.MacOS, pluginCreationSuccess.plugin.osConstraints.single())
   }
 
   @Test

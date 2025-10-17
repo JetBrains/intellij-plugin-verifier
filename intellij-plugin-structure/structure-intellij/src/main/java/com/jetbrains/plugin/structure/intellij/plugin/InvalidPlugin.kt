@@ -5,8 +5,6 @@ import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode.Implicit
-import com.jetbrains.plugin.structure.intellij.plugin.enums.CpuArch
-import com.jetbrains.plugin.structure.intellij.plugin.enums.OS
 import com.jetbrains.plugin.structure.intellij.verifiers.ProblemRegistrar
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
@@ -54,8 +52,6 @@ class InvalidPlugin(override val underlyingDocument: Document) : IdePlugin, Stru
   override val useIdeClassLoader: Boolean = false
   override val classpath: Classpath = Classpath.EMPTY
   override val isImplementationDetail: Boolean = false
-  override val osConstraint: OS? = null
-  override val archConstraint: CpuArch? = null
   @Deprecated("See IdePlugin::isV2")
   override val isV2: Boolean = false
   override val moduleVisibility: ModuleVisibility = ModuleVisibility.PRIVATE
