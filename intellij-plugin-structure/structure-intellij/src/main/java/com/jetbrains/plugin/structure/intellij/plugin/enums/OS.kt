@@ -5,7 +5,10 @@
 package com.jetbrains.plugin.structure.intellij.plugin.enums
 
 
-enum class OS(private val suffix: String, val parents: Set<OS> = emptySet()) {
+enum class OS(
+  private val suffix: String,
+  val parents: Set<OS> = emptySet() // used on the MP side to resolve compatibility
+) {
   Windows("windows"),
   Unix("unix"),
   MacOS("macos", parents = setOf(Unix)),
