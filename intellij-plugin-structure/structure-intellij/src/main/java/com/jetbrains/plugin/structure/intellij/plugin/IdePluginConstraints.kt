@@ -13,6 +13,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.enums.OS
  * Marketplace side.
  */
 val IdePlugin.osConstraints: Set<OS>
-  get() = dependencies.filter { it.isOptional.not() }.mapNotNull { OS.getByModule(it.id) }.toSet()
+  get() = dependencies.filter { it.isOptional.not() }.mapNotNullTo(LinkedHashSet()) { OS.getByModule(it.id) }
 val IdePlugin.archConstraints: Set<CpuArch>
-  get() = dependencies.filter { it.isOptional.not() }.mapNotNull { CpuArch.getByModule(it.id) }.toSet()
+  get() = dependencies.filter { it.isOptional.not() }.mapNotNullTo(LinkedHashSet()) { CpuArch.getByModule(it.id) }
