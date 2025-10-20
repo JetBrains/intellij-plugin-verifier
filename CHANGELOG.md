@@ -10,6 +10,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 
+- Dependency update: upgraded `org.bouncycastle:bcpkix-jdk15on` to the latest `org.bouncycastle:bcpkix-jdk18on`
+
 ### Fixed
 
 ## 1.396 - 2025-10-15
