@@ -22,9 +22,8 @@ allprojects {
     }
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+tasks.withType<JavaCompile>().configureEach {
+  options.release = 11
 }
 
 val manifestAttributes = mapOf("Main-Class" to "org.jetbrains.ide.diff.builder.MainKt")
