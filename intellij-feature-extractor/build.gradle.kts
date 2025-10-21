@@ -24,11 +24,9 @@ allprojects {
     mavenLocal()
   }
 
-  java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+  tasks.withType<JavaCompile>().configureEach {
+    options.release = 11
   }
-
 
   tasks.withType<KotlinCompile> {
     kotlinOptions {
