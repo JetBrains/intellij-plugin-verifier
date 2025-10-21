@@ -5,7 +5,7 @@ logback-classic = "1.2.13"
 log4j-toSlf4j = "2.22.0"
 mapdb = "3.0.10"
 spring-boot = "2.7.18"
-spring-dependencyManagement = "1.1.4"
+spring-dependencyManagement = "1.1.7"
 teamcity-restClient = "1.14.0"
 
 [libraries]
