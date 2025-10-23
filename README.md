@@ -65,8 +65,7 @@ The Plugin Verifier can be run using the command line:
 
 Command is one of `check-plugin`, `check-ide` or `check-trunk-api`.
 
-Beginning with version 1.260, the Plugin Verifier requires Java 11.
-Prior to this version, Java 8 is required.
+Java 11 is required to run the Plugin Verifier, and Java 17 is required to build it.
 
 ## Results
 
