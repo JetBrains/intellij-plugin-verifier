@@ -70,7 +70,7 @@ jobs:
 
       - name: Collect Test Results
         if: ${{ failure() }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: test-results-intellij-plugin-verifier
           path: ${{ github.workspace }}/intellij-plugin-verifier/build/reports/problems/
