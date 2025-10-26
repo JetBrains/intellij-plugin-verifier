@@ -400,6 +400,39 @@ Here is the full syntax of the command:
     * `org.jetbrains.kotlin::access to unresolved class org.jetbrains.kotlin.compiler.*` — ignore the plugin problem for all versions of the Kotlin plugin.  
     * `access to unresolved class org.jetbrains.kotlin.compiler.*` — ignore the plugin problem for all plugins.
 
+    The following API compatibility problems can be ignored:
+
+    - abstract class instantiation,
+    - abstract method invocation,
+    - change final field,
+    - class not found,
+    - failed to read class file,
+    - field not found,
+    - illegal class access,
+    - illegal field access,
+    - illegal method access,
+    - inherit from final class,
+    - instance access of static field,
+    - interface instantiation,
+    - internal FUS API usage compatibility,
+    - invalid class file,
+    - invoke class method on interface,
+    - invoke instance instruction on static method,
+    - invoke interface method on class,
+    - invoke interface on private method,
+    - invoke static on instance method,
+    - method not found,
+    - method not implemented,
+    - missing property reference,
+    - multiple default implementations,
+    - overriding final method,
+    - package not found,
+    - static access of instance field,
+    - super class became interface,
+    - super interface became class,
+    - undeclared dependency on Java plugin,
+    - undeclared plugin dependency
+
 * `-keep-only-problems (-kop)`
 
     A file that contains patterns of problems that will be reflected in report. All other problems will be ignored. Applied to short problem description.
