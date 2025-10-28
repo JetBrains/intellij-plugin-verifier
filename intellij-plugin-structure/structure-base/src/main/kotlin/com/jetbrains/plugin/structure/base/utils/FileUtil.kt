@@ -127,8 +127,14 @@ fun Path.listFiles(): List<Path> {
 
 fun Path.listJars(): List<Path> = listFiles().filter { it.isJar() }
 
-fun Path.listAllFiles() =
-  Files.walk(this).use { stream -> stream.filter { it.isFile }.map { this.relativize(it) }.toList() }
+fun Path.listAllFiles(): List<Path> {
+  return Files.walk(this).use { stream ->
+    stream
+      .filter { it.isFile }
+      .map { this.relativize(it) }
+      .collect(Collectors.toList())
+  }
+}
 
 fun Path.deleteQuietly(): Boolean {
   return try {
