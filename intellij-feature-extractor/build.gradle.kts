@@ -24,6 +24,12 @@ allprojects {
     mavenLocal()
   }
 
+  java {
+    toolchain {
+      languageVersion = JavaLanguageVersion.of(11)
+    }
+  }
+
   tasks.withType<JavaCompile>().configureEach {
     options.release = 11
   }

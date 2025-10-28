@@ -14,6 +14,12 @@ allprojects {
         plugin("org.jetbrains.kotlin.plugin.serialization")
     }
 
+    java {
+      toolchain {
+        languageVersion = JavaLanguageVersion.of(11)
+      }
+    }
+
     repositories {
         maven("https://cache-redirector.jetbrains.com/intellij-repository/releases")
         maven("https://cache-redirector.jetbrains.com/intellij-dependencies")

@@ -47,6 +47,12 @@ allprojects {
   group = "org.jetbrains.intellij.plugins"
   version = projectVersion
 
+  java {
+    toolchain {
+      languageVersion = JavaLanguageVersion.of(11)
+    }
+  }
+
   tasks.withType<JavaCompile>().configureEach {
     options.release = 11
   }
