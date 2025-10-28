@@ -9,9 +9,7 @@ class InMemoryPluginRepository : PluginRepository{
 
   private val plugins = mutableListOf<PluginInfo>()
 
-  override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> {
-    return plugins.toList()
-  }
+  override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<PluginInfo> = plugins
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): PluginInfo? {
     return plugins.lastOrNull { it.pluginId == pluginId }
