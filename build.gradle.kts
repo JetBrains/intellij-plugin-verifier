@@ -3,7 +3,6 @@ tasks.register("clean") {
     dependsOn(gradle.includedBuild("intellij-feature-extractor").task(":clean"))
     dependsOn(gradle.includedBuild("intellij-plugin-structure").task(":clean"))
     dependsOn(gradle.includedBuild("intellij-plugin-verifier").task(":clean"))
-    dependsOn(gradle.includedBuild("plugins-verifier-service").task(":clean"))
 }
 
 tasks.register("test") {
@@ -11,7 +10,6 @@ tasks.register("test") {
   dependsOn(gradle.includedBuild("intellij-feature-extractor").task(":test"))
   dependsOn(gradle.includedBuild("intellij-plugin-structure").task(":test"))
   dependsOn(gradle.includedBuild("intellij-plugin-verifier").task(":test"))
-  dependsOn(gradle.includedBuild("plugins-verifier-service").task(":test"))
 }
 
 tasks.register<JavaExec>("checkPlugin") {
