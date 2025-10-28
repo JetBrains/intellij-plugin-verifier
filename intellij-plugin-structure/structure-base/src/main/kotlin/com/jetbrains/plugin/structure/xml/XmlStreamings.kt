@@ -31,6 +31,7 @@ fun createXmlInputFactory(): XmlInputFactoryResult {
     XMLInputFactory.newInstance().apply {
       setProperty(XMLInputFactory.IS_REPLACING_ENTITY_REFERENCES, false)
       setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false)
+      setProperty(XMLInputFactory.SUPPORT_DTD, false)
     }.let {
       return XmlInputFactoryResult.Created(it)
     }

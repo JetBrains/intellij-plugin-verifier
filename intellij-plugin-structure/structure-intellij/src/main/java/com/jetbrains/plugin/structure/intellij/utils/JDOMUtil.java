@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.utils;
 
+import com.jetbrains.plugin.structure.xml.XMLParserConfiguration;
 import org.apache.commons.io.IOUtils;
 import org.jdom2.*;
 import org.jdom2.filter.AbstractFilter;
@@ -23,6 +24,18 @@ public class JDOMUtil {
   private static final char[] EMPTY_CHAR_ARRAY = new char[0];
 
   private JDOMUtil() {
+  }
+
+  private static SAXBuilder createDefaultSaxBuilder() {
+    SAXBuilder saxBuilder = new SAXBuilder();
+    saxBuilder.setEntityResolver((publicId, systemId) -> new InputSource(new CharArrayReader(EMPTY_CHAR_ARRAY)));
+    saxBuilder.setFeature(XMLParserConfiguration.FEATURE_DISALLOW_DOCTYPE_DECL,true);
+    saxBuilder.setExpandEntities(false);
+    saxBuilder.setFeature(XMLParserConfiguration.FEATURE_EXTERNAL_GENERAL_ENTITIES, false);
+    saxBuilder.setFeature(XMLParserConfiguration.FEATURE_EXTERNAL_PARAMETER_ENTITIES, false);
+    saxBuilder.setFeature(XMLParserConfiguration.FEATURE_LOAD_EXTERNAL_DTD, false);
+
+    return saxBuilder;
   }
 
   private static boolean areElementsEqual(Element e1, Element e2) {
@@ -80,8 +93,7 @@ public class JDOMUtil {
    */
   @NotNull
   public static Document loadDocument(@NotNull Reader reader) throws JDOMException, IOException {
-    SAXBuilder saxBuilder = new SAXBuilder();
-    saxBuilder.setEntityResolver((publicId, systemId) -> new InputSource(new CharArrayReader(EMPTY_CHAR_ARRAY)));
+    SAXBuilder saxBuilder = createDefaultSaxBuilder();
     return saxBuilder.build(reader);
   }
 
@@ -90,8 +102,7 @@ public class JDOMUtil {
     //to prevent closing the supplied stream from InputStreamReader.close()
     InputStream copied = copyInputStream(stream);
     try (InputStreamReader reader = new InputStreamReader(copied, StandardCharsets.UTF_8)) {
-      SAXBuilder saxBuilder = new SAXBuilder();
-      saxBuilder.setEntityResolver((publicId, systemId) -> new InputSource(new CharArrayReader(EMPTY_CHAR_ARRAY)));
+      SAXBuilder saxBuilder = createDefaultSaxBuilder();
       return saxBuilder.build(reader);
     }
   }

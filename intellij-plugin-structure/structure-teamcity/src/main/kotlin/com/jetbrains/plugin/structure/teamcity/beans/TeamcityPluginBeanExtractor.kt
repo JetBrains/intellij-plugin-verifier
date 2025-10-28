@@ -4,28 +4,20 @@
 
 package com.jetbrains.plugin.structure.teamcity.beans
 
+import com.jetbrains.plugin.structure.xml.DefaultXMLDocumentBuilderProvider
 import org.xml.sax.SAXParseException
-import org.xml.sax.helpers.DefaultHandler
 import java.io.InputStream
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.UnmarshalException
-import javax.xml.parsers.DocumentBuilderFactory
 
 object TeamcityPluginBeanExtractor {
   private val jaxbContext = JAXBContext.newInstance(TeamcityPluginBean::class.java)
-  private val documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder().apply {
-    setErrorHandler(object : DefaultHandler() {
-      override fun error(e: SAXParseException) {
-        throw e
-      }
-    })
-  }
 
-  @Throws(UnmarshalException::class)
+  @Throws(UnmarshalException::class, SAXParseException::class)
   fun extractPluginBean(inputStream: InputStream): TeamcityPluginBean {
-    val document = documentBuilder.parse(inputStream)
+    val document = DefaultXMLDocumentBuilderProvider.documentBuilder().parse(inputStream)
     val unmarshaller = jaxbContext.createUnmarshaller()
     return unmarshaller.unmarshal(document, TeamcityPluginBean::class.java).value
-        ?: throw UnmarshalException("Metadata element not found")
+      ?: throw UnmarshalException("Metadata element not found")
   }
 }

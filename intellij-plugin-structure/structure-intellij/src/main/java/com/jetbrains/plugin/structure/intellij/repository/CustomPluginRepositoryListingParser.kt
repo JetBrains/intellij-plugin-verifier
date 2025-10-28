@@ -1,11 +1,9 @@
 package com.jetbrains.plugin.structure.intellij.repository
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.xml.DefaultXMLDocumentBuilderProvider
 import org.w3c.dom.Element
-import org.xml.sax.SAXParseException
-import org.xml.sax.helpers.DefaultHandler
 import java.net.URL
-import javax.xml.parsers.DocumentBuilderFactory
 
 /**
  * Utility class that parses list of plugins from one of supported listing formats
@@ -32,15 +30,8 @@ object CustomPluginRepositoryListingParser {
     repositoryUrl: URL,
     listingType: CustomPluginRepositoryListingType
   ): List<PluginInfo> {
-    val document = DocumentBuilderFactory.newInstance()
-      .newDocumentBuilder()
-      .apply {
-        setErrorHandler(object : DefaultHandler() {
-          override fun error(e: SAXParseException) {
-            throw e
-          }
-        })
-      }
+    val document = DefaultXMLDocumentBuilderProvider
+      .documentBuilder()
       .parse(pluginsListXmlContent.toByteArray().inputStream())
     val root = document.documentElement
     return if (listingType == CustomPluginRepositoryListingType.SIMPLE) {
