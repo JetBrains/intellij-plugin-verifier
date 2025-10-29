@@ -37,6 +37,12 @@ allprojects {
     plugin("com.github.ben-manes.versions")
   }
 
+  java {
+    toolchain {
+      languageVersion = JavaLanguageVersion.of(11)
+    }
+  }
+
   tasks.withType<JavaCompile>().configureEach {
     options.release = 11
   }

@@ -22,7 +22,6 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.stream.Collectors
-import kotlin.streams.toList
 
 private val LOG = LoggerFactory.getLogger("structure.FileUtil")
 
@@ -38,9 +37,14 @@ fun Path.isJar(): Boolean = this.hasExtension("jar")
 fun Path.hasExtension(expected: String) =
   Files.isRegularFile(this) && expected == extension
 
-fun Path.listRecursivelyAllFilesWithExtension(extension: String) =
-  Files.walk(this, FileVisitOption.FOLLOW_LINKS)
-    .use { stream -> stream.filter { it.toString().endsWith(".${extension}") }.toList() }
+fun Path.listRecursivelyAllFilesWithExtension(extension: String): List<Path> {
+  return Files.walk(this, FileVisitOption.FOLLOW_LINKS)
+    .use { stream ->
+      stream.filter {
+        it.toString().endsWith(".${extension}")
+      }.collect(Collectors.toList())
+    }
+}
 
 fun String.withPathSeparatorOf(path: Path) = replace('\\', '/').replace("/", path.fileSystem.separator)
 fun String.withZipFsSeparator() = replace('\\', '/')
@@ -127,8 +131,14 @@ fun Path.listFiles(): List<Path> {
 
 fun Path.listJars(): List<Path> = listFiles().filter { it.isJar() }
 
-fun Path.listAllFiles() =
-  Files.walk(this).use { stream -> stream.filter { it.isFile }.map { this.relativize(it) }.toList() }
+fun Path.listAllFiles(): List<Path> {
+  return Files.walk(this).use { stream ->
+    stream
+      .filter { it.isFile }
+      .map { this.relativize(it) }
+      .collect(Collectors.toList())
+  }
+}
 
 fun Path.deleteQuietly(): Boolean {
   return try {

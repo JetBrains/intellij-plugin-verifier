@@ -28,7 +28,6 @@ internal class PluginModuleResolver {
           Module.InlineModule(name, namespace, actualNamespace, loadingRule, cDataContent)
         }
       }
-      .toList()
   }
 
   fun supports(pluginBean: PluginBean): Boolean = pluginBean.pluginContent != null

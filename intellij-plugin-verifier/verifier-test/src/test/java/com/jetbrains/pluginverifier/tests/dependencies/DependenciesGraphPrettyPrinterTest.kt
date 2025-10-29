@@ -86,7 +86,7 @@ class DependenciesGraphPrettyPrinterTest {
 
     val startVertex = vertices.find { it.pluginId == "start" }!!
     val missingDeps = missingDependencies.map { DependencyNode(it.key.pluginId, it.key.version) to missingDependencies[it.key].orEmpty().toSet() }.toMap()
-    val dependenciesGraph = DependenciesGraph(startVertex, vertices.toList(), edges, missingDeps)
+    val dependenciesGraph = DependenciesGraph(startVertex, vertices, edges, missingDeps)
     val prettyPrinter = DependenciesGraphPrettyPrinter(dependenciesGraph)
     val prettyPresentation = prettyPrinter.prettyPresentation().trim()
 

@@ -40,7 +40,7 @@ import org.jetbrains.ide.diff.builder.persistence.json.JsonApiReportReader
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Paths
-import kotlin.streams.toList
+import java.util.stream.Collectors
 import kotlin.system.exitProcess
 
 /**
@@ -114,7 +114,7 @@ class ApiQualityCheckCommand : Command {
       val pluginFiles = Files.list(pluginsPath).use { stream ->
         stream
           .filter { it.isDirectory || it.extension == "zip" || it.extension == "jar" }
-          .toList()
+          .collect(Collectors.toList())
       }
       for (pluginFile in pluginFiles) {
         LOG.info("Reading plugin frmo: $pluginFile")

@@ -4,11 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.IconTheme
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.base.plugin.parseThirdPartyDependenciesByPath
-import com.jetbrains.plugin.structure.base.utils.exists
-import com.jetbrains.plugin.structure.base.utils.hasExtension
-import com.jetbrains.plugin.structure.base.utils.inputStream
-import com.jetbrains.plugin.structure.base.utils.readBytes
-import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
+import com.jetbrains.plugin.structure.base.utils.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -16,7 +12,7 @@ import java.nio.file.FileSystem
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.streams.toList
+import java.util.stream.Collectors
 
 const val META_INF = "META-INF"
 const val PLUGIN_XML = "plugin.xml"
@@ -54,7 +50,7 @@ class PluginJar @Throws(JarArchiveCannotBeOpenException::class) constructor(
         .filter { it.hasExtension(XML_EXTENSION) }
         .filter(descriptorFilter::accept)
         .use {
-          it.toList()
+          it.collect(Collectors.toList())
         }
     }
 

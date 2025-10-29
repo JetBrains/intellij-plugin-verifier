@@ -33,7 +33,7 @@ class ProductInfoBasedIde private constructor(
 
   override fun getVersion() = version
 
-  override fun getBundledPlugins(): List<IdePlugin> = plugins.toList()
+  override fun getBundledPlugins(): List<IdePlugin> = plugins
 
   override fun hasBundledPlugin(pluginId: String): Boolean {
     return productInfo.layout.any { it.name == pluginId }
