@@ -250,6 +250,57 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     assertEquals("someId_\$implicit", dependency.namespace)
   }
 
+  @Test
+  fun `plugin descriptor contains BOM`() {
+    val pluginXml = "<idea-plugin />"
+    val bom = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
+    val pluginXmlBytes = bom + pluginXml.toByteArray(Charsets.UTF_8)
+
+    createPlugin {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml", pluginXmlBytes)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `plugin descriptor contains BOM in an dependent descriptr`() {
+    val secondaryDescriptor = "<idea-plugin />"
+    val bom = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
+    val secondaryDescriptorBytes = bom + secondaryDescriptor.toByteArray(Charsets.UTF_8)
+
+    val pluginXml = """
+      <idea-plugin>
+          <depends optional="true" config-file="git4idea-integration.xml">Git4Idea</depends>      
+      </idea-plugin>          
+    """.trimIndent()
+
+    val plugin = createPlugin {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml", pluginXml)
+              file("git4idea-integration.xml", secondaryDescriptorBytes)
+            }
+          }
+        }
+      }
+    }
+    with(plugin.optionalDescriptors) {
+      assertEquals(1, size)
+      val git4IdeaDescriptor = first()
+      assertEquals("Git4Idea", git4IdeaDescriptor.dependency.id)
+    }
+  }
+
+
   private fun createPlugin(content: ContentBuilder.() -> Unit): IdePlugin {
     val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->
       pluginManager.createPlugin(
