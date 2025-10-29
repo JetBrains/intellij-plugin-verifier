@@ -1,6 +1,6 @@
 package com.jetbrains.pluginverifier.usages.properties
 
-import com.jetbrains.plugin.structure.classes.utils.KtClassResolver
+import com.jetbrains.pluginverifier.results.presentation.JvmDescriptorsPresentation
 import com.jetbrains.pluginverifier.verifiers.findAnnotation
 import com.jetbrains.pluginverifier.verifiers.getAnnotationValue
 import com.jetbrains.pluginverifier.verifiers.hasAnnotation
@@ -11,9 +11,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.MethodAsm
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.MethodNode
 
-internal const val ENUM_PRIVATE_CONSTRUCTOR_DESC = "(Ljava/lang/String;ILjava/lang/String;)V"
-
-class EnumClassPropertyUsageAdapter(private val classResolver: KtClassResolver = KtClassResolver()) {
+class EnumClassPropertyUsageAdapter() {
 
   fun resolve(method: Method): ResourceBundledProperty? {
     if (!supports(method)) return null
@@ -25,15 +23,20 @@ class EnumClassPropertyUsageAdapter(private val classResolver: KtClassResolver =
   }
 
   fun supports(method: Method): Boolean {
-    return method.isInKotlinEnumClass()
-      && method.descriptor == ENUM_PRIVATE_CONSTRUCTOR_DESC
+    return method.isEnumClass() && isEnumConstructorDesc(method.descriptor)
       && method.hasParameterAnnotation("org/jetbrains/annotations/PropertyKey")
   }
 
-  private fun Method.isInKotlinEnumClass(): Boolean {
+  fun isEnumConstructorDesc(descriptor: String): Boolean {
+    val (paramTypes, returnType) = JvmDescriptorsPresentation.splitMethodDescriptorOnRawParametersAndReturnTypes(descriptor)
+
+    return paramTypes.size > 2 && paramTypes[0] == "Ljava/lang/String;" && paramTypes[1] == "I" && returnType == "V"
+      && paramTypes.slice(2 until paramTypes.size).contains("Ljava/lang/String;")
+  }
+
+  private fun Method.isEnumClass(): Boolean {
     val enclosingClassFile = containingClassFile as? ClassFileAsm ?: return false
-    val ktClass = classResolver[enclosingClassFile.asmNode]
-    return ktClass != null && ktClass.isEnumClass
+    return enclosingClassFile.superName == "java/lang/Enum"
   }
 
   private fun Method.hasParameterAnnotation(annotation: BinaryClassName): Boolean {

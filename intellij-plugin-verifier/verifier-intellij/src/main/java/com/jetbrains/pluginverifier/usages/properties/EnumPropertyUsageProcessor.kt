@@ -1,6 +1,7 @@
 package com.jetbrains.pluginverifier.usages.properties
 
 import com.jetbrains.pluginverifier.results.reference.MethodReference
+import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.bytecode.InterpreterAdapter
 import com.jetbrains.pluginverifier.verifiers.bytecode.InvokeSpecialInterpreterListener
@@ -11,7 +12,7 @@ import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.analysis.Analyzer
 import org.objectweb.asm.tree.analysis.BasicValue
 
-class EnumPropertyUsageProcessor : AbstractPropertyUsageProcessor() {
+class EnumPropertyUsageProcessor(private val propertyChecker: PropertyChecker) : ApiUsageProcessor {
   private val enumClassPropertyUsage = EnumClassPropertyUsageAdapter()
 
   override fun processMethodInvocation(
@@ -29,7 +30,7 @@ class EnumPropertyUsageProcessor : AbstractPropertyUsageProcessor() {
     )
     enumClassPropertyUsage.resolve(resolvedMethod)?.let { resourceBundledProperty ->
       invokeSpecialDetector.invocations.filter {
-        it.methodName == "<init>" && it.desc == ENUM_PRIVATE_CONSTRUCTOR_DESC
+        it.methodName == "<init>" && enumClassPropertyUsage.isEnumConstructorDesc(it.desc)
       }.forEach { constructorInvocation ->
         // Drop the following parameters
         //    1) invocation target 2) enum member name 3) enum ordinal value
@@ -37,7 +38,7 @@ class EnumPropertyUsageProcessor : AbstractPropertyUsageProcessor() {
         val invocationParameteres = constructorInvocation.values.drop(3)
         // TODO support more parameters
         invocationParameteres.firstStringOrNull()?.let { propertyKey ->
-          checkProperty(resourceBundledProperty.bundleName, propertyKey, context, callerMethod.location)
+          propertyChecker.checkProperty(resourceBundledProperty.bundleName, propertyKey, context, callerMethod.location)
         }
       }
     }

@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.tests.mocks.MockVerificationContext
 import com.jetbrains.pluginverifier.tests.mocks.asm.constructorPublicNoArg
 import com.jetbrains.pluginverifier.tests.mocks.asm.constructorPublicString
 import com.jetbrains.pluginverifier.tests.mocks.asm.publicNoArgReturnVoid
+import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.BinaryClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
@@ -27,7 +28,7 @@ import java.util.*
 class PropertyUsageProcessorTest {
   @Test
   fun `resource bundle property is resolved`() {
-    val propertyUsageProcessor = object : AbstractPropertyUsageProcessor() {
+    val propertyUsageProcessor = object : ApiUsageProcessor {
       override fun processMethodInvocation(
         methodReference: MethodReference,
         resolvedMethod: Method,
@@ -35,7 +36,7 @@ class PropertyUsageProcessorTest {
         callerMethod: Method,
         context: VerificationContext
       ) {
-        checkProperty(MOCK_RESOURCE_BUNDLE, MOCK_RESOURCE_BUNDLE_KEY, context, resolvedMethod.location)
+        DefaultPropertyChecker.checkProperty(MOCK_RESOURCE_BUNDLE, MOCK_RESOURCE_BUNDLE_KEY, context, resolvedMethod.location)
       }
     }
     with(invocationSpec()) {
@@ -50,7 +51,7 @@ class PropertyUsageProcessorTest {
 
   @Test
   fun `resource bundle property is not found`() {
-    val propertyUsageProcessor = object : AbstractPropertyUsageProcessor() {
+    val propertyUsageProcessor = object : ApiUsageProcessor {
       override fun processMethodInvocation(
         methodReference: MethodReference,
         resolvedMethod: Method,
@@ -58,7 +59,7 @@ class PropertyUsageProcessorTest {
         callerMethod: Method,
         context: VerificationContext
       ) {
-        checkProperty(MOCK_RESOURCE_BUNDLE, "UNKNOWN_PROPERTY", context, resolvedMethod.location)
+        DefaultPropertyChecker.checkProperty(MOCK_RESOURCE_BUNDLE, "UNKNOWN_PROPERTY", context, resolvedMethod.location)
       }
     }
     with(invocationSpec()) {
@@ -81,7 +82,7 @@ class PropertyUsageProcessorTest {
 
   @Test
   fun `resource bundle property is resolved in deprecated resource bundle`() {
-    val propertyUsageProcessor = object : AbstractPropertyUsageProcessor() {
+    val propertyUsageProcessor = object : ApiUsageProcessor {
       override fun processMethodInvocation(
         methodReference: MethodReference,
         resolvedMethod: Method,
@@ -89,7 +90,7 @@ class PropertyUsageProcessorTest {
         callerMethod: Method,
         context: VerificationContext
       ) {
-        checkProperty(MOCK_RESOURCE_BUNDLE, MOCK_DEPRECATED_RESOURCE_BUNDLE_KEY, context, resolvedMethod.location)
+        DefaultPropertyChecker.checkProperty(MOCK_RESOURCE_BUNDLE, MOCK_DEPRECATED_RESOURCE_BUNDLE_KEY, context, resolvedMethod.location)
       }
     }
     with(invocationSpec()) {

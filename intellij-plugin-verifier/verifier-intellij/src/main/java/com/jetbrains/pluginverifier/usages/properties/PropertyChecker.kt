@@ -4,13 +4,20 @@ import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.problems.MissingPropertyReferenceProblem
-import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import java.util.*
 
-abstract class AbstractPropertyUsageProcessor : ApiUsageProcessor {
+interface PropertyChecker {
+  fun checkProperty(
+    resourceBundleName: String,
+    propertyKey: String,
+    context: VerificationContext,
+    usageLocation: Location
+  )
+}
 
-  protected fun checkProperty(
+object DefaultPropertyChecker: PropertyChecker {
+  override fun checkProperty(
     resourceBundleName: String,
     propertyKey: String,
     context: VerificationContext,

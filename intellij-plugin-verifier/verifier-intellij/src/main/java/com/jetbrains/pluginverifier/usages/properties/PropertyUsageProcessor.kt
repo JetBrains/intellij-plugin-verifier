@@ -5,6 +5,7 @@
 package com.jetbrains.pluginverifier.usages.properties
 
 import com.jetbrains.pluginverifier.results.reference.MethodReference
+import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.CodeAnalysis
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.findAnnotation
@@ -12,9 +13,9 @@ import com.jetbrains.pluginverifier.verifiers.getAnnotationValue
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import org.objectweb.asm.tree.AbstractInsnNode
 
-class PropertyUsageProcessor : AbstractPropertyUsageProcessor() {
+class PropertyUsageProcessor(private val propertyChecker: PropertyChecker = DefaultPropertyChecker) : ApiUsageProcessor {
 
-  private val enumPropertyUsageProcessor = EnumPropertyUsageProcessor()
+  private val enumPropertyUsageProcessor = EnumPropertyUsageProcessor(propertyChecker)
 
   override fun processMethodInvocation(
     methodReference: MethodReference,
@@ -45,7 +46,7 @@ class PropertyUsageProcessor : AbstractPropertyUsageProcessor() {
       val propertyKey = CodeAnalysis().evaluateConstantString(callerMethod, instructionIndex, onStackIndex)
 
       if (propertyKey != null) {
-        checkProperty(resourceBundleName, propertyKey, context, callerMethod.location)
+        propertyChecker.checkProperty(resourceBundleName, propertyKey, context, callerMethod.location)
       }
     }
   }
