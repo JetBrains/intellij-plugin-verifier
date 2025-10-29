@@ -250,6 +250,25 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     assertEquals("someId_\$implicit", dependency.namespace)
   }
 
+  @Test
+  fun `plugin descriptor contains BOM`() {
+    val pluginXml = "<idea-plugin />"
+    val bom = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
+    val pluginXmlBytes = bom + pluginXml.toByteArray(Charsets.UTF_8)
+
+    createPlugin {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml", pluginXmlBytes)
+            }
+          }
+        }
+      }
+    }
+  }
+
   private fun createPlugin(content: ContentBuilder.() -> Unit): IdePlugin {
     val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->
       pluginManager.createPlugin(

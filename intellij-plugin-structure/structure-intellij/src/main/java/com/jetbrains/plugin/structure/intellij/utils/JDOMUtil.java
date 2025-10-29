@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.intellij.utils;
 
 import com.jetbrains.plugin.structure.xml.XMLParserConfiguration;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.BOMInputStream;
 import org.jdom2.*;
 import org.jdom2.filter.AbstractFilter;
 import org.jdom2.filter.Filter;
@@ -113,7 +114,8 @@ public class JDOMUtil {
 
   @NotNull
   private static InputStream copyInputStream(@NotNull InputStream is) throws IOException {
-    return new ByteArrayInputStream(IOUtils.toByteArray(is));
+    BOMInputStream bomExcludingIs = BOMInputStream.builder().setInputStream(is).get();
+    return new ByteArrayInputStream(IOUtils.toByteArray(bomExcludingIs));
   }
 
   private static class EmptyTextFilter extends AbstractFilter<Content> {
