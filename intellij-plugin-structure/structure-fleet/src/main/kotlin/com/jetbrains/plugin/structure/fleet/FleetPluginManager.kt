@@ -19,7 +19,8 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.streams.toList
+import java.util.stream.Collectors
+import java.util.stream.Stream
 
 class FleetPluginManager private constructor(private val extractDirectory: Path) : PluginManager<FleetPlugin> {
   companion object {
@@ -86,14 +87,20 @@ class FleetPluginManager private constructor(private val extractDirectory: Path)
       val icons = loadIconFromDir(pluginDir)
 
       val fileChecker = FileChecker(descriptor.id)
-      val files = Files.list(pluginDir).toList().mapNotNull { file ->
-        val fileName = file.fileName.toString()
-        if (file.isFile && fileChecker.addFile(file)) {
-          PluginFile(fileName, Files.readAllBytes(file))
-        }
-        else {
-          null
-        }
+
+      val files = Files.list(pluginDir).use { stream: Stream<Path> ->
+        stream.filter { it.isFile }
+          .map { path: Path ->
+            val fileName = path.fileName.toString()
+            if (fileChecker.addFile(path)) {
+              PluginFile(fileName, Files.readAllBytes(path))
+            } else {
+              null
+            }
+          }
+          .filter { it != null }
+          .map { it!! }
+          .collect(Collectors.toList())
       }
       if (problems.any { it.level == PluginProblem.Level.ERROR } || fileChecker.problems.isNotEmpty()) {
         return PluginCreationFail(problems + fileChecker.problems)

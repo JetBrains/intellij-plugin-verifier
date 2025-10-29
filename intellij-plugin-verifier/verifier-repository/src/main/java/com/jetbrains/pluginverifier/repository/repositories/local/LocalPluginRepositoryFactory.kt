@@ -19,7 +19,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.streams.toList
+import java.util.stream.Collectors
 
 private val LOG: Logger = LoggerFactory.getLogger(LocalPluginRepositoryFactory::class.java)
 /**
@@ -46,7 +46,7 @@ object LocalPluginRepositoryFactory {
     val pluginFiles = Files.list(repositoryRoot).use { stream ->
       stream
         .filter { it.isDirectory || it.extension == "zip" || it.extension == "jar" }
-        .toList()
+        .collect(Collectors.toList())
     }
 
     val localPluginRepository = LocalPluginRepository(compatibilityPredicate = forcePluginCompatibility.asPredicate())

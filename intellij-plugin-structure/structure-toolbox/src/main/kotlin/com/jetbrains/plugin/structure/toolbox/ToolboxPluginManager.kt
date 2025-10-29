@@ -15,7 +15,8 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.streams.toList
+import java.util.stream.Collectors
+import java.util.stream.Stream
 
 class ToolboxPluginManager private constructor(private val extractDirectory: Path) : PluginManager<ToolboxPlugin> {
   companion object {
@@ -86,15 +87,22 @@ class ToolboxPluginManager private constructor(private val extractDirectory: Pat
       val iconNames = icons.map { it.fileName }.toSet()
 
       val fileChecker = FileChecker()
-      val files = Files.list(pluginDir).toList().mapNotNull { file ->
-        val fileName = file.fileName.toString()
-        if (file.isFile && fileName !in iconNames && fileChecker.addFile(file)) {
-          PluginFile(fileName, Files.readAllBytes(file))
-        }
-        else {
-          null
-        }
+      val files = Files.list(pluginDir).use { stream: Stream<Path> ->
+        stream
+          .filter { it.isFile }
+          .map { path: Path ->
+            val fileName = path.fileName.toString()
+            if (fileName !in iconNames && fileChecker.addFile(path)) {
+              PluginFile(fileName, Files.readAllBytes(path))
+            } else {
+              null
+            }
+          }
+          .filter { it != null }
+          .map { it!! }
+          .collect(Collectors.toList())
       }
+
       if (problems.any { it.level == PluginProblem.Level.ERROR } || fileChecker.problems.isNotEmpty()) {
         return PluginCreationFail(problems + fileChecker.problems)
       }
