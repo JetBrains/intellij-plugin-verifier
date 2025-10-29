@@ -22,7 +22,6 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.stream.Collectors
-import kotlin.streams.toList
 
 private val LOG = LoggerFactory.getLogger("structure.FileUtil")
 
