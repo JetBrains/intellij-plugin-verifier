@@ -38,8 +38,8 @@ class EnumPropertyUsageProcessor(private val propertyChecker: PropertyChecker) :
         // Drop the following parameters
         //    1) invocation target 2) enum member name 3) enum ordinal value
         // Such parameters are passed to the pseudo-synthetic private enum constructor
-        val invocationParameteres = constructorInvocation.values.drop(3)
-        invocationParameteres.filterIsInstance<StringValue>().forEach {
+        val invocationParameters = constructorInvocation.values.drop(3)
+        invocationParameters.filterIsInstance<StringValue>().forEach {
           propertyChecker.checkProperty(resourceBundledProperty.bundleName, it.value, context, callerMethod.location)
         }
       }
