@@ -1,16 +1,27 @@
+/*
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.usages.properties
 
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.utils.getBundleBaseName
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.problems.MissingPropertyReferenceProblem
-import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import java.util.*
 
-abstract class AbstractPropertyUsageProcessor : ApiUsageProcessor {
+interface PropertyChecker {
+  fun checkProperty(
+    resourceBundleName: String,
+    propertyKey: String,
+    context: VerificationContext,
+    usageLocation: Location
+  )
+}
 
-  protected fun checkProperty(
+object DefaultPropertyChecker: PropertyChecker {
+  override fun checkProperty(
     resourceBundleName: String,
     propertyKey: String,
     context: VerificationContext,
