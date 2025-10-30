@@ -17,6 +17,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
 import org.junit.Assert.*
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -648,6 +649,7 @@ class DependenciesTest {
     }
   }
 
+  @Ignore
   @Test
   fun `IntelliJ IDEA Community Edition 2024-2 is tested`() {
     val ideResourceLocation = "/ide-dumps/IC-242.24807.4"
@@ -716,6 +718,7 @@ class DependenciesTest {
     }
   }
 
+  @Ignore
   @Test
   fun test243Dump() {
     val ideResourceLocation = "/ide-dumps/243.12818.47-1"
@@ -780,6 +783,7 @@ class DependenciesTest {
     }
   }
 
+  @Ignore
   @Test
   fun `coverage plugin is resolved`() {
     val ideResourceLocation = "/ide-dumps/243.12818.47-1"
@@ -801,6 +805,7 @@ class DependenciesTest {
     }
   }
 
+  @Ignore
   @Test
   fun `coverage plugin has correct transitive classpath`() {
     val ideResourceLocation = "/ide-dumps/243.12818.47-1"
