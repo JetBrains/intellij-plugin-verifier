@@ -10,7 +10,6 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodAsm
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.analysis.Analyzer
-import org.objectweb.asm.tree.analysis.BasicValue
 
 class EnumPropertyUsageProcessor(private val propertyChecker: PropertyChecker) : ApiUsageProcessor {
   private val enumClassPropertyUsage = EnumClassPropertyUsageAdapter()
@@ -36,9 +35,8 @@ class EnumPropertyUsageProcessor(private val propertyChecker: PropertyChecker) :
         //    1) invocation target 2) enum member name 3) enum ordinal value
         // Such parameters are passed to the pseudo-synthetic private enum constructor
         val invocationParameteres = constructorInvocation.values.drop(3)
-        // TODO support more parameters
-        invocationParameteres.firstStringOrNull()?.let { propertyKey ->
-          propertyChecker.checkProperty(resourceBundledProperty.bundleName, propertyKey, context, callerMethod.location)
+        invocationParameteres.filterIsInstance<StringValue>().forEach {
+          propertyChecker.checkProperty(resourceBundledProperty.bundleName, it.value, context, callerMethod.location)
         }
       }
     }
@@ -48,8 +46,4 @@ class EnumPropertyUsageProcessor(private val propertyChecker: PropertyChecker) :
   fun supports(method: Method): Boolean {
     return enumClassPropertyUsage.supports(method)
   }
-
-  private fun List<BasicValue>.firstStringOrNull(): String? =
-    filterIsInstance<StringValue>().firstOrNull()?.value
-
 }

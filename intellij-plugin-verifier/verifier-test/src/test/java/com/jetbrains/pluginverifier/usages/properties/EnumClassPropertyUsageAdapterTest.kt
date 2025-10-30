@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.usages.properties
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.results.location.Location
 import com.jetbrains.pluginverifier.results.location.MethodLocation
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.problems.MissingPropertyReferenceProblem
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.tests.mocks.MockVerificationContext
@@ -69,14 +70,70 @@ class EnumClassPropertyUsageAdapterTest {
       clinitMethod, context
     )
 
-    (context.problems.first() as MissingPropertyReferenceProblem).apply {
-      assertEquals(missingPropertyKey, propertyKey)
-      assertEquals(resourceBundleName, bundleBaseName)
-      assertEquals("<clinit>", (usageLocation as MethodLocation).methodName)
-      assertEquals("com/jetbrains/JavaEnumExample", (usageLocation as MethodLocation).containingClass.className)
-      assertEquals("Missing property reference", problemType)
-    }
+    assertEquals(1, context.problems.size)
+    assertProblemIsMissingPropertyReference(context.problems[0], missingPropertyKey)
   }
+
+  @Test
+  fun `missing property should be reported for enum class constructor parameter with @PropertyKey annotation at another position`() {
+    val enumPropertyUsageProcessor = EnumPropertyUsageProcessor(alwaysFailingPropertyChecker)
+
+    val classFile = ClassFileAsm(
+      generateJavaEnumClass(
+        listOf(
+          Pair("I", { it.add(LdcInsnNode(4)) }),
+          Pair("Ljava/lang/String;", { it.add(LdcInsnNode(missingPropertyKey)) })
+        ),
+        addAnnotation = true
+      ), origin
+    )
+    val initMethod = classFile.methods.find { it.name == "<init>" }!!
+    val clinitMethod = classFile.methods.find { it.name == "<clinit>" }!!
+
+    val context = MockVerificationContext()
+    enumPropertyUsageProcessor.processMethodInvocation(
+      MethodReference(classFile.name, initMethod.name, initMethod.descriptor),
+      initMethod,
+      MethodInsnNode(Opcodes.RETURN, classFile.name, initMethod.name, initMethod.descriptor),
+      clinitMethod, context
+    )
+
+    assertEquals(1, context.problems.size)
+    assertProblemIsMissingPropertyReference(context.problems[0], missingPropertyKey)
+  }
+
+  @Test
+  fun `multiple missing property errors should be reported for enum class constructor parameters with @PropertyKey annotations`() {
+    val enumPropertyUsageProcessor = EnumPropertyUsageProcessor(alwaysFailingPropertyChecker)
+
+    val classFile = ClassFileAsm(
+      generateJavaEnumClass(
+        listOf(
+          Pair("Ljava/lang/String;", { it.add(LdcInsnNode(missingPropertyKey)) }),
+          Pair("I", { it.add(LdcInsnNode(4)) }),
+          Pair("Ljava/lang/String;", { it.add(LdcInsnNode(missingPropertyKey + "2")) })
+        ),
+        addAnnotation = true
+      ), origin
+    )
+    val initMethod = classFile.methods.find { it.name == "<init>" }!!
+    val clinitMethod = classFile.methods.find { it.name == "<clinit>" }!!
+
+    val context = MockVerificationContext()
+    enumPropertyUsageProcessor.processMethodInvocation(
+      MethodReference(classFile.name, initMethod.name, initMethod.descriptor),
+      initMethod,
+      MethodInsnNode(Opcodes.RETURN, classFile.name, initMethod.name, initMethod.descriptor),
+      clinitMethod, context
+    )
+
+    assertEquals(2, context.problems.size)
+
+    assertProblemIsMissingPropertyReference(context.problems[0], missingPropertyKey)
+    assertProblemIsMissingPropertyReference(context.problems[1], missingPropertyKey + "2")
+  }
+
+
 
   @Test
   fun `no error should be reported for enum class constructor parameter without annotation`() {
@@ -116,7 +173,7 @@ class EnumClassPropertyUsageAdapterTest {
       name = className
       superName = "java/lang/Enum"
 
-      val descriptor = "(Ljava/lang/String;I${additionalInitParams.joinToString { it.first }})V"
+      val descriptor = "(Ljava/lang/String;I${additionalInitParams.joinToString(separator = "") { it.first }})V"
 
       val initMethodNode = MethodNode().apply {
         access = Opcodes.ACC_PRIVATE
@@ -151,11 +208,23 @@ class EnumClassPropertyUsageAdapterTest {
         instructions.add(MethodInsnNode(Opcodes.INVOKESPECIAL, className, "<init>", descriptor))
         instructions.add(InsnNode(Opcodes.RETURN))
 
-        maxStack = 4
+        maxStack = 3 + additionalInitParams.size
       }
 
       methods.add(initMethodNode)
       methods.add(clinitMethodNode)
+    }
+  }
+
+  private fun assertProblemIsMissingPropertyReference(problem: CompatibilityProblem, expectedPropertyKey: String) {
+    require(problem is MissingPropertyReferenceProblem) { "Problem is of type ${problem.javaClass} instead of MissingPropertyReferenceProblem" }
+
+    problem.apply {
+      assertEquals(expectedPropertyKey, propertyKey)
+      assertEquals(resourceBundleName, bundleBaseName)
+      assertEquals("<clinit>", (usageLocation as MethodLocation).methodName)
+      assertEquals("com/jetbrains/JavaEnumExample", (usageLocation as MethodLocation).containingClass.className)
+      assertEquals("Missing property reference", problemType)
     }
   }
 
