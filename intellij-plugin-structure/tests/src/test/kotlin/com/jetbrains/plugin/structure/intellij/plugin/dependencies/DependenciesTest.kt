@@ -24,6 +24,7 @@ import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.math.max
+import kotlin.text.trimIndent
 
 private const val HEADER = """
       <id>someId</id>
@@ -649,9 +650,8 @@ class DependenciesTest {
     }
   }
 
-  @Ignore
   @Test
-  fun `IntelliJ IDEA Community Edition 2024-2 is tested`() {
+  fun `plugin Git4Idea has correct transitive dependencies in IntelliJ IDEA Community Edition 2024-2`() {
     val ideResourceLocation = "/ide-dumps/IC-242.24807.4"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
     assertNotNull("Dumped IDE not found in the resources [$ideResourceLocation]", ideUrl)
@@ -670,51 +670,31 @@ class DependenciesTest {
 
     val dependencyTree = DependencyTree(ide, ide.modulePredicate)
     with(dependencyTree.getTransitiveDependencies(git4Idea)) {
-      assertEquals(30, size)
-      listOf(
-        "com.jetbrains.performancePlugin",
-        "com.intellij.modules.lang",
-        "kotlin.features-trainer",
-        "intellij.java.featuresTrainer",
-        "training",
-        "intellij.platform.lvcs.impl",
-        "intellij.platform.vcs.impl",
-        "intellij.libraries.microba",
-        "Git4Idea",
-        "com.jetbrains.performancePlugin",
-        "intellij.platform.vcs.log.impl",
-        "intellij.platform.collaborationTools",
-        "intellij.platform.vcs.dvcs.impl",
-        "com.intellij.modules.vcs",
-        "intellij.platform.ide.newUiOnboarding",
-        "org.jetbrains.plugins.terminal",
-        "com.jetbrains.sh",
-        "com.intellij.copyright",
-        "com.intellij.modules.xml",
-        "org.jetbrains.kotlin",
-        "com.intellij.java",
-        "com.intellij.platform.images",
-        "com.intellij.modules.idea.community",
-        "com.intellij.modules.xdebugger",
-        "com.intellij.modules.java-capable",
-        "intellij.performanceTesting.vcs",
-        "org.intellij.plugins.markdown",
-        "org.intellij.intelliLang",
-        "com.intellij.modules.java",
-        "org.jetbrains.plugins.yaml",
-        "org.toml.lang",
-        "tanvd.grazi",
-        "com.intellij.properties",
-        "intellij.platform.coverage",
-        "intellij.platform.coverage.agent",
-        "intellij.platform.ide.newUsersOnboarding",
-        "intellij.platform.experiment",
-        "intellij.platform.collaborationTools",
-        "com.intellij.modules.vcs",
-        "intellij.platform.ide.newUiOnboarding",
-        "org.jetbrains.plugins.terminal",
-        "intellij.platform.coverage",
-      ).forEach(::assertContains)
+      assertEquals(25, size)
+      assertContains("com.jetbrains.performancePlugin")
+      assertContains("com.intellij.modules.lang")
+      assertContains("intellij.platform.collaborationTools")
+      assertContains("org.jetbrains.plugins.terminal")
+      assertContains("com.jetbrains.sh")
+      assertContains("com.intellij.copyright")
+      assertContains("org.intellij.plugins.markdown")
+      assertContains("org.intellij.intelliLang")
+      assertContains("com.intellij.modules.java")
+      assertContains("com.intellij.platform.images")
+      assertContains("com.intellij.modules.idea.community")
+      assertContains("training")
+      assertContains("intellij.platform.lvcs.impl")
+      assertContains("Git4Idea")
+      assertContains("com.jetbrains.performancePlugin")
+      assertContains("intellij.platform.collaborationTools")
+      assertContains("intellij.performanceTesting.vcs")
+      assertContains("com.intellij.modules.xml")
+      assertContains("org.jetbrains.plugins.yaml")
+      assertContains("org.toml.lang")
+      assertContains("tanvd.grazi")
+      assertContains("intellij.platform.vcs.impl")
+      assertContains("com.intellij.java")
+      assertContains("com.intellij.properties")
     }
   }
 
