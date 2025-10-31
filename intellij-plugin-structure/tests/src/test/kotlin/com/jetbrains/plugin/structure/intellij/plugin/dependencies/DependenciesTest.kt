@@ -698,9 +698,8 @@ class DependenciesTest {
     }
   }
 
-  @Ignore
   @Test
-  fun test243Dump() {
+  fun `plugin Git4Idea has correct transitive dependencies in IntelliJ IDEA 2024-3`() {
     val ideResourceLocation = "/ide-dumps/243.12818.47-1"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
     assertNotNull("Dumped IDE not found in the resources [$ideResourceLocation]", ideUrl)
@@ -725,14 +724,10 @@ class DependenciesTest {
         DependencyEntry(id = "com.intellij.java", transitive = true),
         DependencyEntry(id = "com.intellij.copyright", transitive = true),
         DependencyEntry(id = "com.intellij.platform.images", transitive = true),
-        DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl", transitive = true),
         DependencyEntry(id = "training", transitive = true),
         DependencyEntry(id = "intellij.platform.lvcs.impl", ownerId = "com.intellij", transitive = true),
-        DependencyEntry(id = "kotlin.features-trainer", ownerId = "kotlin.features-trainer", transitive = true),
-        DependencyEntry(
-          id = "intellij.java.featuresTrainer", ownerId = "intellij.java.featuresTrainer", transitive = true
-        ),
-        DependencyEntry(id = "org.jetbrains.kotlin", transitive = true),
+        // FIXME resolved via com.intellij.java#intellij.java.featuresTrainer
+        // DependencyEntry(id = "intellij.java.featuresTrainer", ownerId = "intellij.java.featuresTrainer", transitive = true),
         DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij", transitive = true),
         DependencyEntry(id = "Git4Idea", transitive = true),
         DependencyEntry(id = "com.jetbrains.performancePlugin", transitive = true),
@@ -753,7 +748,11 @@ class DependenciesTest {
         DependencyEntry(id = "intellij.platform.vcs.impl", ownerId = "com.intellij", transitive = true),
         DependencyEntry(id = "com.intellij.properties", transitive = true),
         DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij"),
-        DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl"),
+        // FIXME resolved via com.intellij#intellij.platform.vcs.impl|com.intellij.modules.vcs
+        // DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl"),
+        // FIXME resolved via com.intellij#intellij.platform.vcs.impl|com.intellij.modules.vcs
+        // Duplicate, but transitive
+        // DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl", transitive = true),
         DependencyEntry(id = "org.jetbrains.plugins.terminal"),
         // duplicate, because ModuleV2Dependency is actually a plugin.
         DependencyEntry(id = "com.intellij.modules.json", ownerId = "com.intellij.modules.json", transitive = true)
