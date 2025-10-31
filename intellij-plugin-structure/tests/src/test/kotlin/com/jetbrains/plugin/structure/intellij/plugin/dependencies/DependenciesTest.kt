@@ -930,7 +930,7 @@ class DependenciesTest {
       plugins/junit/lib/junit.jar
     """.trimIndent().split("\\s".toRegex()).toSet()
 
-    assertEquals(expectedClassPath.joinToString("\n"), relativeClasspaths.toSet().joinToString("\n"))
+    assertEquals(expectedClassPath, relativeClasspaths)
   }
 
   @Test
