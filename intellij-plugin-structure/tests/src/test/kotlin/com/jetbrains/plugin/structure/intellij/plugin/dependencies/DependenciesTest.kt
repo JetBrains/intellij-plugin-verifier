@@ -805,7 +805,6 @@ class DependenciesTest {
     }
   }
 
-  @Ignore
   @Test
   fun `coverage plugin has correct transitive classpath`() {
     val ideResourceLocation = "/ide-dumps/243.12818.47-1"
@@ -928,10 +927,6 @@ class DependenciesTest {
       plugins/toml/lib/toml.jar
       plugins/grazie/lib/grazie.jar
       plugins/properties/lib/properties.jar
-      plugins/Kotlin/lib/kotlin-plugin-shared.jar
-      plugins/Kotlin/lib/kotlin-plugin.jar
-      plugins/Kotlin/lib/kotlin-gradle-tooling.jar
-      plugins/Kotlin/lib/kotlinc.kotlin-compiler-common.jar
       plugins/junit/lib/junit.jar
     """.trimIndent().split("\\s".toRegex()).toSet()
 
