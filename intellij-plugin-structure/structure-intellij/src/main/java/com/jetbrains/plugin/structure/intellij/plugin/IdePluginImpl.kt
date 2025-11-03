@@ -80,7 +80,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
     modulesDescriptors.forEach {
       // FIXME content modules can have plugin aliases
       // addAll(it.module.definedModules)
-      // addAll(it.module.pluginAliases)
+      addAll(it.module.pluginAliases)
       add(it.name)
     }
   }

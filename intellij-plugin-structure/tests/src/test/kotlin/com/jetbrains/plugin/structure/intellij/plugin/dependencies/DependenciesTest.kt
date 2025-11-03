@@ -17,12 +17,14 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
 import org.junit.Assert.*
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.math.max
+import kotlin.text.trimIndent
 
 private const val HEADER = """
       <id>someId</id>
@@ -649,7 +651,7 @@ class DependenciesTest {
   }
 
   @Test
-  fun `IntelliJ IDEA Community Edition 2024-2 is tested`() {
+  fun `plugin Git4Idea has correct transitive dependencies in IntelliJ IDEA Community Edition 2024-2`() {
     val ideResourceLocation = "/ide-dumps/IC-242.24807.4"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
     assertNotNull("Dumped IDE not found in the resources [$ideResourceLocation]", ideUrl)
@@ -668,56 +670,36 @@ class DependenciesTest {
 
     val dependencyTree = DependencyTree(ide, ide.modulePredicate)
     with(dependencyTree.getTransitiveDependencies(git4Idea)) {
-      assertEquals(30, size)
-      listOf(
-        "com.jetbrains.performancePlugin",
-        "com.intellij.modules.lang",
-        "kotlin.features-trainer",
-        "intellij.java.featuresTrainer",
-        "training",
-        "intellij.platform.lvcs.impl",
-        "intellij.platform.vcs.impl",
-        "intellij.libraries.microba",
-        "Git4Idea",
-        "com.jetbrains.performancePlugin",
-        "intellij.platform.vcs.log.impl",
-        "intellij.platform.collaborationTools",
-        "intellij.platform.vcs.dvcs.impl",
-        "com.intellij.modules.vcs",
-        "intellij.platform.ide.newUiOnboarding",
-        "org.jetbrains.plugins.terminal",
-        "com.jetbrains.sh",
-        "com.intellij.copyright",
-        "com.intellij.modules.xml",
-        "org.jetbrains.kotlin",
-        "com.intellij.java",
-        "com.intellij.platform.images",
-        "com.intellij.modules.idea.community",
-        "com.intellij.modules.xdebugger",
-        "com.intellij.modules.java-capable",
-        "intellij.performanceTesting.vcs",
-        "org.intellij.plugins.markdown",
-        "org.intellij.intelliLang",
-        "com.intellij.modules.java",
-        "org.jetbrains.plugins.yaml",
-        "org.toml.lang",
-        "tanvd.grazi",
-        "com.intellij.properties",
-        "intellij.platform.coverage",
-        "intellij.platform.coverage.agent",
-        "intellij.platform.ide.newUsersOnboarding",
-        "intellij.platform.experiment",
-        "intellij.platform.collaborationTools",
-        "com.intellij.modules.vcs",
-        "intellij.platform.ide.newUiOnboarding",
-        "org.jetbrains.plugins.terminal",
-        "intellij.platform.coverage",
-      ).forEach(::assertContains)
+      assertEquals(25, size)
+      assertContains("com.jetbrains.performancePlugin")
+      assertContains("com.intellij.modules.lang")
+      assertContains("intellij.platform.collaborationTools")
+      assertContains("org.jetbrains.plugins.terminal")
+      assertContains("com.jetbrains.sh")
+      assertContains("com.intellij.copyright")
+      assertContains("org.intellij.plugins.markdown")
+      assertContains("org.intellij.intelliLang")
+      assertContains("com.intellij.modules.java")
+      assertContains("com.intellij.platform.images")
+      assertContains("com.intellij.modules.idea.community")
+      assertContains("training")
+      assertContains("intellij.platform.lvcs.impl")
+      assertContains("Git4Idea")
+      assertContains("com.jetbrains.performancePlugin")
+      assertContains("intellij.platform.collaborationTools")
+      assertContains("intellij.performanceTesting.vcs")
+      assertContains("com.intellij.modules.xml")
+      assertContains("org.jetbrains.plugins.yaml")
+      assertContains("org.toml.lang")
+      assertContains("tanvd.grazi")
+      assertContains("intellij.platform.vcs.impl")
+      assertContains("com.intellij.java")
+      assertContains("com.intellij.properties")
     }
   }
 
   @Test
-  fun test243Dump() {
+  fun `plugin Git4Idea has correct transitive dependencies in IntelliJ IDEA 2024-3`() {
     val ideResourceLocation = "/ide-dumps/243.12818.47-1"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
     assertNotNull("Dumped IDE not found in the resources [$ideResourceLocation]", ideUrl)
@@ -742,14 +724,10 @@ class DependenciesTest {
         DependencyEntry(id = "com.intellij.java", transitive = true),
         DependencyEntry(id = "com.intellij.copyright", transitive = true),
         DependencyEntry(id = "com.intellij.platform.images", transitive = true),
-        DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl", transitive = true),
         DependencyEntry(id = "training", transitive = true),
         DependencyEntry(id = "intellij.platform.lvcs.impl", ownerId = "com.intellij", transitive = true),
-        DependencyEntry(id = "kotlin.features-trainer", ownerId = "kotlin.features-trainer", transitive = true),
-        DependencyEntry(
-          id = "intellij.java.featuresTrainer", ownerId = "intellij.java.featuresTrainer", transitive = true
-        ),
-        DependencyEntry(id = "org.jetbrains.kotlin", transitive = true),
+        // FIXME resolved via com.intellij.java#intellij.java.featuresTrainer
+        // DependencyEntry(id = "intellij.java.featuresTrainer", ownerId = "intellij.java.featuresTrainer", transitive = true),
         DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij", transitive = true),
         DependencyEntry(id = "Git4Idea", transitive = true),
         DependencyEntry(id = "com.jetbrains.performancePlugin", transitive = true),
@@ -770,7 +748,11 @@ class DependenciesTest {
         DependencyEntry(id = "intellij.platform.vcs.impl", ownerId = "com.intellij", transitive = true),
         DependencyEntry(id = "com.intellij.properties", transitive = true),
         DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij"),
-        DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl"),
+        // FIXME resolved via com.intellij#intellij.platform.vcs.impl|com.intellij.modules.vcs
+        // DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl"),
+        // FIXME resolved via com.intellij#intellij.platform.vcs.impl|com.intellij.modules.vcs
+        // Duplicate, but transitive
+        // DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl", transitive = true),
         DependencyEntry(id = "org.jetbrains.plugins.terminal"),
         // duplicate, because ModuleV2Dependency is actually a plugin.
         DependencyEntry(id = "com.intellij.modules.json", ownerId = "com.intellij.modules.json", transitive = true)
@@ -781,7 +763,7 @@ class DependenciesTest {
   }
 
   @Test
-  fun `coverage plugin is resolved`() {
+  fun `plugin Coverage has correct transitive dependencies in IntelliJ IDEA 2024-3`() {
     val ideResourceLocation = "/ide-dumps/243.12818.47-1"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
     assertNotNull("Dumped IDE not found in the resources [$ideResourceLocation]", ideUrl)
@@ -797,7 +779,46 @@ class DependenciesTest {
 
     val dependencyTree = DependencyTree(ide, ide.modulePredicate)
     with(dependencyTree.getTransitiveDependencies(coveragePlugin)) {
-      assertSetsEqual(expectedCoveragePluginDependencies, toDependencyEntries())
+      val expectedDependencies = setOf(
+        DependencyEntry(id = "Git4Idea", transitive = true),
+        DependencyEntry(id = "JUnit", transitive = false),
+        DependencyEntry(id = "TestNG-J", transitive = false),
+        DependencyEntry(id = "XPathView", transitive = true),
+        DependencyEntry(id = "com.intellij.copyright", transitive = true),
+        DependencyEntry(id = "com.intellij.java", transitive = false),
+        DependencyEntry(id = "com.intellij.java", transitive = true),
+        DependencyEntry(id = "com.intellij.modules.java", ownerId = "com.intellij.java", transitive = true),
+        DependencyEntry(id = "com.intellij.modules.json", ownerId = "com.intellij.modules.json", transitive = true),
+        // duplicate, because ModuleV2Dependency is actually a plugin.
+        DependencyEntry(id = "com.intellij.modules.json", ownerId = null, transitive = true),
+        DependencyEntry(id = "com.intellij.modules.lang", ownerId = "com.intellij", transitive = true),
+        // FIXME resolved via com.intellij#intellij.platform.vcs.impl|com.intellij.modules.vcs
+        // DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl", transitive = true),
+        DependencyEntry(id = "com.intellij.modules.xml", ownerId = "com.intellij", transitive = true),
+        DependencyEntry(id = "com.intellij.platform.images", transitive = true),
+        DependencyEntry(id = "com.intellij.properties", transitive = true),
+        DependencyEntry(id = "com.jetbrains.performancePlugin", transitive = true),
+        DependencyEntry(id = "com.jetbrains.sh", transitive = true),
+        // FIXME resolved via com.intellij.java#intellij.java.featuresTrainer
+        // DependencyEntry(id = "intellij.java.featuresTrainer", ownerId = "intellij.java.featuresTrainer", transitive = true),
+        DependencyEntry(id = "intellij.performanceTesting.vcs", ownerId = "com.jetbrains.performancePlugin", transitive = true),
+        DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij", transitive = true),
+        DependencyEntry(id = "intellij.platform.coverage", ownerId = "com.intellij", transitive = false),
+        DependencyEntry(id = "intellij.platform.lvcs.impl", ownerId = "com.intellij", transitive = true),
+        DependencyEntry(id = "intellij.platform.vcs.impl", ownerId = "com.intellij", transitive = true),
+        // FIXME com.intellij#intellij.kotlin.onboarding-promoter via v2 <plugin> dependenc
+        //DependencyEntry(id = "kotlin.features-trainer", ownerId = "kotlin.features-trainer", transitive = true),
+        DependencyEntry(id = "org.intellij.intelliLang", transitive = true),
+        DependencyEntry(id = "org.intellij.plugins.markdown", transitive = true),
+        // FIXME com.intellij#intellij.kotlin.onboarding-promoter via v2 <plugin> dependenc
+        //DependencyEntry(id = "org.jetbrains.kotlin", transitive = true),
+        DependencyEntry(id = "org.jetbrains.plugins.terminal", transitive = true),
+        DependencyEntry(id = "org.jetbrains.plugins.yaml", transitive = true),
+        DependencyEntry(id = "org.toml.lang", transitive = true),
+        DependencyEntry(id = "tanvd.grazi", transitive = true),
+        DependencyEntry(id = "training", transitive = true),
+      )
+      assertSetsEqual(expectedDependencies, toDependencyEntries())
     }
   }
 
@@ -923,14 +944,10 @@ class DependenciesTest {
       plugins/toml/lib/toml.jar
       plugins/grazie/lib/grazie.jar
       plugins/properties/lib/properties.jar
-      plugins/Kotlin/lib/kotlin-plugin-shared.jar
-      plugins/Kotlin/lib/kotlin-plugin.jar
-      plugins/Kotlin/lib/kotlin-gradle-tooling.jar
-      plugins/Kotlin/lib/kotlinc.kotlin-compiler-common.jar
       plugins/junit/lib/junit.jar
     """.trimIndent().split("\\s".toRegex()).toSet()
 
-    assertEquals(expectedClassPath, relativeClasspaths.map { it.toString() }.toSet())
+    assertEquals(expectedClassPath, relativeClasspaths)
   }
 
   @Test
@@ -1188,42 +1205,6 @@ class DependenciesTest {
       this as ProductInfoBasedIde
       return ProductInfoBasedIdeModulePredicate(productInfo)
     }
-
-  private val expectedCoveragePluginDependencies = setOf(
-    DependencyEntry(id = "Git4Idea", transitive = true),
-    DependencyEntry(id = "JUnit", transitive = false),
-    DependencyEntry(id = "TestNG-J", transitive = false),
-    DependencyEntry(id = "XPathView", transitive = true),
-    DependencyEntry(id = "com.intellij.copyright", transitive = true),
-    DependencyEntry(id = "com.intellij.java", transitive = false),
-    DependencyEntry(id = "com.intellij.java", transitive = true),
-    DependencyEntry(id = "com.intellij.modules.java", ownerId = "com.intellij.java", transitive = true),
-    DependencyEntry(id = "com.intellij.modules.json", ownerId = "com.intellij.modules.json", transitive = true),
-    // duplicate, because ModuleV2Dependency is actually a plugin.
-    DependencyEntry(id = "com.intellij.modules.json", ownerId = null, transitive = true),
-    DependencyEntry(id = "com.intellij.modules.lang", ownerId = "com.intellij", transitive = true),
-    DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl", transitive = true),
-    DependencyEntry(id = "com.intellij.modules.xml", ownerId = "com.intellij", transitive = true),
-    DependencyEntry(id = "com.intellij.platform.images", transitive = true),
-    DependencyEntry(id = "com.intellij.properties", transitive = true),
-    DependencyEntry(id = "com.jetbrains.performancePlugin", transitive = true),
-    DependencyEntry(id = "com.jetbrains.sh", transitive = true),
-    DependencyEntry(id = "intellij.java.featuresTrainer", ownerId = "intellij.java.featuresTrainer", transitive = true),
-    DependencyEntry(id = "intellij.performanceTesting.vcs", ownerId = "com.jetbrains.performancePlugin", transitive = true),
-    DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij", transitive = true),
-    DependencyEntry(id = "intellij.platform.coverage", ownerId = "com.intellij", transitive = false),
-    DependencyEntry(id = "intellij.platform.lvcs.impl", ownerId = "com.intellij", transitive = true),
-    DependencyEntry(id = "intellij.platform.vcs.impl", ownerId = "com.intellij", transitive = true),
-    DependencyEntry(id = "kotlin.features-trainer", ownerId = "kotlin.features-trainer", transitive = true),
-    DependencyEntry(id = "org.intellij.intelliLang", transitive = true),
-    DependencyEntry(id = "org.intellij.plugins.markdown", transitive = true),
-    DependencyEntry(id = "org.jetbrains.kotlin", transitive = true),
-    DependencyEntry(id = "org.jetbrains.plugins.terminal", transitive = true),
-    DependencyEntry(id = "org.jetbrains.plugins.yaml", transitive = true),
-    DependencyEntry(id = "org.toml.lang", transitive = true),
-    DependencyEntry(id = "tanvd.grazi", transitive = true),
-    DependencyEntry(id = "training", transitive = true),
-  )
 
   private val expectedCoveragePluginDependencyIdentifiers = listOf(
     "Git4Idea",

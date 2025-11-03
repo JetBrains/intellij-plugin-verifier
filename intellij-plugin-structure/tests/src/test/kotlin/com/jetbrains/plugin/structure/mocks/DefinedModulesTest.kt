@@ -188,6 +188,50 @@ class DefinedModulesTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         }
     }
 
+    @Test
+    fun `plugin alias in content module is included in definedModules`() {
+        val plugin = buildPluginSuccess(emptyList()) {
+            buildZipFile(temporaryFolder.newFile("plugin.zip")) {
+                dir("foo") {
+                    dir("lib") {
+                        zip("plugin.jar") {
+                            dir("META-INF") {
+                                file("plugin.xml", """
+                                    <idea-plugin>
+                                        <id>foo</id>
+                                        <name>Whatever</name>
+                                        <version>1.0</version>
+                                        <vendor>Whatever inc.</vendor>
+                                        <idea-version since-build="251.0"/>
+                                        <description>yada yada yada yada yada yada yada yada yada yada yada yada yada yada yada yada yada yada yada yada yada yada yada yada</description>
+                                        <content>
+                                            <module name="foo.module"/>
+                                        </content>
+                                    </idea-plugin>
+                                """.trimIndent())
+                            }
+                            file("foo.module.xml", """
+                                <idea-plugin>
+                                    <module value="foo.alias"/>
+                                </idea-plugin>
+                            """.trimIndent())
+                        }
+                    }
+                }
+            }
+        }
+
+        val expectedModules = listOf(
+          "foo.module",
+          "foo.alias",
+        )
+        val modules = plugin.definedModules
+        assertEquals(expectedModules.size, modules.size)
+        expectedModules.forEach {
+            assert(modules.contains(it)) { "There is no module $it" }
+        }
+    }
+
     @After
     fun tearDown() {
         close()
