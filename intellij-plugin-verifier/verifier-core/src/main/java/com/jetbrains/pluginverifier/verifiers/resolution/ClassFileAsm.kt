@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.results.modifiers.Modifiers
 import com.jetbrains.pluginverifier.verifiers.getAccessType
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.InnerClassNode
 
 class ClassFileAsm(val asmNode: ClassNode, override val classFileOrigin: FileOrigin) : ClassFile {
   override val location
@@ -69,6 +70,9 @@ class ClassFileAsm(val asmNode: ClassNode, override val classFileOrigin: FileOri
   override val annotations
     get() = asmNode.invisibleAnnotations.orEmpty() + asmNode.visibleAnnotations.orEmpty()
 
+  override val innerClasses: List<InnerClassNode>
+    get() = asmNode.innerClasses
+
   override val isAbstract
     get() = asmNode.access and Opcodes.ACC_ABSTRACT != 0
 
@@ -101,6 +105,9 @@ class ClassFileAsm(val asmNode: ClassNode, override val classFileOrigin: FileOri
 
   override val isStatic
     get() = asmNode.access and Opcodes.ACC_STATIC != 0
+
+  override val isEnum
+    get() = asmNode.access and Opcodes.ACC_ENUM != 0
 
   override val nestHostClass: String?
     get() = asmNode.nestHostClass
