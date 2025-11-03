@@ -49,17 +49,17 @@ class MethodAsm(override val containingClassFile: ClassFile, val asmNode: Method
       val parameterNames = asmNode.getParameterNames()
       val parameterAnnotations: Array<out MutableList<AnnotationNode>?> = asmNode.invisibleParameterAnnotations.orEmpty()
 
+      //The first parameter is a parameter of an inner class' constructor => ignore the first annotation.
+      if (name == "<init>" && containingClassFile.isInnerClass) {
+        return parameterNames.mapIndexed { index, parameterName ->
+          MethodParameter(parameterName, parameterAnnotations.getOrElse(index - 1) { emptyList<AnnotationNode>() }.orEmpty())
+        }
+      }
+
       //The simplest case: just zip parameter names and annotations.
       if (parameterNames.size == parameterAnnotations.size) {
         return parameterNames.mapIndexed { index, parameterName ->
           MethodParameter(parameterName, parameterAnnotations[index].orEmpty())
-        }
-      }
-
-      //The first parameter is a parameter of an inner class' constructor => ignore the first annotation.
-      if (name == "<init>" && containingClassFile.isInnerClass && parameterNames.size == parameterAnnotations.size + 1) {
-        return parameterNames.mapIndexed { index, parameterName ->
-          MethodParameter(parameterName, parameterAnnotations.getOrElse(index - 1) { emptyList<AnnotationNode>() }.orEmpty())
         }
       }
 
