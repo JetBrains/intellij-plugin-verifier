@@ -10,7 +10,22 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
-## 1.397 - 2025-10-28
+## [1.398] - 2025-11-03
+
+### Added
+
+- Plugin aliases from content modules are include in 'definedModules'
+
+### Changed
+
+- Removed `Plugin Verifier Service` from composite build
+- Improved Java 11 Compatibility
+
+### Fixed
+
+- Fix false positive reports with enum synthetic parameters ([MP-3108](https://youtrack.jetbrains.com/issue/MP-3108)).
+
+## [1.397] - 2025-10-28
 
 ### Added
 
@@ -558,7 +573,9 @@ This fixes false positives connected with indexes and `DataIndexer`s.
 - Support Java 17 Records ([MP-4865](https://youtrack.jetbrains.com/issue/MP-4865/Plugin-Verifier-Problems-handling-java.lang.Record))
 - Support all variants of `ClientKind` for services  ([MP-4881](https://youtrack.jetbrains.com/issue/MP-4881/Plugin-Verifier-support-all-variants-of-com.intellij.openapi.client.ClientKind-for-services))
 
-[Unreleased]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.307...HEAD
+[Unreleased]: https://github.com/JetBrains/intellij-plugin-verifier/compare/1.398...HEAD
+[1.398]: https://github.com/JetBrains/intellij-plugin-verifier/compare/1.397...1.398
+[1.397]: https://github.com/JetBrains/intellij-plugin-verifier/compare/1.396...1.397
 [1.307]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.306...v1.307
 [1.306]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.305...v1.306
 [1.305]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.304...v1.305
