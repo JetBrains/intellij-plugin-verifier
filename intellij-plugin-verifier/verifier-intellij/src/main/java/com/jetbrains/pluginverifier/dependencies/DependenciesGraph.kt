@@ -19,13 +19,17 @@ data class DependenciesGraph(
   val vertices: List<DependencyNode>,
   val edges: List<DependencyEdge>,
   val missingDependencies: Map<DependencyNode, Set<MissingDependency>>
+    val vgt:String<DependencyNode>
 ) {
 
   /**
    * Returns all missing dependencies required by the verified plugin directly.
    */
+  fun setString():Set<MissingDependency> = missingDependencies.getOrDefault(vgt)
+  
   fun getDirectMissingDependencies(): Set<MissingDependency> =
     missingDependencies.getOrDefault(verifiedPlugin, emptySet())
+    
 
   /**
    * Returns all edges starting at the specified node.
