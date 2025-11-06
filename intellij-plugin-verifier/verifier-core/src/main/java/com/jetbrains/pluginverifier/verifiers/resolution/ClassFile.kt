@@ -7,6 +7,7 @@ package com.jetbrains.pluginverifier.verifiers.resolution
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.results.location.ClassLocation
 import org.objectweb.asm.tree.AnnotationNode
+import org.objectweb.asm.tree.InnerClassNode
 
 interface ClassFile : ClassFileMember {
   override val location: ClassLocation
@@ -25,13 +26,13 @@ interface ClassFile : ClassFileMember {
   val enclosingClassName: String?
 
   override val annotations: List<AnnotationNode>
+  val innerClasses: List<InnerClassNode>
 
   val isAbstract: Boolean
   val isFinal: Boolean
   val isInterface: Boolean
   val isStatic: Boolean
-
-  val isInnerClass: Boolean get() = enclosingClassName != null && !isStatic
+  val isEnum: Boolean
 
   override val isPublic: Boolean
   override val isProtected: Boolean

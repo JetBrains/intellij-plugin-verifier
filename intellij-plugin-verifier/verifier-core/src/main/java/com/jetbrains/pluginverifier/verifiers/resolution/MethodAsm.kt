@@ -44,27 +44,44 @@ class MethodAsm(override val containingClassFile: ClassFile, val asmNode: Method
   override val localVariables: List<LocalVariableNode>
     get() = asmNode.localVariables.orEmpty()
 
+  private var _methodParameters: List<MethodParameter>? = null
   override val methodParameters: List<MethodParameter>
     get() {
+      if (_methodParameters != null) {
+        return _methodParameters!!
+      }
+
       val parameterNames = asmNode.getParameterNames()
       val parameterAnnotations: Array<out MutableList<AnnotationNode>?> = asmNode.invisibleParameterAnnotations.orEmpty()
 
-      //The simplest case: just zip parameter names and annotations.
-      if (parameterNames.size == parameterAnnotations.size) {
+      // Enums have two synthetic parameters
+      val result = if (name == "<init>" && containingClassFile.isEnum) {
         return parameterNames.mapIndexed { index, parameterName ->
-          MethodParameter(parameterName, parameterAnnotations[index].orEmpty())
+          MethodParameter(parameterName, parameterAnnotations.getOrElse(index - 2) { emptyList() }.orEmpty())
         }
       }
 
-      //The first parameter is a parameter of an inner class' constructor => ignore the first annotation.
-      if (name == "<init>" && containingClassFile.isInnerClass && parameterNames.size == parameterAnnotations.size + 1) {
+      // Non-static inner classes have a synthetic parameters
+      else if (name == "<init>" && containingClassFile.isNonStaticInnerClass()) {
         return parameterNames.mapIndexed { index, parameterName ->
-          MethodParameter(parameterName, parameterAnnotations.getOrElse(index - 1) { emptyList<AnnotationNode>() }.orEmpty())
+          MethodParameter(parameterName, parameterAnnotations.getOrElse(index - 1) { emptyList() }.orEmpty())
+        }
+      }
+
+      //The simplest case: just zip parameter names and annotations.
+      else if (parameterNames.size == parameterAnnotations.size) {
+        return parameterNames.zip(parameterAnnotations) { name, annotation ->
+          MethodParameter(name, annotation.orEmpty())
         }
       }
 
       //Fallback: we don't know how to zip parameter names and annotations.
-      return parameterNames.map { parameterName -> MethodParameter(parameterName, emptyList()) }
+      else {
+        parameterNames.map { parameterName -> MethodParameter(parameterName, emptyList()) }
+      }
+
+      _methodParameters = result
+      return result
     }
 
   override val exceptions
@@ -141,4 +158,11 @@ class MethodAsm(override val containingClassFile: ClassFile, val asmNode: Method
     return (0 until descriptorArgumentsNumber).map { "arg$it" }
   }
 
+  private fun ClassFile.isNonStaticInnerClass(): Boolean {
+    if (enclosingClassName == null) {
+      return false
+    }
+
+    return containingClassFile.innerClasses.getOrNull(0)?.let { it.access and Opcodes.ACC_STATIC == 0 } ?: return false
+  }
 }

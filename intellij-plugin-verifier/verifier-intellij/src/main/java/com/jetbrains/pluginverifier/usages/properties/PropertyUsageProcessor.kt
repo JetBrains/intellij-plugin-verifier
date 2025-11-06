@@ -15,8 +15,6 @@ import org.objectweb.asm.tree.AbstractInsnNode
 
 class PropertyUsageProcessor(private val propertyChecker: PropertyChecker = DefaultPropertyChecker) : ApiUsageProcessor {
 
-  private val enumPropertyUsageProcessor = EnumPropertyUsageProcessor(propertyChecker)
-
   override fun processMethodInvocation(
     methodReference: MethodReference,
     resolvedMethod: Method,
@@ -24,10 +22,6 @@ class PropertyUsageProcessor(private val propertyChecker: PropertyChecker = Defa
     callerMethod: Method,
     context: VerificationContext
   ) {
-    if (enumPropertyUsageProcessor.supports(resolvedMethod)) {
-      return enumPropertyUsageProcessor.processMethodInvocation(methodReference, resolvedMethod, instructionNode, callerMethod, context)
-    }
-
     val methodParameters = resolvedMethod.methodParameters
     if (methodParameters.any { it.name.contains("default", true) }) {
       //Some resource bundle methods provide default value parameter, which is used if such property is not available in the bundle.
