@@ -70,8 +70,8 @@ class MethodAsm(override val containingClassFile: ClassFile, val asmNode: Method
 
       //The simplest case: just zip parameter names and annotations.
       else if (parameterNames.size == parameterAnnotations.size) {
-        return parameterNames.mapIndexed { index, parameterName ->
-          MethodParameter(parameterName, parameterAnnotations[index].orEmpty())
+        return parameterNames.zip(parameterAnnotations) { name, annotation ->
+          MethodParameter(name, annotation.orEmpty())
         }
       }
 

@@ -3,8 +3,7 @@ package com.jetbrains.pluginverifier.verifiers.resolution
 import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.pluginverifier.jdk.JdkDescriptorCreator
 import com.jetbrains.pluginverifier.tests.findMockPluginJarPath
-import com.jetbrains.pluginverifier.verifiers.resolution.classDump.`InnerClassExample$InnerDump`
-import com.jetbrains.pluginverifier.verifiers.resolution.classDump.`InnerClassExample$StaticInnerDump`
+import com.jetbrains.pluginverifier.verifiers.resolution.classDump.InnerClassExampleDump
 import com.jetbrains.pluginverifier.verifiers.resolution.classDump.JavaEnumExampleDump
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
@@ -184,7 +183,7 @@ class MethodsTest {
     }
 
     val classNode = ClassNode(ASM7)
-    val classReader = ClassReader(`InnerClassExample$InnerDump`.dump())
+    val classReader = ClassReader(InnerClassExampleDump.nonStaticInnerDump())
     classReader.accept(classNode, 0)
 
     val classFile = ClassFileAsm(classNode, origin)
@@ -220,7 +219,7 @@ class MethodsTest {
     }
 
     val classNode = ClassNode(ASM7)
-    val classReader = ClassReader(`InnerClassExample$StaticInnerDump`.dump())
+    val classReader = ClassReader(InnerClassExampleDump.staticInnerDump())
     classReader.accept(classNode, 0)
 
     val classFile = ClassFileAsm(classNode, origin)
