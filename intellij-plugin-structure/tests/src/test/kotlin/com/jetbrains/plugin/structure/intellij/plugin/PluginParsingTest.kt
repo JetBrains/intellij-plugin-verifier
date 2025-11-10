@@ -19,7 +19,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import java.nio.file.Path
-import java.util.*
+import java.util.UUID
 
 class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fileSystemType) {
 
