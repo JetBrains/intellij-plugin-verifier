@@ -4,13 +4,19 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.zip.ZipEntrySpec
+import com.jetbrains.plugin.structure.base.zip.ZipEntrySpec.File
+import com.jetbrains.plugin.structure.base.zip.ZipEntrySpec.Plain
+import com.jetbrains.plugin.structure.base.zip.createZip
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.IdePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.After
+import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -300,6 +306,59 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     }
   }
 
+  @Test
+  fun `ZIP contains a file starting two dots, but this is allowed, unless there is a directory separator`() {
+    createPlugin {
+      file("..md")
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml", "<idea-plugin />")
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `ZIP file contains a directory traversal via two dots`() {
+    val pluginJarPath = temporaryFolder.newFile("plugin.jar")
+    createZip(pluginJarPath, mapOf("META-INF/plugin.xml" to "<idea-plugin />"))
+
+    val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->
+      pluginManager.createPlugin(
+        pluginArtifactPath,
+        validateDescriptor = true,
+        problemResolver = AnyProblemToWarningPluginCreationResultResolver,
+      )
+    }
+    val pluginManager = createManager(extractedDirectory)
+    val contentBase = listOf(File("plugin/lib/plugin.jar", pluginJarPath))
+    val wrongScenarios = listOf(
+      Plain("..", "") to "The plugin archive file cannot be extracted. " +
+        "Invalid relative entry name: path traversal outside root of archive in [..]",
+      Plain("META-INF/../..", "") to "The plugin archive file cannot be extracted. " +
+        "Invalid relative entry name: path traversal outside root of archive in [META-INF/../..]",
+      Plain(".", "") to "The plugin archive file cannot be extracted. " +
+        "Resolved entry name cannot be empty: [.]",
+      Plain("././.", "") to "The plugin archive file cannot be extracted. " +
+        "Resolved entry name cannot be empty: [././.]",
+      Plain(".hidden/.", "") to "The plugin root directory must not contain multiple files: .hidden, plugin. " +
+        "The plugin .jar file should be placed in the 'lib' folder within the plugin's root directory, along with all the required bundled libraries.",
+    )
+
+    wrongScenarios.forEach {(spec, expectedMessage) ->
+      val randomNumber = System.currentTimeMillis()
+      val zipPath = temporaryFolder.newFile("plugin$randomNumber.zip")
+      createZip(zipPath, *(contentBase + spec).toTypedArray())
+      val pluginCreationResult = createPlugin(pluginManager, zipPath, pluginFactory)
+      if (pluginCreationResult is PluginCreationFail) {
+        assertEquals(expectedMessage, pluginCreationResult.errorsAndWarnings.firstOrNull()?.message)
+      }
+    }
+  }
 
   private fun createPlugin(content: ContentBuilder.() -> Unit): IdePlugin {
     val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->

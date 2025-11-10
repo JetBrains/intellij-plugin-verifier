@@ -58,9 +58,22 @@ class IncorrectJarOrDirectory(
     }
 }
 
-class UnableToExtractZip : PluginFileError() {
-  override val message
-    get() = "The plugin archive file cannot be extracted."
+class UnableToExtractZip() : PluginFileError() {
+  private var additionalMessage: String? = null
+
+  constructor(additionalMessage: String) : this() {
+    this.additionalMessage = additionalMessage
+  }
+
+  override val message: String
+    get() {
+      val message = "The plugin archive file cannot be extracted"
+      return if (additionalMessage != null) {
+        "$message. $additionalMessage"
+      } else {
+        message
+      }
+    }
 }
 
 class PluginFileSizeIsTooLarge(private val sizeLimit: Long) : PluginFileError() {

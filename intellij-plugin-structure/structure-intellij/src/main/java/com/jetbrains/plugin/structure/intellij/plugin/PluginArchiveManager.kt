@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.jetbrains.plugin.structure.base.decompress.DecompressorException
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.utils.Deletable
@@ -46,7 +47,11 @@ class PluginArchiveManager(private val extractDirectory: Path, private val isCol
         pluginExtractor.extractPlugin(pluginFile, extractDirectory)
       }.getOrElse {
         LOG.info("Unable to extract plugin zip ${pluginFile.simpleName}", it)
-        Fail(UnableToExtractZip())
+        if (it is DecompressorException) {
+          Fail(UnableToExtractZip(it.message))
+        } else {
+          Fail(UnableToExtractZip())
+        }
       }
     }
     return when (val extraction = extractorResult) {
