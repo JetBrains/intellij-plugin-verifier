@@ -306,7 +306,7 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
   }
 
   @Test
-  fun `ZIP file contains a directory traversal via two dots`() {
+  fun `ZIP file contains a directory traversal`() {
     val pluginJarPath = temporaryFolder.newFile("plugin.jar")
     createZip(pluginJarPath, Plain("META-INF/plugin.xml", "<idea-plugin />"))
 
