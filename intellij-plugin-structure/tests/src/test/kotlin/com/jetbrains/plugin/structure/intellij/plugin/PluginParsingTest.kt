@@ -343,6 +343,21 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     }
   }
 
+  @Test
+  fun `ZIP file contains a file with two dots in a subdirectory`() {
+    val pluginJarPath = temporaryFolder.newFile("plugin.jar")
+    createZip(pluginJarPath, Plain("META-INF/plugin.xml", "<idea-plugin>$HEADER</idea-plugin>"))
+    val randomNumber = UUID.randomUUID().toString()
+    val zipPath = temporaryFolder.newFile("plugin$randomNumber.zip")
+
+    val contentBase = listOf(File("plugin/lib/plugin.jar", pluginJarPath))
+    val spec = Plain("plugin/tldr/pages/common/..md", "")
+
+    createZip(zipPath, *(contentBase + spec).toTypedArray())
+
+    createPluginSuccessfully(zipPath)
+  }
+
   private fun createPlugin(content: ContentBuilder.() -> Unit): IdePlugin {
     val pluginFactory = { pluginManager: IdePluginManager, pluginArtifactPath: Path ->
       pluginManager.createPlugin(
@@ -355,6 +370,16 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     val successResult = createPluginSuccessfully(pluginArtifactPath, pluginFactory)
     return successResult.plugin
   }
+
+  private val HEADER = """
+      <id>someId</id>
+      <name>someName</name>
+      <version>someVersion</version>
+      <vendor email="vendor.com" url="url">vendor</vendor>
+      <description>this description is looooooooooong enough</description>
+      <change-notes>these change-notes are looooooooooong enough</change-notes>
+      <idea-version since-build="131.1"/>
+    """
 
   @After
   fun tearDown() {
