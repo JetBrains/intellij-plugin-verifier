@@ -21,6 +21,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import java.nio.file.Path
+import java.util.UUID
 
 class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fileSystemType) {
 
@@ -334,7 +335,7 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     )
 
     wrongScenarios.forEach {(spec, expectedMessage) ->
-      val randomNumber = System.currentTimeMillis()
+      val randomNumber = UUID.randomUUID().toString()
       val zipPath = temporaryFolder.newFile("plugin$randomNumber.zip")
       createZip(zipPath, *(contentBase + spec).toTypedArray())
       val pluginCreationResult = createPlugin(pluginManager, zipPath, pluginFactory)
