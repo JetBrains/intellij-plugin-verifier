@@ -332,7 +332,7 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
         "The plugin .jar file should be placed in the 'lib' folder within the plugin's root directory, along with all the required bundled libraries.",
     )
 
-    wrongScenarios.forEach {(spec, expectedMessage) ->
+    wrongScenarios.forEach { (spec, expectedMessage) ->
       val randomNumber = UUID.randomUUID().toString()
       val zipPath = temporaryFolder.newFile("plugin$randomNumber.zip")
       createZip(zipPath, *(contentBase + spec).toTypedArray())
