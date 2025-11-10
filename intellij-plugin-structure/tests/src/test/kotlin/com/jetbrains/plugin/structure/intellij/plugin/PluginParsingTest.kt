@@ -7,7 +7,6 @@ package com.jetbrains.plugin.structure.intellij.plugin
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.base.zip.ZipEntrySpec
 import com.jetbrains.plugin.structure.base.zip.ZipEntrySpec.File
 import com.jetbrains.plugin.structure.base.zip.ZipEntrySpec.Plain
 import com.jetbrains.plugin.structure.base.zip.createZip
@@ -16,12 +15,11 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.IdePluginManagerTest
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.After
-import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import java.nio.file.Path
-import java.util.UUID
+import java.util.*
 
 class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fileSystemType) {
 

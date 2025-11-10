@@ -8,7 +8,6 @@ import java.io.IOException
 
 abstract class DecompressorException : IOException {
   constructor(message: String) : super(message)
-  constructor(message: String, cause: Throwable) : super(message, cause)
 
   override val message: String
     get() = super.message ?: ""
