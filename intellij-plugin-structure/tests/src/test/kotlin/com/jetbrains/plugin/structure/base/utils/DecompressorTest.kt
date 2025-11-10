@@ -61,4 +61,17 @@ class DecompressorTest {
       zipFile.extractTo(tempFolder.newFolder().toPath())
     }
   }
+
+  @Test
+  fun `empty directory is properly decompressed`() {
+    val zipFile = tempFolder.newFile("empty-dir.zip").toPath()
+    ZipOutputStream(Files.newOutputStream(zipFile)).use {
+      it.putNextEntry(ZipEntry("dir/"))
+      it.closeEntry()
+    }
+    val destinationPath = tempFolder.newFolder().toPath()
+    zipFile.extractTo(destinationPath)
+    val extractedFiles = destinationPath.listFiles()
+    assertEquals(listOf(destinationPath.resolve("dir")), extractedFiles)
+  }
 }
