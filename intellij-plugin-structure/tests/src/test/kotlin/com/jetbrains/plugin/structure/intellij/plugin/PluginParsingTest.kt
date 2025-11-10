@@ -322,6 +322,8 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
     val wrongScenarios = listOf(
       Plain("..", "") to "The plugin archive file cannot be extracted. " +
         "Invalid relative entry name: path traversal outside root of archive in [..]",
+      Plain("../../dir/../../../../child", "") to "The plugin archive file cannot be extracted. " +
+        "Invalid relative entry name: path traversal outside root of archive in [../../dir/../../../../child]",
       Plain("META-INF/../..", "") to "The plugin archive file cannot be extracted. " +
         "Invalid relative entry name: path traversal outside root of archive in [META-INF/../..]",
       Plain(".", "") to "The plugin archive file cannot be extracted. " +
