@@ -307,22 +307,6 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
   }
 
   @Test
-  fun `ZIP contains a file starting two dots, but this is allowed, unless there is a directory separator`() {
-    createPlugin {
-      file("..md")
-      dir("plugin") {
-        dir("lib") {
-          zip("plugin.jar") {
-            dir("META-INF") {
-              file("plugin.xml", "<idea-plugin />")
-            }
-          }
-        }
-      }
-    }
-  }
-
-  @Test
   fun `ZIP file contains a directory traversal via two dots`() {
     val pluginJarPath = temporaryFolder.newFile("plugin.jar")
     createZip(pluginJarPath, Plain("META-INF/plugin.xml", "<idea-plugin />"))

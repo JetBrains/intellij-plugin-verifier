@@ -31,3 +31,5 @@ class EmptyEntryNameException(message: String) : DecompressorException(message) 
     fun ofEntry(name: String) = EmptyEntryNameException("Resolved entry name cannot be empty: [$name]")
   }
 }
+
+class DecompressorSizeLimitExceededException(val sizeLimit: Long) : DecompressorException("Decompressor size limit of $sizeLimit bytes exceeded")

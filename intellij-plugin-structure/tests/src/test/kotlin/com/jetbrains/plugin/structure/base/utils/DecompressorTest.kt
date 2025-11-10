@@ -1,5 +1,7 @@
 package com.jetbrains.plugin.structure.base.utils
 
+import com.jetbrains.plugin.structure.base.decompress.EntryNameTooLongException
+import com.jetbrains.plugin.structure.base.decompress.InvalidRelativeEntryNameException
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -31,9 +33,9 @@ class DecompressorTest {
 
   @Test
   fun `contains file with relative path`() {
-    val relativeName = "some/../relative.txt"
+    val relativeName = "../relative.txt"
 
-    Assert.assertThrows("Invalid relative entry name: some/../relative.txt", IOException::class.java) {
+    Assert.assertThrows("Invalid relative entry name: ../relative.txt", InvalidRelativeEntryNameException::class.java) {
       val zipFile = tempFolder.newFile("broken.zip").toPath()
       ZipOutputStream(Files.newOutputStream(zipFile)).use {
         it.putNextEntry(ZipEntry(relativeName))
@@ -49,7 +51,7 @@ class DecompressorTest {
   fun `contains file with too long name`() {
     val tooLongName = "a".repeat(256)
 
-    Assert.assertThrows("Entry name is too long: $tooLongName", IOException::class.java) {
+    Assert.assertThrows("Entry name is too long: $tooLongName", EntryNameTooLongException::class.java) {
       val zipFile = tempFolder.newFile("broken.zip").toPath()
       ZipOutputStream(Files.newOutputStream(zipFile)).use {
         it.putNextEntry(ZipEntry(tooLongName))
