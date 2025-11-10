@@ -10,20 +10,6 @@ import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-internal fun createZip(zipPath: Path, files: Map<String, String>): Path {
-  return ZipOutputStream(zipPath.outputStream().buffered()).use { zipOut ->
-    for ((entryName, content) in files) {
-      val entry = ZipEntry(entryName)
-      zipOut.putNextEntry(entry)
-
-      val data = content.toByteArray(Charsets.UTF_8)
-      zipOut.write(data, 0, data.size)
-      zipOut.closeEntry()
-    }
-    zipPath
-  }
-}
-
 internal fun createZip(zipPath: Path, vararg entrySpec: ZipEntrySpec): Path {
   return ZipOutputStream(zipPath.outputStream().buffered()).use { zipOut ->
     for (spec in entrySpec) {
