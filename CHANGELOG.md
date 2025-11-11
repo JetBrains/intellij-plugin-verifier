@@ -9,6 +9,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Changed
 
 - Refactor method parameter resolution and fix inner class annotation indexing [#1374](https://github.com/JetBrains/intellij-plugin-verifier/pull/1374)
+- Update Gradle to 9.2.0
 
 ### Fixed
 
