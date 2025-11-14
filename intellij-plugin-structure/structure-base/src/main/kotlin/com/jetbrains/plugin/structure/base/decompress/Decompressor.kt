@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.bufferedInputStream
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import com.jetbrains.plugin.structure.base.utils.inputStream
+import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.CompressorException
 import org.apache.commons.compress.compressors.CompressorStreamFactory
@@ -24,6 +25,7 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
     const val FILE_NAME_LENGTH_LIMIT = 255
   }
 
+  @Throws(DecompressorException::class)
   fun extract(outputDir: Path) {
     openStream()
     try {
@@ -44,7 +46,6 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
                 .setMaxCount(remainingSize + 1)
                 .setPropagateClose(false)
                 .get()
-
 
               outputFile.createParentDirs()
               Files.copy(countingStream, outputFile)
@@ -80,16 +81,38 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
 
 }
 
+@Throws(DecompressorException::class)
 private fun getEntryFile(outputDir: Path, entry: Decompressor.Entry): Path {
-  val independentEntryName = entry.name.replace("\\", "/")
-  val parts = independentEntryName.split("/")
-  if (parts.any { it.contains("..") }) {
-    throw IOException("Invalid relative entry name: ${entry.name}")
+  val independentEntryName = entry.name.toSystemIndependentName()
+  val pathElements = independentEntryName.split("/").filter { it.isNotEmpty() }
+  val normalizedEntryName = normalizePathTraversal(entry, pathElements)
+  if (pathElements.any { it.length > Decompressor.FILE_NAME_LENGTH_LIMIT }) {
+    throw EntryNameTooLongException.ofEntry(entry.name)
   }
-  if (parts.any { it.length > Decompressor.FILE_NAME_LENGTH_LIMIT }) {
-    throw IOException("Entry name is too long: ${entry.name}")
+  return outputDir.resolve(normalizedEntryName)
+}
+
+@Throws(DecompressorException::class)
+private fun normalizePathTraversal(entry: Decompressor.Entry, pathElements: List<String>): String {
+  val normalized = mutableListOf<String>()
+  for (element in pathElements) {
+    when (element) {
+      "." -> continue
+      ".." -> {
+        if (normalized.isEmpty()) {
+          throw InvalidRelativeEntryNameException.ofEntry(entry.name)
+        }
+        normalized.removeAt(normalized.lastIndex)
+      }
+      else -> {
+        normalized += element
+      }
+    }
   }
-  return outputDir.resolve(independentEntryName)
+  if (normalized.isEmpty()) {
+    throw EmptyEntryNameException.ofEntry(entry.name)
+  }
+  return normalized.joinToString("/")
 }
 
 internal class ZipDecompressor(private val zipFile: Path, sizeLimit: Long?) : Decompressor(sizeLimit) {
