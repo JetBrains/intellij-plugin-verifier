@@ -65,7 +65,7 @@ class IdeManagerImpl : AbstractIdeManager() {
    * For example, `<xi:include href="/META-INF/include.xml">` declared in `plugin.xml` where `plugin.xml` resides in `one.jar`
    * and `include.xml` resides in `two.jar`.
    *
-   * - Non-absolute paths to xml files that reside in the same .jar file as the xml containg such `<xi:include>`.
+   * - Non-absolute paths to xml files that reside in the same .jar file as the xml containing such `<xi:include>`.
    * For example, `<xi:include href="nearby.xml">` declared in `plugin.xml` where `plugin.xml` and `nearby.xml`
    * reside in the same jar file.
    * But rarely `nearby.xml` may reside in another platform's jar file. Apparently, IDE handles such a case accidentally:
