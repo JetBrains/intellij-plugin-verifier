@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.intellij.plugin.DependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PassThruDependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
@@ -157,7 +158,11 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
       if (isModule) {
         resolveModule(id)?.let { provision ->
           //FIXME some plugins, like JSON, have ID 'com.intellij.modules.json' and they are declared as plugins
-          Module(provision.plugin, id)
+          if (provision.plugin is IdePluginImpl) {
+            Plugin(provision.plugin)
+          } else {
+            Module(provision.plugin, id)
+          }
         }
       } else {
         resolvePlugin(id)?.let { provision ->
