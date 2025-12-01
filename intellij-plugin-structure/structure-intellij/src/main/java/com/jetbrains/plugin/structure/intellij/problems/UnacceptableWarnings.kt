@@ -59,7 +59,10 @@ class StatusBarWidgetFactoryExtensionPointIdMissing(private val implementationCl
 
 class NoDependencies(descriptorPath: String) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "Plugin has no dependencies. Please check the documentation: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html"
+  detailedMessage = "Plugin has no dependencies. " +
+    "It is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA. " +
+    "Plugins should declare a dependency on `com.intellij.modules.platform` to indicate dependence on shared functionality. " +
+    "Please check the documentation: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html"
 ) {
   override val level
     get() = Level.UNACCEPTABLE_WARNING
