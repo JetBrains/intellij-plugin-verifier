@@ -7,13 +7,10 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 import com.jetbrains.plugin.structure.intellij.plugin.INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
-import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier.VerificationResult.NotLegacyPlugin
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -28,47 +25,24 @@ private val ADDITIONAL_MODULES_AVAILABLE_IN_ALL_PRODUCTS = listOf(
   "com.intellij.modules.xdebugger"
 )
 
-/**
- * Verifies if a plugin is a legacy plugin compatible with IntelliJ IDEA only.
- *
- * See [IntelliJ SDK Plugin Compatibility Docs](https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#declaring-plugin-dependencies)
- * for detailed info.
- */
 class LegacyIntelliJIdeaPluginVerifier {
-  sealed class VerificationResult {
-    object NotLegacyPlugin : VerificationResult()
-    object NoDependencies: VerificationResult()
-    object NoModuleDependencies: VerificationResult()
-  }
-
   fun verify(plugin: IdePlugin, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
-    when (verify(plugin)) {
-      NotLegacyPlugin -> Unit
-      VerificationResult.NoDependencies -> problemRegistrar.registerProblem(NoDependencies(descriptorPath))
-      VerificationResult.NoModuleDependencies -> problemRegistrar.registerProblem(NoModuleDependencies(descriptorPath))
-    }
-  }
-
-  fun verify(plugin: IdePlugin): VerificationResult {
-    if (plugin is IdeModule || plugin.hasPackagePrefix || plugin.contentModules.isNotEmpty()) return NotLegacyPlugin
+    if (plugin.hasPackagePrefix || plugin.contentModules.isNotEmpty()) return
 
     val dependencies = plugin.dependencies
     if (dependencies.isEmpty()) {
-      return VerificationResult.NoDependencies
+      problemRegistrar.registerProblem(NoDependencies(descriptorPath))
     } else {
       val v1Dependencies = dependencies.filterIsInstance<PluginV1Dependency>()
-      // Due to confusing semantics we might need to check old-style module declarations
-      val oldSemanticsModuleDependencies = dependencies.filterIsInstance<PluginDependencyImpl>()
-      val moduleCandidates = v1Dependencies + oldSemanticsModuleDependencies
-      if (dependsOnAnyModuleAvailableInAllProducts(moduleCandidates)) return NotLegacyPlugin
-      if (dependsOnAnyModuleWithComIntellijModulesPrefix(moduleCandidates)) return NotLegacyPlugin
-      if (dependencies.any { it is PluginV2Dependency }) return NotLegacyPlugin
+      if (dependsOnAnyModuleAvailableInAllProducts(v1Dependencies)) return
+      if (dependsOnAnyModuleWithComIntellijModulesPrefix(v1Dependencies)) return
+      if (dependencies.any { it is PluginV2Dependency }) return
 
-      return VerificationResult.NoModuleDependencies
+      problemRegistrar.registerProblem(NoModuleDependencies(descriptorPath))
     }
   }
 
-  private fun dependsOnAnyModuleWithComIntellijModulesPrefix(dependencies: List<PluginDependency>): Boolean {
+  private fun dependsOnAnyModuleWithComIntellijModulesPrefix(dependencies: List<PluginV1Dependency>): Boolean {
     return dependencies.any { it.id.startsWith(INTELLIJ_MODULE_PREFIX) }
   }
 
@@ -83,7 +57,7 @@ class LegacyIntelliJIdeaPluginVerifier {
       return true
     } else {
       LOG.debug("Undeclared dependency on any of the modules that are available in all Products." +
-                  "This is not an issue if a dependency on the '$PLATFORM_MODULE_ID' is declared explicitly.")
+                  "This is not an issue if a dependency on the '$PLATFORM_MODULE_ID$ is declared explicitly.")
     }
     return false
   }
