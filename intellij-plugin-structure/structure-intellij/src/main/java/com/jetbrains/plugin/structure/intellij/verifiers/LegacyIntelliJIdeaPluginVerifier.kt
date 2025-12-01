@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import org.slf4j.Logger
@@ -27,7 +28,7 @@ private val ADDITIONAL_MODULES_AVAILABLE_IN_ALL_PRODUCTS = listOf(
 
 class LegacyIntelliJIdeaPluginVerifier {
   fun verify(plugin: IdePlugin, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
-    if (plugin.hasPackagePrefix || plugin.contentModules.isNotEmpty()) return
+    if (plugin is IdeModule || plugin.hasPackagePrefix || plugin.contentModules.isNotEmpty()) return
 
     val dependencies = plugin.dependencies
     if (dependencies.isEmpty()) {
