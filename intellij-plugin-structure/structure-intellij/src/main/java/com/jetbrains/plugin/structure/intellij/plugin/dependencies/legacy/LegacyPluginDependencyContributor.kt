@@ -9,6 +9,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
+import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier.VerificationResult.NotLegacyPlugin
 
 private const val CORE_IDE_PLUGIN_ID = "com.intellij"
 
@@ -24,7 +26,7 @@ private val JAVA_MODULE_DEPENDENCY = PluginDependencyImpl(JAVA_MODULE_ID, false,
  * If a plugin doesn't declare any dependencies in its `plugin.xml` file, or if it declares dependencies only on
   * other plugins but not modules, it is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
  */
-class LegacyPluginDependencyContributor(private val ide: PluginProvider): DependenciesModifier {
+class LegacyPluginDependencyContributor(private val ide: PluginProvider, private val legacyPluginVerifier: LegacyIntelliJIdeaPluginVerifier): DependenciesModifier {
   override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<PluginDependency> {
     if (plugin.pluginId == CORE_IDE_PLUGIN_ID) {
       return plugin.dependencies
@@ -32,9 +34,8 @@ class LegacyPluginDependencyContributor(private val ide: PluginProvider): Depend
     if (ide.findPluginByModule(ALL_MODULES_ID) == null) {
       return plugin.dependencies
     }
-    val isLegacyPlugin = plugin.dependencies.none { it.isModule }
     val isNonBundledPlugin = plugin.isNonBundled(ide)
-    if (isNonBundledPlugin && isLegacyPlugin) {
+    if (isNonBundledPlugin && plugin.isLegacy()) {
       val javaModule = ide.findPluginByModule(JAVA_MODULE_ID)
       if (javaModule != null) {
         return plugin.dependencies + JAVA_MODULE_DEPENDENCY
@@ -42,6 +43,9 @@ class LegacyPluginDependencyContributor(private val ide: PluginProvider): Depend
     }
     return plugin.dependencies
   }
+
+  private fun IdePlugin.isLegacy() =
+    legacyPluginVerifier.verify(this) != NotLegacyPlugin
 
   private fun IdePlugin.isNonBundled(pluginProvider: PluginProvider): Boolean {
     return pluginId?.let { id ->
