@@ -41,7 +41,8 @@ class PlatformSearcher(private val zipEntryFilter: (ZipEntry) -> Boolean = { tru
 
   @Throws(IOException::class)
   private fun ZipFilePath.getUri(zipEntry: ZipEntry): URI {
-    return FileSystems.newFileSystem(/* path = */ this, /* loader = */ null as ClassLoader).use { fs ->
+    val implicitInstalledClassLoader: ClassLoader? = null
+    return FileSystems.newFileSystem(/* path = */ this, implicitInstalledClassLoader).use { fs ->
       fs.getPath(zipEntry.name).toUri()
     }
   }
