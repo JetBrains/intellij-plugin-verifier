@@ -83,7 +83,7 @@ class LegacyIntelliJIdeaPluginVerifier {
       return true
     } else {
       LOG.debug("Undeclared dependency on any of the modules that are available in all Products." +
-                  "This is not an issue if a dependency on the '$PLATFORM_MODULE_ID$ is declared explicitly.")
+                  "This is not an issue if a dependency on the '$PLATFORM_MODULE_ID' is declared explicitly.")
     }
     return false
   }
