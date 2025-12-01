@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 import com.jetbrains.plugin.structure.intellij.plugin.INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
@@ -56,15 +57,18 @@ class LegacyIntelliJIdeaPluginVerifier {
       return VerificationResult.NoDependencies
     } else {
       val v1Dependencies = dependencies.filterIsInstance<PluginV1Dependency>()
-      if (dependsOnAnyModuleAvailableInAllProducts(v1Dependencies)) return NotLegacyPlugin
-      if (dependsOnAnyModuleWithComIntellijModulesPrefix(v1Dependencies)) return NotLegacyPlugin
+      // Due to confusing semantics we might need to check old-style module declarations
+      val oldSemanticsModuleDependencies = dependencies.filterIsInstance<PluginDependencyImpl>()
+      val moduleCandidates = v1Dependencies + oldSemanticsModuleDependencies
+      if (dependsOnAnyModuleAvailableInAllProducts(moduleCandidates)) return NotLegacyPlugin
+      if (dependsOnAnyModuleWithComIntellijModulesPrefix(moduleCandidates)) return NotLegacyPlugin
       if (dependencies.any { it is PluginV2Dependency }) return NotLegacyPlugin
 
       return VerificationResult.NoModuleDependencies
     }
   }
 
-  private fun dependsOnAnyModuleWithComIntellijModulesPrefix(dependencies: List<PluginV1Dependency>): Boolean {
+  private fun dependsOnAnyModuleWithComIntellijModulesPrefix(dependencies: List<PluginDependency>): Boolean {
     return dependencies.any { it.id.startsWith(INTELLIJ_MODULE_PREFIX) }
   }
 
