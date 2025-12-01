@@ -26,6 +26,12 @@ private val ADDITIONAL_MODULES_AVAILABLE_IN_ALL_PRODUCTS = listOf(
   "com.intellij.modules.xdebugger"
 )
 
+/**
+ * Verifies if a plugin is a legacy plugin compatible with IntelliJ IDEA only.
+ *
+ * See [IntelliJ SDK Plugin Compatibility Docs](https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#declaring-plugin-dependencies)
+ * for detailed info.
+ */
 class LegacyIntelliJIdeaPluginVerifier {
   fun verify(plugin: IdePlugin, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
     if (plugin is IdeModule || plugin.hasPackagePrefix || plugin.contentModules.isNotEmpty()) return
