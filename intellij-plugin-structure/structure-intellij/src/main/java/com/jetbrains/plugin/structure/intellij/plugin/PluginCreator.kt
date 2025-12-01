@@ -24,8 +24,6 @@ import com.jetbrains.plugin.structure.intellij.problems.DependencyConstraintsDup
 import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
 import com.jetbrains.plugin.structure.intellij.problems.ElementMissingAttribute
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
-import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorCycleProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.SinceBuildGreaterThanUntilBuild
