@@ -7,7 +7,6 @@ package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.intellij.plugin.DependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PassThruDependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
@@ -73,6 +72,7 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     val pluginId: PluginId = requireNotNull(plugin.pluginId) { missingId(plugin) }
     val graph = getDependencyGraph(plugin, dependencyResolutionContext)
     return graph.collectDependencies(pluginId)
+      .resolveDuplicateDependencies(dependencyResolutionContext)
   }
 
   private fun getDependencyGraph(plugin: IdePlugin, context: ResolutionContext): DiGraph<PluginId, Dependency> {
@@ -115,6 +115,7 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
           if (ignore(plugin, dep)) {
             debugLog(nestedIndent, i + 1, "Ignoring '{}'", dep)
           } else if (graph.contains(pluginId, hasId(dep))) {
+            // TODO log if a dependency might be provided by another plugin with different plugin
             debugLog(nestedIndent, i + 1, "Resolved cached dependency '{}'", dep.id)
           } else if (dep in missingDependencies) {
             debugLog(nestedIndent, i + 1, "Skipping dependency '{}' as it is already marked missing", dep.id)
@@ -155,25 +156,16 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
 
   private fun resolve(dependency: PluginDependency): Dependency {
     return with(dependency) {
-      if (isModule) {
-        resolveModule(id)?.let { provision ->
-          //FIXME some plugins, like JSON, have ID 'com.intellij.modules.json' and they are declared as plugins
-          if (provision.plugin is IdePluginImpl) {
-            Plugin(provision.plugin)
-          } else {
-            Module(provision.plugin, id)
-          }
-        }
-      } else {
-        resolvePlugin(id)?.let { provision ->
-          val plugin = provision.plugin
-          if (ideModulePredicate.matches(id, plugin)) {
-            Module(plugin, id)
-          } else if (provision.source == CONTENT_MODULE_ID) {
-            Module(plugin, id)
-          } else {
-            Plugin(plugin)
-          }
+      resolvePlugin(id)?.let { provision ->
+        val plugin = provision.plugin
+        return if (ideModulePredicate.matches(id, plugin)) {
+          // It is explicitly declared as a module in the product-info.json in the module list,
+          // or it is marked as a module in the product info layout elements.
+          Module(plugin, id)
+        } else if (provision.source == CONTENT_MODULE_ID) {
+          Module(plugin, id)
+        } else {
+          Plugin(plugin)
         }
       } ?: None
     }
@@ -226,11 +218,13 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
   ) {
     for (dependency in this[id]) {
       if (dependency is PluginAware) {
-        val depId = dependency.plugin.pluginId!!
         val dep = if (layer == 0) dependency else dependency.asTransitive()
         if (dep !in dependencies) {
           dependencies += dep
-          collectDependencies(depId, dependencies, layer + 1)
+          val dependencyIdAndAliases = listOf(dependency.id) + dependency.plugin.pluginAliases
+          for (idOrAlias in dependencyIdAndAliases) {
+            collectDependencies(idOrAlias, dependencies, layer + 1)
+          }
         }
       }
     }
@@ -257,6 +251,26 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
       .let {
         pluginProvider.query(it)
       } as? PluginProvision.Found
+  }
+
+  private fun Set<Dependency>.resolveDuplicateDependencies(resolutionContext: ResolutionContext): Set<Dependency> {
+    if (!resolutionContext.isMergingDuplicateDependencies) return this
+
+    val unique = mutableMapOf<String, Dependency>()
+    for (dependency in this) {
+      val depId = dependency.artifactId ?: continue
+      if (depId in unique) {
+        @Suppress("USELESS_IS_CHECK")
+        unique[depId] = when (dependency) {
+          is Plugin -> dependency.copy(isTransitive = false)
+          is Module -> dependency.copy(isTransitive = false)
+          is None -> None
+        }
+      } else {
+        unique[depId] = dependency
+      }
+    }
+    return unique.values.toSet()
   }
 
   private fun DiGraph<PluginId, Dependency>.toDebugString(
@@ -355,9 +369,17 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     }
   }
 
+  /**
+   * A configuration for dependency resolution.
+   * @param missingDependencyListener a listener that is invoked when a dependency is missing.
+   * @param dependenciesModifier contributes or removes the list of dependencies for a plugin or module
+   * @param isMergingDuplicateDependencies indicates whether to merge a single dependency that occurs as a
+   * transitive and regular dependency into a single non-transitive dependency
+   */
   private data class ResolutionContext(
     val missingDependencyListener: MissingDependencyListener = EMPTY_MISSING_DEPENDENCY_LISTENER,
-    val dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier
+    val dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier,
+    val isMergingDuplicateDependencies: Boolean = true
   ) {
     fun notifyMissingDependency(plugin: IdePlugin, dependency: PluginDependency) {
       missingDependencyListener(plugin, dependency)
