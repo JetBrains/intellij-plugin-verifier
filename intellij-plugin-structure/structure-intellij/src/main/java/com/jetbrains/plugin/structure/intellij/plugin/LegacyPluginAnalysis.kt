@@ -6,11 +6,13 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 
+@Deprecated("See com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier")
 class LegacyPluginAnalysis {
   /**
    * Returns `true` if [plugin] is a legacy plugin which is compatible with IntelliJ IDEA only, see
    * https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html#declaring-plugin-dependencies
    */
+  @Deprecated("See com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier#verify")
   fun isLegacyPlugin(plugin: IdePlugin): Boolean = with(plugin) {
     plugin !is IdeModule 
       && !hasPackagePrefix

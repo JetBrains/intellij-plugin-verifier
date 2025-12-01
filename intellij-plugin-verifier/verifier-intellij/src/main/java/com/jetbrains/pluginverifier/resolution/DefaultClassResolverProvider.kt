@@ -16,12 +16,13 @@ import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResol
 import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.plugin.CompositePluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.LegacyPluginAnalysis
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DefaultIdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.NegativeIdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
+import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier.VerificationResult.NotLegacyPlugin
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
@@ -64,7 +65,7 @@ class DefaultClassResolverProvider(
 
   private val bundledPluginClassResolverProvider = BundledPluginClassResolverProvider()
 
-  private val legacyPluginAnalysis = LegacyPluginAnalysis()
+  private val legacyPluginVerifier = LegacyIntelliJIdeaPluginVerifier()
 
   private val dependenciesGraphProvider = DependenciesGraphProvider()
 
@@ -84,7 +85,7 @@ class DefaultClassResolverProvider(
 
       val dependenciesGraph: DependenciesGraph
       if (!ideDescriptor.isProductInfoBased()
-        || legacyPluginAnalysis.isLegacyPlugin(checkedPluginDetails.idePlugin)
+        || checkedPluginDetails.idePlugin.isLegacyPlugin()
         || ideResolver !is DependencyTreeAwareResolver
         ) {
         val (depGraph, dependenciesResults) =
@@ -113,9 +114,7 @@ class DefaultClassResolverProvider(
   override fun provideExternalClassesPackageFilter() = externalClassesPackageFilter
 
   private fun getIdeResolver(plugin: IdePlugin, ideDescriptor: IdeDescriptor): Resolver {
-    return if (ideDescriptor.isProductInfoBased()
-      && !legacyPluginAnalysis.isLegacyPlugin(plugin)
-    ) {
+    return if (ideDescriptor.isProductInfoBased() && !plugin.isLegacyPlugin()) {
       pluginResolverProvider.getResolver(plugin)
     } else {
       ideDescriptor.ideResolver
@@ -169,6 +168,9 @@ class DefaultClassResolverProvider(
     }
     return resolvers
   }
+
+  private fun IdePlugin.isLegacyPlugin()
+    = legacyPluginVerifier.verify(this) != NotLegacyPlugin
 
   private inline fun <T, R> Iterable<T>.mapNotNullInterruptible(transform: (T) -> R): List<R> {
     return mapNotNull {
