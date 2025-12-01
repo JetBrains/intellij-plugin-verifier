@@ -20,6 +20,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
 import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
@@ -364,7 +365,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     }
     val optionalDescriptor = plugin.optionalDescriptors.single()
     assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
-    assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
+    assertEquals(PluginV1Dependency.Optional("Optional Dependency"), optionalDescriptor.dependency)
   }
 
   @Test
@@ -399,7 +400,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
 
     val optionalDescriptor = plugin.optionalDescriptors.single()
     assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
-    assertEquals(PluginDependencyImpl("optionalDependencyId", true, false), optionalDescriptor.dependency)
+    assertEquals(PluginV1Dependency.Optional("optionalDependencyId"), optionalDescriptor.dependency)
 
     val optionalPlugin = optionalDescriptor.optionalPlugin
     assertEquals(
@@ -409,7 +410,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     val transitiveOptional =
       optionalPlugin.optionalDescriptors.find { it.dependency.id == "transitiveOptionalDependencyId" }!!
     assertEquals("transitiveOptionalDependency.xml", transitiveOptional.configurationFilePath)
-    assertEquals(PluginDependencyImpl("transitiveOptionalDependencyId", true, false), transitiveOptional.dependency)
+    assertEquals(PluginV1Dependency.Optional("transitiveOptionalDependencyId"), transitiveOptional.dependency)
   }
 
   @Test
@@ -819,15 +820,15 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
     assertEquals(9, plugin.dependencies.size.toLong())
     //check plugin and module dependencies
     val expectedDependencies = listOf(
-      PluginDependencyImpl("JUnit", true, false),
-      PluginDependencyImpl("optionalDependency", true, false),
-      PluginDependencyImpl("otherDirOptionalDependency", true, false),
-      PluginDependencyImpl("referenceFromRoot", true, false),
-      PluginDependencyImpl("missingDependency", true, false),
-      PluginDependencyImpl("mandatoryDependency", false, false),
-      PluginDependencyImpl("com.intellij.modules.mandatoryDependency", false, true),
-      PluginDependencyImpl("duplicatedDependencyId", false, false),
-      PluginDependencyImpl("duplicatedDependencyId", false, false),
+      PluginV1Dependency.Optional("JUnit"),
+      PluginV1Dependency.Optional("optionalDependency"),
+      PluginV1Dependency.Optional("otherDirOptionalDependency"),
+      PluginV1Dependency.Optional("referenceFromRoot"),
+      PluginV1Dependency.Optional("missingDependency"),
+      PluginV1Dependency.Mandatory("mandatoryDependency"),
+      PluginV1Dependency.Mandatory("com.intellij.modules.mandatoryDependency"),
+      PluginV1Dependency.Mandatory("duplicatedDependencyId"),
+      PluginV1Dependency.Mandatory("duplicatedDependencyId"),
     )
     assertEquals(expectedDependencies, plugin.dependencies)
 
