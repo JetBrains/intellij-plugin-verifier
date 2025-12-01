@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIde
@@ -1247,6 +1248,95 @@ class DependenciesTest {
       with(this[1]) {
         assertEquals("nonexistent.plugin", pluginId)
         assertEquals("not found", reason)
+      }
+    }
+  }
+
+  @Test
+  fun `plugin depends on another plugin whose all content modules are resolved including classpath`() {
+    val yamlPlugin = buildPlugin("yaml.zip") {
+      dir("yaml") {
+        dir("lib") {
+          zip("yaml.jar") {
+            dir("META-INF") {
+              file("plugin.xml") {
+                """
+                  <idea-plugin>
+                    <name>YAML</name>
+                    <id>org.jetbrains.plugins.yaml</id>
+                    <version>someVersion</version>
+                    <vendor email="vendor.com" url="url">vendor</vendor>
+                    <description>this description is looooooooooong enough</description>
+                    <change-notes>these change-notes are looooooooooong enough</change-notes>
+                    <idea-version since-build="131.1"/>
+                    <depends>com.intellij.modules.platform</depends>
+                    <content>
+                      <module name="intellij.yaml" loading="embedded">
+                        <idea-plugin />
+                      </module>
+                      <module name="intellij.yaml.editing" loading="required">
+                        <idea-plugin />
+                      </module>  
+                    </content>
+                  </idea-plugin>
+                """
+              }
+            }
+          }
+          dir("modules") {
+            zip("intellij.yaml.backend.jar") {
+              file("intellij.yaml.backend.xml") {
+                "<idea-plugin />"
+              }
+            }
+            zip("intellij.yaml.frontend.split.jar") {
+              file("intellij.yaml.frontend.split.xml") {
+                "<idea-plugin />"
+              }
+            }
+          }
+        }
+      }
+    }
+    val dependantPlugin = buildPlugin("dependant-plugin.jar") {
+      dir("META-INF") {
+        file("plugin.xml") {
+          perfectXmlBuilder.modify {
+            id = "<id>dependantPlugin</id>"
+            name = "<name>Dependant</name>"
+            depends = "<depends>com.intellij.modules.platform</depends>" +
+              "<depends>org.jetbrains.plugins.yaml</depends>"
+          }
+        }
+      }
+    }
+    val pluginProvider = EventLogSinglePluginProvider(yamlPlugin)
+
+    val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
+    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
+      assertEquals(1, size)
+
+      val transitiveClasspath = flatMap {
+        when (it) {
+          is Dependency.Module -> it.plugin.classpath.paths
+          is Dependency.Plugin -> it.plugin.classpath.paths
+          else -> emptyList()
+        }
+      }
+      val classpath = dependantPlugin.classpath.paths + transitiveClasspath
+
+      val dependentPluginPath = dependantPlugin.originalFile ?: error("Plugin original file is missing")
+      val relativeClasspaths = classpath
+        .map { dependentPluginPath.relativize(it).toString().toSystemIndependentName() }
+        .toSet()
+      val suffixes = setOf(
+        "yaml/lib/yaml.jar",
+        "yaml/lib/modules/intellij.yaml.backend.jar",
+        "yaml/lib/modules/intellij.yaml.frontend.split.jar"
+      )
+      assertEquals(3, relativeClasspaths.size)
+      suffixes.forEach { suffix ->
+        assertTrue(relativeClasspaths.any { it.endsWith(suffix) })
       }
     }
   }
