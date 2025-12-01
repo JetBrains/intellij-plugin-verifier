@@ -84,7 +84,7 @@ class DependencyTreeTest {
     val missingDependencies = MissingDependencyCollector()
     dependencyTree.getTransitiveDependencies(somePlugin, missingDependencies)
 
-    val expectedPluginDependency = PluginDependencyImpl(pluginNotInIde.pluginId!!, false, false)
+    val expectedPluginDependency = PluginV1Dependency.Mandatory(pluginNotInIde.pluginId!!)
     assertEquals(setOf(expectedPluginDependency), missingDependencies)
   }
 
@@ -208,7 +208,7 @@ class DependencyTreeTest {
       assertSetsEqual(expectedDependencyIds, transitiveDependencies.map { it.id }.toSet())
 
       val expectedMissingDependencies = mapOf(
-        somePlugin to setOf(PluginDependencyImpl(pluginNotInIde.pluginId!!, false, false)))
+        somePlugin to setOf(PluginV1Dependency.Mandatory (pluginNotInIde.pluginId!!)))
       assertEquals(expectedMissingDependencies, this.missingDependencies)
     }
   }
@@ -294,6 +294,8 @@ class DependencyTreeTest {
     override fun isEmpty() = missingDependencies.isEmpty()
 
     override fun iterator() = missingDependencies.iterator()
+
+    override fun toString() = missingDependencies.toString()
   }
 
 }
