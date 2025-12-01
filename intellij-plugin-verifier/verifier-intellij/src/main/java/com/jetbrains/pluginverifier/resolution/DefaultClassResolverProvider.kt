@@ -54,17 +54,18 @@ class DefaultClassResolverProvider(
   } else {
     NegativeIdeModulePredicate
   }
-  private val legacyPluginVerifier = LegacyIntelliJIdeaPluginVerifier()
 
   private val pluginResolverProvider = CompositePluginProvider.of(
       ideDescriptor.ide,
       DependencyFinderPluginProvider(dependencyFinder, ideDescriptor.ide, archiveManager)
     ).let { pluginProvider ->
-    val dependenciesModifier = LegacyPluginDependencyContributor(ideDescriptor.ide, legacyPluginVerifier)
+    val dependenciesModifier = LegacyPluginDependencyContributor(ideDescriptor.ide)
     CachingPluginDependencyResolverProvider(pluginProvider, secondaryResolver, ideModulePredicate, dependenciesModifier)
   }
 
   private val bundledPluginClassResolverProvider = BundledPluginClassResolverProvider()
+
+  private val legacyPluginVerifier = LegacyIntelliJIdeaPluginVerifier()
 
   private val dependenciesGraphProvider = DependenciesGraphProvider()
 

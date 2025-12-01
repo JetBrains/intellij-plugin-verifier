@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
+import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier.VerificationResult.NotLegacyPlugin
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -33,19 +34,33 @@ private val ADDITIONAL_MODULES_AVAILABLE_IN_ALL_PRODUCTS = listOf(
  * for detailed info.
  */
 class LegacyIntelliJIdeaPluginVerifier {
+  sealed class VerificationResult {
+    object NotLegacyPlugin : VerificationResult()
+    object NoDependencies: VerificationResult()
+    object NoModuleDependencies: VerificationResult()
+  }
+
   fun verify(plugin: IdePlugin, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
-    if (plugin is IdeModule || plugin.hasPackagePrefix || plugin.contentModules.isNotEmpty()) return
+    when (verify(plugin)) {
+      NotLegacyPlugin -> Unit
+      VerificationResult.NoDependencies -> problemRegistrar.registerProblem(NoDependencies(descriptorPath))
+      VerificationResult.NoModuleDependencies -> problemRegistrar.registerProblem(NoModuleDependencies(descriptorPath))
+    }
+  }
+
+  fun verify(plugin: IdePlugin): VerificationResult {
+    if (plugin is IdeModule || plugin.hasPackagePrefix || plugin.contentModules.isNotEmpty()) return NotLegacyPlugin
 
     val dependencies = plugin.dependencies
     if (dependencies.isEmpty()) {
-      problemRegistrar.registerProblem(NoDependencies(descriptorPath))
+      return VerificationResult.NoDependencies
     } else {
       val v1Dependencies = dependencies.filterIsInstance<PluginV1Dependency>()
-      if (dependsOnAnyModuleAvailableInAllProducts(v1Dependencies)) return
-      if (dependsOnAnyModuleWithComIntellijModulesPrefix(v1Dependencies)) return
-      if (dependencies.any { it is PluginV2Dependency }) return
+      if (dependsOnAnyModuleAvailableInAllProducts(v1Dependencies)) return NotLegacyPlugin
+      if (dependsOnAnyModuleWithComIntellijModulesPrefix(v1Dependencies)) return NotLegacyPlugin
+      if (dependencies.any { it is PluginV2Dependency }) return NotLegacyPlugin
 
-      problemRegistrar.registerProblem(NoModuleDependencies(descriptorPath))
+      return VerificationResult.NoModuleDependencies
     }
   }
 
