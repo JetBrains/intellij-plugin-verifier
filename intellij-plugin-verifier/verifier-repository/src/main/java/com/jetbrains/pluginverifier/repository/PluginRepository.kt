@@ -35,6 +35,10 @@ interface PluginRepository {
   /**
    * Returns all plugins declaring module [moduleId].
    * If [ideVersion] is specified, only plugins compatible with this IDE are returned.
+   *
+   * @param moduleId module id. For IntelliJ plugins, this might be
+   * * either v1 plugin alias mapped to `<module value="..."/>`
+   * * or v2 content module name mapped to `<content><module name="..."/></content>`
    */
   fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?): List<PluginInfo>
 
