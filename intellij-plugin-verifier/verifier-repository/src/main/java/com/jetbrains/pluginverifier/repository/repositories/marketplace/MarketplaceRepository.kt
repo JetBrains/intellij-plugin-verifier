@@ -12,6 +12,8 @@ import com.jetbrains.pluginverifier.repository.repositories.tracing.withLogging
 import org.jetbrains.intellij.pluginRepository.PluginRepositoryFactory
 import org.jetbrains.intellij.pluginRepository.model.IntellijUpdateMetadata
 import org.jetbrains.intellij.pluginRepository.model.PluginId
+import org.jetbrains.intellij.pluginRepository.model.StringPluginId
+import org.jetbrains.intellij.pluginRepository.model.UpdateBean
 import org.jetbrains.intellij.pluginRepository.model.UpdateId
 import java.net.MalformedURLException
 import java.net.URL
@@ -27,42 +29,73 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
   //This mapping never changes. Updates in JetBrains Marketplace have constant plugin ID.
   private val updateIdToPluginIdMapping = ConcurrentHashMap<Int, Int>()
 
-  private val metadataCache: LoadingCache<Pair<PluginId, UpdateId>, Optional<UpdateInfo>> = Caffeine.newBuilder()
+  private val metadataCache: LoadingCache<MarketplaceUpdate, Optional<UpdateInfo>> = Caffeine.newBuilder()
     .expireAfterWrite(5, TimeUnit.MINUTES)
     .build {
       //Loading is required => this key is outdated => will request in batch and put to the cache.
       Optional.empty()
     }
 
-  override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> =
-    getLastCompatiblePlugins(ideVersion, "")
+  private val unavailablePluginIdentifiers = ConcurrentHashMap.newKeySet<String>()
 
-  fun getLastCompatiblePlugins(ideVersion: IdeVersion, channel: String): List<UpdateInfo> {
+  private data class ModuleAndVersion(val id: String, val ideVersion: String?)
+  private data class PluginAndVersion(val id: StringPluginId, val ideVersion: String?)
+
+  private val pluginMetadataCache = Caffeine.newBuilder()
+    .maximumSize(512)
+    .expireAfterWrite(5, TimeUnit.MINUTES)
+    .build<PluginAndVersion, List<MarketplaceUpdate>>()
+
+  private val modulesForPluginCache = Caffeine.newBuilder()
+    .maximumSize(512)
+    .expireAfterWrite(5, TimeUnit.MINUTES)
+    .build<ModuleAndVersion, List<UpdateBean>>()
+
+  override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> {
     val pluginManager = pluginRepositoryInstance.pluginManager
     @Suppress("DEPRECATION")
     val pluginsXmlIds = pluginManager.getCompatiblePluginsXmlIds(ideVersion.asString(), MAX_AVAILABLE_PLUGINS_IN_REPOSITORY, 0)
-    val updates = pluginManager.searchCompatibleUpdates(pluginsXmlIds, ideVersion.asString(), channel)
+    val updates = pluginManager.searchCompatibleUpdates(pluginsXmlIds, ideVersion.asString(), channel = "")
     val pluginIdAndUpdateIds = updates.map { it.pluginId to it.id }
     return getPluginInfosForManyPluginIdsAndUpdateIds(pluginIdAndUpdateIds).values.toList()
   }
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? {
-    val compatibleUpdates = pluginRepositoryInstance.pluginManager.searchCompatibleUpdates(listOf(pluginId), ideVersion.asString())
-    val compatibleUpdate = compatibleUpdates.firstOrNull() ?: return null
-    return getOrRequestInfo(compatibleUpdate.pluginId, compatibleUpdate.id)
+    val pluginAndVersion = PluginAndVersion(pluginId, ideVersion.intern())
+    val compatibleUpdates: List<MarketplaceUpdate> = pluginMetadataCache.get(pluginAndVersion) {
+      pluginRepositoryInstance.pluginManager
+        .searchCompatibleUpdates(listOf(pluginId), ideVersion.asString())
+        .map { it -> MarketplaceUpdate(it.pluginId, it.id) }
+    }
+    return compatibleUpdates
+      .firstOrNull()
+      ?.let { getOrRequestInfo(it) }
   }
 
   override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> {
-    val pluginBean = pluginRepositoryInstance.pluginManager.getPluginByXmlId(pluginId) ?: return emptyList()
-    val pluginVersions = pluginRepositoryInstance.pluginManager.getPluginVersions(pluginBean.id)
-    val pluginIdAndUpdateIds = pluginVersions.map { pluginBean.id to it.id }
-    return getPluginInfosForManyPluginIdsAndUpdateIds(pluginIdAndUpdateIds).values.toList()
+    if (pluginId in unavailablePluginIdentifiers) return emptyList()
+    val pluginBean = pluginRepositoryInstance.pluginManager.getPluginByXmlId(pluginId)
+    if (pluginBean == null) {
+      unavailablePluginIdentifiers += pluginId
+      return emptyList()
+    } else {
+      val pluginVersions = pluginRepositoryInstance.pluginManager.getPluginVersions(pluginBean.id)
+      val pluginIdAndUpdateIds = pluginVersions.map { pluginBean.id to it.id }
+      return getPluginInfosForManyPluginIdsAndUpdateIds(pluginIdAndUpdateIds).values.toList()
+    }
   }
 
   override fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?): List<UpdateInfo> {
-    val plugins = pluginRepositoryInstance.pluginManager.searchCompatibleUpdates(
-      module = moduleId, build = ideVersion?.asString().orEmpty()
-    )
+    val moduleAndVersion = ModuleAndVersion(moduleId, ideVersion.intern())
+
+    val plugins = modulesForPluginCache.get(moduleAndVersion) {
+      pluginRepositoryInstance.pluginManager.searchCompatibleUpdates(
+        module = moduleId, build = ideVersion?.asString().orEmpty()
+      )
+    }
+    if (plugins.isEmpty()) {
+      return emptyList()
+    }
     val pluginIdAndUpdateIds = plugins.map { it.pluginId to it.id }
     return getPluginInfosForManyPluginIdsAndUpdateIds(pluginIdAndUpdateIds).values.toList()
   }
@@ -83,7 +116,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
       pluginId
     )
     updateIdToPluginIdMapping[updateInfo.updateId] = pluginId
-    metadataCache.put(updateInfo.pluginIntId to updateInfo.updateId, Optional.of(updateInfo))
+    metadataCache.put(updateInfo.toMarketplaceUpdate(), Optional.of(updateInfo))
     return updateInfo
   }
 
@@ -98,11 +131,11 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
 
   fun getPluginInfoByUpdateId(updateId: Int): UpdateInfo? {
     val pluginId = getPluginIntIdByUpdateId(updateId) ?: return null
-    return getOrRequestInfo(pluginId, updateId)
+    return getOrRequestInfo(MarketplaceUpdate(pluginId, updateId))
   }
 
-  private fun getCachedInfo(pluginId: Int, updateId: Int): UpdateInfo? {
-    val optional = metadataCache[pluginId to updateId]
+  private fun getCachedInfo(marketplaceUpdate: MarketplaceUpdate): UpdateInfo? {
+    val optional = metadataCache[marketplaceUpdate]
     if (optional.isPresent) {
       //Return up-to-date metadata.
       return optional.get()
@@ -110,11 +143,12 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     return null
   }
 
-  private fun getOrRequestInfo(pluginId: Int, updateId: Int): UpdateInfo? {
-    val cachedInfo = getCachedInfo(pluginId, updateId)
+  private fun getOrRequestInfo(marketplaceUpdate: MarketplaceUpdate): UpdateInfo? {
+    val cachedInfo = getCachedInfo(marketplaceUpdate)
     if (cachedInfo != null) {
       return cachedInfo
     }
+    val (pluginId, updateId) = marketplaceUpdate
     val updateMetadata = pluginRepositoryInstance.pluginUpdateManager.getIntellijUpdateMetadata(pluginId, updateId)
       ?: return null
     return createAndCacheUpdateInfo(updateMetadata, pluginId)
@@ -141,7 +175,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     val toRequest = arrayListOf<Pair<PluginId, UpdateId>>()
     val result = hashMapOf<UpdateId, UpdateInfo>()
     for ((pluginId, updateId) in pluginAndUpdateIds) {
-      val cachedInfo = getCachedInfo(pluginId, updateId)
+      val cachedInfo = getCachedInfo(MarketplaceUpdate(pluginId, updateId))
       if (cachedInfo != null) {
         result[updateId] = cachedInfo
       } else {
@@ -183,6 +217,8 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     }
   }
 
+  private fun UpdateInfo.toMarketplaceUpdate() = MarketplaceUpdate(pluginIntId, updateId)
+
   override val presentableName
     get() = "JetBrains Marketplace ${repositoryURL.toExternalForm()}"
 
@@ -197,4 +233,23 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     // Contact JetBrains Marketplace team for details.
     private const val MAX_AVAILABLE_PLUGINS_IN_REPOSITORY = 10000
   }
+
+  private fun IdeVersion?.intern() = IdeVersionInterner.intern(this)
+
+  private object IdeVersionInterner : AutoCloseable {
+
+    private val pool = ConcurrentHashMap<IdeVersion, String>()
+
+    fun intern(version: IdeVersion?) = version?.let {
+      pool.computeIfAbsent(version) {
+        it.asString()
+      }
+    }
+
+    override fun close() {
+      pool.clear()
+    }
+  }
+
+  private data class MarketplaceUpdate(val pluginId: Int, val updateId: Int)
 }
