@@ -42,12 +42,12 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       offset: Int,
       query: String
     ): List<String> {
-      LOG.debug("Getting compatible plugins identifiers for build '$build'. Max: $max, offset: $offset, query: $query")
+      LOG.debug("Getting compatible plugins identifiers for build '{}'. Max: {}, offset: {}, query: {}", build, max, offset, query)
       return delegate.getCompatiblePluginsXmlIds(build, max, offset, query)
     }
 
     override fun getPlugin(id: PluginId): PluginBean? {
-      LOG.debug("Getting plugin with ID=$id")
+      LOG.debug("Getting plugin with ID={}", id)
       return delegate.getPlugin(id)
     }
 
@@ -55,25 +55,29 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       xmlId: StringPluginId,
       family: ProductFamily
     ): PluginBean? {
-      LOG.debug("Retrieving plugin metadata for '$xmlId'", family.name.lowercase())
-      return delegate.getPluginByXmlId(
-        xmlId,
-        family
-      )
+      val familyMsg = family.name.lowercase()
+      LOG.debug("Retrieving plugin metadata for '{}' (family: {})", xmlId, familyMsg)
+      return delegate.getPluginByXmlId(xmlId, family).also { plugin ->
+        if (plugin == null) {
+          LOG.debug("No plugin metadata for '{}' were retrieved (family: {})", xmlId, familyMsg)
+        } else {
+          LOG.debug("Retrieved plugin metadata for '{}' (family: {}): {}", xmlId, familyMsg, plugin.name)
+        }
+      }
     }
 
     override fun getPluginChannels(id: PluginId): List<String> {
-      LOG.debug("Retrieving plugin channels for plugin '$id'")
+      LOG.debug("Retrieving plugin channels for plugin '{}'", id)
       return delegate.getPluginChannels(id)
     }
 
     override fun getPluginCompatibleProducts(id: PluginId): List<ProductEnum> {
-      LOG.debug("Retrieving compatible products for plugin '$id'")
+      LOG.debug("Retrieving compatible products for plugin '{}'", id)
       return delegate.getPluginCompatibleProducts(id)
     }
 
     override fun getPluginDevelopers(id: PluginId): List<PluginUserBean> {
-      LOG.debug("Retrieving plugin developers for plugin '$id'")
+      LOG.debug("Retrieving plugin developers for plugin '{}'", id)
       return delegate.getPluginDevelopers(id)
     }
 
@@ -81,14 +85,14 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       build: String,
       xmlId: StringPluginId
     ): List<UpdateBean> {
-      LOG.debug("Getting last compatible updates for plugin '$xmlId' and build '$build'")
+      LOG.debug("Getting last compatible updates for plugin '{}' and build '{}'", xmlId, build)
       return delegate.getPluginLastCompatibleUpdates(build, xmlId)
     }
 
     override fun getPluginVersions(id: PluginId): List<UpdateBean> {
-      LOG.debug("Retrieving plugin versions for plugin '$id'")
+      LOG.debug("Retrieving plugin versions for plugin '{}'", id)
       return delegate.getPluginVersions(id).also {
-        LOG.debug("Plugin '$id' has ${it.size} versions")
+        LOG.debug("Plugin '{}' has {} versions", id, it.size)
       }
     }
 
@@ -97,12 +101,12 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       includeOptional: Boolean
     ): List<String> {
       val optionalMsg = if (includeOptional) "optional " else ""
-      LOG.debug("Getting plugin XML IDs by ${optionalMsg}dependency '$dependency'")
+      LOG.debug("Getting plugin XML IDs by {}dependency '{}'", optionalMsg, dependency)
       return delegate.getPluginXmlIdByDependency(
         dependency,
         includeOptional
       ).also {
-        LOG.debug("Found ${it.size} plugins for ${optionalMsg}dependency '$dependency'")
+        LOG.debug("Found {} plugins for {}dependency '{}'", it.size, optionalMsg, dependency)
       }
     }
 
@@ -112,9 +116,9 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       channel: String?,
       pluginId: StringPluginId?
     ): List<PluginXmlBean> {
-      LOG.debug("Listing plugins for IDE '$ideBuild' (channel '$channel')")
+      LOG.debug("Listing plugins for IDE '{}' (channel '{}')", ideBuild, channel)
       return delegate.listPlugins(ideBuild, channel, pluginId).also {
-        LOG.debug("Found ${it.size} plugins for IDE '$ideBuild' (channel '$channel')")
+        LOG.debug("Found {} plugins for IDE '{}' (channel '{}')", it.size, ideBuild, channel)
       }
     }
 
@@ -126,25 +130,25 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
     ): List<UpdateBean> {
       val channelMsg = if (channel.isNotBlank()) ", channel '$channel'" else ""
       val specMsg = if (xmlIds.isEmpty() && module.isNotBlank()) {
-        "module $module$channelMsg"
+        "module '$module$' for $build$channelMsg"
       } else {
         val moduleMsg = if (module.isNotBlank()) ", module '$module'" else ""
         val pluginIdMsg = when (xmlIds.size) {
           0 -> "no plugin IDs"
-          1 -> xmlIds.first()
-          else -> xmlIds.joinToString()
+          1 -> "'${xmlIds.first()}'"
+          else -> xmlIds.joinToString(prefix = "'", postfix = "'")
         }
-        "$pluginIdMsg for $build $channelMsg$moduleMsg"
+        "$pluginIdMsg for $build$channelMsg$moduleMsg"
       }
 
-      LOG.debug("Searching for compatible plugin updates of $specMsg")
+      LOG.debug("Searching for compatible plugin updates of {}", specMsg)
       return delegate.searchCompatibleUpdates(
         xmlIds,
         build,
         channel,
         module
       ).also {
-        LOG.debug("Found ${it.size} compatible plugin updates of $specMsg")
+        LOG.debug("Found {} compatible plugin updates of {}", it.size, specMsg)
       }
     }
   }
@@ -156,7 +160,7 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       targetPath: File,
       channel: String?
     ): File? {
-      LOG.debug("Downloading $xmlId:$version to [$targetPath] (channel: $channel)")
+      LOG.debug("Downloading {}:{} to [{}] (channel: {})", xmlId, version, targetPath, channel)
       return delegate.download(xmlId, version, targetPath, channel)
     }
 
@@ -164,7 +168,7 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       id: UpdateId,
       targetPath: File
     ): File? {
-      LOG.debug("Downloading update (ID=$id) to [$targetPath]")
+      LOG.debug("Downloading update (ID={}) to [{}]", id, targetPath)
       return delegate.download(id, targetPath)
     }
 
@@ -174,7 +178,7 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       targetPath: File,
       channel: String?
     ): File? {
-      LOG.debug("Downloading latest compatible plugin '$xmlId' with IDE '$ideBuild 'to [$targetPath] (channel: $channel)")
+      LOG.debug("Downloading latest compatible plugin '{}' with IDE '{} 'to [{}] (channel: {})", xmlId, ideBuild, targetPath, channel)
       return delegate.downloadLatestCompatiblePlugin(xmlId, ideBuild, targetPath, channel)
     }
 
@@ -185,7 +189,7 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       oldFile: File,
       channel: String?
     ): File? {
-      LOG.debug("Downloading latest compatible plugin '$xmlId' with IDE '$ideBuild 'to [$targetPath] (channel: $channel)")
+      LOG.debug("Downloading latest compatible plugin '{}' with IDE '{} 'to [{}] (channel: {})", xmlId, ideBuild, targetPath, channel)
       return delegate.downloadLatestCompatiblePluginViaBlockMap(xmlId, ideBuild, targetPath, oldFile, channel)
     }
 
@@ -196,7 +200,7 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       oldFile: File,
       channel: String?
     ): File? {
-      LOG.debug("Downloading $xmlId:$version to [$targetPath] (channel: $channel, blockmap download via '$targetPath)'")
+      LOG.debug("Downloading {}:{} to [{}] (channel: {}, blockmap download via '{})'", xmlId, version, targetPath, channel, targetPath)
       return delegate.downloadViaBlockMap(xmlId, version, targetPath, oldFile, channel)
     }
 
@@ -205,7 +209,7 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       targetPath: File,
       oldFile: File
     ): File? {
-      LOG.debug("Downloading plugin update '$id' to [$targetPath] (blockmap download via '$oldFile)'")
+      LOG.debug("Downloading plugin update '{}' to [{}] (blockmap download via '{})'", id, targetPath, oldFile)
       return delegate.downloadViaBlockMap(id, targetPath, oldFile)
     }
 
@@ -213,7 +217,7 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
 
   private class LoggingAndTracingPluginUpdateManager(private val delegate: PluginUpdateManager) : PluginUpdateManager {
     override fun getUpdateById(id: UpdateId): PluginUpdateBean? {
-      LOG.debug("Getting plugin update '$id'")
+      LOG.debug("Getting plugin update '{}'", id)
       return delegate.getUpdateById(id)
     }
 
@@ -222,7 +226,7 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       version: String,
       family: ProductFamily
     ): List<PluginUpdateBean> {
-      LOG.debug("Getting plugin updates for '$xmlId:$version' (family: ${family.name.lowercase()})")
+      LOG.debug("Getting plugin updates for '{}:{}' (family: {})", xmlId, version, family.name.lowercase())
       return delegate.getUpdatesByVersionAndFamily(
         xmlId,
         version,
@@ -231,12 +235,12 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
     }
 
     override fun deleteUpdate(updateId: UpdateId): UpdateDeleteBean? {
-      LOG.debug("Deleting plugin update '$updateId'")
+      LOG.debug("Deleting plugin update '{}'", updateId)
       return delegate.deleteUpdate(updateId)
     }
 
     override fun getIntellijUpdateMetadata(pluginId: PluginId, updateId: UpdateId): IntellijUpdateMetadata? {
-      LOG.debug("Retrieving plugin update metadata for plugin '$pluginId' and update '$updateId'")
+      LOG.debug("Retrieving plugin update metadata for plugin '{}' and update '{}'", pluginId, updateId)
       return delegate.getIntellijUpdateMetadata(pluginId, updateId)
     }
 
@@ -250,7 +254,7 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
         "$plugin (${updates.size} updates): ${updates.joinToString { it.toString() }}"
       }.joinToString("; ")
 
-      LOG.debug("Retrieving plugin update metadata for plugins $updateIdMsg")
+      LOG.debug("Retrieving plugin update metadata for plugins {}", updateIdMsg)
       return delegate.getIntellijUpdateMetadataBatch(updateIds)
     }
   }
