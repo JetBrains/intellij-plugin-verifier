@@ -51,6 +51,8 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     .expireAfterWrite(5, TimeUnit.MINUTES)
     .build<ModuleAndVersion, List<UpdateBean>>()
 
+  private val ideVersionInterner = IdeVersionInterner()
+
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> {
     val pluginManager = pluginRepositoryInstance.pluginManager
     @Suppress("DEPRECATION")
@@ -235,9 +237,9 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     private const val MAX_AVAILABLE_PLUGINS_IN_REPOSITORY = 10000
   }
 
-  private fun IdeVersion?.intern() = IdeVersionInterner.intern(this)
+  private fun IdeVersion?.intern() = ideVersionInterner.intern(this)
 
-  private object IdeVersionInterner : AutoCloseable {
+  private class IdeVersionInterner {
 
     private val pool = ConcurrentHashMap<IdeVersion, String>()
 
@@ -245,10 +247,6 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
       pool.computeIfAbsent(version) {
         it.asString()
       }
-    }
-
-    override fun close() {
-      pool.clear()
     }
   }
 
