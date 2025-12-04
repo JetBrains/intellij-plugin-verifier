@@ -130,7 +130,7 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
     ): List<UpdateBean> {
       val channelMsg = if (channel.isNotBlank()) ", channel '$channel'" else ""
       val specMsg = if (xmlIds.isEmpty() && module.isNotBlank()) {
-        "module '$module$' for $build$channelMsg"
+        "module '$module' for $build$channelMsg"
       } else {
         val moduleMsg = if (module.isNotBlank()) ", module '$module'" else ""
         val pluginIdMsg = when (xmlIds.size) {
