@@ -36,19 +36,20 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
       Optional.empty()
     }
 
-  private val unavailablePluginIdentifiers = ConcurrentHashMap.newKeySet<String>()
+  private val unavailablePluginIdentifiers = Caffeine.newBuilder()
+    .build<String, Boolean>()
 
   private data class ModuleAndVersion(val id: String, val ideVersion: String?)
   private data class PluginAndVersion(val id: StringPluginId, val ideVersion: String?)
 
   private val pluginMetadataCache = Caffeine.newBuilder()
     .maximumSize(512)
-    .expireAfterWrite(5, TimeUnit.MINUTES)
+    .expireAfterAccess(5, TimeUnit.MINUTES)
     .build<PluginAndVersion, List<MarketplaceUpdate>>()
 
   private val modulesForPluginCache = Caffeine.newBuilder()
     .maximumSize(512)
-    .expireAfterWrite(5, TimeUnit.MINUTES)
+    .expireAfterAccess(5, TimeUnit.MINUTES)
     .build<ModuleAndVersion, List<UpdateBean>>()
 
   private val ideVersionInterner = IdeVersionInterner()
@@ -75,10 +76,10 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
   }
 
   override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> {
-    if (pluginId in unavailablePluginIdentifiers) return emptyList()
+    if (unavailablePluginIdentifiers.getIfPresent(pluginId) != null) return emptyList()
     val pluginBean = pluginRepositoryInstance.pluginManager.getPluginByXmlId(pluginId)
     if (pluginBean == null) {
-      unavailablePluginIdentifiers += pluginId
+      unavailablePluginIdentifiers.put(pluginId, true)
       return emptyList()
     } else {
       val pluginVersions = pluginRepositoryInstance.pluginManager.getPluginVersions(pluginBean.id)
