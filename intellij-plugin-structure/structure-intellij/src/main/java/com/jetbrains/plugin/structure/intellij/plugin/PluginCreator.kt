@@ -24,8 +24,6 @@ import com.jetbrains.plugin.structure.intellij.problems.DependencyConstraintsDup
 import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
 import com.jetbrains.plugin.structure.intellij.problems.ElementMissingAttribute
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
-import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorCycleProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.SinceBuildGreaterThanUntilBuild
@@ -34,6 +32,7 @@ import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.verifiers.ExposedModulesVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.K2IdeModeCompatibilityVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ProjectAndApplicationListenerAvailabilityVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.StatusBarWidgetFactoryExtensionPointVerifier
@@ -282,9 +281,7 @@ internal class PluginCreator private constructor(
       addDepends(DependsPluginDependency(it.dependencyId, it.isOptional, it.configFile))
     }
     dependencies += bean.dependenciesV1.map { depBean ->
-      PluginDependencyImpl(depBean.dependencyId, depBean.isOptional, depBean.isModule).also { it ->
-        registerIfOptionalDependency(it, depBean)
-      }
+      depBean.asV1Dependency().also { registerIfOptionalDependency(it, depBean) }
     }
     // dependencies from `<dependencies>`
     bean.contentModuleDependencies.forEach { dep ->
@@ -555,14 +552,6 @@ internal class PluginCreator private constructor(
 
   private fun validatePlugin(plugin: IdePluginImpl) {
     val dependencies = plugin.dependencies
-    if (!plugin.hasPackagePrefix && plugin.contentModules.isEmpty()) {
-      if (dependencies.isEmpty()) {
-        registerProblem(NoDependencies(descriptorPath))
-      }
-      if (dependencies.none { it.isModule || it is PluginV2Dependency }) {
-        registerProblem(NoModuleDependencies(descriptorPath))
-      }
-    }
     dependencies.map { it.id }
       .groupingBy { it }
       .eachCount()
@@ -589,6 +578,7 @@ internal class PluginCreator private constructor(
       registerProblem(SinceBuildGreaterThanUntilBuild(descriptorPath, sinceBuild, untilBuild))
     }
 
+    LegacyIntelliJIdeaPluginVerifier().verify(plugin, descriptorPath, ::registerProblem)
     ProjectAndApplicationListenerAvailabilityVerifier().verify(plugin, ::registerProblem)
     ServiceExtensionPointPreloadVerifier().verify(plugin, ::registerProblem)
     StatusBarWidgetFactoryExtensionPointVerifier().verify(plugin, ::registerProblem)
@@ -674,6 +664,14 @@ internal class PluginCreator private constructor(
     if (pluginDependency.isOptional && dependencyBean.configFile != null) {
       optionalDependenciesConfigFiles[pluginDependency] =
         if (v2ModulePrefix.matches(dependencyBean.configFile)) "../${dependencyBean.configFile}" else dependencyBean.configFile
+    }
+  }
+
+  private fun PluginDependencyBean.asV1Dependency(): PluginV1Dependency {
+    return if (isOptional) {
+      PluginV1Dependency.Optional(dependencyId)
+    } else {
+      PluginV1Dependency.Mandatory(dependencyId)
     }
   }
 }

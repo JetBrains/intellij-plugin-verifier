@@ -23,3 +23,18 @@ class ProductInfoBasedIdeModulePredicate(private val productInfo: ProductInfo) :
     return plugin is IdeModule || id in productInfo.modules
   }
 }
+
+/**
+ * Predicate for a plugin that is considered to be a module if it identifier or alias starts with [idPrefix].
+ */
+class IdPrefixIdeModulePredicate(private val idPrefix: String) : IdeModulePredicate {
+  override fun matches(id: String, plugin: IdePlugin): Boolean {
+    return plugin is IdeModule
+      || id.startsWith(idPrefix)
+      || plugin.pluginAliases.any { it.startsWith(idPrefix) }
+  }
+
+  companion object {
+    val HAS_COM_INTELLIJ_MODULE_PREFIX = IdPrefixIdeModulePredicate("com.intellij.modules.")
+  }
+}

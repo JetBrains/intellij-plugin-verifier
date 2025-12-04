@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import com.jetbrains.plugin.structure.xinclude.withConditionalXIncludes
 import com.jetbrains.plugin.structure.xinclude.withSystemProperty
@@ -93,7 +93,7 @@ class XIncludePluginTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         }
         val optionalDescriptor = plugin.optionalDescriptors.single()
         assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
-        assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
+        assertEquals(PluginV1Dependency.Optional("Optional Dependency"), optionalDescriptor.dependency)
 
         assert(plugin.extensions.isEmpty())
       }
@@ -124,7 +124,7 @@ class XIncludePluginTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         }
         val optionalDescriptor = plugin.optionalDescriptors.single()
         assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
-        assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
+        assertEquals(PluginV1Dependency.Optional("Optional Dependency"), optionalDescriptor.dependency)
 
         assert(plugin.extensions.isEmpty())
       }
@@ -155,7 +155,7 @@ class XIncludePluginTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         }
         val optionalDescriptor = plugin.optionalDescriptors.single()
         assertEquals("optionalDependency.xml", optionalDescriptor.configurationFilePath)
-        assertEquals(PluginDependencyImpl("Optional Dependency", true, false), optionalDescriptor.dependency)
+        assertEquals(PluginV1Dependency.Optional("Optional Dependency"), optionalDescriptor.dependency)
 
         assert(plugin.extensions.isEmpty())
       }

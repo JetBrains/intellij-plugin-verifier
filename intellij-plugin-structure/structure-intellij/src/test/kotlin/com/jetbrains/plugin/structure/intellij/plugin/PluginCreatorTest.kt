@@ -5,7 +5,11 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
+import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
+import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
+import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import junit.framework.TestCase.assertEquals
@@ -17,10 +21,20 @@ import java.nio.file.Path
 class PluginCreatorTest {
   @Test
   fun `plugin is created from the descriptor resource`() {
+    val expectedProblems = listOf(
+      ForbiddenPluginIdPrefix::class,
+      TemplateWordInPluginId::class,
+      TemplateWordInPluginName::class,
+      NoDependencies::class)
+
     val plugin = createPlugin(DUMMY_PLUGIN_XML)
     plugin.run {
       assertTrue(isSuccess)
-      assertEquals(5, resolvedProblems.size)
+      assertEquals(4, resolvedProblems.size)
+      expectedProblems.forEach { problemClass ->
+        assertTrue("$problemClass must be detected",
+                   resolvedProblems.any { it::class == problemClass })
+      }
     }
   }
 
