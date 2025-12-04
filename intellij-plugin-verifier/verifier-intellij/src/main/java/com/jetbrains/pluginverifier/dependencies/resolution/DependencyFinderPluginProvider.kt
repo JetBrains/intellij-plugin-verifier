@@ -38,11 +38,13 @@ class DependencyFinderPluginProvider(private val dependencyFinder: DependencyFin
       findPluginById(query.identifier)?.let {
         return PluginProvision.Found(it, PluginProvision.Source.ID)
       }
-    } else if (query.searchPluginAliases()) {
+    }
+    if (query.searchPluginAliases()) {
       findPluginByModule(query.identifier)?.let {
         return PluginProvision.Found(it, PluginProvision.Source.ALIAS)
       }
-    } else if (query.searchContentModuleId()) {
+    }
+    if (query.searchContentModuleId()) {
       findPluginByModule(query.identifier)?.let {
         return PluginProvision.Found(it, PluginProvision.Source.CONTENT_MODULE_ID)
       }
