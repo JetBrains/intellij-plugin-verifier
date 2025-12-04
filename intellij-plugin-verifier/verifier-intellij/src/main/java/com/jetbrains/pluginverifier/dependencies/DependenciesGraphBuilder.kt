@@ -249,9 +249,9 @@ private data class DepEdge(
   private val sourceVertex: DepVertex,
   private val targetVertex: DepVertex
 ) : DefaultEdge() {
-  public override fun getSource() = sourceVertex
+  override fun getSource() = sourceVertex
 
-  public override fun getTarget() = targetVertex
+  override fun getTarget() = targetVertex
 }
 
 private data class DepId(val id: String, val isModule: Boolean)
