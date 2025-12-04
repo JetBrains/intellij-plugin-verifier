@@ -65,7 +65,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     val compatibleUpdates: List<MarketplaceUpdate> = pluginMetadataCache.get(pluginAndVersion) {
       pluginRepositoryInstance.pluginManager
         .searchCompatibleUpdates(listOf(pluginId), ideVersion.asString())
-        .map { it -> MarketplaceUpdate(it.pluginId, it.id) }
+        .map { MarketplaceUpdate(it.pluginId, it.id) }
     }
     return compatibleUpdates
       .firstOrNull()
@@ -166,6 +166,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     return getPluginInfosForManyPluginIdsAndUpdateIds(pluginAndUpdateIds)
   }
 
+  @Suppress("unused")
   fun getPluginChannels(pluginId: String): List<String> {
     val pluginBean = pluginRepositoryInstance.pluginManager.getPluginByXmlId(pluginId) ?: return emptyList()
     return pluginRepositoryInstance.pluginManager.getPluginChannels(pluginBean.id)
@@ -212,7 +213,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     }
     return try {
       URL(url)
-    } catch (e: MalformedURLException) {
+    } catch (_: MalformedURLException) {
       null
     }
   }
