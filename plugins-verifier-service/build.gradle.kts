@@ -1,3 +1,6 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
+
 plugins {
   war
   idea
@@ -13,14 +16,15 @@ kotlin {
 }
 
 tasks {
-  compileKotlin {
-    kotlinOptions {
-      apiVersion = "1.4"
-      languageVersion = "1.4"
-    }
-  }
   publishToMavenLocal {
     dependsOn(test)
+  }
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+  compilerOptions {
+    apiVersion = KotlinVersion.KOTLIN_1_8
+    languageVersion = KotlinVersion.KOTLIN_1_8
   }
 }
 

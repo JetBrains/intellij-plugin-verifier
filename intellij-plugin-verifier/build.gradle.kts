@@ -62,8 +62,8 @@ allprojects {
   kotlin {
     compilerOptions {
       jvmTarget = JvmTarget.fromTarget(javaVersion.toString())
-      apiVersion = KotlinVersion.KOTLIN_1_5
-      languageVersion = KotlinVersion.KOTLIN_1_5
+      apiVersion = KotlinVersion.KOTLIN_1_8
+      languageVersion = KotlinVersion.KOTLIN_1_8
       freeCompilerArgs.add("-Xjvm-default=all-compatibility")
     }
   }
