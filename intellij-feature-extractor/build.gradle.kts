@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -35,10 +37,10 @@ allprojects {
   }
 
   tasks.withType<KotlinCompile> {
-    kotlinOptions {
-      jvmTarget = "11"
-      apiVersion = "1.4"
-      languageVersion = "1.4"
+    compilerOptions {
+      jvmTarget = JvmTarget.JVM_11
+      apiVersion = KotlinVersion.KOTLIN_1_8
+      languageVersion = KotlinVersion.KOTLIN_1_8
     }
   }
 }
