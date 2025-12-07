@@ -14,7 +14,6 @@ import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependen
 import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
-import com.jetbrains.plugin.structure.intellij.plugin.CompositePluginProvider
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DefaultIdeModulePredicate
@@ -28,7 +27,7 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphProvider
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
-import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinderPluginProvider
+import com.jetbrains.pluginverifier.dependencies.resolution.IdeThenDelegatePluginProvider
 import com.jetbrains.pluginverifier.dependencies.resolution.getDetails
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginDetails
@@ -56,10 +55,9 @@ class DefaultClassResolverProvider(
   }
   private val legacyPluginVerifier = LegacyIntelliJIdeaPluginVerifier()
 
-  private val pluginResolverProvider = CompositePluginProvider.of(
-      ideDescriptor.ide,
-      DependencyFinderPluginProvider(dependencyFinder, ideDescriptor.ide, archiveManager)
-    ).let { pluginProvider ->
+  private val pluginResolverProvider = IdeThenDelegatePluginProvider
+    .of(ideDescriptor, dependencyFinder, archiveManager)
+    .let { pluginProvider ->
     val dependenciesModifier = LegacyPluginDependencyContributor(ideDescriptor.ide, legacyPluginVerifier)
     CachingPluginDependencyResolverProvider(pluginProvider, secondaryResolver, ideModulePredicate, dependenciesModifier)
   }

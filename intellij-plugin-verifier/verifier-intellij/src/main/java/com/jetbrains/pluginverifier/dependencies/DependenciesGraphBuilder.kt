@@ -9,11 +9,15 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
+import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import org.jgrapht.Graph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
+
+private const val INTELLIJ_MODULE_PREFIX = "com.intellij.modules."
 
 /**
  * Builds the dependencies graph using the [dependencyFinder].
@@ -31,7 +35,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
     val missingDependencies = hashMapOf<DepId, MutableSet<DepMissingVertex>>()
 
     val start = DepVertex(plugin, DependencyFinder.Result.FoundPlugin(plugin))
-    addTransitiveDependencies(graph, start, missingDependencies)
+    addTransitiveDependencies(ide, graph, start, missingDependencies)
     if (plugin.pluginId != CORE_IDE_PLUGIN_ID) {
       maybeAddOptionalJavaPluginDependency(plugin, ide, graph, missingDependencies)
       maybeAddBundledPluginsWithUseIdeaClassLoader(ide, graph, missingDependencies)
@@ -42,6 +46,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
   }
 
   private fun addTransitiveDependencies(
+    pluginProvider: PluginProvider,
     graph: Graph<DepVertex, DepEdge>,
     vertex: DepVertex,
     missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
@@ -64,9 +69,10 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
       dependencies += getRecursiveOptionalDependencies(vertex.plugin).map { PluginDependencyImpl(it.id, true, it.isModule) }
 
       for (pluginDependency in dependencies) {
-        val resolvedDependency = resolveDependency(vertex, pluginDependency, graph, missingDependencies) ?: continue
+        val resolvedDependency = resolveDependency(pluginProvider, vertex, pluginDependency, graph, missingDependencies)
+          ?: continue
 
-        addTransitiveDependencies(graph, resolvedDependency, missingDependencies)
+        addTransitiveDependencies(pluginProvider, graph, resolvedDependency, missingDependencies)
 
         /**
          * Skip the dependency onto itself.
@@ -86,12 +92,13 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
   }
 
   private fun resolveDependency(
+    pluginProvider: PluginProvider,
     vertex: DepVertex,
     pluginDependency: PluginDependency,
     graph: Graph<DepVertex, DepEdge>,
     missingDependencies: MutableMap<DepId, MutableSet<DepMissingVertex>>
   ): DepVertex? {
-    val depId = DepId(pluginDependency.id, pluginDependency.isModule)
+    val (resolvedPluginDependency, depId) = pluginProvider.resolveIfModule(pluginDependency)
 
     val existingVertex = graph.vertexSet().find {
       if (depId.isModule) {
@@ -105,7 +112,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
     }
 
     fun registerMissingDependency(reason: String): DepVertex? {
-      missingDependencies.getOrPut(depId) { hashSetOf() } += DepMissingVertex(vertex, pluginDependency, reason)
+      missingDependencies.getOrPut(depId) { hashSetOf() } += DepMissingVertex(vertex, resolvedPluginDependency, reason)
       return null
     }
 
@@ -114,7 +121,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
       return registerMissingDependency(sameReason)
     }
 
-    return when (val result = dependencyFinder.findPluginDependency(pluginDependency)) {
+    return when (val result = dependencyFinder.findPluginDependency(resolvedPluginDependency)) {
       is DependencyFinder.Result.FoundPlugin -> DepVertex(result.plugin, result)
       is DependencyFinder.Result.DetailsProvided -> {
         when (val cacheResult = result.pluginDetailsCacheResult) {
@@ -172,7 +179,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
         is DependencyFinder.Result.NotFound -> null
       } ?: return
       val javaPluginVertex = DepVertex(javaPlugin, dependencyResult)
-      addTransitiveDependencies(graph, javaPluginVertex, missingDependencies)
+      addTransitiveDependencies(ide, graph, javaPluginVertex, missingDependencies)
     }
   }
 
@@ -190,14 +197,44 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
     for (bundledPlugin in ide.bundledPlugins) {
       if (bundledPlugin.useIdeClassLoader && bundledPlugin.pluginId != null) {
         val dependencyId = bundledPlugin.pluginId!!
-        val pluginDependency = PluginDependencyImpl(dependencyId, true, false)
+        val pluginDependency = PluginV1Dependency.Optional(dependencyId)
         val dependencyResult = dependencyFinder.findPluginDependency(pluginDependency.id, pluginDependency.isModule)
         val bundledVertex = DepVertex(bundledPlugin, dependencyResult)
-        addTransitiveDependencies(graph, bundledVertex, missingDependencies)
+        addTransitiveDependencies(ide, graph, bundledVertex, missingDependencies)
       }
     }
   }
 
+  /**
+   * Flips the dependency to the dependency of a module type. This is to monkey-patch
+   * the uncertain semantics of `isModule` property in the legacy mode (v1).
+   */
+  private fun PluginProvider.resolveIfModule(dependency: PluginDependency): Pair<PluginDependency, DepId> {
+    val depId = resolveDepId(dependency)
+    val resolvedModule = if (!dependency.isModule && depId.isModule) {
+      ProxyModulePluginDependency.of(dependency)
+    } else {
+      dependency
+    }
+    return resolvedModule to depId
+  }
+
+  /**
+   * Resolve a dependency while patching semantics of `isModule` property in the legacy mode (v1).
+   * A [PluginDependency] is a module if:
+   * - it has been explicitly marked as `isModule`
+   * - it starts with the IntelliJ module prefix
+   * - plugin provider contains a module with the same ID
+   */
+  private fun PluginProvider.resolveDepId(dependency: PluginDependency): DepId {
+    val isModuleLike =
+      dependency.isModule ||
+        // In legacy mode (v1) IDE modules tend to have a common prefix
+        dependency.id.startsWith(INTELLIJ_MODULE_PREFIX) ||
+        // IDE contains this module, so assume it is a module
+        findPluginByModule(dependency.id) != null
+    return DepId(dependency.id, isModuleLike)
+  }
 }
 
 private data class DepVertex(val plugin: IdePlugin, val dependencyResult: DependencyFinder.Result) {
@@ -212,9 +249,9 @@ private data class DepEdge(
   private val sourceVertex: DepVertex,
   private val targetVertex: DepVertex
 ) : DefaultEdge() {
-  public override fun getSource() = sourceVertex
+  override fun getSource() = sourceVertex
 
-  public override fun getTarget() = targetVertex
+  override fun getTarget() = targetVertex
 }
 
 private data class DepId(val id: String, val isModule: Boolean)
@@ -248,4 +285,26 @@ private class DepGraph2ApiGraphConverter {
   private fun DepVertex.toDependencyNode(): DependencyNode =
     DependencyNode(plugin.pluginId ?: "<empty id>", plugin.pluginVersion ?: "<empty version>")
 
+}
+
+private data class ProxyModulePluginDependency(override val id: String, override val isOptional: Boolean) : PluginDependency {
+  companion object {
+    /**
+     * Converts a dependency into an explicit module dependency.
+     * It doesn't cover any subtype of `PluginDependency`, only V1 types.
+     * This is due to the legacy V1 mode in which this DependenciesGraph operates.
+     */
+    fun of(dependency: PluginDependency): PluginDependency {
+      return when (dependency) {
+        is PluginV1Dependency.Mandatory -> ProxyModulePluginDependency(dependency.id, isOptional = false)
+        is PluginV1Dependency.Optional -> ProxyModulePluginDependency(dependency.id, isOptional = true)
+        is PluginDependencyImpl -> ProxyModulePluginDependency(dependency.id, dependency.isOptional)
+        else -> dependency
+      }
+    }
+  }
+
+  override val isModule = true
+
+  override fun asOptional() = copy(isOptional = true)
 }

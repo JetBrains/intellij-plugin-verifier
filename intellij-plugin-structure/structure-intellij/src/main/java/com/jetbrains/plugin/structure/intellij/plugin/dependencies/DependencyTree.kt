@@ -242,17 +242,6 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
       } as? PluginProvision.Found
   }
 
-  private fun resolveModule(moduleId: String): PluginProvision.Found? {
-    return PluginQuery.Builder.of(moduleId)
-      .inId()
-      .inName()
-      .inPluginAliases()
-      .build()
-      .let {
-        pluginProvider.query(it)
-      } as? PluginProvision.Found
-  }
-
   private fun Set<Dependency>.resolveDuplicateDependencies(resolutionContext: ResolutionContext): Set<Dependency> {
     if (!resolutionContext.isMergingDuplicateDependencies) return this
 
@@ -305,20 +294,6 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
   }
 
   private fun hasId(dependency: PluginDependency) = { dep: Dependency -> dep.matches(dependency.id) }
-
-  fun toDebugString(pluginId: String): CharSequence {
-    val resolutionContext = ResolutionContext(EMPTY_MISSING_DEPENDENCY_LISTENER)
-    return StringBuilder().apply {
-      pluginProvider.findPluginById(pluginId)?.let { plugin ->
-        getDependencyGraph(plugin, resolutionContext).toDebugString(
-          pluginId,
-          indentSize = 0,
-          mutableSetOf(),
-          printer = this
-        )
-      }
-    }
-  }
 
   private fun debugLog(indent: String, message: String, vararg params: Any) {
     debugLog(indent, numericIndex = 0, message, *params)

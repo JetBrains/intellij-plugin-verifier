@@ -208,7 +208,7 @@ class DependencyTreeTest {
       assertSetsEqual(expectedDependencyIds, transitiveDependencies.map { it.id }.toSet())
 
       val expectedMissingDependencies = mapOf(
-        somePlugin to setOf(PluginV1Dependency.Mandatory (pluginNotInIde.pluginId!!)))
+        somePlugin to setOf(PluginV1Dependency.Mandatory(pluginNotInIde.pluginId!!)))
       assertEquals(expectedMissingDependencies, this.missingDependencies)
     }
   }
