@@ -491,6 +491,8 @@ Read more about possible integration options: [Verifying Plugin Compatibility](h
 
 ## Feedback
 
+### Issue Tracking
+
 Please report issues to YouTrack: https://youtrack.jetbrains.com/issues/MP (MP stands for `Marketplace`)
 
 - Check if there is already a similar ticket present.
