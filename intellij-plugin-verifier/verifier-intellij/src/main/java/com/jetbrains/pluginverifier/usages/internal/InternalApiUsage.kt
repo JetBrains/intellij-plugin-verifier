@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.usages.internal
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.results.location.Location
+import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.usages.ApiUsage
 import com.jetbrains.pluginverifier.usages.annotation.AnnotationResolver
 import com.jetbrains.pluginverifier.usages.annotation.isMemberEffectivelyAnnotatedWith
@@ -17,9 +18,18 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 abstract class InternalApiUsage : ApiUsage()
 
 fun ClassFileMember.isInternalApi(resolver: Resolver, location: Location): Boolean =
-  isMemberEffectivelyAnnotatedWith(internalApiStatusResolver, resolver, location) ||
-    isMemberEffectivelyAnnotatedWith(intellijInternalApiResolver, resolver, location)
+  !isIgnoredUsage(this, location)
+    && listOf(internalApiStatusResolver, intellijInternalApiResolver)
+    .any { isMemberEffectivelyAnnotatedWith(it, resolver, location) }
 
+private fun isIgnoredUsage(resolvedMember: ClassFileMember, usageLocation: Location): Boolean
+  = ignoredAPIs.any { predicate -> predicate(resolvedMember, usageLocation) }
+
+typealias IgnoredUsagePredicate = (ClassFileMember, Location) -> Boolean
+
+private val ignoredAPIs: List<IgnoredUsagePredicate> = listOf(
+  { member, location -> (member.containingClassFile).name.endsWith("\$DefaultImpls")}
+)
 
 private val internalApiStatusResolver = AnnotationResolver("org/jetbrains/annotations/ApiStatus\$Internal")
 private val intellijInternalApiResolver = AnnotationResolver("com/intellij/openapi/util/IntellijInternalApi")
