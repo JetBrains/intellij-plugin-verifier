@@ -17,12 +17,15 @@ import java.util.*
 private val LOG: Logger = LoggerFactory.getLogger(LazyJarResolver::class.java)
 
 class LazyJarResolver(
-  public override val jarPath: Path,
-  override val readMode: ReadMode,
-  override val fileOrigin: FileOrigin,
-  override val name: String = jarPath.fileName.toString(),
+  jarPath: Path,
+  readMode: ReadMode,
+  fileOrigin: FileOrigin,
+  name: String = jarPath.fileName.toString(),
   private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider
-) : AbstractJarResolver(jarPath, readMode, fileOrigin), AutoCloseable {
+) : AbstractJarResolver(jarPath, readMode, fileOrigin, name), AutoCloseable {
+  // override to make public
+  public override val jarPath: Path
+    get() = super.jarPath
 
   private val jar: Jar by lazy {
     Jar(jarPath, fileSystemProvider).init()

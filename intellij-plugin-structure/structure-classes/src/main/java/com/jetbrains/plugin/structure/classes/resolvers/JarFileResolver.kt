@@ -27,10 +27,16 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @Deprecated("Replaced with LazyJarResolver", replaceWith = ReplaceWith("LazyJarResolver", "com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver"))
 class JarFileResolver(
-  override val jarPath: Path,
-  override val readMode: ReadMode,
-  override val fileOrigin: FileOrigin
+  jarPath: Path,
+  readMode: ReadMode,
+  fileOrigin: FileOrigin
 ) : AbstractJarResolver(jarPath, readMode, fileOrigin) {
+  override val jarPath: Path
+    get() = super.jarPath
+  override val readMode: ReadMode
+    get() = super.readMode
+  override val fileOrigin: FileOrigin
+    get() = super.fileOrigin
 
   private companion object {
     private const val CLASS_SUFFIX = ".class"
