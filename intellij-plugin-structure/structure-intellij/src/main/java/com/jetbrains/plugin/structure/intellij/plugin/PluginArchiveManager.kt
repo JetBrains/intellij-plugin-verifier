@@ -33,12 +33,18 @@ class PluginArchiveManager(private val extractDirectory: Path, private val isCol
 
   val stats: Stats? = if (isCollectingStats) Stats() else null
 
-  @Synchronized
-  fun extractArchive(path: Path): Result =
-    cache.get(path)
+  fun extractArchive(path: Path): Result {
+    val cached = getCached(path)
+    if (cached != null) return cached
+    return doExtractArchive(path)
+  }
+
+  private fun getCached(path: Path): Result? {
+    val cached = cache[path]
       .takeIf { it is Extracted && it.resourceToClose.pluginFile.exists() }
       ?.also { it.logCached() }
-      ?: doExtractArchive(path)
+    return cached
+  }
 
   private fun doExtractArchive(pluginFile: Path): Result {
     lateinit var extractorResult: ExtractorResult
@@ -78,14 +84,20 @@ class PluginArchiveManager(private val extractDirectory: Path, private val isCol
     stats?.run { logCreated(artifactPath, extractionDuration) }
   }
 
-  @Synchronized
   fun clear() {
-    cache.forEach { (_, result) ->
-      if (result is Extracted) {
-        result.resourceToClose.close()
+    do {
+      var removed = 0
+      val iterator = cache.entries.iterator()
+      while (iterator.hasNext()) {
+        val entry = iterator.next()
+        val result = entry.value
+        if (result is Extracted) {
+          result.resourceToClose.close()
+        }
+        iterator.remove()
+        removed++
       }
-    }
-    cache.clear()
+    } while (removed > 0)
   }
 
   override fun delete() {
