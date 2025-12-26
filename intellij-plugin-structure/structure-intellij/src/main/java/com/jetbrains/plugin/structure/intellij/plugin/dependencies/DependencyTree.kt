@@ -4,18 +4,16 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.jetbrains.plugin.structure.base.utils.pluralize
-import com.jetbrains.plugin.structure.intellij.plugin.DependenciesModifier
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PassThruDependenciesModifier
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision.Source.CONTENT_MODULE_ID
-import com.jetbrains.plugin.structure.intellij.plugin.PluginQuery
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency.*
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency.Module
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.max
 
 private val LOG: Logger = LoggerFactory.getLogger(DependencyTree::class.java)
@@ -230,7 +228,28 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     }
   }
 
+  private val myPluginIdCache: ConcurrentHashMap<PluginId, PluginId> = ConcurrentHashMap()
+  private val myPluginCache: Cache<PluginId, PluginProvision.Found> = Caffeine.newBuilder()
+    .softValues()
+    .build()
+
   private fun resolvePlugin(pluginId: PluginId): PluginProvision.Found? {
+    val id = myPluginIdCache.computeIfAbsent(pluginId) { pluginId }
+    val result = myPluginCache.getIfPresent(id)
+    if (result != null) return result
+    // it's OK to synchronize on PluginId (String) since we've interned it.
+    synchronized(id) {
+      val result = myPluginCache.getIfPresent(id)
+      if (result != null) return result
+      val resolved = doResolvePlugin(id)
+      if (resolved != null) {
+        myPluginCache.put(id, resolved)
+      }
+      return resolved
+    }
+  }
+
+  private fun doResolvePlugin(pluginId: PluginId): PluginProvision.Found? {
     return PluginQuery.Builder.of(pluginId)
       .inId()
       .inName()
