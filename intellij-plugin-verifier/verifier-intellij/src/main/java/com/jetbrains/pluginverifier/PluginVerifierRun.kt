@@ -41,17 +41,3 @@ fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<
   }
   return executor.executeTasks(tasks)
 }
-
-fun getConcurrencyLevel(): Int {
-  val fromProperty = System.getProperty("intellij.plugin.verifier.concurrency.level")?.toIntOrNull()
-  if (fromProperty != null) {
-    check(fromProperty > 0) { "Invalid concurrency level: $fromProperty" }
-    return fromProperty
-  }
-
-  val availableMemory = Runtime.getRuntime().maxMemory()
-  val availableCpu = Runtime.getRuntime().availableProcessors().toLong()
-  //About 200 Mb is needed for an average verification
-  val maxByMemory = availableMemory / 1024 / 1024 / 200
-  return maxOf(8, minOf(maxByMemory, availableCpu)).toInt()
-}
