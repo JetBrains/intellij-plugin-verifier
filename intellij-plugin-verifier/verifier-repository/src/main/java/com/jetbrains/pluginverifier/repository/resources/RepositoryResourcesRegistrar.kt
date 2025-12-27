@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.repository.resources
 
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import org.slf4j.Logger
+import java.util.*
 
 /**
  * Data structure that maintains a set of registered resources and their total weights.
@@ -31,6 +32,8 @@ internal class RepositoryResourcesRegistrar<R, K, W : ResourceWeight<W>>(
 
   val resources: Map<K, ResourceInfo<R, W>>
     get() = _resources.toMap()
+
+  val entries: Set<Map.Entry<K, ResourceInfo<R, W>>> get() = Collections.unmodifiableSet(_resources.entries)
 
   /**
    * Associates the [resource] with [key].

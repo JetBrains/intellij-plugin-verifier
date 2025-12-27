@@ -241,7 +241,9 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
   @Synchronized
   override fun cleanup() {
     if (evictionPolicy.isNecessary(resourcesRegistrar.totalWeight)) {
-      val availableResources = getAvailableResources()
+      val availableResources = resourcesRegistrar.entries.map { (key, resourceInfo) ->
+        AvailableResource(key, resourceInfo, statistics[key]!!, isLockedKey(key))
+      }
 
       val evictionInfo = EvictionInfo(resourcesRegistrar.totalWeight, availableResources)
       val resourcesForEviction = evictionPolicy.selectResourcesForEviction(evictionInfo)
