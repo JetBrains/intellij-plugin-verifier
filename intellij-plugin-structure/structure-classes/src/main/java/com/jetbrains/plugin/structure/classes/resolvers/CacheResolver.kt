@@ -13,18 +13,20 @@ import java.util.concurrent.ExecutionException
 
 class CacheResolver(
   private val delegate: Resolver,
-  cacheSize: Int = DEFAULT_CACHE_SIZE
+  cacheSize: Int = getDefaultCacheSize()
 ) : Resolver() {
 
   private data class BundleCacheKey(val baseName: String, val locale: Locale)
 
-  private val classCache: LoadingCache<String, ResolutionResult<ClassNode>> =
+  private val classCache: LoadingCache<BinaryClassName, ResolutionResult<ClassNode>> =
     Caffeine.newBuilder()
+      .softValues()
       .maximumSize(cacheSize.toLong())
       .build { key -> delegate.resolveClass(key) }
 
   private val propertyBundleCache: LoadingCache<BundleCacheKey, ResolutionResult<PropertyResourceBundle>> =
     Caffeine.newBuilder()
+      .softValues()
       .maximumSize(cacheSize.toLong())
       .build { key -> delegate.resolveExactPropertyResourceBundle(key.baseName, key.locale) }
 
@@ -49,14 +51,12 @@ class CacheResolver(
     get() = delegate.readMode
 
   @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
-  override fun resolveClass(className: String): ResolutionResult<ClassNode> = try {
+  override fun resolveClass(className: String): ResolutionResult<ClassNode> = resolveClass(className as BinaryClassName)
+
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> = try {
     classCache.get(className)
   } catch (e: ExecutionException) {
     throw e.cause ?: e
-  }
-
-  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
-    return resolveClass(className.toString())
   }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> = try {
@@ -84,6 +84,7 @@ class CacheResolver(
     delegate.processAllClasses(processor)
 
   private companion object {
-    private const val DEFAULT_CACHE_SIZE = 1024
+    fun getDefaultCacheSize(): Int =
+      System.getProperty("intellij.structure.classes.cache.size", "1024").toIntOrNull() ?: 1024
   }
 }
