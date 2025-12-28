@@ -1,28 +1,30 @@
 package com.jetbrains.plugin.structure.base.utils.trie
 
 
-class Trie<V>() {
+class Trie<V> {
   private data class Node<V>(
-    val children: MutableMap<Char, Node<V>> = HashMap(),
+    val children: MutableMap<String, Node<V>> = HashMap(),
+    var childrenSeparator: Char? = null,
     var value: V? = null,
     var isTerminal: Boolean = false
   )
 
-  private fun empty() = Node<V>(HashMap(), value = null)
+  private fun empty() = Node<V>()
 
   private val root = empty()
 
-  val isEmpty: Boolean get() = root.isChildless && root.value == null && !root.isTerminal
+  val isEmpty: Boolean get() = root.isChildless && !root.isTerminal
   private val Node<V>.isChildless: Boolean get() = children.isEmpty()
 
-  fun contains(word: CharSequence): Boolean = findNode(word) != null
+  fun contains(prefix: CharSequence): Boolean = findNode(prefix) != null
 
-  fun findValue(word: CharSequence): V? = findNode(word)?.value
+  fun findValue(prefix: CharSequence): V? = findNode(prefix)?.value
 
   private fun findNode(prefix: CharSequence): Node<V>? {
     var n = root
-    for (c in prefix) {
-      n = n.children[c] ?: return null
+    for (pair in split(prefix)) {
+      if (n.childrenSeparator != pair.first) return null
+      n = n.children[pair.second] ?: return null
     }
     return n
   }
@@ -30,12 +32,46 @@ class Trie<V>() {
   fun insert(key: CharSequence, value: V? = null): Boolean {
     var isInserted = false
     var currentNode = root
-    for (char in key) {
-      currentNode = currentNode.children.getOrPut(char) { empty().also { isInserted = true } }
+    for (pair in split(key)) {
+      if (currentNode.isChildless) currentNode.childrenSeparator = pair.first
+      else if (currentNode.childrenSeparator != pair.first) {
+        throw IllegalArgumentException("Node '$currentNode' has separator '${currentNode.childrenSeparator}' but trying to insert child '${pair.second}' with separator '${pair.first}'")
+      }
+      currentNode = currentNode.children.getOrPut(pair.second) { empty().also { isInserted = true } }
     }
     currentNode.value = value
     currentNode.isTerminal = true
     return isInserted
+  }
+
+  private fun split(str: CharSequence): List<Pair<Char?, String>> {
+    if (str.isEmpty()) return emptyList()
+    val result = ArrayList<Pair<Char?, String>>()
+    var separator: Char? = null
+    var i = 0
+    // trim start separators
+    while (str[i] == '/' || str[i] == '.' || str[i] == '$') {
+      i++
+    }
+    var startIndex = i
+    while (i < str.length) {
+      val c = str[i]
+      if (c == '/' || c == '.' || c == '$') {
+        if (startIndex != i) {
+          result.add(Pair(separator, str.substring(startIndex, i)))
+        }
+        separator = c
+        startIndex = i + 1
+      }
+      i++
+    }
+    if (startIndex < str.length) {
+      result.add(Pair(separator, str.substring(startIndex, str.length)))
+    }
+    if (result.isNotEmpty()) {
+      assert(result.first().first == null)
+    }
+    return result
   }
 
   fun <R> visit(visitor: NodeVisitor<V, R>): List<R> {
@@ -47,23 +83,25 @@ class Trie<V>() {
 
   private fun <R> visit(node: Node<V>, prefix: StringBuilder, result: MutableList<R>, visitor: NodeVisitor<V, R>) {
     if (node.isChildless) {
-      result += visitor.visit(NodeVisitor.NodeVisit(prefix, node.value, isLeaf = true, node.isTerminal))
+      result += visitor.visit(prefix, node.value, isLeaf = true, node.isTerminal)
     } else {
-      result += visitor.visit(NodeVisitor.NodeVisit(prefix, node.value, isLeaf = false, node.isTerminal))
-      for ((char, child) in node.children) {
+      result += visitor.visit(prefix, node.value, isLeaf = false, node.isTerminal)
+      for ((edge, child) in node.children) {
         with(prefix) {
-          append(char)
-          visit(child, prefix, result, visitor)
-          deleteCharAt(lastIndex)
+          val mark = length
+          if (isNotEmpty()) {
+            append(node.childrenSeparator)
+          }
+          append(edge)
+          visit(child, this, result, visitor)
+          delete(mark, length)
         }
       }
     }
   }
 
   fun interface NodeVisitor<V, R> {
-    data class NodeVisit<V>(val word: CharSequence, val value: V?, val isLeaf: Boolean, val isTerminal: Boolean)
-
-    fun visit(visit: NodeVisit<V>): R
+    fun visit(word: CharSequence, value: V?, isLeaf: Boolean, isTerminal: Boolean): R
   }
 
 }

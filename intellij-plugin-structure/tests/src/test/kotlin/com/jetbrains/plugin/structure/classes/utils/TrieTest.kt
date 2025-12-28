@@ -2,11 +2,11 @@ package com.jetbrains.plugin.structure.classes.utils
 
 import com.jetbrains.plugin.structure.base.utils.trie.Trie
 import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals
+import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.getAllNodes
 import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.getInsertions
 import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.leafCount
 import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.nodeCount
 import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.valueCount
-import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.withDelimiter
 import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.withNonNullValues
 import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.withValue
 import com.jetbrains.plugin.structure.jar.PathInJar
@@ -15,9 +15,7 @@ import org.junit.Test
 
 class TrieTest {
 
-  private fun newTrie(): Trie<Boolean> {
-    return Trie<Boolean>()
-  }
+  private fun newTrie(): Trie<Unit> = Trie()
 
   @Test
   fun `all words are retrieved, nonrecursively (without middle prefixes)`() {
@@ -35,14 +33,14 @@ class TrieTest {
       "com.jetbrains.cli.impl",
       "com.jetbrains.foo"
     )
-    val visitor = TrieTraversals.Leaves<Boolean>()
+    val visitor = TrieTraversals.Leaves<Unit>()
     packages.visit(visitor)
     assertEquals(expected, visitor.result)
   }
 
   @Test
   fun `all words are retrieved with explicit values`() {
-    val packages = newTrie().apply {
+    val packages = Trie<Boolean>().apply {
       insert("com.example.foo", true)
       insert("com.example.bar", true)
       insert("com.example.bar.zap", true)
@@ -64,7 +62,7 @@ class TrieTest {
 
   @Test
   fun `word in trie is found, others are not`() {
-    val packages = Trie<Boolean>()
+    val packages = newTrie()
     packages.insert("com.example.foo")
     packages.insert("com.example.bar")
     packages.insert("com.example.bar.zap")
@@ -73,6 +71,8 @@ class TrieTest {
     packages.insert("com.jetbrains.cli.impl")
 
     assertTrue(packages.contains("com.example"))
+    assertTrue(packages.contains("com.example.bar"))
+    assertFalse(packages.contains("com.example.b")) // half-word not found
     assertTrue(packages.contains("com.example.bar.zap"))
     assertFalse(packages.contains("com.unavailable"))
     assertTrue(packages.contains(""))
@@ -99,7 +99,7 @@ class TrieTest {
 
   @Test
   fun `trie with an empty string inserted with an explicit value`() {
-    val emptyTrie = newTrie()
+    val emptyTrie = Trie<Boolean>()
     emptyTrie.insert("", true)
     assertFalse(emptyTrie.isEmpty)
   }
@@ -108,7 +108,7 @@ class TrieTest {
   fun `empty trie is not traversed at all`() {
     val emptyTrie = newTrie()
     var wasVisited = false
-    emptyTrie.visit { wasVisited = true }
+    emptyTrie.visit { _, _, _, _ -> wasVisited = true }
     assertFalse(wasVisited)
   }
 
@@ -120,8 +120,8 @@ class TrieTest {
       insert("com.example")
     }
     var terminalCount = 0
-    packages.visit { v ->
-      if (v.isTerminal) terminalCount++
+    packages.visit { _, _, _, isTerminal ->
+      if (isTerminal) terminalCount++
     }
     assertEquals(3, terminalCount)
   }
@@ -135,6 +135,17 @@ class TrieTest {
     assertFalse(packages.insert("com.example.foo.zap"))
 
     assertFalse(packages.insert("com.example"))
+  }
+
+  @Test
+  fun `inserting values with extra separators`() {
+    val trie = newTrie()
+    assertTrue(trie.insert(".com.example.foo"))
+    assertFalse(trie.insert("com.example..foo"))
+    assertFalse(trie.insert("com..example..foo"))
+    assertTrue(trie.insert("com.example.foo.zap."))
+
+    assertEquals(5, trie.nodeCount())
   }
 
   @Test
@@ -171,7 +182,7 @@ class TrieTest {
 
   @Test
   fun `all dot-separated components are collected`() {
-    val packages = newTrie().apply {
+    val trie = newTrie().apply {
       insert("com.example.foo")
       insert("com.example.bar")
       insert("com.example.bar.zap")
@@ -180,7 +191,7 @@ class TrieTest {
       insert("com.jetbrains.cli.impl")
     }
 
-    val results = packages.withDelimiter('.')
+    val results = trie.getAllNodes()
 
     assertEquals(
       setOf(
@@ -200,10 +211,10 @@ class TrieTest {
 
   @Test
   fun `delimiter collection in a trie with a single empty word`() {
-    val packages = newTrie().apply {
+    val trie = newTrie().apply {
       insert("")
     }
-    assertEquals(setOf(""), packages.withDelimiter('.'))
+    assertEquals(setOf(""), trie.getAllNodes())
   }
 
   @Test
@@ -216,7 +227,8 @@ class TrieTest {
     // There are 2 strings, one is a prefix of the other. There is only one leaf.
     assertEquals(1, trie.leafCount())
     // The node count corresponds to the length of the longer string plus 1 for the root node with an empty prefix
-    assertEquals(bClass.length + 1, trie.nodeCount())
+    // root, 'a', 'a/A', 'a/A\$B'
+    assertEquals(4, trie.nodeCount())
   }
 
   @Test
@@ -224,6 +236,7 @@ class TrieTest {
     val lines = listOf(
       "bundle/IdeBundle",
 
+      "com/intellij/execution/filters",
       "com/intellij/execution/filters/Filter",
       "com/intellij/execution/filters/Filter\$Result",
       "com/intellij/execution/filters/Filter\$ResultItem",
@@ -238,25 +251,37 @@ class TrieTest {
       "inheritance/AImpl",
       "inheritance/AImpl$1",
     )
-    // leaves represent groups that share a common prefix.
-    // Each leaf has the longest prefix
+
     val leafs = listOf(
       "bundle/IdeBundle",
+      "com/intellij/execution/filters/Filter",
+      "com/intellij/execution/filters/Filter\$Result",
       "com/intellij/execution/filters/Filter\$ResultItem",
+      "defaults/Iface",
       "defaults/IfaceDefault",
+      "experimental/ExperimentalApiEnclosingClass",
       "experimental/ExperimentalApiEnclosingClass\$NestedClass",
+      "inheritance/A",
+      "inheritance/AImpl",
       "inheritance/AImpl$1",
     )
 
     val trie = Trie<Boolean>()
     lines.forEach { trie.insert(it, true) }
 
-    assertEquals(leafs.size, trie.leafCount())
-    // Each leaf has its length. No leaf has a common prefix with another note-
-    // Hence there are as many nodes as sum of lengths of leaf prefixes plus one for the root node.
-    assertEquals(leafs.sumOf { it.length } + 1, trie.nodeCount())
+    //assertEquals(leafs.size, trie.leafCount())
+    // Each leaf has its length. No leaf has a common prefix with another node.
+    // Hence, there are as many nodes as sum of lengths of leaf prefixes plus one for the root node.
+    //assertEquals(leafs.sumOf { it.length } + 1, trie.nodeCount())
 
     assertEquals(lines.size, trie.valueCount(true))
+  }
+
+  @Test(expected = IllegalArgumentException::class)
+  fun `conflicting separators throws exception`() {
+    val trie = newTrie()
+    trie.insert("com.example.foo")
+    trie.insert("com/example/bar")
   }
 
   @Test

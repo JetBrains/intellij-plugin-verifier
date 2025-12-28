@@ -2,7 +2,7 @@ package com.jetbrains.plugin.structure.jar
 
 import com.jetbrains.plugin.structure.base.utils.trie.Trie
 import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.getInsertions
-import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.withDelimiter
+import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.getAllNodes
 
 typealias BinaryPackageName = String
 
@@ -28,5 +28,5 @@ class Packages {
     get() = trie.getInsertions()
 
   val all: Set<BinaryPackageName>
-    get() = trie.withDelimiter('/')
+    get() = trie.getAllNodes()
 }
