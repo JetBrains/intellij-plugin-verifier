@@ -62,6 +62,7 @@ object KotlinMethods {
 
   private fun Method.isKotlinMethodInvokingDefaultImpls(): Boolean {
     // If this method doesn't have any bytecode, it will be skipped
+    val instructions = instructions
     if (instructions.isEmpty()) {
       return false
     }
