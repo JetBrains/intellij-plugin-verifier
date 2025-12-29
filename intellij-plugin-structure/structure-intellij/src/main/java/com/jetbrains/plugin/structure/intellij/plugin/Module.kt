@@ -14,14 +14,19 @@ package com.jetbrains.plugin.structure.intellij.plugin
  *        specifying the namespace explicitly.
  * @param loadingRule specifies how the module should be loaded by IntelliJ Platform
  */
-sealed class Module(open val name: String, open val namespace: String?, open val actualNamespace: String, open val loadingRule: ModuleLoadingRule) {
+sealed class Module {
+  abstract val name: String
+  abstract val namespace: String?
+  abstract val actualNamespace: String
+  abstract val loadingRule: ModuleLoadingRule
+
   data class InlineModule(
     override val name: String,
     override val namespace: String?,
     override val actualNamespace: String,
     override val loadingRule: ModuleLoadingRule,
     val textContent: String
-  ) : Module(name, namespace, actualNamespace, loadingRule) {
+  ) : Module() {
     override fun toString(): String = "$name (CDATA module, ${textContent.length} characters)"
   }
 
@@ -31,7 +36,7 @@ sealed class Module(open val name: String, open val namespace: String?, open val
     override val actualNamespace: String,
     override val loadingRule: ModuleLoadingRule,
     val configFile: String
-  ) : Module(name, namespace, actualNamespace, loadingRule) {
+  ) : Module() {
     override fun toString(): String = "$name (file module, $configFile)"
   }
 }
