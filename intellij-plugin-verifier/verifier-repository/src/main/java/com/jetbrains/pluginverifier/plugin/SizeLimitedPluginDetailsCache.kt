@@ -21,7 +21,7 @@ import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInf
  * use by multiple threads. It is necessary because the details creation may be expensive
  * as it requires downloading the plugin, reading its class files and registering a file lock.
  *
- * The cache must be [closed] [close] on the application shutdown to free all the details.
+ * The cache must be [closed][close] on the application shutdown to free all the details.
  */
 class SizeLimitedPluginDetailsCache(
   cacheSize: Int,

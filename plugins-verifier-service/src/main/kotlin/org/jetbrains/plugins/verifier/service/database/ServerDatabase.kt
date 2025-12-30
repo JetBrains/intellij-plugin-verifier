@@ -9,7 +9,7 @@ import java.io.Closeable
 /**
  * Server database allows to persist data between the server start-ups.
  *
- * The database must be [closed] [close] on the server shutdown.
+ * The database must be [closed][close] on the server shutdown.
  */
 interface ServerDatabase : Closeable {
 
