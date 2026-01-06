@@ -219,25 +219,22 @@ class PluginVerifier(
    * is not available, then "" is returned.
    */
   private fun Resolver.getTopMostMissingPackage(className: String): String? {
-    if ('/' !in className) {
-      return if (containsPackage("")) {
-        null
-      } else {
-        ""
+    val packageName = className.substringBeforeLast('/', "")
+    var slashIndex = -1
+    while (true) {
+      slashIndex = packageName.indexOf('/', slashIndex + 1)
+      if (slashIndex == -1) {
+        // check the full package name string, also serves for when it's empty
+        if (!containsPackage(packageName)) {
+          return packageName
+        }
+        return null
+      }
+      val packagePart = packageName.substring(0, slashIndex)
+      if (!containsPackage(packagePart)) {
+        return packagePart
       }
     }
-    val packageParts = className.substringBeforeLast('/', "").split('/')
-    var superPackage = ""
-    for (packagePart in packageParts) {
-      if (superPackage.isNotEmpty()) {
-        superPackage += '/'
-      }
-      superPackage += packagePart
-      if (!containsPackage(superPackage)) {
-        return superPackage
-      }
-    }
-    return null
   }
 
   private fun PluginVerificationContext.runAnalyzers() {
