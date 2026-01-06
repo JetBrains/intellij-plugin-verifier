@@ -7,9 +7,10 @@ package com.jetbrains.plugin.structure.classes.resolvers
 import com.jetbrains.plugin.structure.base.BinaryClassName
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 
-open class DelegatingNamedResolver(name: String, private val delegateProvider: () -> Resolver) : NamedResolver(name) {
-  private val delegateResolver by lazy { delegateProvider() }
+open class DelegatingNamedResolver(name: String, delegateProvider: () -> Resolver) : NamedResolver(name) {
+  private val delegateResolver: Resolver by lazy { delegateProvider() }
 
   override val readMode: ReadMode
     get() = delegateResolver.readMode

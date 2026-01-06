@@ -6,4 +6,4 @@ package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.base.Named
 
-abstract class NamedResolver(override val name: String) : Resolver(), Named
+abstract class NamedResolver(override val name: String) : Resolver, Named

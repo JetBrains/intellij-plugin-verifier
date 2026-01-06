@@ -17,6 +17,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 import java.util.*
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 
 private val LOG: Logger = LoggerFactory.getLogger(LazyJarResolver::class.java)
 
@@ -40,10 +41,6 @@ class LazyJarResolver(
   override val bundleNames: MutableMap<String, MutableSet<String>>
     get() = jar.bundleNames.mapValues { it.value.toMutableSet() }.toMutableMap()
 
-  @Deprecated("Use 'allClassNames' property instead which is more efficient")
-  override val allClasses: Set<String>
-    get() = allClassNames.mapTo(hashSetOf()) { it.toString() }
-
   override val allClassNames: Set<BinaryClassName>
     get() = jar.classes
 
@@ -59,15 +56,10 @@ class LazyJarResolver(
   override val implementedServiceProviders: Map<String, Set<String>>
     get() = jar.serviceProviders
 
-  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
-  override fun resolveClass(className: String): ResolutionResult<ClassNode> {
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
     return jar.processClassPathInJar(className) { className, classFilePath ->
       readClass(className, classFilePath)
     } ?: ResolutionResult.NotFound
-  }
-
-  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
-    return resolveClass(className.toString())
   }
 
   override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean {

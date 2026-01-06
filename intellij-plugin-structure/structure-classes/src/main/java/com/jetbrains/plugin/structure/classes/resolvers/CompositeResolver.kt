@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.classes.resolvers
 import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.closeAll
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
 

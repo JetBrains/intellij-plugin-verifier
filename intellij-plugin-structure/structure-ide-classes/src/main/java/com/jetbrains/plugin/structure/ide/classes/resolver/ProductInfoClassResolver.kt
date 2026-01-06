@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.ide.classes.resolver
@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.ide.classes.resolver
 import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.classes.resolvers.*
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode.FULL
 import com.jetbrains.plugin.structure.ide.*
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin.IdeLibDirectory
