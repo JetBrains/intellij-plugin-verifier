@@ -5,7 +5,7 @@
 package com.jetbrains.pluginverifier.repository.provider
 
 /**
- * Represents possible [provision] [ResourceProvider.provide] outcomes.
+ * Represents possible [provision][ResourceProvider.provide] outcomes.
  */
 sealed class ProvideResult<out R : Any> {
   /**
