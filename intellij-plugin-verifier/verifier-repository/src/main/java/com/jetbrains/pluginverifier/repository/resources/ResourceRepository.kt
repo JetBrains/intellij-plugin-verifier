@@ -1,32 +1,32 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.repository.resources
 
 /**
  * Resource repository is a data structure that maintains
- * a set of _resources_ identified by unique [keys].
+ * a set of [resources][R] identified by unique [keys][K].
  *
  * The essential difference from the standard cache, such as
- * one provided by [guava cache] [com.google.common.cache.LoadingCache],
- * is that for all the keys being [fetched] [get] the [resource lock] [ResourceLock]
- * is registered. This resource lock, until being [released] [ResourceLock.release],
- * protects the key from [removing] [remove] by other threads.
+ * one provided by guava cache or [caffeine cache][com.github.benmanes.caffeine.cache.Cache],
+ * is that for all the keys being [fetched][get] the [resource lock][ResourceLock]
+ * is registered. This resource lock, until being [released][ResourceLock.release],
+ * protects the key from being [removed][remove] from cache by other threads.
  *
  * This useful protection property is intended for the cases in which
  * several concurrent threads access the same shareable resource, such as
- * a file, and it is necessary to ensure that no thread will remove the file
+ * a file. It is necessary to ensure that no thread will remove the file
  * while it is used by any other thread. Once the file becomes unused, it can be
  * safely removed.
  *
- * The main [implementation] [ResourceRepositoryImpl], in addition to that properties,
- * provides means to limit the total "weight" of the resources being kept.
+ * The main [implementation][ResourceRepositoryImpl], in addition to those properties,
+ * provides means to limit the total [weight][W] of the resources being kept.
  * In the above example with files, this can be used to set up the maximum disk space
  * used by all the available files. Once the space exceeds the limit, the unused files
- * become evicted. The files for eviction are chosen using a configurable [policy] [EvictionPolicy].
+ * become evicted. The files for eviction are chosen using a configurable [policy][EvictionPolicy].
  */
-interface ResourceRepository<R, K, W : ResourceWeight<W>> {
+interface ResourceRepository<R : Any, K : Any, W : ResourceWeight<W>> {
 
   /**
    * Provides a resource by [key].
@@ -38,7 +38,7 @@ interface ResourceRepository<R, K, W : ResourceWeight<W>> {
    * all represented by instances of the [ResourceRepositoryResult].
    *
    * In case the resource is available in the repository or
-   * has been provided, a [resource lock] [ResourceLock] is registered
+   * has been provided, a [resource lock][ResourceLock] is registered
    * for the resource, so it will be protected against
    * deletions by other threads.
    */
@@ -46,7 +46,7 @@ interface ResourceRepository<R, K, W : ResourceWeight<W>> {
 
   /**
    * Adds the [resource] by specified [key] to this repository
-   * if the key is not available. Otherwise it has no effect.
+   * if the key is not available. Otherwise, it has no effect.
    *
    * @return `true` if the [resource] has been added,
    * `false` if the resource by the specified [key] is already present.
@@ -55,7 +55,7 @@ interface ResourceRepository<R, K, W : ResourceWeight<W>> {
 
   /**
    * Removes the resource by specified [key] from this repository
-   * if the key is [available] [has] and there are no registered locks for
+   * if the key is [available][has] and there are no registered locks for
    * the resource by this key.
    *
    * If the resource is not available in the repository, the [remove] produces no effect
@@ -69,7 +69,7 @@ interface ResourceRepository<R, K, W : ResourceWeight<W>> {
   fun remove(key: K): Boolean
 
   /**
-   * Removes all the [available] [has] keys from this repository.
+   * Removes all the [available][has] keys from this repository.
    * This method behaves as if by invoking of the following code:
    * ```
    * with(resourceRepository) {
@@ -79,20 +79,20 @@ interface ResourceRepository<R, K, W : ResourceWeight<W>> {
    * }
    * ```
    *
-   * Thus, each non-locked resource is [removed] [remove] immediately,
+   * Thus, each non-locked resource is [removed][remove] immediately,
    * while the locked keys are scheduled for removing once
-   * their holders [release] [ResourceLock.release] the resource locks.
+   * their holders [release][ResourceLock.release] the resource locks.
    */
   fun removeAll()
 
   /**
-   * Returns `true` if the resource by specified key is available in
+   * Returns `true` if the resource by specified [key] is available in
    * the repository, `false` otherwise.
    */
   fun has(key: K): Boolean
 
   /**
-   * Returns `true` if the resource by specified key is available in
+   * Returns `true` if the resource by specified [key] is available in
    * the repository and is locked, or it is being provided,
    * at the moment of invocation of this method.
    * Returns `false` otherwise.
@@ -100,7 +100,7 @@ interface ResourceRepository<R, K, W : ResourceWeight<W>> {
   fun isLockedOrBeingProvided(key: K): Boolean
 
   /**
-   * Returns all keys [available] [has] in the repository at the moment.
+   * Returns all keys [available][has] in the repository at the moment.
    *
    * The returned value is a copy of the internal set.
    */

@@ -13,7 +13,7 @@ import java.nio.file.Path
  * Descriptor of the file available at the moment in the [FileRepository].
  *
  * This is used to select the files that should be removed on the
- * [cleanup procedure] [com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy].
+ * [cleanup procedure][com.jetbrains.pluginverifier.repository.cleanup.SweepPolicy].
  */
 class AvailableFile<out K>(
   key: K,
