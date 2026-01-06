@@ -14,7 +14,7 @@ import java.util.concurrent.ExecutionException
 class CacheResolver(
   private val delegate: Resolver,
   cacheSize: Int = getDefaultCacheSize()
-) : Resolver() {
+) : Resolver by delegate {
 
   private data class BundleCacheKey(val baseName: String, val locale: Locale)
 
@@ -30,28 +30,10 @@ class CacheResolver(
       .maximumSize(cacheSize.toLong())
       .build { key -> delegate.resolveExactPropertyResourceBundle(key.baseName, key.locale) }
 
-  @Deprecated("Use 'allClassNames' property instead which is more efficient")
-  override val allClasses
-    get() = delegate.allClasses
-
-  override val allClassNames: Set<BinaryClassName>
-    get() = delegate.allClassNames
-
-  override val allBundleNameSet
-    get() = delegate.allBundleNameSet
-
-  @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
-  override val allPackages
-    get() = delegate.allPackages
-
-  override val packages: Set<String>
-    get() = delegate.packages
-
-  override val readMode
-    get() = delegate.readMode
-
   @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
-  override fun resolveClass(className: String): ResolutionResult<ClassNode> = resolveClass(className as BinaryClassName)
+  override fun resolveClass(className: String): ResolutionResult<ClassNode> {
+    return resolveClass(className as BinaryClassName)
+  }
 
   override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> = try {
     classCache.get(className)
@@ -66,22 +48,6 @@ class CacheResolver(
   }
 
   override fun toString() = "Caching resolver for $delegate"
-
-  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
-  override fun containsClass(className: String) =
-    delegate.containsClass(className)
-
-  override fun containsClass(className: BinaryClassName) = delegate.containsClass(className)
-
-  override fun containsPackage(packageName: String) =
-    delegate.containsPackage(packageName)
-
-  override fun close() {
-    delegate.close()
-  }
-
-  override fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean) =
-    delegate.processAllClasses(processor)
 
   private companion object {
     fun getDefaultCacheSize(): Int =

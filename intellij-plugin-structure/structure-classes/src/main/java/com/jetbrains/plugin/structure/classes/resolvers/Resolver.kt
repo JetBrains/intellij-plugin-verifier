@@ -13,7 +13,7 @@ import java.util.*
 /**
  * Resolves class files by name.
  */
-abstract class Resolver : Closeable {
+interface Resolver : Closeable {
 
   /**
    * Read mode used to specify whether this resolver reads [ClassNode]s fully,
@@ -26,18 +26,18 @@ abstract class Resolver : Closeable {
   /**
    * Read mode this resolved is opened with.
    */
-  abstract val readMode: ReadMode
+  val readMode: ReadMode
 
   /**
    * Returns the *binary* names of all the contained classes.
    */
   @Deprecated(message = "Use 'allClassNames' property instead which is more efficient")
-  abstract val allClasses: Set<String>
+  val allClasses: Set<String> get() = allClassNames.mapTo(LinkedHashSet()) { it.toString() }
 
   /**
    * Returns the *binary* names of all the contained classes.
    */
-  abstract val allClassNames: Set<BinaryClassName>
+  val allClassNames: Set<BinaryClassName>
 
   /**
    * Returns binary names of all contained packages and their super-packages.
@@ -46,57 +46,57 @@ abstract class Resolver : Closeable {
    * then [allPackages] contains `com`, `com/example` and `com/example/utils`.
    */
   @Deprecated(message = "Use 'packages' property instead. This property may be slow on some file systems.")
-  abstract val allPackages: Set<String>
+  val allPackages: Set<String>
 
   /**
    * Returns binary names of all contained packages. Their superpackages are *not* available in this collection.
    *
-   * For example, if this Resolver contains classes of a package `com/example/utils` and `org.example.impl`.
+   * For example, if this Resolver contains classes of a package `com/example/utils` and `org.example.impl`,
    * then [packages] contains these two elements.
    */
-  abstract val packages: Set<String>
+  val packages: Set<String>
 
   /**
    * Returns data structure used to obtain bundle names contained in this resolver.
    */
-  abstract val allBundleNameSet: ResourceBundleNameSet
+  val allBundleNameSet: ResourceBundleNameSet
 
   /**
-   * Resolves class with specified binary name.
+   * Resolves class with a specified binary name.
    */
   @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
-  abstract fun resolveClass(className: String): ResolutionResult<ClassNode>
+  fun resolveClass(className: String): ResolutionResult<ClassNode> = resolveClass(className as BinaryClassName)
 
   /**
-   * Resolves class with specified binary name.
+   * Resolves class with a specified binary name.
    */
-  abstract fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode>
+  fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode>
 
   /**
-   * Resolves property resource bundle with specified **exact** base name and locale.
+   * Resolves property resource bundle with a specified ** exact ** base name and locale.
    * If no property bundle is available for that locale, the search in candidate locales **is not performed**.
    */
-  abstract fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle>
+  fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle>
 
   /**
    * Returns true if `this` Resolver contains the given class. It may be faster
    * than checking [.findClass] is not null.
    */
   @Deprecated("Use 'containsClass(BinaryClassName)' instead")
-  abstract fun containsClass(className: String): Boolean
+  fun containsClass(className: String): Boolean = containsClass(className as BinaryClassName)
 
   /**
    * Returns true if `this` Resolver contains the given class. It may be faster
    * than checking [.findClass] is not null.
    */
-  abstract fun containsClass(className: BinaryClassName): Boolean
+  fun containsClass(className: BinaryClassName): Boolean
 
   /**
    * Returns true if `this` Resolver contains the given package,
    * specified with binary name ('/'-separated). It may be faster
    * than fetching [allPackages] and checking for presence in it.
    */
-  abstract fun containsPackage(packageName: String): Boolean
+  fun containsPackage(packageName: String): Boolean
 
 
   /**
@@ -104,6 +104,6 @@ abstract class Resolver : Closeable {
    * The [processor] returns `true` to continue processing and `false` to stop.
    */
   @Throws(IOException::class)
-  abstract fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean
+  fun processAllClasses(processor: (ResolutionResult<ClassNode>) -> Boolean): Boolean
 
 }

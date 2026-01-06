@@ -1,7 +1,3 @@
-/*
- * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
 package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.base.BinaryClassName
@@ -9,9 +5,10 @@ import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 
-open class SimpleCompositeResolver<R : Resolver>(
-  open val resolvers: List<R>,
+open class SimpleCompositeResolver<T: Resolver>(
+  val resolvers: List<T>,
   override val readMode: ReadMode,
   override val name: String
 ) : NamedResolver(name) {

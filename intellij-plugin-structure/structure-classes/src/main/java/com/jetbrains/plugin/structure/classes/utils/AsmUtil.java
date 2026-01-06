@@ -64,6 +64,15 @@ public class AsmUtil {
   }
 
   @NotNull
+  public static ClassNode readClassFromFile(@NotNull CharSequence className,
+                                            @NotNull Path classFile,
+                                            boolean fully) throws IOException, InvalidClassFileException {
+    try (InputStream is = Files.newInputStream(classFile)) {
+      return readClassNode(className, is, fully);
+    }
+  }
+
+  @NotNull
   public static ClassNode readClassFromFile(@NotNull String className,
                                             @NotNull Path classFile,
                                             boolean fully) throws IOException, InvalidClassFileException {
