@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.classes.resolvers
@@ -27,10 +27,16 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @Deprecated("Replaced with LazyJarResolver", replaceWith = ReplaceWith("LazyJarResolver", "com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver"))
 class JarFileResolver(
-  override val jarPath: Path,
-  override val readMode: ReadMode,
-  override val fileOrigin: FileOrigin
+  jarPath: Path,
+  readMode: ReadMode,
+  fileOrigin: FileOrigin
 ) : AbstractJarResolver(jarPath, readMode, fileOrigin) {
+  override val jarPath: Path
+    get() = super.jarPath
+  override val readMode: ReadMode
+    get() = super.readMode
+  override val fileOrigin: FileOrigin
+    get() = super.fileOrigin
 
   private companion object {
     private const val CLASS_SUFFIX = ".class"
@@ -61,14 +67,14 @@ class JarFileResolver(
     val jarRoot = jarFs.rootDirectories.single()
     val visitedDirs = hashSetOf<Path>()
     Files.walkFileTree(jarRoot, object : SimpleFileVisitor<Path>() {
-      override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes?): FileVisitResult {
+      override fun preVisitDirectory(dir: Path, attrs: BasicFileAttributes): FileVisitResult {
         if (!visitedDirs.add(dir)) {
           return FileVisitResult.SKIP_SUBTREE
         }
         return FileVisitResult.CONTINUE
       }
 
-      override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
+      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
         val entryName = getPathInJar(file)
         when {
           entryName.endsWith(CLASS_SUFFIX) -> {
