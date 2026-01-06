@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.plugin.structure.classes.resolvers
 
 import com.jetbrains.plugin.structure.jar.Packages
@@ -53,6 +57,23 @@ class PackagesTest {
       assertEquals(4, size)
       assertEquals(setOf("com", "com/example", "com/example/bar", "com/example/foo"), this)
     }
+  }
+
+  @Test
+  fun `test packages with strange names are listed correctly`() {
+    val packages  = Packages()
+    val classes = listOf(
+      "com/test/$01_convertor/CreateSubSpringBootModule.class",
+      "com/test/$01_convertor/CreateSubSpringBootModuleDialog\$CreateNewSpringBootModuleListener.class",
+      "com/test/$01_convertor/CreateSubSpringBootModuleDialog.class",
+      "com/test/$02_convert/ConvertMavenToSpringBoot.class",
+      "com/test/$02_convert/ConvertMavenToSpringBootDialog\$ConvertMavenToSpringBootListener.class",
+      "com/test/$02_convert/ConvertMavenToSpringBootDialog.class",
+      "com/test/TestPackageClass.class",
+      "com/test/utils/FileUtils.class",
+      )
+    classes.forEach { packages.addClass(it) }
+    assertEquals(4, packages.entries.size)
   }
 
   @Test

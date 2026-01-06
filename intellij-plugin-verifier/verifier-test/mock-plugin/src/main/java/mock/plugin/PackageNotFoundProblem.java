@@ -1,10 +1,10 @@
 /*expected(PROBLEM)
-Package 'non.existing' is not found
+Package 'non' is not found
 
-Package 'non.existing' is not found along with its class non.existing.NonExistingClass.
-Probably the package 'non.existing' belongs to a library or dependency that is not resolved by the checker.
+Package 'non' is not found along with its class non.existing.NonExistingClass.
+Probably the package 'non' belongs to a library or dependency that is not resolved by the checker.
 It is also possible, however, that this package was actually removed from a dependency causing the detected problems. Access to unresolved classes at runtime may lead to **NoSuchClassError**.
-The following classes of 'non.existing' are not resolved:
+The following classes of 'non' are not resolved:
   Class non.existing.NonExistingClass is referenced in
     mock.plugin.FieldTypeNotFound.myNonExistingClass : NonExistingClass
     mock.plugin.MethodProblems.brokenArg(NonExistingClass brokenArg) : void
