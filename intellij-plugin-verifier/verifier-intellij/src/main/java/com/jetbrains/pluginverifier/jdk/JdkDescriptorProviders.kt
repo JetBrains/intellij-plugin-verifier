@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.jdk
 
 import com.jetbrains.plugin.structure.base.utils.isDirectory
@@ -26,6 +30,7 @@ class DefaultJdkDescriptorProvider: JdkDescriptorProvider {
       fromExplicitPath(defaultJdkPath)
       ?: fromIdeBundled(ide)
       ?: fromJavaHome()
+      ?: fromCurrentJvm()
     return jdkDescriptor.toResult()
   }
 
@@ -44,7 +49,22 @@ class DefaultJdkDescriptorProvider: JdkDescriptorProvider {
   private fun fromJavaHome(): JdkDescriptor? {
     val javaHome: Path? = try {
        System.getenv("JAVA_HOME")
-    } catch (e: SecurityException) {
+    } catch (_: SecurityException) {
+      null
+    }?.let {
+      Paths.get(it)
+    }?.takeIf {
+      it.isDirectory
+    }
+
+    return javaHome?.let {
+      JdkDescriptorCreator.createJdkDescriptor(it)
+    }
+  }
+  private fun fromCurrentJvm(): JdkDescriptor? {
+    val javaHome: Path? = try {
+       System.getProperty("java.home")
+    } catch (_: SecurityException) {
       null
     }?.let {
       Paths.get(it)
