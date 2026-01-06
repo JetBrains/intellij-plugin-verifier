@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.jetbrains.pluginverifier.repository.repositories.dependency
 
@@ -15,4 +15,9 @@ class DependencyPluginInfo(val pluginInfo: PluginInfo) : PluginInfo(
   pluginInfo.sinceBuild,
   pluginInfo.untilBuild,
   pluginInfo.vendor
-)
+) {
+  override fun equals(other: Any?): Boolean = this === other ||
+    other is DependencyPluginInfo && pluginInfo == other.pluginInfo
+
+  override fun hashCode(): Int = pluginInfo.hashCode()
+}
