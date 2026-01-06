@@ -76,4 +76,19 @@ class DefaultJdkDescriptorProvider: JdkDescriptorProvider {
       JdkDescriptorCreator.createJdkDescriptor(it)
     }
   }
+  private fun fromCurrentJvm(): JdkDescriptor? {
+    val javaHome: Path? = try {
+       System.getProperty("java.home")
+    } catch (e: SecurityException) {
+      null
+    }?.let {
+      Paths.get(it)
+    }?.takeIf {
+      it.isDirectory
+    }
+
+    return javaHome?.let {
+      JdkDescriptorCreator.createJdkDescriptor(it)
+    }
+  }
 }
