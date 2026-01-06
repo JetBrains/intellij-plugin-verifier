@@ -1,11 +1,12 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.repository.resources
 
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import org.slf4j.Logger
+import java.util.*
 
 /**
  * Data structure that maintains a set of registered resources and their total weights.
@@ -31,6 +32,8 @@ internal class RepositoryResourcesRegistrar<R, K, W : ResourceWeight<W>>(
 
   val resources: Map<K, ResourceInfo<R, W>>
     get() = _resources.toMap()
+
+  val entries: Set<Map.Entry<K, ResourceInfo<R, W>>> get() = Collections.unmodifiableSet(_resources.entries)
 
   /**
    * Associates the [resource] with [key].
