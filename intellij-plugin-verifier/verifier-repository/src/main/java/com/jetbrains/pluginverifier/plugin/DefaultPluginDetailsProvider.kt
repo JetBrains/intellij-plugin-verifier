@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.utils.Striped
 import com.jetbrains.plugin.structure.base.utils.closeAll
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.plugin.BundledPluginClassesFinder
@@ -18,6 +19,7 @@ import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationR
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.utils.DeletableOnClose
+import com.jetbrains.pluginverifier.getConcurrencyLevel
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.repositories.bundled.BundledPluginInfo
@@ -25,6 +27,7 @@ import com.jetbrains.pluginverifier.repository.repositories.dependency.Dependenc
 import java.io.Closeable
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.absolutePathString
 
 /**
  * Provides plugin details with explicit support for bundled plugins that are provided by the Platform
@@ -60,25 +63,32 @@ class DefaultPluginDetailsProvider(
     }
   }
 
+  private val createPluginLocks = Striped.lock(getConcurrencyLevel().coerceAtLeast(1))
+
   override fun createPlugin(pluginInfo: PluginInfo, pluginFileLock: FileLock): PluginCreationResult<IdePlugin> {
     return if (pluginInfo is DependencyPluginInfo) {
-      synchronized(extractedPluginLocationCache) {
-        val pluginArtifactPath = pluginFileLock.file
-        if (extractedPluginLocationCache.containsKey(pluginArtifactPath)) {
+      val pluginArtifactPath = pluginFileLock.file
+      val result = extractedPluginLocationCache[pluginArtifactPath]
+      if (result != null) {
+        eventLog.logCached(pluginArtifactPath)
+        return result
+      }
+      synchronized(createPluginLocks.get(pluginArtifactPath.absolutePathString())) {
+        val result = extractedPluginLocationCache[pluginArtifactPath]
+        if (result != null) {
           eventLog.logCached(pluginArtifactPath)
-          extractedPluginLocationCache.getValue(pluginArtifactPath)
-        } else {
-          idePluginManager
-            .createPlugin(
-              pluginArtifactPath,
-              validateDescriptor = false,
-              problemResolver = dependencyProblemResolver,
-            ).also {
-              eventLog.logExtracted(pluginArtifactPath)
-              it.registerCloseableResources()
-                .cacheExtractedDirectory(pluginArtifactPath)
-            }
+          return result
         }
+        idePluginManager
+          .createPlugin(
+            pluginArtifactPath,
+            validateDescriptor = false,
+            problemResolver = dependencyProblemResolver,
+          ).also {
+            eventLog.logExtracted(pluginArtifactPath)
+            it.registerCloseableResources()
+              .cacheExtractedDirectory(pluginArtifactPath)
+          }
       }
     } else {
       super.createPlugin(pluginInfo, pluginFileLock)

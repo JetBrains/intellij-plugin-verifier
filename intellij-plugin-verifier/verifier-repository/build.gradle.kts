@@ -4,6 +4,7 @@ dependencies {
   api("org.jetbrains.intellij.plugins:structure-intellij-classes:$intellijStructureVersion")
   api("org.jetbrains.intellij.plugins:structure-ide:$intellijStructureVersion")
 
+  implementation(project(":verifier-core"))
   implementation(sharedLibs.caffeine)
   implementation(libs.commons.compress)
   implementation(sharedLibs.xz)
