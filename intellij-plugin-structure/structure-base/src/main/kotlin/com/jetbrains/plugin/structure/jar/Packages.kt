@@ -1,8 +1,12 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.plugin.structure.jar
 
 import com.jetbrains.plugin.structure.base.utils.trie.Trie
 import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.getInsertions
-import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.withDelimiter
+import com.jetbrains.plugin.structure.base.utils.trie.TrieTraversals.getAllNodes
 
 typealias BinaryPackageName = String
 
@@ -28,5 +32,5 @@ class Packages {
     get() = trie.getInsertions()
 
   val all: Set<BinaryPackageName>
-    get() = trie.withDelimiter('/')
+    get() = trie.getAllNodes()
 }
