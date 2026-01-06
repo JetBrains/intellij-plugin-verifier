@@ -26,6 +26,7 @@ class DefaultJdkDescriptorProvider: JdkDescriptorProvider {
       fromExplicitPath(defaultJdkPath)
       ?: fromIdeBundled(ide)
       ?: fromJavaHome()
+      ?: fromCurrentJvm()
     return jdkDescriptor.toResult()
   }
 
@@ -44,6 +45,21 @@ class DefaultJdkDescriptorProvider: JdkDescriptorProvider {
   private fun fromJavaHome(): JdkDescriptor? {
     val javaHome: Path? = try {
        System.getenv("JAVA_HOME")
+    } catch (e: SecurityException) {
+      null
+    }?.let {
+      Paths.get(it)
+    }?.takeIf {
+      it.isDirectory
+    }
+
+    return javaHome?.let {
+      JdkDescriptorCreator.createJdkDescriptor(it)
+    }
+  }
+  private fun fromCurrentJvm(): JdkDescriptor? {
+    val javaHome: Path? = try {
+       System.getProperty("java.home")
     } catch (e: SecurityException) {
       null
     }?.let {
