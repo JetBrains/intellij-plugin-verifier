@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.verifiers.method
 
 import com.github.benmanes.caffeine.cache.Cache
@@ -62,6 +66,7 @@ object KotlinMethods {
 
   private fun Method.isKotlinMethodInvokingDefaultImpls(): Boolean {
     // If this method doesn't have any bytecode, it will be skipped
+    val instructions = instructions
     if (instructions.isEmpty()) {
       return false
     }
