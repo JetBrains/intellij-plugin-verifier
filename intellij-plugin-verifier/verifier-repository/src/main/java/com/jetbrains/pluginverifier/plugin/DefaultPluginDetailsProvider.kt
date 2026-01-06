@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
@@ -108,15 +112,17 @@ class DefaultPluginDetailsProvider(
 
   val eventLog = EventLog()
 
-  class EventLog() : AbstractList<String>() {
+  class EventLog : AbstractList<String>() {
     private val events: MutableList<String> = mutableListOf()
+    private val cache: MutableMap<String, String> = HashMap()
 
     fun logCached(path: Path) = log(path, true)
 
     fun logExtracted(path: Path) = log(path, false)
 
     fun log(path: Path, isCached: Boolean) {
-      events += (if (isCached) "cached " else "extracted ") + path
+      val event = (if (isCached) "cached " else "extracted ") + path
+      events += cache.getOrPut(event) { event }
     }
 
     override val size: Int
@@ -124,6 +130,9 @@ class DefaultPluginDetailsProvider(
 
     override fun get(index: Int): String = events[index]
 
-    fun clear() = events.clear()
+    fun clear() {
+      cache.clear()
+      events.clear()
+    }
   }
 }
