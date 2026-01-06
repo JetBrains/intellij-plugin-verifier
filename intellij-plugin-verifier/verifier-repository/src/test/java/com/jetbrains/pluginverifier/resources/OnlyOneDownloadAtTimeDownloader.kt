@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.resources
 
 import com.jetbrains.pluginverifier.repository.downloader.DownloadResult
@@ -14,21 +18,20 @@ class OnlyOneDownloadAtTimeDownloader : Downloader<Int> {
   private val downloadResult = DownloadResult.NotFound("Not found")
 
   override fun download(key: Int, tempDirectory: Path): DownloadResult {
-    val thread = downloading[key]
+    val current = Thread.currentThread()
+    val thread = downloading.putIfAbsent(key, current)
     if (thread != null) {
-      errors.add(AssertionError("Key $key is already being downloaded by $thread; current thread = " + Thread.currentThread()))
+      errors.add(AssertionError("Key $key is already being downloaded by $thread; current thread = $current"))
       return downloadResult
     }
-    downloading[key] = Thread.currentThread()
     try {
       doDownload()
     } finally {
-      downloading.remove(key)
+      downloading.remove(key, current)
     }
     return downloadResult
   }
 
-  @Synchronized
   private fun doDownload() {
     Thread.sleep(1000)
   }
