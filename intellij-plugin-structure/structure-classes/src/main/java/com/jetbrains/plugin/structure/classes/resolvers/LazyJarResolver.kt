@@ -41,13 +41,11 @@ class LazyJarResolver(
     get() = jar.bundleNames.mapValues { it.value.toMutableSet() }.toMutableMap()
 
   @Deprecated("Use 'allClassNames' property instead which is more efficient")
-  override val allClasses: Set<String> by lazy {
-    jar.classes.mapTo(hashSetOf()) { it.toString() }
-  }
+  override val allClasses: Set<String>
+    get() = allClassNames.mapTo(hashSetOf()) { it.toString() }
 
-  override val allClassNames: Set<BinaryClassName> by lazy {
-    jar.classes
-  }
+  override val allClassNames: Set<BinaryClassName>
+    get() = jar.classes
 
   @Deprecated("Use 'packages' property instead. This property may be slow on some file systems.")
   override val allPackages: Set<String> by lazy { jar.packages.all }
@@ -58,9 +56,8 @@ class LazyJarResolver(
     ResourceBundleNameSet(jar.bundleNames)
   }
 
-  override val implementedServiceProviders: Map<String, Set<String>> by lazy {
-    jar.serviceProviders
-  }
+  override val implementedServiceProviders: Map<String, Set<String>>
+    get() = jar.serviceProviders
 
   @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
   override fun resolveClass(className: String): ResolutionResult<ClassNode> {
