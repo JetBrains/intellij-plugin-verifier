@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.resources
 
 import com.jetbrains.pluginverifier.repository.cleanup.SizeEvictionPolicy
@@ -58,7 +62,7 @@ class ResourceRepositoryImplTest {
       Closeable { }
     }
 
-    assertEquals(emptySet<Closeable>(), resourceRepository.getAllExistingKeys())
+    assertEquals(emptySet<Any>(), resourceRepository.getAllExistingKeys())
 
     //Add the initial keys and unlock the resources immediately
     for (i in 0 until size) {

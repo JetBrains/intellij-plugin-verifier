@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.repository.files
@@ -22,7 +22,7 @@ import java.time.Clock
  * File repository is the refinement of the
  * [resource repository] [ResourceRepository] for files.
  */
-class FileRepository<K>(
+class FileRepository<K : Any>(
   resourceProvider: ResourceProvider<K, Path> = EmptyResourceProvider(),
   sweepPolicy: SweepPolicy<K> = IdleSweepPolicy(),
   presentableName: String = "FileRepository",
@@ -85,7 +85,7 @@ class FileRepository<K>(
 
 }
 
-fun <K> FileRepository<K>.addInitialFilesFrom(directory: Path, keyProvider: (Path) -> K?): FileRepository<K> {
+fun <K : Any> FileRepository<K>.addInitialFilesFrom(directory: Path, keyProvider: (Path) -> K?): FileRepository<K> {
   for (file in directory.listFiles()) {
     val key = keyProvider(file)
     if (key != null) {

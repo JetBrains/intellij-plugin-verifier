@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.resources
 
 import com.jetbrains.plugin.structure.base.utils.*
@@ -14,9 +18,9 @@ import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.abs
 
@@ -98,7 +102,7 @@ class FileRepositoryTest {
     assertTrue(downloader.errors.isEmpty())
   }
 
-  private fun <K> FileRepository<K>.getFound(k: K) = getFile(k) as FileRepositoryResult.Found
+  private fun <K : Any> FileRepository<K>.getFound(k: K) = getFile(k) as FileRepositoryResult.Found
 
   @Test
   fun `file sweeper removes files using LRU order when the file is released`() {
@@ -167,16 +171,14 @@ class FileRepositoryTest {
    */
   @Test
   fun `delete the file which is being downloaded`() {
-    val downloadStarted = AtomicBoolean()
-    val removeCalled = AtomicBoolean()
+    val downloadStarted = CountDownLatch(1)
+    val removeCalled = CountDownLatch(1)
 
     val downloader = SimulationDownloader {
-      downloadStarted.set(true)
+      downloadStarted.countDown()
 
       //simulating the downloading until the 'remove' method is called
-      @Suppress("ControlFlowWithEmptyBody")
-      while (!removeCalled.get()) {
-      }
+      removeCalled.await()
     }
 
     val fileRepository = FileRepository(
@@ -192,14 +194,12 @@ class FileRepositoryTest {
 
     val removeThread = Thread {
       //waiting until the downloading is started
-      @Suppress("ControlFlowWithEmptyBody")
-      while (!downloadStarted.get()) {
-      }
+      downloadStarted.await()
 
       //call the remove in the time of downloading
       fileRepository.remove(0)
 
-      removeCalled.set(true)
+      removeCalled.countDown()
     }
 
     downloadThread.start()

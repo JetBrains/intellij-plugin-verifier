@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.repository.cache
@@ -16,6 +16,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.time.Clock
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Resource cache is intended to cache any resources which
@@ -39,7 +40,7 @@ import java.time.Clock
  * While there are available "slots" in the cache, the resources are not disposed.
  * All the unreleased resources will be [disposed] [disposer] once the cache is [closed] [close].
  */
-class ResourceCache<R, in K, W : ResourceWeight<W>>(
+class ResourceCache<R : Any, in K : Any, W : ResourceWeight<W>>(
   /**
    * [ResourceProvider] that provides the
    * requested resources by [keys] [K].
@@ -99,9 +100,8 @@ class ResourceCache<R, in K, W : ResourceWeight<W>>(
 
   /**
    * A flag indicating whether _this_ cache is already closed.
-   * It is protected by the synchronized blocks.
    */
-  private var isClosed = false
+  private val isClosed = AtomicBoolean(false)
 
   /**
    * Enqueues for closing all resources.
@@ -113,11 +113,9 @@ class ResourceCache<R, in K, W : ResourceWeight<W>>(
    * be released and closed at the [getResourceCacheEntry].
    * Thus, no new resources can be allocated after the [close] is invoked.
    */
-  @Synchronized
   override fun close() {
     LOG.debug("Closing the $presentableName")
-    if (!isClosed) {
-      isClosed = true
+    if (isClosed.compareAndSet(false, true)) {
       resourceRepository.removeAll()
     }
   }
@@ -137,10 +135,8 @@ class ResourceCache<R, in K, W : ResourceWeight<W>>(
     /**
      * Cancel the fetching if _this_ resource cache is already closed.
      */
-    synchronized(this) {
-      if (isClosed) {
-        throw InterruptedException()
-      }
+    if (isClosed.get()) {
+      throw InterruptedException()
     }
     val repositoryResult = resourceRepository.get(key)
     val lockedResource = with(repositoryResult) {
@@ -151,21 +147,19 @@ class ResourceCache<R, in K, W : ResourceWeight<W>>(
       }
     }
     /**
-     * If _this_ cache was closed after the [key]
+     * If _this_ cache was closed while the [key]
      * had been requested, release the lock and register
      * the [key] for deletion: it will be either
      * removed immediately, or just after the last
      * holder releases the lock.
      */
-    synchronized(this) {
-      if (isClosed) {
-        lockedResource.release()
-        resourceRepository.remove(key)
-        throw InterruptedException()
-      }
-      return lockedResource.closeOnException {
-        ResourceCacheEntryResult.Found(ResourceCacheEntry(lockedResource))
-      }
+    if (isClosed.get()) {
+      lockedResource.release()
+      resourceRepository.remove(key)
+      throw InterruptedException()
+    }
+    return lockedResource.closeOnException {
+      ResourceCacheEntryResult.Found(ResourceCacheEntry(lockedResource))
     }
   }
 
@@ -178,7 +172,7 @@ class ResourceCache<R, in K, W : ResourceWeight<W>>(
 
 }
 
-fun <K, R> createSizeLimitedResourceCache(
+fun <K : Any, R : Any> createSizeLimitedResourceCache(
   cacheSize: Int,
   resourceProvider: ResourceProvider<K, R>,
   disposer: (R) -> Unit,

@@ -7,194 +7,260 @@ package com.jetbrains.pluginverifier.repository.resources
 import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.pluralize
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.repository.cleanup.UsageStatistic
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Clock
-import java.time.Instant
-import java.util.concurrent.CancellationException
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.FutureTask
+import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.locks.Condition
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 /**
- * The implementation of the [resource repository] [ResourceRepository]
+ * The implementation of the [resource repository][ResourceRepository]
  * that can be safely used in a concurrent environment
- * where the resources can be added, accessed and removed by multiple threads.
+ * where the resources can be added, accessed, and removed by multiple threads.
+ *
+ * Data structure that maintains a set of registered resources and their total weights.
+ *
+ * It is initialized with initial weight of [totalWeight],
+ * typically equal zero in the units of chosen weights domain, the [weigher] used to assign
+ * weights of the resources in a controlled way and the [disposer] used to deallocate
+ * the resources being removed.
  */
-class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
+class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
   private val evictionPolicy: EvictionPolicy<R, K, W>,
   private val clock: Clock,
   private val resourceProvider: ResourceProvider<K, R>,
   initialWeight: W,
-  weigher: (R) -> W,
-  disposer: (R) -> Unit,
+  private val weigher: (R) -> W,
+  private val disposer: (R) -> Unit,
   private val presentableName: String = "ResourceRepository"
 ) : ResourceRepository<R, K, W> {
   private val logger: Logger = LoggerFactory.getLogger(presentableName)
 
-  private val resourcesRegistrar = RepositoryResourcesRegistrar<R, K, W>(initialWeight, weigher, disposer, logger)
+  private val nextLockId = AtomicLong()
 
-  private var nextLockId = 0L
+  private val storage = ConcurrentHashMap<K, StorageStatus>()
+  private val totalWeight: AtomicReference<W> = AtomicReference(initialWeight)
+  private val removeQueue: MutableSet<Pair<K, StorageStatus>> = ConcurrentHashMap.newKeySet()
 
-  private val key2Locks = hashMapOf<K, MutableSet<ResourceLockImpl<R, K, W>>>()
+  sealed interface StorageStatus
 
-  private val removeQueue = hashSetOf<K>()
+  @Suppress("EqualsOrHashCode")
+  class Fetching<R : Any>(callable: Callable<ProvideResult<R>>) : StorageStatus, FutureTask<ProvideResult<R>>(callable) {
+    @Volatile
+    var fetched: Stored<R, *, *>? = null
 
-  private val additionTasks = hashMapOf<K, FutureTask<ProvideResult<R>>>()
+    override fun equals(other: Any?): Boolean {
+      return this === other
+    }
+  }
 
-  private val additionWaitingThreads = hashMapOf<K, Int>()
+  @Suppress("EqualsOrHashCode")
+  class Stored<R : Any, K : Any, W : ResourceWeight<W>>(
+    val info: ResourceInfo<R, W>,
+    val statistic: UsageStatistic,
+  ) : StorageStatus {
+    internal val locks = HashSet<ResourceLockImpl<R, K, W>>()
 
-  private val statistics = hashMapOf<K, UsageStatistic>()
+    @Volatile
+    internal var removed = false // guarded by `locks`
 
-  @Synchronized
+    /**
+     * Use identity equals
+     */
+    override fun equals(other: Any?): Boolean {
+      return this === other
+    }
+  }
+
   override fun add(key: K, resource: R) =
     try {
-      addResource(key, resource)
+      val weight = weigher(resource)
+      val previous = storage.putIfAbsent(key, Stored<R, K, W>(ResourceInfo(resource, weight), UsageStatistic(clock.instant(), 1)))
+      val added = previous === null
+      if (added) {
+        totalWeight.accumulateAndGet(weight) { acc, weight -> acc + weight }
+      }
+      added
     } finally {
-      cleanup()
+      maybeCleanup()
     }
 
-  /**
-   * Adds the [resource] to the [resourcesRegistrar].
-   *
-   * It doesn't invoke [cleanup] since this resource
-   * may be awaited, which can lead to its eviction
-   * and invalid resource locking.
-   */
-  @Synchronized
-  private fun addResource(key: K, resource: R): Boolean {
-    if (resourcesRegistrar.addResource(key, resource)) {
-      check(key !in statistics)
-      updateUsageStatistics(key)
-      return true
+  override fun getAllExistingKeys(): Set<K> = HashSet(storage.keys)
+
+  override fun has(key: K): Boolean = storage.containsKey(key)
+
+  override fun isLockedOrBeingProvided(key: K): Boolean {
+    val value = storage[key] ?: return false
+    when (value) {
+      is Fetching<*> -> return true
+      is Stored<*, *, *> -> synchronized(value.locks) { return value.locks.isNotEmpty() }
     }
-    return false
   }
 
-  @Synchronized
-  override fun getAllExistingKeys() = resourcesRegistrar.getAllKeys().toSet()
+  override fun remove(key: K): Boolean = remove2(key, true)
 
-  @Synchronized
-  override fun has(key: K) = resourcesRegistrar.has(key)
+  private fun remove2(key: K, cleanupIfRemoved: Boolean): Boolean {
+    val value = storage[key] ?: return false
+    when (value) {
+      is Fetching<*> -> {
+        logger.debugMaybe { "remove($key): the resource is being provided, enqueue for removing later" }
+        removeQueue.add(key to (value.fetched ?: value))
+        return false
+      }
 
-  @Synchronized
-  override fun isLockedOrBeingProvided(key: K) = isLockedKey(key) || isBeingProvided(key)
-
-  @Synchronized
-  override fun remove(key: K): Boolean = when {
-    isLockedOrBeingProvided(key) -> {
-      logger.debugMaybe { "remove($key): the resource is locked or is being provided, enqueue for removing later." }
-      removeQueue.add(key)
-      false
-    }
-    resourcesRegistrar.has(key) -> {
-      logger.debugMaybe { "remove($key): the resource is not locked, deleting now" }
-      doRemove(key)
-      cleanup()
-      true
-    }
-    else -> false
-  }
-
-  @Synchronized
-  override fun removeAll() {
-    getAllExistingKeys().forEach { remove(it) }
-  }
-
-  @Synchronized
-  private fun isLockedKey(key: K) = key2Locks.containsKey(key)
-
-  @Synchronized
-  private fun isBeingProvided(key: K) = additionTasks.containsKey(key)
-
-  private fun updateUsageStatistics(key: K): Instant {
-    val now = clock.instant()
-    val usageStatistic = statistics.getOrPut(key) {
-      UsageStatistic(now, 0)
-    }
-    usageStatistic.lastAccessTime = now
-    usageStatistic.timesAccessed++
-    return now
-  }
-
-  @Synchronized
-  private fun registerLock(key: K): ResourceLock<R, W> {
-    check(resourcesRegistrar.has(key))
-    val resourceInfo = resourcesRegistrar.get(key)!!
-    val now = updateUsageStatistics(key)
-    val lockId = nextLockId++
-    val lock = ResourceLockImpl(now, resourceInfo, key, lockId, this)
-    logger.debugMaybe { "get($key): lock is registered $lock " }
-    key2Locks.getOrPut(key) { hashSetOf() }.add(lock)
-    return lock
-  }
-
-  @Synchronized
-  internal fun releaseLock(lock: ResourceLockImpl<R, K, W>) {
-    val key = lock.key
-    val resourceLocks = key2Locks[key]
-    if (resourceLocks != null) {
-      logger.debugMaybe { "releasing lock $lock" }
-      resourceLocks.remove(lock)
-      if (resourceLocks.isEmpty()) {
-        key2Locks.remove(key)
-
-        if (key in removeQueue) {
-          if (isBeingProvided(key)) {
-            logger.debugMaybe { "hand over removing of the $key to another thread waiting for this key" }
-          } else {
-            logger.debugMaybe { "removing the $key as it is enqueued for removing and it has been just released" }
-            removeQueue.remove(key)
-            doRemove(key)
+      is Stored<*, *, *> -> {
+        val removed = synchronized(value.locks) {
+          if (value.locks.isNotEmpty()) {
+            logger.debugMaybe { "remove($key): the resource is locked, enqueue for removing later" }
+            removeQueue.add(key to value)
+            return false
           }
+          logger.debugMaybe { "remove($key): the resource is not locked, deleting now" }
+          value.removed = true
+          storage.remove(key, value)
+        }
+
+        if (removed) {
+          @Suppress("UNCHECKED_CAST")
+          val info = value.info as ResourceInfo<*, W>
+          totalWeight.accumulateAndGet(info.weight) { acc, weight -> acc - weight }
+          @Suppress("UNCHECKED_CAST")
+          safeDispose(key, value.info.resource as R)
+        } else {
+          // Association has changed, probably some other thread removed it and optionally put another value.
+          // Since our `value` is obsolete and has no locks, consider that it's removed.
+        }
+        if (cleanupIfRemoved) {
+          maybeCleanup()
+        }
+        return true
+      }
+    }
+  }
+
+  override fun removeAll() {
+    if (getAllExistingKeys().map { remove2(it, false) }.any { it }) {
+      cleanup()
+    }
+  }
+
+  internal fun releaseLock(lock: ResourceLockImpl<R, K, W>) {
+    logger.debugMaybe { "releasing lock $lock" }
+
+    val key = lock.key
+    val value = lock.value
+    val pair = key to value
+
+    val hasLocks = synchronized(value.locks) {
+      value.locks.remove(lock)
+      value.locks.isNotEmpty()
+    }
+
+    if (hasLocks) {
+      return
+    }
+
+    refreshRemoveQueue()
+
+    // Probably should be removed since no more locks left
+    if (removeQueue.remove(pair)) {
+      // was in the queue, remove it from the storage if there are no locks
+      val removed = synchronized(value.locks) {
+        if (value.locks.isNotEmpty()) {
+          // someone acquired a lock while we were removing the pair from the queue, put it back
+          removeQueue.add(pair)
+          return
+        }
+        value.removed = true
+        storage.remove(key, value)
+      }
+
+      if (removed) {
+        totalWeight.accumulateAndGet(value.info.weight) { acc, weight -> acc - weight }
+        safeDispose(key, value.info.resource)
+      } else {
+        // Association has changed, probably some other thread removed it and optionally put another value.
+        // Since our `value` is obsolete and has no locks, consider that it's removed.
+      }
+    }
+  }
+
+  private fun refreshRemoveQueue() {
+    for (pair in removeQueue) {
+      if (pair.second is Fetching<*>) {
+        val fetched = (pair.second as Fetching<*>).fetched
+        if (fetched != null) {
+          removeQueue.remove(pair)
+          removeQueue.add(pair.first to fetched)
         }
       }
-    } else {
-      logger.debugMaybe { "attempt to release an unregistered lock $lock" }
     }
-  }
-
-  @Synchronized
-  private fun doRemove(key: K) {
-    check(!isBeingProvided(key))
-    resourcesRegistrar.removeResource(key)
-    statistics.remove(key)
   }
 
   @Throws(InterruptedException::class)
   private fun getOrWait(key: K): ResourceRepositoryResult<R, W> {
-    checkIfInterrupted()
-    val (fetchTask, runInCurrentThread) = synchronized(this) {
-      if (resourcesRegistrar.has(key)) {
-        val lock = registerLock(key)
+    while (true) {
+      checkIfInterrupted()
+
+      val value: StorageStatus? = storage[key]
+      if (value is Stored<*, *, *>) {
+        val now = clock.instant()
+        val lockId = nextLockId.incrementAndGet()
+
+        @Suppress("UNCHECKED_CAST")
+        val lock = ResourceLockImpl(now, key, lockId, this, value as Stored<R, K, W>)
+        // attempt to lock if `value` is not removed yet
+
+        val removed = synchronized(value.locks) {
+          if (value.removed) {
+            // was marked as removed, can no longer add any lock, re-run the whole method to read new association from storage
+          } else {
+            // implies that `storage[key] === value`, otherwise `value.removed` would be `true.`
+            value.statistic.access(now)
+            value.locks.add(lock)
+          }
+          value.removed
+        }
+        if (removed) {
+          continue
+        }
         logger.debugMaybe { "get($key): the resource is available and a lock is registered $lock" }
         return ResourceRepositoryResult.Found(lock)
       }
-
-      val oldTask = additionTasks[key]
-      additionWaitingThreads.compute(key) { _, v -> (v ?: 0) + 1 }
-      if (oldTask != null) {
+      val fetchTask: Fetching<R>
+      val runInCurrentThread: Boolean
+      if (value is Fetching<*>) {
         logger.debugMaybe { "get($key): waiting for another thread to finish fetching the resource" }
-        oldTask to false
+        @Suppress("UNCHECKED_CAST")
+        fetchTask = value as Fetching<R>
+        runInCurrentThread = false
       } else {
+        assert(value === null)
         logger.debugMaybe { "get($key): fetching the resource in the current thread" }
-        val newTask = FutureTask {
-          fetchAndAddResource(key)
+        val newTask = Fetching {
+          fetchResource(key)
         }
-        additionTasks[key] = newTask
-        newTask to true
+        if (storage.putIfAbsent(key, newTask) != null) {
+          // value has changed, re-run the whole method
+          continue
+        }
+        fetchTask = newTask
+        runInCurrentThread = true
       }
-    }
 
-    //Run the task in the current thread
-    //if it started fetching the key first.
-    if (runInCurrentThread) {
-      fetchTask.run()
-    }
+      // Run the task in the current thread if it started fetching the key first.
+      if (runInCurrentThread) {
+        fetchTask.run()
+      }
 
-    try {
       val provideResult = try {
         fetchTask.get() //propagate InterruptedException
       } catch (_: CancellationException) {
@@ -207,74 +273,167 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
           throw RuntimeException("Failed to fetch result", e)
         }
       }
-      return provideResult.registerLockIfProvided(key)
-    } finally {
-      synchronized(this) {
-        additionWaitingThreads.compute(key) { _, v -> if (v!! == 1) null else (v - 1) }
-        if (!additionWaitingThreads.containsKey(key)) {
-          additionTasks.remove(key)
+
+      // the first-possible thread should update storage
+      if (provideResult is ProvideResult.Provided<R>) {
+        val created = Stored<R, K, W>(ResourceInfo(provideResult.resource, weigher(provideResult.resource)), UsageStatistic(clock.instant(), 1))
+        if (storage.replace(key, fetchTask, created)) {
+          // successfully replaced the task with the created value
+          totalWeight.accumulateAndGet(created.info.weight) { acc, weight -> acc + weight }
+          fetchTask.fetched = created
+          if (removeQueue.remove(key to fetchTask)) {
+            removeQueue.add(key to created)
+          }
+        } else {
+          // probably another thread updated the association, re-run the whole method
+          continue
+        }
+        // re-run the whole method, it will return 'Found' resource
+        continue
+      } else {
+        // remove unsuccessful task from the storage
+        storage.remove(key, fetchTask)
+        return when (provideResult) {
+          is ProvideResult.NotFound<R> -> ResourceRepositoryResult.NotFound(provideResult.reason)
+          is ProvideResult.Failed<R> -> ResourceRepositoryResult.Failed(provideResult.reason, provideResult.error)
+          else -> throw IllegalStateException("Unexpected result type: $provideResult")
         }
       }
     }
   }
 
-  private fun fetchAndAddResource(key: K): ProvideResult<R> {
+  private fun fetchResource(key: K): ProvideResult<R> {
     val provideResult = resourceProvider.provide(key)
-    if (provideResult is ProvideResult.Provided<R>) {
-      addResource(key, provideResult.resource)
-    }
     return provideResult
   }
 
-  private fun ProvideResult<R>.registerLockIfProvided(key: K) = when (this) {
-    is ProvideResult.Provided<R> -> ResourceRepositoryResult.Found(registerLock(key))
-    is ProvideResult.NotFound<R> -> ResourceRepositoryResult.NotFound(reason)
-    is ProvideResult.Failed<R> -> ResourceRepositoryResult.Failed(reason, error)
+  override fun getAvailableResources(): List<AvailableResource<R, K, W>> {
+    return storage.entries.mapNotNull {
+      if (it.value is Fetching<*>) return@mapNotNull null
+      @Suppress("UNCHECKED_CAST")
+      val value = it.value as Stored<R, K, W>
+      // copying statistics since it could be used in sorting and it should be unmodifiable
+      val (isLocked, stats) = synchronized(value.locks) { value.locks.isNotEmpty() to value.statistic.copy() }
+      AvailableResource(it.key, value.info, stats, isLocked)
+    }
   }
 
-  @Synchronized
-  override fun getAvailableResources() =
-    resourcesRegistrar.resources.map { (key, resourceInfo) ->
-      AvailableResource(key, resourceInfo, statistics[key]!!, isLockedKey(key))
-    }
-
-  @Synchronized
   override fun cleanup() {
-    if (evictionPolicy.isNecessary(resourcesRegistrar.totalWeight)) {
-      val availableResources = resourcesRegistrar.entries.map { (key, resourceInfo) ->
-        AvailableResource(key, resourceInfo, statistics[key]!!, isLockedKey(key))
+    if (maybeCleanup()) {
+      return
+    }
+    // wait for another running cleanup, run one more from the current thread
+    var skipped = 0
+    while (true) {
+      val stop = cleanupState.lock.withLock {
+        if (cleanupState.running) {
+          cleanupState.condition.await()
+        }
+        if (!cleanupState.running) {
+          cleanupState.running = true
+          skipped = cleanupState.skipped
+          true
+        } else {
+          false
+        }
       }
+      if (stop) {
+        break
+      }
+    }
+    try {
+      doCleanup()
+    } finally {
+      cleanupState.lock.withLock {
+        cleanupState.running = false
+        cleanupState.skipped -= skipped
+        cleanupState.condition.signalAll()
+      }
+    }
+  }
 
-      val evictionInfo = EvictionInfo(resourcesRegistrar.totalWeight, availableResources)
+  /**
+   * Runs cleanup if other thread isn't doing it, else skip
+   *
+   * @return whether cleanup was performed by the current thread
+   */
+  fun maybeCleanup(): Boolean {
+    val skipped: Int = cleanupState.lock.withLock {
+      if (!cleanupState.running) {
+        cleanupState.running = true
+        cleanupState.skipped
+      } else {
+        cleanupState.skipped++
+        return false
+      }
+    }
+    try {
+      doCleanup()
+    } finally {
+      cleanupState.lock.withLock {
+        cleanupState.running = false
+        cleanupState.skipped -= skipped
+        cleanupState.condition.signalAll()
+      }
+    }
+    return true
+  }
+
+  private class CleanupState {
+    val lock = ReentrantLock()
+    val condition: Condition = lock.newCondition()
+    var running: Boolean = false
+    var skipped: Int = 0
+  }
+
+  private val cleanupState = CleanupState()
+
+  fun doCleanup() {
+    if (evictionPolicy.isNecessary(totalWeight.get())) {
+      val availableResources = getAvailableResources()
+      val totalWeight = availableResources.map { it.resourceInfo.weight }.reduce { acc, weight -> acc + weight }
+
+      val evictionInfo = EvictionInfo(totalWeight, availableResources)
       val resourcesForEviction = evictionPolicy.selectResourcesForEviction(evictionInfo)
 
       if (resourcesForEviction.isNotEmpty()) {
         val disposedTotalWeight = resourcesForEviction.map { it.resourceInfo.weight }.reduce { acc, weight -> acc + weight }
         logger.debugMaybe {
           "It's time to evict unused resources. " +
-            "Total weight: ${resourcesRegistrar.totalWeight}. " +
+            "Total weight: $totalWeight. " +
             "${resourcesForEviction.size} " + "resource".pluralize(resourcesForEviction.size) +
             " will be evicted with total weight $disposedTotalWeight"
         }
         for (resource in resourcesForEviction) {
-          remove(resource.key)
+          remove2(resource.key, false)
         }
       }
     }
   }
 
+  private fun safeDispose(key: K, resource: R) {
+    try {
+      logger.debugMaybe { "dispose($key)" }
+      disposer(resource)
+    } catch (e: Exception) {
+      e.rethrowIfInterrupted()
+      logger.error("unable to dispose the resource $resource", e)
+    }
+  }
+
+
   /**
    * Provides the resource by [key].
    *
    * If the resource is cached, returns it from the cache,
-   * otherwise it firstly provides the resource, adds it to
-   * to the cache and returns it.
+   * otherwise it firstly provides the resource, adds it
+   * to the cache, and returns it.
 
    * The possible results are represented as subclasses of [ResourceRepositoryResult].
    * If the resource is available in the cache or successfully provided, the resource lock is registered
-   * for the resource so it will be protected against deletions by other threads.
+   * for the resource, so it will be protected against deletions by other threads.
    *
-   * This method is thread safe. In case several threads attempt to get the same resource, only one
+   * This method is thread-safe. In case several threads attempt to get the same resource, only one
    * of them provides the resource while others wait for the first to complete and return the same resource.
    *
    * @throws InterruptedException if the current thread has been interrupted while waiting for the resource.
@@ -286,7 +445,7 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
      * Release the lock if the cleanup procedure has failed.
      */
     (result as? ResourceRepositoryResult.Found<*, *>)?.lockedResource?.closeOnException {
-      cleanup()
+      maybeCleanup()
     }
     return result
   }
