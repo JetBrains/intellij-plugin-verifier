@@ -1,21 +1,20 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.jetbrains.plugin.structure.base.utils.pluralize
-import com.jetbrains.plugin.structure.intellij.plugin.DependenciesModifier
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PassThruDependenciesModifier
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision.Source.CONTENT_MODULE_ID
-import com.jetbrains.plugin.structure.intellij.plugin.PluginQuery
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency.*
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency.Module
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Function
 import kotlin.math.max
 
 private val LOG: Logger = LoggerFactory.getLogger(DependencyTree::class.java)
@@ -154,21 +153,34 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
       }
     }
 
+  // It's OK to keep them all in memory since they're held in memory by:
+  // DiGraph
+  //  <- DefaultDependencyTreeResolution
+  //   <- DependencyTreeAwareResolver
+  //    <- CachingPluginDependencyResolverProvider.cache
+  //     <- DefaultClassResolverProvider.pluginResolverProvider
+  //      <- PluginVerificationDescriptor$IDE.classResolverProvider
+  //       <- PluginVerifier.verificationDescriptor
+  private val dependencyCache: ConcurrentHashMap<Dependency, Dependency> = ConcurrentHashMap()
+
+  private fun Dependency.intern(): Dependency {
+    return dependencyCache.computeIfAbsent(this, Function.identity())
+  }
+
   private fun resolve(dependency: PluginDependency): Dependency {
-    return with(dependency) {
-      resolvePlugin(id)?.let { provision ->
-        val plugin = provision.plugin
-        return if (ideModulePredicate.matches(id, plugin)) {
-          // It is explicitly declared as a module in the product-info.json in the module list,
-          // or it is marked as a module in the product info layout elements.
-          Module(plugin, id)
-        } else if (provision.source == CONTENT_MODULE_ID) {
-          Module(plugin, id)
-        } else {
-          Plugin(plugin)
-        }
-      } ?: None
+    val id = dependency.id
+    val found = resolvePlugin(id) ?: return None
+    val plugin = found.plugin
+    val dep = if (ideModulePredicate.matches(id, plugin)) {
+      // It is explicitly declared as a module in the product-info.json in the module list,
+      // or it is marked as a module in the product info layout elements.
+      Module(plugin, id)
+    } else if (found.source == CONTENT_MODULE_ID) {
+      Module(plugin, id)
+    } else {
+      Plugin(plugin)
     }
+    return dep.intern()
   }
 
   private fun getNestedDependencyIndent(indent: String, dependencyNumber: String): String {
@@ -218,7 +230,7 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
   ) {
     for (dependency in this[id]) {
       if (dependency is PluginAware) {
-        val dep = if (layer == 0) dependency else dependency.asTransitive()
+        val dep = (if (layer == 0) dependency else dependency.asTransitive()).intern()
         if (dep !in dependencies) {
           dependencies += dep
           val dependencyIdAndAliases = listOf(dependency.id) + dependency.plugin.pluginAliases
@@ -230,7 +242,27 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     }
   }
 
+  private val pluginCache: Cache<PluginId, PluginProvision.Found> = Caffeine.newBuilder()
+    .softValues()
+    .build()
+
   private fun resolvePlugin(pluginId: PluginId): PluginProvision.Found? {
+    val id = pluginId.intern()
+    val result = pluginCache.getIfPresent(id)
+    if (result != null) return result
+    // it's OK to synchronize on PluginId (String) since we've interned it.
+    synchronized(id) {
+      val result = pluginCache.getIfPresent(id)
+      if (result != null) return result
+      val resolved = doResolvePlugin(id)
+      if (resolved != null) {
+        pluginCache.put(id, resolved)
+      }
+      return resolved
+    }
+  }
+
+  private fun doResolvePlugin(pluginId: PluginId): PluginProvision.Found? {
     return PluginQuery.Builder.of(pluginId)
       .inId()
       .inName()
@@ -254,7 +286,7 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
           is Plugin -> dependency.copy(isTransitive = false)
           is Module -> dependency.copy(isTransitive = false)
           is None -> None
-        }
+        }.intern()
       } else {
         unique[depId] = dependency
       }
