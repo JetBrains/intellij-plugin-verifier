@@ -5,6 +5,7 @@
 package com.jetbrains.pluginverifier.repository.downloader
 
 import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.pluginverifier.getConcurrencyLevel
 import com.jetbrains.pluginverifier.repository.cleanup.fileSize
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
@@ -56,37 +57,44 @@ class DownloadProvider<in K : Any>(
     }
   }
 
-  @Synchronized
+  private val nameGenerationLocks = Striped.lock(getConcurrencyLevel().coerceAtLeast(1))
+
   private fun saveDownloadedFileToFinalDestination(
     key: K,
     tempDownloadedFile: Path,
     extension: String,
     isDirectory: Boolean
   ): ProvideResult<Path> {
-    val destination = getDestinationFile(key, isDirectory, extension)
-    try {
-      moveFileOrDirectory(tempDownloadedFile, destination)
-    } catch (e: Exception) {
-      e.rethrowIfInterrupted()
-      return ProvideResult.Failed("Unable to download $key", e)
+    // Synchronized to ensure that two threads won't use the same destination file
+    val prefixAndSuffix = getDestinationPrefixAndSuffix(key, isDirectory, extension)
+    synchronized(nameGenerationLocks.get(prefixAndSuffix)) {
+      val destination = getDestinationFile(prefixAndSuffix)
+      try {
+        moveFileOrDirectory(tempDownloadedFile, destination)
+      } catch (e: Exception) {
+        e.rethrowIfInterrupted()
+        return ProvideResult.Failed("Unable to download $key", e)
+      }
+      return ProvideResult.Provided(destination)
     }
-    return ProvideResult.Provided(destination)
   }
 
-  private fun getDestinationFile(key: K, isDirectory: Boolean, extension: String): Path {
+  private data class PrefixAndSuffix(val nameWithoutExtension: String, val extensionSuffix: String)
+
+  private fun getDestinationPrefixAndSuffix(key: K, isDirectory: Boolean, extension: String): PrefixAndSuffix {
     check(extension == extension.replaceInvalidFileNameCharacters()) { "Extension must not contain invalid characters: $extension" }
 
     val nameWithoutExtension = fileNameWithoutExtensionMapper(key).replaceInvalidFileNameCharacters()
     val extensionSuffix = if (isDirectory || extension.isEmpty()) "" else ".$extension"
 
-    var destination = destinationDirectory.resolve(nameWithoutExtension + extensionSuffix)
+    return PrefixAndSuffix(nameWithoutExtension, extensionSuffix)
+  }
+
+  private fun getDestinationFile(name: PrefixAndSuffix): Path {
+    var destination = destinationDirectory.resolve(name.nameWithoutExtension + name.extensionSuffix)
     var nextSuffix = 1
     while (Files.exists(destination)) {
-      val newName = if (extensionSuffix.isEmpty()) {
-        "$nameWithoutExtension ($nextSuffix)"
-      } else {
-        "$nameWithoutExtension ($nextSuffix)$extensionSuffix"
-      }
+      val newName = "${name.nameWithoutExtension} ($nextSuffix)${name.extensionSuffix}"
       destination = destinationDirectory.resolve(newName)
       nextSuffix++
     }

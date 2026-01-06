@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.repository.downloader
@@ -14,11 +14,10 @@ import java.util.*
  */
 class DownloadStatistics {
 
-  private val events = Collections.synchronizedList(arrayListOf<DownloadEvent>())
+  private val events = Collections.synchronizedList(arrayListOf<FinishedDownloadEvent>())
 
-  @Synchronized
-  private fun reportEvent(downloadEvent: DownloadEvent) {
-    events += downloadEvent
+  private fun reportEvent(downloadEvent: FinishedDownloadEvent) {
+    events.add(downloadEvent)
   }
 
   fun getTotalDownloadedAmount(): SpaceAmount =
@@ -32,7 +31,7 @@ class DownloadStatistics {
     val endEvents = events.groupBy { it.endInstant }
     val allInstants = (events.map { it.startInstant } + events.map { it.endInstant }).sorted()
     var totalDuration = Duration.ZERO
-    val activeEvents = hashSetOf<DownloadEvent>()
+    val activeEvents = hashSetOf<FinishedDownloadEvent>()
     for (i in 0 until allInstants.size - 1) {
       val segmentStart = allInstants[i]
       val segmentEnd = allInstants[i + 1]
@@ -52,14 +51,14 @@ class DownloadStatistics {
 
   inner class DownloadEvent(
     internal val startInstant: Instant,
-    internal var endInstant: Instant = Instant.EPOCH,
-    internal var downloadedAmount: SpaceAmount = SpaceAmount.ZERO_SPACE
   ) {
-    @Synchronized
     fun downloadEnded(downloadedAmount: SpaceAmount) {
-      this.endInstant = Instant.now()
-      this.downloadedAmount = downloadedAmount
-      reportEvent(this)
+      reportEvent(FinishedDownloadEvent(startInstant, Instant.now(), downloadedAmount))
     }
   }
+  data class FinishedDownloadEvent(
+    internal val startInstant: Instant,
+    internal val endInstant: Instant,
+    internal val downloadedAmount: SpaceAmount,
+  )
 }
