@@ -133,13 +133,13 @@ class Jar(
 
   fun containsClass(className: String) = className in classes
 
-  private fun getPath(className: String): PathInJar? = classesInJar[className]
+  private fun getPath(className: CharSequence): PathInJar? = classesInJar[className]
 
   private fun getFileSystem(): FileSystem {
     return fileSystemProvider.getFileSystem(jarPath)
   }
 
-  fun <T> processClassPathInJar(className: String, handler: (String, PathInJar) -> T): T? {
+  fun <T> processClassPathInJar(className: CharSequence, handler: (CharSequence, PathInJar) -> T): T? {
     return getPath(className)?.let { pathInJar ->
       handler(className, pathInJar)
     }

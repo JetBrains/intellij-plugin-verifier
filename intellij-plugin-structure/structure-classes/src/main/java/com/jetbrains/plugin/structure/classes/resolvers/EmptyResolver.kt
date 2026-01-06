@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.classes.resolvers
 import com.jetbrains.plugin.structure.base.BinaryClassName
 import org.objectweb.asm.tree.ClassNode
 import java.util.*
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 
 class EmptyResolver(override val name: String) : NamedResolver(name) {
 

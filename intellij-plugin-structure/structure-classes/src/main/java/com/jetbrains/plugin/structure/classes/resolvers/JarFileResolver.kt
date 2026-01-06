@@ -24,6 +24,7 @@ import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 
 @Deprecated("Replaced with LazyJarResolver", replaceWith = ReplaceWith("LazyJarResolver", "com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver"))
 class JarFileResolver(
@@ -46,7 +47,7 @@ class JarFileResolver(
     private const val SERVICE_PROVIDERS_PREFIX = "META-INF/services/"
   }
 
-  private val classes: MutableSet<String> = hashSetOf()
+  private val classes: MutableSet<BinaryClassName> = hashSetOf()
 
   private val packageSet = Packages()
 
@@ -121,10 +122,6 @@ class JarFileResolver(
   override val allBundleNameSet: ResourceBundleNameSet
     get() = ResourceBundleNameSet(bundleNames)
 
-  @Deprecated("Use 'allClassNames' property instead which is more efficient")
-  override val allClasses
-    get() = classes
-
   override val allClassNames
     get() = classes
 
@@ -144,31 +141,23 @@ class JarFileResolver(
     }
   }
 
-  @Deprecated("Use 'containsClass(BinaryClassName)' instead")
-  override fun containsClass(className: String) = className in classes
-
-  override fun containsClass(className: BinaryClassName) = containsClass(className.toString())
+  override fun containsClass(className: BinaryClassName) = className in classes
 
   override fun containsPackage(packageName: String) = packageName in packageSet
 
-  @Deprecated("Use 'resolveClass(BinaryClassName)' instead")
-  override fun resolveClass(className: String): ResolutionResult<ClassNode> {
+  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
     checkIsOpen()
     if (className !in classes) {
       return ResolutionResult.NotFound
     }
     return JarFileSystemsPool.perform(jarPath) { jarFs ->
-      val classPath = jarFs.getPath(className + CLASS_SUFFIX)
+      val classPath = jarFs.getPath(className.toString() + CLASS_SUFFIX)
       if (classPath.exists()) {
         readClass(className, classPath)
       } else {
         ResolutionResult.NotFound
       }
     }
-  }
-
-  override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> {
-    return resolveClass(className.toString())
   }
 
   override fun resolveExactPropertyResourceBundle(baseName: String, locale: Locale): ResolutionResult<PropertyResourceBundle> {
@@ -224,7 +213,7 @@ class JarFileResolver(
 
 fun buildJarOrZipFileResolvers(
   jarsOrZips: Iterable<Path>,
-  readMode: Resolver.ReadMode,
+  readMode: ReadMode,
   parentOrigin: FileOrigin
 ): List<Resolver> {
   val resolvers = arrayListOf<Resolver>()
