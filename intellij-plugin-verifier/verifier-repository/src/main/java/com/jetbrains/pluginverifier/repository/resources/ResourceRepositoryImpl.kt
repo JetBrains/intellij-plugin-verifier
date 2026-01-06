@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.repository.resources
@@ -197,7 +197,7 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
     try {
       val provideResult = try {
         fetchTask.get() //propagate InterruptedException
-      } catch (ce: CancellationException) {
+      } catch (_: CancellationException) {
         throw InterruptedException("Fetch task for $key has been cancelled")
       } catch (e: ExecutionException) {
         val cause = e.cause
@@ -228,7 +228,7 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
 
   private fun ProvideResult<R>.registerLockIfProvided(key: K) = when (this) {
     is ProvideResult.Provided<R> -> ResourceRepositoryResult.Found(registerLock(key))
-    is ProvideResult.NotFound<R> -> ResourceRepositoryResult.NotFound<R, W>(reason)
+    is ProvideResult.NotFound<R> -> ResourceRepositoryResult.NotFound(reason)
     is ProvideResult.Failed<R> -> ResourceRepositoryResult.Failed(reason, error)
   }
 
@@ -241,7 +241,9 @@ class ResourceRepositoryImpl<R, K, W : ResourceWeight<W>>(
   @Synchronized
   override fun cleanup() {
     if (evictionPolicy.isNecessary(resourcesRegistrar.totalWeight)) {
-      val availableResources = getAvailableResources()
+      val availableResources = resourcesRegistrar.entries.map { (key, resourceInfo) ->
+        AvailableResource(key, resourceInfo, statistics[key]!!, isLockedKey(key))
+      }
 
       val evictionInfo = EvictionInfo(resourcesRegistrar.totalWeight, availableResources)
       val resourcesForEviction = evictionPolicy.selectResourcesForEviction(evictionInfo)
