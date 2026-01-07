@@ -1,27 +1,19 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.jdk
 
 import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
-import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.InvalidClassFileException
-import com.jetbrains.plugin.structure.classes.resolvers.JdkFileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
-import com.jetbrains.plugin.structure.classes.resolvers.ResourceBundleNameSet
+import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.jar.Packages
 import org.objectweb.asm.tree.ClassNode
 import java.net.URI
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.StandardOpenOption
+import java.nio.file.*
 import java.util.*
+import java.util.function.Function
 import java.util.stream.Collectors
 
 /**
@@ -55,13 +47,14 @@ class JdkJImageResolver(jdkPath: Path, override val readMode: ReadMode) : Resolv
     nameSeparator = fileSystem.separator
     modulesPath = fileSystem.getPath("/modules")
 
+    val strings = mutableMapOf<String, String>()
     classNameToModuleName = Files.walk(modulesPath).use { stream ->
       stream
         .filter { p -> p.fileName.toString().endsWith(".class") }
         .collect(
           Collectors.toMap(
             { p -> getClassName(p) },
-            { p -> getModuleName(p) },
+            { p -> strings.computeIfAbsent(getModuleName(p), Function.identity()) },
             { one, _ -> one }
           )
         )
