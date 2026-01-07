@@ -1,16 +1,12 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.ide.Ide
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import org.jgrapht.Graph
@@ -266,8 +262,8 @@ private class DepGraph2ApiGraphConverter {
     vertexMissingDependencies: Map<DepId, Set<DepMissingVertex>>
   ): DependenciesGraph {
     val startNode = startVertex.toDependencyNode()
-    val vertices = graph.vertexSet().mapNotNull { it.toDependencyNode() }
-    val edges = graph.edgeSet().mapNotNull { edge ->
+    val vertices = graph.vertexSet().mapNotNullTo(LinkedHashSet()) { it.toDependencyNode() }
+    val edges = graph.edgeSet().mapNotNullTo(LinkedHashSet()) { edge ->
       val from = graph.getEdgeSource(edge).toDependencyNode()
       val to = graph.getEdgeTarget(edge).toDependencyNode()
       DependencyEdge(from, to, edge.dependency)

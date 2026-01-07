@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.dependencies
@@ -29,8 +29,8 @@ class DependenciesGraphProvider {
     return DependenciesGraph(verifiedPlugin, vertices, edges, missingDependencies)
   }
 
-  private fun DependencyTreeResolution.getTransitiveDependencyVertices(): List<DependencyNode> {
-    return transitiveDependencies.flatMap {
+  private fun DependencyTreeResolution.getTransitiveDependencyVertices(): Set<DependencyNode> {
+    return transitiveDependencies.flatMapTo(LinkedHashSet()) {
       when (it) {
         is Dependency.Module -> it.getVertices()
         is Dependency.Plugin -> setOf(DependencyNode(it.id, version = UNKNOWN_VERSION))
@@ -39,8 +39,8 @@ class DependenciesGraphProvider {
     }
   }
 
-  private fun DependencyTreeResolution.getEdges(): List<DependencyEdge> {
-    val edges = mutableListOf<DependencyEdge>()
+  private fun DependencyTreeResolution.getEdges(): Set<DependencyEdge> {
+    val edges = LinkedHashSet<DependencyEdge>()
     forEach { id, dependency ->
       edges += DependencyEdge(
         DependencyNode(id, UNKNOWN_VERSION).intern(),

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.output
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
@@ -36,8 +40,8 @@ open class BaseOutputPrintTest<T : ResultPrinter>: BaseOutputTest() {
 
   private val dependenciesGraph: DependenciesGraph = DependenciesGraph(
         verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
-        vertices = emptyList(),
-        edges = emptyList(),
+        vertices = emptySet(),
+        edges = emptySet(),
         missingDependencies = emptyMap())
 
   open fun `when plugin is compatible`(testRunner: VerifiedPluginHandler) {
@@ -70,8 +74,8 @@ open class BaseOutputPrintTest<T : ResultPrinter>: BaseOutputTest() {
 
     val dependenciesGraph = DependenciesGraph(
       verifiedPlugin = pluginDependency,
-      vertices = emptyList(),
-      edges = emptyList(),
+      vertices = emptySet(),
+      edges = emptySet(),
       missingDependencies = mapOf(pluginDependency to setOf(expectedDependency))
     )
 

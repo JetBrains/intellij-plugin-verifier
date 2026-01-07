@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.tests.dependencies
 
 import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
@@ -77,8 +81,8 @@ class DependenciesGraphPrettyPrinterTest {
 
     edgesDescriptions.forEach { edgeDescription -> parseDescription(edgeDescription) }
 
-    val vertices = missingDependencies.keys.map { createDependencyNode(it) }
-    val edges = dependencies.flatMap { (fromAndTo, deps) ->
+    val vertices = missingDependencies.keys.mapTo(LinkedHashSet()) { createDependencyNode(it) }
+    val edges = dependencies.flatMapTo(LinkedHashSet()) { (fromAndTo, deps) ->
       deps.map {
         DependencyEdge(createDependencyNode(fromAndTo.first), createDependencyNode(fromAndTo.second), it)
       }
