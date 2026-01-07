@@ -1,25 +1,14 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.BinaryClassName
 import com.jetbrains.plugin.structure.base.utils.exists
-import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
-import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
-import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
-import com.jetbrains.plugin.structure.classes.resolvers.NamedResolver
-import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode.FULL
-import com.jetbrains.plugin.structure.classes.resolvers.SimpleCompositeResolver
-import com.jetbrains.plugin.structure.classes.resolvers.asResolver
-import com.jetbrains.plugin.structure.ide.BuildTxtIdeVersionProvider
-import com.jetbrains.plugin.structure.ide.Ide
-import com.jetbrains.plugin.structure.ide.IdeVersionResolution
-import com.jetbrains.plugin.structure.ide.InvalidIdeException
-import com.jetbrains.plugin.structure.ide.ProductInfoAware
+import com.jetbrains.plugin.structure.ide.*
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin.IdeLibDirectory
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
@@ -279,8 +268,8 @@ class ProductInfoClassResolver private constructor(
   private class LayoutComponentResolver(
     val kind: String,
     name: String,
-    override val resolvers: List<LazyJarResolver>,
+    resolvers: List<LazyJarResolver>,
     readMode: ReadMode,
-  ) : SimpleCompositeResolver(resolvers, readMode, name)
+  ) : SimpleCompositeResolver<LazyJarResolver>(resolvers, readMode, name)
 }
 
