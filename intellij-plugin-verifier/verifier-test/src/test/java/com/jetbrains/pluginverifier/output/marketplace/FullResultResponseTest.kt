@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.output.marketplace
 
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
@@ -12,10 +16,10 @@ import com.jetbrains.pluginverifier.output.PLUGIN_ID
 import com.jetbrains.pluginverifier.output.PLUGIN_VERSION
 import com.jetbrains.pluginverifier.response.VerificationResultTypeDto
 import com.jetbrains.pluginverifier.response.prepareResponse
-import org.junit.Test
-import kotlin.random.Random
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Test
+import kotlin.random.Random
 
 class FullResultResponseTest: BaseOutputTest() {
 
@@ -24,8 +28,8 @@ class FullResultResponseTest: BaseOutputTest() {
     private val verificationTarget = PluginVerificationTarget.IDE(ideVersion, JdkVersion("11", null))
     private val dependenciesGraph: DependenciesGraph = DependenciesGraph(
         verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
-        vertices = emptyList(),
-        edges = emptyList(),
+        vertices = emptySet(),
+        edges = emptySet(),
         missingDependencies = emptyMap())
 
     @Test
