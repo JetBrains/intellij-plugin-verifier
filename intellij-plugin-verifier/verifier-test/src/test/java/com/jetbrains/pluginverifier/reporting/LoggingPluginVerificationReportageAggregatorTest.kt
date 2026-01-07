@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.reporting
 
 import com.jetbrains.plugin.structure.base.problems.InvalidPluginIDProblem
@@ -43,8 +47,8 @@ class LoggingPluginVerificationReportageAggregatorTest {
   fun `verification results are aggregated`() {
     val dependenciesGraph = DependenciesGraph(
       verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
-      vertices = emptyList(),
-      edges = emptyList(),
+      vertices = emptySet(),
+      edges = emptySet(),
       missingDependencies = emptyMap()
     )
     val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)
@@ -74,8 +78,8 @@ class LoggingPluginVerificationReportageAggregatorTest {
   fun `verification results are emitted from multiple plugins`() {
     val dependenciesGraph = DependenciesGraph(
       verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
-      vertices = emptyList(),
-      edges = emptyList(),
+      vertices = emptySet(),
+      edges = emptySet(),
       missingDependencies = emptyMap()
     )
     val verificationResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)
@@ -83,8 +87,8 @@ class LoggingPluginVerificationReportageAggregatorTest {
 
     val anotherDependenciesGraph = DependenciesGraph(
       verifiedPlugin = DependencyNode(ANOTHER_PLUGIN_ID, ANOTHER_PLUGIN_VERSION),
-      vertices = emptyList(),
-      edges = emptyList(),
+      vertices = emptySet(),
+      edges = emptySet(),
       missingDependencies = emptyMap()
     )
     val anotherVerificationResult = PluginVerificationResult.Verified(anotherPluginInfo, anotherVerificationTarget, anotherDependenciesGraph)

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.tests.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
@@ -31,8 +35,8 @@ class DependenciesGraphCycleTest {
 
     val dependenciesGraph = DependenciesGraph(
       a,
-      listOf(a, b, c, d),
-      listOf(
+      setOf(a, b, c, d),
+      setOf(
         DependencyEdge(a, b, PluginDependencyImpl("b", false, false)),
         DependencyEdge(b, c, PluginDependencyImpl("c", false, false)),
         DependencyEdge(c, b, PluginDependencyImpl("b", false, false)),
