@@ -15,6 +15,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.time.Clock
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.Condition
@@ -67,16 +68,31 @@ class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
     val info: ResourceInfo<R, W>,
     val statistic: UsageStatistic,
   ) : StorageStatus {
-    internal val locks = HashSet<ResourceLockImpl<R, K, W>>()
-
-    @Volatile
-    internal var removed = false // guarded by `locks`
+    // `-1` means Stored was removed from the storage. One should re-read it.
+    internal val locks = AtomicInteger()
 
     /**
      * Use identity equals
      */
     override fun equals(other: Any?): Boolean {
       return this === other
+    }
+
+    fun acquireLock(): Boolean {
+      while (true) {
+        val count = locks.get()
+        if (count == -1) {
+          // was marked as removed, can no longer add any lock
+          return false
+        } else {
+          // implies that `storage[key] === value`, otherwise `value.locks` would be `-1`
+          if (locks.compareAndSet(count, count + 1)) {
+            // successfully acquired the lock
+            return true
+          }
+          // the count of locks was changed, re-read
+        }
+      }
     }
   }
 
@@ -101,7 +117,7 @@ class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
     val value = storage[key] ?: return false
     when (value) {
       is Fetching<*> -> return true
-      is Stored<*, *, *> -> synchronized(value.locks) { return value.locks.isNotEmpty() }
+      is Stored<*, *, *> -> return value.locks.get() > 0
     }
   }
 
@@ -117,18 +133,17 @@ class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
       }
 
       is Stored<*, *, *> -> {
-        val removed = synchronized(value.locks) {
-          if (value.locks.isNotEmpty()) {
-            logger.debugMaybe { "remove($key): the resource is locked, enqueue for removing later" }
-            removeQueue.add(key to value)
-            return false
-          }
-          logger.debugMaybe { "remove($key): the resource is not locked, deleting now" }
-          value.removed = true
-          storage.remove(key, value)
+        val markAsRemoved = value.locks.compareAndExchange(0, -1)
+        if (markAsRemoved > 0) {
+          // still have live locks
+          logger.debugMaybe { "remove($key): the resource is locked, enqueue for removing later" }
+          removeQueue.add(key to value)
+          return false
         }
+        val removedFromStorage = storage.remove(key, value)
 
-        if (removed) {
+        if (removedFromStorage) {
+          logger.debugMaybe { "remove($key): the resource is not locked, deleting now" }
           @Suppress("UNCHECKED_CAST")
           val info = value.info as ResourceInfo<*, W>
           totalWeight.accumulateAndGet(info.weight) { acc, weight -> acc - weight }
@@ -159,9 +174,9 @@ class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
     val value = lock.value
     val pair = key to value
 
-    val hasLocks = synchronized(value.locks) {
-      value.locks.remove(lock)
-      value.locks.isNotEmpty()
+    val hasLocks = let {
+      val value = value.locks.decrementAndGet()
+      value > 0
     }
 
     if (hasLocks) {
@@ -173,17 +188,17 @@ class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
     // Probably should be removed since no more locks left
     if (removeQueue.remove(pair)) {
       // was in the queue, remove it from the storage if there are no locks
-      val removed = synchronized(value.locks) {
-        if (value.locks.isNotEmpty()) {
-          // someone acquired a lock while we were removing the pair from the queue, put it back
-          removeQueue.add(pair)
-          return
-        }
-        value.removed = true
-        storage.remove(key, value)
+      val markAsRemoved = value.locks.compareAndExchange(0, -1)
+      if (markAsRemoved > 0) {
+        // someone acquired a lock while we were removing the pair from the queue, put it back
+        logger.debugMaybe { "remove($key): the resource is locked, enqueue for removing later" }
+        removeQueue.add(pair)
+        return
       }
+      val removed = storage.remove(key, value)
 
       if (removed) {
+        logger.debugMaybe { "remove($key): the resource is not locked, deleting now" }
         totalWeight.accumulateAndGet(value.info.weight) { acc, weight -> acc - weight }
         safeDispose(key, value.info.resource)
       } else {
@@ -219,19 +234,11 @@ class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
         val lock = ResourceLockImpl(now, key, lockId, this, value as Stored<R, K, W>)
         // attempt to lock if `value` is not removed yet
 
-        val removed = synchronized(value.locks) {
-          if (value.removed) {
-            // was marked as removed, can no longer add any lock, re-run the whole method to read new association from storage
-          } else {
-            // implies that `storage[key] === value`, otherwise `value.removed` would be `true.`
-            value.statistic.access(now)
-            value.locks.add(lock)
-          }
-          value.removed
-        }
-        if (removed) {
+        if (!value.acquireLock()) {
+          // was marked as removed, can no longer add any lock, re-run the whole method to read new association from storage
           continue
         }
+        value.statistic.access(now)
         logger.debugMaybe { "get($key): the resource is available and a lock is registered $lock" }
         return ResourceRepositoryResult.Found(lock)
       }
@@ -313,7 +320,7 @@ class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
       @Suppress("UNCHECKED_CAST")
       val value = it.value as Stored<R, K, W>
       // copying statistics since it could be used in sorting and it should be unmodifiable
-      val (isLocked, stats) = synchronized(value.locks) { value.locks.isNotEmpty() to value.statistic.copy() }
+      val (isLocked, stats) = (value.locks.get() > 0) to value.statistic.copy()
       AvailableResource(it.key, value.info, stats, isLocked)
     }
   }
