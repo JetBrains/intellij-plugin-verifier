@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.BinaryClassName
@@ -11,11 +15,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
-import com.jetbrains.plugin.structure.intellij.plugin.Classpath
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
@@ -188,16 +188,18 @@ class CachingPluginDependencyResolverProviderTest {
       assertEquals(corePluginCacheHit, hitCount())
       /*
         1) "com.example.somePlugin" (plugin itself),
-        2) "com.intellij"
-        3) "com.intellij" sole 'classpath' entry
-        4) "com.intellij.modules.json"
-        5) "com.intellij.modules.json" sole 'classpath' entry
+        2) "com.intellij" unlocked
+        3) "com.intellij" under lock
+        4) "com.intellij" sole 'classpath' entry ("com.intellij/product.jar")
+        5) "com.intellij.modules.json" unlocked
+        6) "com.intellij.modules.json" under lock
+        7) "com.intellij.modules.json" sole 'classpath' entry ("com.intellij.modules.json/json.jar")
         The modules of "com.intellij" are not considered to be cache misses as they are conflated with the
         "com.intellij" plugin.
         - "com.intellij.modules.platform" as module of "com.intellij"
         - "com.intellij.modules.lang" as a module of "com.intellij"
        */
-      assertEquals(5,  missCount())
+      assertEquals(7,  missCount())
     }
     listOf(
       "com.example.somePlugin",
@@ -211,6 +213,12 @@ class CachingPluginDependencyResolverProviderTest {
         assertTrue("Resolver must cache $it", resolverProvider.contains(it))
       }
 
+    with(resolverProvider.getStats()) {
+      assertNotNull(this); this!!
+      // 7 elements from several lines above checking `resolverProvider.contains`
+      assertEquals(7, hitCount())
+    }
+
     with(resolver) {
       assertEquals(expectedIdeaCorePluginExplicitPackages + expectedJsonPluginExplicitPackages, packages)
       assertEquals(expectedIdeaCoreClasses + expectedJsonPluginClasses, allClassNames)
@@ -221,13 +229,17 @@ class CachingPluginDependencyResolverProviderTest {
     with(resolverProvider.getStats()) {
       assertNotNull(this); this!!
       /*
-        All seven (7) modules and plugins are in the cache. Add one for Java itself.
+        Existing 7 checks from the previous half of the test, plus one for "com.intellij"
        */
       assertEquals(8, hitCount())
       /*
-        All seven (7) modules and plugins are in the cache. Add one for Java itself.
+        Existing 7 from the previous half of the test, plus:
+        8) "com.example.BetterJava" (plugin itself)
+        9) "com.intellij.java" unlocked
+        10) "com.intellij.java" under lock
+        11) "com.intellij.java" sole 'classpath' entry ("com.intellij.java/java-impl.jar")
        */
-      assertEquals(8, missCount())
+      assertEquals(11, missCount())
     }
 
     with(pluginDependingOnJavaResolver) {
