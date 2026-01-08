@@ -1,38 +1,19 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.stats.CacheStats
-import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
-import com.jetbrains.plugin.structure.classes.resolvers.DelegatingNamedResolver
-import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
-import com.jetbrains.plugin.structure.classes.resolvers.EmptyResolver
-import com.jetbrains.plugin.structure.classes.resolvers.LazyCompositeResolver
-import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
-import com.jetbrains.plugin.structure.classes.resolvers.NamedResolver
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
-import com.jetbrains.plugin.structure.classes.resolvers.UNNAMED_RESOLVER
-import com.jetbrains.plugin.structure.classes.resolvers.asResolver
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
-import com.jetbrains.plugin.structure.intellij.plugin.DependenciesModifier
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
-import com.jetbrains.plugin.structure.intellij.plugin.PassThruDependenciesModifier
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdeModulePredicate
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.NegativeIdeModulePredicate
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginId
-import java.util.*
+import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.*
 
 /**
- * See also cache size in [com.jetbrains.plugin.structure.classes.resolvers.CacheResolver].
+ * See also cache size in [CacheResolver].
  */
 private const val DEFAULT_CACHE_SIZE = 1024L
 
@@ -50,7 +31,7 @@ class CachingPluginDependencyResolverProvider(
   private val cache = Caffeine.newBuilder()
     .maximumSize(DEFAULT_CACHE_SIZE)
     .recordStats()
-    .build<PluginId, Resolver>()
+    .build<String, Resolver>()
 
   /**
    * Provide a unified resolver for all transitive dependencies of this plugin.
@@ -86,14 +67,22 @@ class CachingPluginDependencyResolverProvider(
       .filterNot { dep -> dep.pluginId == plugin.id }
 
     val resolvers = transitiveDependencies
-      .mapNotNull { dep -> dep.pluginId?.let { it to dep } }
+      .mapNotNull { dep -> dep.pluginId?.let { it.intern() to dep } }
       .distinctBy { it.first }
       .associate { (id, dep) ->
         val dependencyResolver = cache.getIfPresent(id)
         if (dependencyResolver != null) {
-          id to dependencyResolver
-        } else {
-          id to dep.createResolverTree()
+          return@associate id to dependencyResolver
+        }
+        // it's OK to synchronize on plugin id (String) since we've interned it.
+        // Synchronizing to prevent creating different resolvers for the same plugin in `createResolverTree`
+        synchronized(id) {
+          val dependencyResolver = cache.getIfPresent(id)
+          if (dependencyResolver != null) {
+            id to dependencyResolver
+          } else {
+            id to dep.createResolverTree()
+          }
         }
       }
     return DependencyTreeAwareResolver.of(plugin.id ?: UNNAMED_RESOLVER, resolvers, dependencyTreeResolution)
@@ -130,7 +119,7 @@ class CachingPluginDependencyResolverProvider(
     getFromSecondaryCache(this)?.let { pluginResolver ->
       val definedModuleResolvers = definedModules.map { moduleId ->
         getFromSecondaryCache(moduleId) ?: pluginResolver //FIXME document fallback pluginResolver when wrong product-info.json
-      }
+      }.unique()
 
       val resultResolver = if (definedModuleResolvers.isNotEmpty()) {
         composeUniqueResolvers(newResolverName(), pluginResolver, definedModuleResolvers)
@@ -148,13 +137,16 @@ class CachingPluginDependencyResolverProvider(
       val origin = IdeFileOrigin.BundledPlugin(cpEntry.path, idePlugin = this)
       val cpEntryResolverName = resolverPrefix + cpEntry.path.fileName.toString()
       val cpEntryResolver = cache.getIfPresent(cpEntryResolverName)
-      if (cpEntryResolver != null) {
-        cpEntryResolver as? NamedResolver ?: CompositeResolver.create(listOf(cpEntryResolver), cpEntryResolverName)
+      if (cpEntryResolver is NamedResolver) {
+        return@map cpEntryResolver
+      }
+      (if (cpEntryResolver != null) {
+        CompositeResolver.create(listOf(cpEntryResolver), cpEntryResolverName)
       } else {
         getFromSecondaryCache(cpEntryResolverName)
-          ?: LazyJarResolver(cpEntry.path, readMode = ReadMode.SIGNATURES, origin, cpEntryResolverName).also {
-            resolversToCache += it
-          }
+          ?: LazyJarResolver(cpEntry.path, readMode = ReadMode.SIGNATURES, origin, cpEntryResolverName)
+      }).also {
+        resolversToCache += it
       }
     }
     definedModules.forEach { moduleName ->
@@ -199,10 +191,11 @@ class CachingPluginDependencyResolverProvider(
     }
 
   private fun composeUniqueResolvers(resolverName: String, resolver: NamedResolver, moreResolvers: Collection<NamedResolver>): NamedResolver {
-    val result = IdentityHashMap<NamedResolver, Unit>()
-    result[resolver] = Unit
-    moreResolvers.forEach { result[it] = Unit }
-    return CompositeResolver.create(result.keys, resolverName)
+    val resolvers = (listOf(resolver) + moreResolvers).unique()
+    if (resolvers.size == 1) {
+      return resolver
+    }
+    return CompositeResolver.create(resolvers, resolverName)
   }
 
   class DependencyTreeAwareResolver private constructor(
