@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier
@@ -59,7 +59,7 @@ class PluginVerifier(
 
   private val structureProblemsResolver = KotlinCompatibilityModeProblemResolver()
 
-  private val extractedJsonPluginAnalyzer = ExtractedJsonPluginAnalyzer()
+  private val extractedJsonPluginAnalyzer = ExtractedJsonPluginAnalyzer
 
   fun loadPluginAndVerify(): PluginVerificationResult {
     pluginDetailsCache.getPluginDetailsCacheEntry(verificationDescriptor.checkedPlugin).use { cacheEntry ->
