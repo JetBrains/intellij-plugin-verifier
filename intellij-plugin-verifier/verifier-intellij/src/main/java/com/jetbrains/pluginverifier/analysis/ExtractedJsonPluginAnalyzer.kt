@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2024 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.analysis
@@ -18,7 +18,7 @@ private const val JSON_PLUGIN_ID = "com.intellij.modules.json"
 
 private const val JSON_PLUGIN_EXTRACTED_REASON = "JSON support has been extracted to a separate plugin."
 
-class ExtractedJsonPluginAnalyzer {
+object ExtractedJsonPluginAnalyzer {
   private val removedPackages = listOf(
     "com.intellij.json",
     "com.intellij.json.codeinsight",
