@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.results.problems
 
 import com.jetbrains.plugin.structure.intellij.problems.UndeclaredKotlinK2CompatibilityMode
@@ -18,7 +22,9 @@ import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
  from the [PluginVerificationContext.pluginStructureWarnings].
  */
 class KotlinCompatibilityModeProblemResolver : CompatibilityProblemResolver {
-  private val sinceIdeVersion = IdeVersion.createIdeVersion("242.21829.142")
+  companion object {
+    private val sinceIdeVersion = IdeVersion.createIdeVersion("242.21829.142")
+  }
 
   /**
    * Remaps any [UndeclaredKotlinK2CompatibilityMode] structure warning to an [UndeclaredKotlinK2CompatibilityModeWarning]
