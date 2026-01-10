@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
@@ -12,12 +12,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.resolution.BundledPluginDependencyFinder
-import com.jetbrains.pluginverifier.dependencies.resolution.CompositeDependencyFinder
-import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
-import com.jetbrains.pluginverifier.dependencies.resolution.LastCompatibleVersionSelector
-import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
-import com.jetbrains.pluginverifier.dependencies.resolution.RepositoryDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.*
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -128,19 +123,21 @@ class CheckTrunkApiParamsBuilder(
       }
     }
 
-    if (releasePluginsToCheck.isNotEmpty()) {
+    releasePluginsToCheck.takeIf { it.isNotEmpty() }?.let {
       reportage.logVerificationStage(
         "The following updates will be checked with both ${trunkIdeDescriptor.ideVersion} and #${releaseIdeDescriptor.ideVersion}:\n" +
-          releasePluginsToCheck
-            .listPresentationInColumns(4, 60)
+          if (opts.needTeamCityLog) it.joinToString("\n\t", prefix = "\t")
+          else it.listPresentationInColumns(4, 60)
       )
     }
 
     val trunkLatestPluginsToCheck = latestCompatibleVersions.filter { trunkPluginsSet.shouldVerifyPlugin(it) }
-    if (trunkLatestPluginsToCheck.isNotEmpty()) {
+
+    trunkLatestPluginsToCheck.takeIf { it.isNotEmpty() }?.let {
       reportage.logVerificationStage(
         "The following updates will be checked with ${trunkIdeDescriptor.ideVersion} only for comparison with the release versions of the same plugins:\n" +
-          trunkLatestPluginsToCheck.listPresentationInColumns(4, 60)
+          if (opts.needTeamCityLog) it.joinToString("\n\t", prefix = "\t")
+          else it.listPresentationInColumns(4, 60)
       )
     }
 
