@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.runSeveralVerifiers
 import com.jetbrains.pluginverifier.tasks.Task
+import com.jetbrains.pluginverifier.tasks.sortWithBigPluginsInFront
 import com.jetbrains.pluginverifier.tasks.twoTargets.TwoTargetsVerificationResults
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 
@@ -45,11 +46,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task {
         )
       }
 
-      /*
-       * Sort verification tasks to increase chances that two verifications of the same plugin
-       * would be executed shortly, and therefore caches, such as plugin details cache, would be warmed-up.
-       */
-      val sortedVerifiers = verifiers.sortedBy { it.verificationDescriptor.checkedPlugin.pluginId }
+      val sortedVerifiers = verifiers.sortWithBigPluginsInFront()
       val results = runSeveralVerifiers(reportage, sortedVerifiers)
 
       return TwoTargetsVerificationResults(
