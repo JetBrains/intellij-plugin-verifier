@@ -201,7 +201,7 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
   }
 
   private fun ignore(plugin: IdePlugin, dependency: PluginDependency): Boolean {
-    return dependency.isModule && plugin.definedModules.contains(dependency.id)
+    return dependency.isModule && plugin.hasDefinedModuleWithId(dependency.id)
   }
 
   private fun missingId(plugin: IdePlugin): String {

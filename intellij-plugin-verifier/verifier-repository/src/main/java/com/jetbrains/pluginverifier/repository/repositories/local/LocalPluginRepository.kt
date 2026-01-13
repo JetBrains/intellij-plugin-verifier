@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.repository.repositories.local
@@ -40,7 +40,7 @@ class LocalPluginRepository(
 
   override fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?) =
     plugins.filter {
-      moduleId in it.definedModules && (ideVersion == null || compatibilityPredicate.isCompatible(
+      it.idePlugin.hasDefinedModuleWithId(moduleId) && (ideVersion == null || compatibilityPredicate.isCompatible(
         it,
         ideVersion
       ))
