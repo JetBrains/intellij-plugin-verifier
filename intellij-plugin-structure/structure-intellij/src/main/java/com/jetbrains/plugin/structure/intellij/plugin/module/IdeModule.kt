@@ -1,23 +1,14 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.plugin.structure.intellij.plugin.module
 
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
-import com.jetbrains.plugin.structure.intellij.plugin.Classpath
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.Classpath.Companion.EMPTY
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
-import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
-import com.jetbrains.plugin.structure.intellij.plugin.Module
-import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleVisibility
-import com.jetbrains.plugin.structure.intellij.plugin.MutableIdePluginContentDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginMainModuleDependency
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -62,6 +53,9 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
 
   @Deprecated("use either pluginAliases or contentModules")
   override val definedModules: Set<String> get() = _definedModules + pluginAliases + setOf(pluginId)
+
+  override fun hasDefinedModuleWithId(id: String): Boolean =
+    _definedModules.contains(id) || pluginAliases.contains(id) || pluginId == id
 
   override val optionalDescriptors = emptyList<OptionalPluginDescriptor>()
   override val modulesDescriptors = emptyList<ModuleDescriptor>()

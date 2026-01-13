@@ -98,7 +98,7 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
 
     val existingVertex = graph.vertexSet().find {
       if (depId.isModule) {
-        it.plugin.definedModules.contains(depId.id)
+        it.plugin.hasDefinedModuleWithId(depId.id)
       } else {
         it.plugin.pluginId == depId.id
       }

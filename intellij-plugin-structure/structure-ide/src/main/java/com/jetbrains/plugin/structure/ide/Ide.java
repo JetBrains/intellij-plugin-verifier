@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.ide;
@@ -75,7 +75,7 @@ public abstract class Ide implements PluginProvider {
   @Override
   final public IdePlugin findPluginByModule(@NotNull String moduleId) {
     for (IdePlugin plugin : getBundledPlugins()) {
-      if (plugin.getDefinedModules().contains(moduleId)) {
+      if (plugin.hasDefinedModuleWithId(moduleId)) {
         return plugin;
       }
     }
@@ -94,7 +94,7 @@ public abstract class Ide implements PluginProvider {
       String id = getPluginId(plugin);
       if (Objects.equals(id, pluginIdOrModuleId)) {
         return new PluginProviderResult(PLUGIN, plugin);
-      } else if (plugin.getDefinedModules().contains(pluginIdOrModuleId)) {
+      } else if (plugin.hasDefinedModuleWithId(pluginIdOrModuleId)) {
         return new PluginProviderResult(MODULE, plugin);
       }
     }
