@@ -13,6 +13,10 @@ class InternalMethodOverridingProcessor(private val internalApiUsageRegistrar: I
   override fun processMethodOverriding(method: Method, overriddenMethod: Method, context: VerificationContext) {
     if (overriddenMethod.isInternalApi(context.classResolver, method.location)
       && overriddenMethod.hasDifferentOrigin(method)) {
+      // As of Kotlin 2.2, the Kotlin compiler generates a stub method on interface implementations
+      // that only calls the corresponding superclass/interface's method. These stub methods are not
+      // really differentiable from when a user would manually do such an override, so we can get
+      // false positives in this case.
       internalApiUsageRegistrar.registerInternalApiUsage(
         InternalMethodOverridden(
           overriddenMethod.location,

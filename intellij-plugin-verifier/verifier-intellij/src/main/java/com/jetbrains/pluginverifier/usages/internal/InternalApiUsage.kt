@@ -6,7 +6,6 @@ package com.jetbrains.pluginverifier.usages.internal
 
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.pluginverifier.results.location.Location
-import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.usages.ApiUsage
 import com.jetbrains.pluginverifier.usages.annotation.AnnotationResolver
 import com.jetbrains.pluginverifier.usages.annotation.isMemberEffectivelyAnnotatedWith
@@ -23,12 +22,16 @@ fun ClassFileMember.isInternalApi(resolver: Resolver, location: Location): Boole
     .any { isMemberEffectivelyAnnotatedWith(it, resolver, location) }
 
 private fun isIgnoredUsage(resolvedMember: ClassFileMember, usageLocation: Location): Boolean
-  = ignoredAPIs.any { predicate -> predicate(resolvedMember, usageLocation) }
+  = ignoredApis.any { predicate -> predicate(resolvedMember, usageLocation) }
 
 typealias IgnoredUsagePredicate = (ClassFileMember, Location) -> Boolean
 
-private val ignoredAPIs: List<IgnoredUsagePredicate> = listOf(
-  { member, location -> (member.containingClassFile).name.endsWith("\$DefaultImpls")}
+private val ignoredApis: List<IgnoredUsagePredicate> = listOf(
+  // Kotlin interface default methods may be implemented via a generated inner class `DefaultImpls`
+  // (depending on `-Xjvm-default` mode). Implementations then contain overrides that delegate to
+  // `DefaultImpls` static methods, and since `DefaultImpls` inherits @Internal this can trigger
+  // false-positive internal-usage warnings.
+  { member, _ -> (member.containingClassFile).name.endsWith("\$DefaultImpls")}
 )
 
 private val internalApiStatusResolver = AnnotationResolver("org/jetbrains/annotations/ApiStatus\$Internal")
