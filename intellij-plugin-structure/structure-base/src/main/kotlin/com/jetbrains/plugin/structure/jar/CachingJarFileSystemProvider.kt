@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.jar
@@ -62,8 +62,7 @@ class CachingJarFileSystemProvider(
 
     var fs = fsCache.getIfPresent(key)
     if (fs != null)  {
-      if (fs.isOpen) {
-        fs.increment(expectedClients)
+      if (fs.increment(expectedClients)) {
         logReusedFs(key)
       } else {
         val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
