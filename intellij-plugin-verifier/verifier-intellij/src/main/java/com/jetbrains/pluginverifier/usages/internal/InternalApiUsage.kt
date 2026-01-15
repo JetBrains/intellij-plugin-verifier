@@ -17,9 +17,22 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 abstract class InternalApiUsage : ApiUsage()
 
 fun ClassFileMember.isInternalApi(resolver: Resolver, location: Location): Boolean =
-  isMemberEffectivelyAnnotatedWith(internalApiStatusResolver, resolver, location) ||
-    isMemberEffectivelyAnnotatedWith(intellijInternalApiResolver, resolver, location)
+  !isIgnoredUsage(this, location)
+    && listOf(internalApiStatusResolver, intellijInternalApiResolver)
+    .any { isMemberEffectivelyAnnotatedWith(it, resolver, location) }
 
+private fun isIgnoredUsage(resolvedMember: ClassFileMember, usageLocation: Location): Boolean
+  = ignoredApis.any { predicate -> predicate(resolvedMember, usageLocation) }
+
+typealias IgnoredUsagePredicate = (ClassFileMember, Location) -> Boolean
+
+private val ignoredApis: List<IgnoredUsagePredicate> = listOf(
+  // Kotlin interface default methods may be implemented via a generated inner class `DefaultImpls`
+  // (depending on `-Xjvm-default` mode). Implementations then contain overrides that delegate to
+  // `DefaultImpls` static methods, and since `DefaultImpls` inherits @Internal this can trigger
+  // false-positive internal-usage warnings.
+  { member, _ -> (member.containingClassFile).name.endsWith("\$DefaultImpls")}
+)
 
 private val internalApiStatusResolver = AnnotationResolver("org/jetbrains/annotations/ApiStatus\$Internal")
 private val intellijInternalApiResolver = AnnotationResolver("com/intellij/openapi/util/IntellijInternalApi")
