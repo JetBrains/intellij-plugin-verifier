@@ -113,8 +113,8 @@ class Jar(
   fun processAllClasses(processor: (String, Path) -> Boolean): Boolean {
     return getFileSystem().use { _ ->
       classesInJar.all { (className, classFilePath) ->
-        getFileSystem().use { classFS ->
-          val nested = classFS.getPath(classFilePath.toString())
+        getFileSystem().use { classFs ->
+          val nested = classFs.getPath(classFilePath.toString())
           if (nested.isFile) {
             processor(className.toString(), nested)
           } else {
