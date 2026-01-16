@@ -48,6 +48,19 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
 
   private var zipFileHolderRef: Reference<ZipFileHolder>? = null
 
+  /**
+   * Either opens new `ZipFile` or reuses existing one stored under [reference][zipFileHolderRef] (WeakReference or SoftReference).
+   * `ZipFileHolder` used to perform `ZipFile` closing once it's no longer reachable from GC roots.
+   *
+   * In this method [reference][zipFileHolderRef] is accessed with synchronization to ensure we won't create more than one ZipFileHolder.
+   *
+   * Three states are possible:
+   * 1. Reference is null, no `ZipFileHolder` is created yet
+   * 2. Reference is not null, but `ZipFileHolder` is null, which means that `ZipFileHolder` was garbage collected
+   * 3. Reference and `ZipFileHolder` are not null, `ZipFileHolder` is still valid
+   *
+   * In the case of the first two, we create a new `ZipFile`, `ZipFileHolder` and store it under [reference][zipFileHolderRef], so it becomes state three.
+   */
   @Throws(ZipException::class, IOException::class)
   private fun getActiveHolder(): Pair<ZipFileHolder, Reference<ZipFileHolder>> {
     val (holder: ZipFileHolder?, ref: Reference<ZipFileHolder>?) = synchronized(this) {
@@ -86,7 +99,10 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
     return try {
       val (holder, ref) = getActiveHolder()
       val result = block.invoke(holder.zipFile)
-      // Tricks to keep both ZipFileHolder and reference alive, so it won't be garbage collected
+
+      //region Tricks to keep both ZipFileHolder and reference alive, so it won't be garbage collected
+      // It's OK to access zipFileHolderRef without synchronization here.
+      // Since `ref` and `holder` are accessible, `zipFileHolderRef` cannot change
       if (ref !== zipFileHolderRef) {
         throw IllegalStateException("Reference to ZipFileHolder was changed mid-execution")
       }
@@ -94,6 +110,8 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
       if (holder2 !== holder) {
         throw IllegalStateException("ZipFileHolder was changed mid-execution")
       }
+      //endregion
+
       result
     } catch (e: ZipException) {
       throw MalformedZipArchiveException(zipFile, e)
@@ -103,6 +121,10 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
   }
 }
 
+/**
+ * Holder for ZipFile. Although it implements AutoCloseable, we don't use that.
+ * Once there are no more references to ZipFileHolder, ZipFile will be closed by Cleaner
+ */
 private class ZipFileHolder(zipFile: ZipFile) : AutoCloseable {
   private val state: State = State(zipFile)
   private val cleanable: Cleaner.Cleanable = CLEANER.register(this, state)
