@@ -86,6 +86,8 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) = true
 
+  override fun toString(): String = "module: $pluginId"
+
   companion object {
     @Throws(IllegalArgumentException::class)
     fun clone(plugin: IdePlugin, pluginId: String, classpath: Classpath): IdeModule {
