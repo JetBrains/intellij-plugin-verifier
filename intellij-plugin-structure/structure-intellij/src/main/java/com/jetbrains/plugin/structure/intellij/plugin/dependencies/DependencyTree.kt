@@ -77,16 +77,21 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
   private fun getDependencyGraph(plugin: IdePlugin, context: ResolutionContext): DiGraph<PluginId, Dependency> {
     val graph = DiGraph<PluginId, Dependency>()
     val missingDependencies = MissingDependencies()
-    getDependencyGraph(plugin, graph, resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1,
-      missingDependencies, context,
-      plugin.id
-      )
+    getDependencyGraph(
+      plugin = plugin,
+      graph = graph,
+      visitedPlugins = LinkedHashSet(),
+      resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1,
+      missingDependencies = missingDependencies, context = context,
+      artifactId = plugin.id,
+    )
     return graph
   }
 
   private fun getDependencyGraph(
     plugin: IdePlugin,
     graph: DiGraph<PluginId, Dependency>,
+    visitedPlugins: MutableSet<IdePlugin>,
     resolutionDepth: Int,
     dependencyIndex: Int,
     parentDependencyIndex: Int,
@@ -95,6 +100,10 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     artifactId: PluginId?
   ): Unit =
     with(plugin) {
+      if (!visitedPlugins.add(plugin)) {
+        // Already visited and resolved/resolving dependencies, recursive SOE prevention
+        return@with
+      }
       val dependencies = context.dependenciesModifier.apply(this, pluginProvider)
       val pluginId = artifactId ?: pluginId ?: return@with
       val number = if (dependencyIndex < 0) "" else "" + (dependencyIndex + 1) + ") "
@@ -127,6 +136,7 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
                   getDependencyGraph(
                     dependencyPlugin.plugin,
                     graph,
+                    visitedPlugins,
                     resolutionDepth + 1,
                     i,
                     dependencyIndex,
