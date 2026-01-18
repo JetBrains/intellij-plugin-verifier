@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.ide
@@ -18,7 +18,7 @@ class PluginQueryMatcher {
       PluginProvision.Found(plugin, NAME)
     } else if (query.searchContentModuleId() && plugin.contentModules.any { it.name == identifier }) {
       PluginProvision.Found(plugin, CONTENT_MODULE_ID)
-    } else if (query.searchPluginAliases() && plugin.definedModules.contains(identifier)) {
+    } else if (query.searchPluginAliases() && plugin.hasDefinedModuleWithId(identifier)) {
       PluginProvision.Found(plugin, ALIAS)
     } else PluginProvision.NotFound
   }

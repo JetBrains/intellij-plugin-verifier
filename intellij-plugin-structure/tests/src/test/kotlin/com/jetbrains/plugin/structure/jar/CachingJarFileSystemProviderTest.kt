@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.plugin.structure.jar
 
 import com.jetbrains.plugin.structure.base.fs.isClosed
@@ -92,19 +96,23 @@ class CachingJarFileSystemProviderTest {
   @Test
   fun `two filesystems are closed in reverse order of retrieval`() {
     val fileSystemProvider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE)
-    val fs = fileSystemProvider.getFileSystem(jarPath)
-    val anotherFs = fileSystemProvider.getFileSystem(jarPath)
+    val fs = fileSystemProvider.getFileSystem(jarPath) as FsHandleFileSystem
+    val anotherFs = fileSystemProvider.getFileSystem(jarPath) as FsHandleFileSystem
+    val underlying = fs.delegateFileSystem
     assertTrue(fs.isOpen)
     assertTrue(anotherFs.isOpen)
+    assertSame(fs, anotherFs)
 
     anotherFs.close()
     // still one delegate left open (one from `fs`)
     assertTrue(fs.isOpen)
+    assertTrue(underlying.isOpen)
     fs.close()
 
-    // no clients left, underlying FS delegate is closed
+    // no clients left, the underlying FS delegate is closed
     assertFalse(fs.isOpen)
     assertFalse(anotherFs.isOpen)
+    assertFalse(underlying.isOpen)
   }
 
   @Test

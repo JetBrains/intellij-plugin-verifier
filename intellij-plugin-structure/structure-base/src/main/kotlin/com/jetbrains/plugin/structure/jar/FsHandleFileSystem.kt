@@ -1,23 +1,18 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.jar
 
-import com.jetbrains.plugin.structure.base.fs.isClosed
 import com.jetbrains.plugin.structure.fs.FsHandlerFileSystemProvider
 import com.jetbrains.plugin.structure.fs.FsHandlerPath
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.nio.file.FileStore
-import java.nio.file.FileSystem
-import java.nio.file.Path
-import java.nio.file.PathMatcher
-import java.nio.file.WatchService
+import java.nio.file.*
 import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.io.NoSuchFileException
 
 private val LOG: Logger = LoggerFactory.getLogger(FsHandleFileSystem::class.java)
 
@@ -44,58 +39,91 @@ class FsHandleFileSystem(
   private val path: Path
 ) : FileSystem() {
 
-  private val isOpen = AtomicBoolean(true)
-
+  // '-1' for closed
   private val referenceCount = AtomicInteger(1)
 
   private var _delegateFileSystem = initialDelegateFileSystem
   val delegateFileSystem: FileSystem get() = getOrReopenDelegateFileSystem()
 
-  fun increment() {
-    referenceCount.incrementAndGet()
+  /**
+   * Returns true if FS is opened
+   */
+  fun increment(): Boolean {
+    return increment(1)
   }
 
-  fun increment(amount: Int) {
-    referenceCount.addAndGet(amount)
-  }
-
-  @Synchronized
-  private fun getOrReopenDelegateFileSystem(): FileSystem {
-    if (_delegateFileSystem.isClosed) {
-      LOG.debug("Reopening filesystem delegate for <{}>", path)
-      _delegateFileSystem = provider.getFileSystem(path)
+  /**
+   * Returns true if FS is opened
+   */
+  fun increment(amount: Int): Boolean {
+    while (true) {
+      val current = referenceCount.get()
+      if (current < 0) {
+        return false
+      }
+      // might reopen FS
+      if (!delegateFileSystem.isOpen) {
+        return false
+      }
+      val updated = current + amount
+      if (referenceCount.compareAndSet(current, updated)) {
+        return true
+      }
     }
-    return _delegateFileSystem
   }
 
-  @Synchronized
+  private fun getOrReopenDelegateFileSystem(): FileSystem {
+    var fs = synchronized(this) { _delegateFileSystem }
+    if (fs.isOpen) {
+      return fs
+    }
+    synchronized(this) {
+      fs = _delegateFileSystem
+      if (fs.isOpen) {
+        return fs
+      }
+      LOG.debug("Reopening filesystem delegate for <{}>", path)
+      fs = provider.getFileSystem(path)
+      _delegateFileSystem = fs
+      return fs
+    }
+  }
+
   override fun close() {
-    if (!isOpen.get()) {
+    while (true) {
+      val current = referenceCount.get()
+      if (current <= 0) {
+        return
+      }
+      if (!referenceCount.compareAndSet(current, current - 1)) {
+        continue
+      }
+      if (current == 1) {
+        // was the last one, means referenceCount == 0, let's close and mark as closed
+        closeDelegate()
+        referenceCount.set(-1)
+      }
       return
     }
-    if (referenceCount.decrementAndGet() == 0) {
-      closeDelegate()
-      isOpen.set(false)
-    }
   }
 
-  @Synchronized
   fun closeDelegate() {
+    val fs = synchronized(this) { _delegateFileSystem }
     try {
-      if (delegateFileSystem.isOpen) delegateFileSystem.close()
+      if (fs.isOpen) fs.close()
     } catch (_: InterruptedException) {
       Thread.currentThread().interrupt()
-      LOG.info("Cannot close due to an interruption for [{}]", delegateFileSystem)
+      LOG.info("Cannot close due to an interruption for [{}]", fs)
     } catch (_: NoSuchFileException) {
-      LOG.debug("Cannot close as the file no longer exists for [{}]", delegateFileSystem)
+      LOG.debug("Cannot close as the file no longer exists for [{}]", fs)
     } catch (_: java.nio.file.NoSuchFileException) {
-      LOG.debug("Cannot close as the file no longer exists for [{}]", delegateFileSystem)
+      LOG.debug("Cannot close as the file no longer exists for [{}]", fs)
     } catch (e: Exception) {
-      LOG.error("Unable to close [{}]", delegateFileSystem, e)
+      LOG.error("Unable to close [{}]", fs, e)
     }
   }
 
-  override fun isOpen(): Boolean = isOpen.get() && delegateFileSystem.isOpen
+  override fun isOpen(): Boolean = referenceCount.get() >= 0 && delegateFileSystem.isOpen
 
   override fun isReadOnly(): Boolean = delegateFileSystem.isReadOnly
 

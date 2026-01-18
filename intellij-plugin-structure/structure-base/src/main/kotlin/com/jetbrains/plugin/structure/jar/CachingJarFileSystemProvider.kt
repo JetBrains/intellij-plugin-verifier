@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.jar
@@ -45,40 +45,38 @@ class CachingJarFileSystemProvider(
     return FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath)
   }
 
-  @Synchronized
   override fun getFileSystem(jarPath: Path): FileSystem {
     return getFileSystem(jarPath, expectedClients = DEFAULT_EXPECTED_CLIENTS)
   }
 
-  @Synchronized
   override fun getFileSystem(jarPath: Path, configuration: Configuration): FileSystem {
     return getFileSystem(jarPath, configuration.expectedClients)
   }
 
-  @Synchronized
   private fun getFileSystem(jarPath: Path, expectedClients: Int): FileSystem {
     val jarUri = jarPath.toJarFileUri()
     val key = jarUri.toString()
 
-    var fs = fsCache.getIfPresent(key)
-    if (fs != null)  {
-      if (fs.isOpen) {
-        fs.increment(expectedClients)
-        logReusedFs(key)
-      } else {
-        val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
-          LOG.debug("Recreating an already closed a filesystem handler for <{}> (Cache size: {})", key, fsCache.estimatedSize())
+    synchronized(key.intern()) {
+      var fs = fsCache.getIfPresent(key)
+      if (fs != null) {
+        if (fs.increment(expectedClients)) {
+          logReusedFs(key)
+        } else {
+          val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
+            LOG.debug("Recreating an already closed a filesystem handler for <{}> (Cache size: {})", key, fsCache.estimatedSize())
+          }
+          fs = FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath)
+          fsCache.put(key, fs)
+          logRecreatedFs(key)
         }
-        fs = FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath)
+      } else {
+        fs = createFileSystem(jarPath, jarUri)
         fsCache.put(key, fs)
-        logRecreatedFs(key)
+        logCreatedFs(key)
       }
-    } else {
-      fs = createFileSystem(jarPath, jarUri)
-      fsCache.put(key, fs)
-      logCreatedFs(key)
+      return fs
     }
-    return fs
   }
 
   override fun close() {

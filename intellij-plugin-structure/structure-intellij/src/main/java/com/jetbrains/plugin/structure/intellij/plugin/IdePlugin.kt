@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.plugin.structure.intellij.plugin
@@ -63,6 +63,9 @@ interface IdePlugin : Plugin {
    */
   @Deprecated("use either pluginAliases or contentModules")
   val definedModules: Set<String>
+
+  @Suppress("DEPRECATION")
+  fun hasDefinedModuleWithId(id: String): Boolean = this.definedModules.contains(id)
 
   val optionalDescriptors: List<OptionalPluginDescriptor>
 

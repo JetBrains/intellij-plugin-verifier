@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.plugin.structure.jar
 
 import com.jetbrains.plugin.structure.base.utils.CharSequenceComparator
@@ -67,7 +71,7 @@ class Jar(
 
   val serviceProviders: Map<String, Set<String>> by lazy {
     val serviceProviders = mutableMapOf<String, MutableSet<String>>()
-    fileSystemProvider.getFileSystem(jarPath).use { fs ->
+    getFileSystem().use { fs ->
       serviceProviderPaths.forEach { spPath ->
         val serviceProviderFile = fs.getPath(spPath.toString())
         if (serviceProviderFile.isFile) {
@@ -107,12 +111,15 @@ class Jar(
   }
 
   fun processAllClasses(processor: (String, Path) -> Boolean): Boolean {
-    return getFileSystem(jarPath, classesInJar.size).use { fs ->
+    return getFileSystem().use { _ ->
       classesInJar.all { (className, classFilePath) ->
-        getFileSystem(jarPath, expectedClients = 1).use { classFs ->
-          classFs.getPath(classFilePath.toString())
-            .takeIf { it.isFile }
-            ?.let { processor(className.toString(), it) } == true
+        getFileSystem().use { classFs ->
+          val nested = classFs.getPath(classFilePath.toString())
+          if (nested.isFile) {
+            processor(className.toString(), nested)
+          } else {
+            false // entry isn't found while present in classesInJar
+          }
         }
       }
     }
@@ -124,8 +131,8 @@ class Jar(
 
   private fun getPath(className: String): PathInJar? = classesInJar[className]
 
-  private fun getFileSystem(jarPath: Path, expectedClients: Int): FileSystem {
-    return fileSystemProvider.getFileSystem(jarPath, JarFileSystemProvider.Configuration(expectedClients))
+  private fun getFileSystem(): FileSystem {
+    return fileSystemProvider.getFileSystem(jarPath)
   }
 
   fun <T> processClassPathInJar(className: String, handler: (String, PathInJar) -> T): T? {
