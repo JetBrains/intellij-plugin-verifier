@@ -4,7 +4,6 @@
 
 package com.jetbrains.plugin.structure.jar
 
-import com.jetbrains.plugin.structure.base.utils.CharSequenceComparator
 import com.jetbrains.plugin.structure.base.utils.charseq.CharBufferCharSequence
 import com.jetbrains.plugin.structure.base.utils.charseq.CharReplacingCharSequence
 import com.jetbrains.plugin.structure.base.utils.getBundleBaseName
@@ -18,6 +17,7 @@ import com.jetbrains.plugin.structure.jar.JarEntryResolver.Key
 import com.jetbrains.plugin.structure.jar.descriptors.Descriptor
 import com.jetbrains.plugin.structure.jar.descriptors.ModuleDescriptorReference
 import com.jetbrains.plugin.structure.jar.descriptors.PluginDescriptorReference
+import gnu.trove.THashMap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -26,7 +26,6 @@ import java.nio.CharBuffer
 import java.nio.file.FileSystem
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 import java.util.zip.ZipEntry
 import kotlin.streams.asSequence
 
@@ -54,9 +53,15 @@ class Jar(
   private val entryResolvers: List<JarEntryResolver<*>> = emptyList()
 ) : AutoCloseable {
 
-  private val classesInJar = TreeMap<CharSequence, PathInJar>(CharSequenceComparator)
+  /**
+   * Regular HashMap cannot be used there since it uses `given != null && given.equals(stored)` in `getNode` and we mostly pass `String` as `given`
+   * while `stored` is a CharSequence, so it cannot find anything.
+   *
+   * THashMap uses `stored != null && stored.equals(given)`, so with custom `equals` of all our `SpecialCharSequence`'s, it works fine.
+   */
+  private val classesInJar: MutableMap<CharSequence, PathInJar> = THashMap()
 
-  val classes: Set<CharSequence> = classesInJar.keys
+  val classes: Set<CharSequence> get() = classesInJar.keys
 
   val packages: Packages by lazy {
     Packages().apply {

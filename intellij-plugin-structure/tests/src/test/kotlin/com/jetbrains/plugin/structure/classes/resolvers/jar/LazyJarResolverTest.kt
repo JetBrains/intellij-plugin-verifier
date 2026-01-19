@@ -105,10 +105,10 @@ class LazyJarResolverTest {
     val jar = Jar(jarPath, SingletonCachingJarFileSystemProvider).init()
     val anotherJar = Jar(jarPath, SingletonCachingJarFileSystemProvider).init()
 
-    assertEquals(jar.classes, anotherJar.classes)
+    assertEquals(HashSet(jar.classes), HashSet(anotherJar.classes))
     assertEquals(2, jar.classes.size)
     LazyJarResolver(jarPath, Resolver.ReadMode.FULL, fileOrigin, fileSystemProvider = SingletonCachingJarFileSystemProvider).use { resolver ->
-      assertEquals(jar.classes, resolver.allClassNames)
+      assertEquals(HashSet(jar.classes), HashSet(resolver.allClassNames))
       val resourceBundleResolution = resolver.resolveExactPropertyResourceBundle("com.example.MyClass", Locale.US)
       assertTrue(resourceBundleResolution is Found)
       resourceBundleResolution as Found

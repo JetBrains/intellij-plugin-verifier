@@ -7,14 +7,14 @@ package com.jetbrains.plugin.structure.base.utils.charseq
 class ConcatenatedCharSequence(
   private val first: CharSequence,
   private val second: CharSequence
-) : CharSequence {
+) : SpecialCharSequence() {
 
   override val length: Int
     get() = first.length + second.length
 
   override fun get(index: Int): Char {
     return when {
-      index < 0 || index >= length -> throw IndexOutOfBoundsException("Index: $index, Length: $length")
+      index !in indices -> throw IndexOutOfBoundsException("Index: $index, Length: $length")
       index < first.length -> first[index]
       else -> second[index - first.length]
     }
