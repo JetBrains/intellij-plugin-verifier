@@ -233,7 +233,7 @@ class CheckTrunkApiParamsBuilder(
   private class IgnoreBundledPluginsFilter(val ide: Ide) : PluginFilter {
     override fun shouldVerifyPlugin(pluginInfo: PluginInfo): PluginFilter.Result {
       if (ide.findPluginById(pluginInfo.pluginId) != null) {
-        return PluginFilter.Result.Ignore("Plugin is bundled with $ide")
+        return PluginFilter.Result.Ignore("Plugin is bundled with ${ide.presentableName}")
       }
       return PluginFilter.Result.Verify
     }
