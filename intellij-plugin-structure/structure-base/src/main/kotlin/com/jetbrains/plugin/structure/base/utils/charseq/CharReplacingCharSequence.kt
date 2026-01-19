@@ -7,7 +7,7 @@ package com.jetbrains.plugin.structure.base.utils.charseq
 import java.nio.CharBuffer
 
 class CharReplacingCharSequence(private val characters: CharSequence, private val oldChar: Char, private val replacement: Char) :
-  CharSequence {
+  SpecialCharSequence() {
   override val length: Int
     get() = characters.length
 
@@ -28,8 +28,8 @@ class CharReplacingCharSequence(private val characters: CharSequence, private va
   override fun toString(): String {
     if (oldChar == replacement) return characters.toString()
 
-    val newBuf = CharBuffer.allocate(characters.length)
-    for (i in 0..characters.length - 1) {
+    val newBuf = CharBuffer.allocate(length)
+    for (i in indices) {
       newBuf.put(i, get(i))
     }
     return newBuf.toString()

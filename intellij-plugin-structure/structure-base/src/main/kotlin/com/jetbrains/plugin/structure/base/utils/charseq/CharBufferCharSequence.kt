@@ -7,11 +7,11 @@ package com.jetbrains.plugin.structure.base.utils.charseq
 import java.nio.CharBuffer
 
 class CharBufferCharSequence(private val buffer: CharBuffer, private val startIndex: Int, private val endIndex: Int) :
-  CharSequence {
+  SpecialCharSequence() {
 
   init {
     if (startIndex < 0 || endIndex > buffer.length || startIndex > endIndex) {
-      throw IndexOutOfBoundsException("Invalid start or end index")
+      throw IndexOutOfBoundsException("Invalid start or end index: $startIndex, $endIndex")
     }
   }
 
@@ -19,17 +19,17 @@ class CharBufferCharSequence(private val buffer: CharBuffer, private val startIn
     get() = endIndex - startIndex
 
   override fun get(index: Int): Char {
-    if (index < 0 || index >= length) {
-      throw IndexOutOfBoundsException("Index out of bounds: " + index)
+    if (index !in indices) {
+      throw IndexOutOfBoundsException("Index out of bounds: $index")
     }
     return buffer.get(startIndex + index)
   }
 
-  override fun subSequence(subStart: Int, subEnd: Int): CharSequence {
-    if (subStart < 0 || subEnd > length || subStart > subEnd) {
-      throw IndexOutOfBoundsException("Invalid subSequence range")
+  override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
+    if (startIndex < 0 || endIndex > length || startIndex > endIndex) {
+      throw IndexOutOfBoundsException("Invalid subSequence range: $startIndex, $endIndex")
     }
-    return CharBufferCharSequence(buffer, startIndex + subStart, startIndex + subEnd)
+    return CharBufferCharSequence(buffer, this.startIndex + startIndex, this.startIndex + endIndex)
   }
 
   override fun toString(): String {
