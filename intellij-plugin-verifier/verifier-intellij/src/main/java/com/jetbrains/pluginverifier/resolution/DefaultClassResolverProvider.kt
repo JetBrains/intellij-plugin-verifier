@@ -16,6 +16,8 @@ import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResol
 import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
+import com.jetbrains.plugin.structure.intellij.plugin.CompositeDependenciesModifier
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.CorePluginDependencyContributor
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DefaultIdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.NegativeIdeModulePredicate
@@ -58,7 +60,14 @@ class DefaultClassResolverProvider(
   private val pluginResolverProvider = IdeThenDelegatePluginProvider
     .of(ideDescriptor, dependencyFinder, archiveManager)
     .let { pluginProvider ->
-    val dependenciesModifier = LegacyPluginDependencyContributor(ideDescriptor.ide, legacyPluginVerifier)
+    // Compose dependency modifiers:
+    // 1. CorePluginDependencyContributor - adds core plugin (com.intellij) as implicit dependency for all plugins
+    //    This emulates the IDE runtime behavior where coreLoader is always added as the last parent classloader.
+    // 2. LegacyPluginDependencyContributor - adds Java module for legacy plugins (plugins without module dependencies)
+    val dependenciesModifier = CompositeDependenciesModifier(
+      CorePluginDependencyContributor(ideDescriptor.ide),
+      LegacyPluginDependencyContributor(ideDescriptor.ide, legacyPluginVerifier)
+    )
     CachingPluginDependencyResolverProvider(pluginProvider, secondaryResolver, ideModulePredicate, dependenciesModifier)
   }
 
