@@ -18,15 +18,15 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
-import org.junit.Assert.*
-import org.junit.ComparisonFailure
+import org.assertj.core.api.BDDAssertions.then
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.math.max
-import kotlin.text.trimIndent
+import kotlin.test.*
 
 private const val HEADER = """
       <id>someId</id>
@@ -146,6 +146,7 @@ class DependenciesTest {
     file(xmlDefinition.name, xmlDefinition.xml)
   }
 
+  @Suppress("XmlPathReference")
   private val comIntellijPlugin = Xml("lib/app.jar#META-INF", "plugin") {
     //language=XML
     """
@@ -632,91 +633,103 @@ class DependenciesTest {
   @Test
   fun test241() {
     val ide = IdeManager.createManager().createIde(buildIdeaDirectory())
-    with(ide.bundledPlugins) {
-      assertEquals(5, size)
-      assertTrue(any { it.pluginId == "com.intellij" })
-      assertTrue(any { it.pluginId == "Git4Idea" })
-      assertTrue(any { it.pluginId == "com.intellij.platform.images" })
-      assertTrue(any { it.pluginId == "com.intellij.copyright" })
-      assertTrue(any { it.pluginId == "com.jetbrains.performancePlugin" })
-    }
+    then(ide.bundledPlugins)
+      .hasSize(5)
+      .extracting<String> { it.pluginId }
+      .containsExactlyInAnyOrder(
+        "com.intellij",
+        "Git4Idea",
+        "com.intellij.platform.images",
+        "com.intellij.copyright",
+        "com.jetbrains.performancePlugin",
+      )
 
     val git4Idea = ide.findPluginById("Git4Idea") ?: return
 
     val dependencyTree = DependencyTree(ide)
-    with(dependencyTree.getTransitiveDependencies(git4Idea)) {
-      assertEquals(3, size)
-      assertContains("com.intellij.modules.vcs")
-      assertContains("com.jetbrains.performancePlugin")
-      assertContains("com.intellij.modules.lang")
+    val dependencies = dependencyTree.getTransitiveDependencies(git4Idea)
+
+    listOf(
+      "com.intellij.modules.vcs",
+      "com.jetbrains.performancePlugin",
+      "com.intellij.modules.lang",
+    ).forEach { id ->
+      asserter.assertTrue(
+        { "ID '$id' is not matched by any of dependencies of Git4Idea: \n${dependencies.joinToString("\n")}" },
+        dependencies.any { it.matches(id) }
+      )
     }
+    then(dependencies).hasSize(3)
   }
 
   @Test
   fun `plugin Git4Idea has correct transitive dependencies in IntelliJ IDEA Community Edition 2024-2`() {
     val ideResourceLocation = "/ide-dumps/IC-242.24807.4"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
-    assertNotNull("Dumped IDE not found in the resources [$ideResourceLocation]", ideUrl)
-    ideUrl!!
+    assertNotNull(ideUrl, "Dumped IDE not found in the resources [$ideResourceLocation]")
     val ideRoot = Paths.get(ideUrl.toURI())
 
     val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_CLASSPATH)
       .createIde(ideRoot)
-    with(ide.bundledPlugins) {
-      assertEquals(280, size)
-    }
+    then(ide.bundledPlugins).hasSize(280)
 
     val git4Idea = ide.findPluginById("Git4Idea")
-    assertNotNull("No Git4Idea plugin found in the IDE", git4Idea)
-    git4Idea!!
+    assertNotNull(git4Idea, "No Git4Idea plugin found in the IDE")
 
     val dependencyTree = DependencyTree(ide, ide.modulePredicate)
-    with(dependencyTree.getTransitiveDependencies(git4Idea)) {
-      assertEquals(25, size)
-      assertContains("com.jetbrains.performancePlugin")
-      assertContains("com.intellij.modules.lang")
-      assertContains("intellij.platform.collaborationTools")
-      assertContains("org.jetbrains.plugins.terminal")
-      assertContains("com.jetbrains.sh")
-      assertContains("com.intellij.copyright")
-      assertContains("org.intellij.plugins.markdown")
-      assertContains("org.intellij.intelliLang")
-      assertContains("com.intellij.modules.java")
-      assertContains("com.intellij.platform.images")
-      assertContains("com.intellij.modules.idea.community")
-      assertContains("training")
-      assertContains("intellij.platform.lvcs.impl")
-      assertContains("Git4Idea")
-      assertContains("com.jetbrains.performancePlugin")
-      assertContains("intellij.platform.collaborationTools")
-      assertContains("intellij.performanceTesting.vcs")
-      assertContains("com.intellij.modules.xml")
-      assertContains("org.jetbrains.plugins.yaml")
-      assertContains("org.toml.lang")
-      assertContains("tanvd.grazi")
-      assertContains("intellij.platform.vcs.impl")
-      assertContains("com.intellij.java")
-      assertContains("com.intellij.properties")
+    val dependencies = dependencyTree.getTransitiveDependencies(git4Idea)
+    listOf(
+      "com.jetbrains.performancePlugin",
+      "com.intellij.modules.lang",
+      "intellij.platform.collaborationTools",
+      "org.jetbrains.plugins.terminal",
+      "com.jetbrains.sh",
+      "com.intellij.copyright",
+      "org.intellij.plugins.markdown",
+      "org.intellij.intelliLang",
+      "com.intellij.modules.java",
+      "com.intellij.platform.images",
+      "com.intellij.modules.idea.community",
+      "training",
+      "intellij.platform.lvcs.impl",
+      "Git4Idea",
+      "com.jetbrains.performancePlugin",
+      "intellij.platform.collaborationTools",
+      "intellij.performanceTesting.vcs",
+      "com.intellij.modules.xml",
+      "org.jetbrains.plugins.yaml",
+      "org.toml.lang",
+      "tanvd.grazi",
+      "intellij.platform.vcs.impl",
+      "com.intellij.java",
+      "com.intellij.properties",
+    ).forEach { id ->
+      asserter.assertTrue(
+        { "ID '$id' is not matched by any of dependencies of Git4Idea: \n${dependencies.joinToString("\n")}" },
+        dependencies.any { it.matches(id) }
+      )
     }
+    then(dependencies).hasSizeGreaterThanOrEqualTo(22)
+    // Sometimes the following three could be missing:
+    // Transitive Module 'intellij.java.featuresTrainer' provided by plugin 'intellij.java.featuresTrainer',
+    // Transitive Module 'kotlin.features-trainer' provided by plugin 'kotlin.features-trainer',
+    // Transitive Plugin dependency: 'org.jetbrains.kotlin',
   }
 
   @Test
   fun `plugin Git4Idea has correct transitive dependencies in IntelliJ IDEA 2024-3`() {
     val ideResourceLocation = "/ide-dumps/243.12818.47-1"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
-    assertNotNull("Dumped IDE not found in the resources [$ideResourceLocation]", ideUrl)
-    ideUrl!!
+    assertNotNull(ideUrl, "Dumped IDE not found in the resources [$ideResourceLocation]")
     val ideRoot = Paths.get(ideUrl.toURI())
 
     val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_CLASSPATH)
       .createIde(ideRoot)
-    with(ide.bundledPlugins) {
-      assertEquals(504, size)
-    }
+
+    then(ide.bundledPlugins).hasSize(504)
 
     val git4Idea = ide.findPluginById("Git4Idea")
-    assertNotNull("No Git4Idea plugin found in the IDE", git4Idea)
-    git4Idea!!
+    assertNotNull(git4Idea, "No Git4Idea plugin found in the IDE")
 
     val dependencyTree = DependencyTree(ide, ide.modulePredicate)
     with(dependencyTree.getTransitiveDependencies(git4Idea)) {
@@ -756,7 +769,7 @@ class DependenciesTest {
         DependencyEntry(id = "org.jetbrains.plugins.terminal"),
       )
 
-      assertSetsEqual(expectedDependencies, toDependencyEntries())
+      then(toDependencyEntries()).containsExactlyInAnyOrderElementsOf(expectedDependencies)
     }
   }
 
@@ -764,16 +777,14 @@ class DependenciesTest {
   fun `plugin Coverage has correct transitive dependencies in IntelliJ IDEA 2024-3`() {
     val ideResourceLocation = "/ide-dumps/IU-243.21565.193"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
-    assertNotNull("Dumped IDE not found in the resources [$ideResourceLocation]", ideUrl)
-    ideUrl!!
+    assertNotNull(ideUrl, "Dumped IDE not found in the resources [$ideResourceLocation]")
     val ideRoot = Paths.get(ideUrl.toURI())
 
     val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_CLASSPATH)
       .createIde(ideRoot)
 
     val coveragePlugin = ide.findPluginById("Coverage")
-    assertNotNull("No 'Coverage' plugin found in the IDE", coveragePlugin)
-    coveragePlugin!!
+    assertNotNull(coveragePlugin, "No 'Coverage' plugin found in the IDE")
 
     val dependencyTree = DependencyTree(ide, ide.modulePredicate)
     with(dependencyTree.getTransitiveDependencies(coveragePlugin)) {
@@ -814,7 +825,7 @@ class DependenciesTest {
         DependencyEntry(id = "tanvd.grazi", transitive = true),
         DependencyEntry(id = "training", transitive = true),
       )
-      assertSetsEqual(expectedDependencies, toDependencyEntries())
+      then(toDependencyEntries()).containsExactlyInAnyOrderElementsOf(expectedDependencies)
     }
   }
 
@@ -822,16 +833,14 @@ class DependenciesTest {
   fun `coverage plugin has correct transitive classpath in 243`() {
     val ideResourceLocation = "/ide-dumps/243.12818.47-1"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
-    assertNotNull("Dumped IDE not found in the resources [$ideResourceLocation]", ideUrl)
-    ideUrl!!
+    assertNotNull(ideUrl, "Dumped IDE not found in the resources [$ideResourceLocation]")
     val ideRoot = Paths.get(ideUrl.toURI())
 
     val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_CLASSPATH)
       .createIde(ideRoot)
 
     val coveragePlugin = ide.findPluginById("Coverage")
-    assertNotNull("No 'Coverage' plugin found in the IDE", coveragePlugin)
-    coveragePlugin!!
+    assertNotNull(coveragePlugin, "No 'Coverage' plugin found in the IDE")
 
     val dependencyTree = DependencyTree(ide, ide.modulePredicate)
     val dependencies = dependencyTree.getTransitiveDependencies(coveragePlugin)
@@ -846,7 +855,7 @@ class DependenciesTest {
 
     val relativeClasspaths = classpath
       .map { ideRoot.relativize(it) }
-      .map { it.toString() }
+      .map { it.invariantSeparatorsPathString }
       .toSet()
 
     val expectedClassPath = """
@@ -947,7 +956,7 @@ class DependenciesTest {
       plugins/junit/lib/junit.jar
     """.trimIndent().split("\\s".toRegex()).toSet()
 
-    assertEquals(expectedClassPath, relativeClasspaths)
+    then(relativeClasspaths).containsExactlyInAnyOrderElementsOf(expectedClassPath)
   }
 
   @Test
@@ -998,15 +1007,13 @@ class DependenciesTest {
     val pluginProvider = EventLogSinglePluginProvider(plugin)
 
     val dependencyTree = DependencyTree(pluginProvider)
-    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
-      assertEquals(1, size)
-      assertEquals(Dependency.Module(plugin, "intellij.platform.vcs.impl"), single())
-    }
+    then(dependencyTree.getTransitiveDependencies(dependantPlugin))
+      .hasSize(1)
+      .containsExactly(Dependency.Module(plugin, "intellij.platform.vcs.impl"))
 
-    with(pluginProvider.pluginSearchLog) {
-      assertEquals(1, size)
-      assertEquals(LogEntry("intellij.platform.vcs.impl", plugin, "found via content module ID"), this[0])
-    }
+    then(pluginProvider.pluginSearchLog)
+      .hasSize(1)
+      .containsExactly(LogEntry("intellij.platform.vcs.impl", plugin, "found via content module ID"))
   }
 
   @Test
@@ -1046,15 +1053,13 @@ class DependenciesTest {
     val pluginProvider = EventLogSinglePluginProvider(ideModule)
 
     val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate)
-    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
-      assertEquals(1, size)
-      assertEquals(Dependency.Module(ideModule, "intellij.java.terminal"), single())
-    }
+    then(dependencyTree.getTransitiveDependencies(dependantPlugin))
+      .hasSize(1)
+      .containsExactly(Dependency.Module(ideModule, "intellij.java.terminal"))
 
-    with(pluginProvider.pluginSearchLog) {
-      assertEquals(1, size)
-      assertEquals(LogEntry("intellij.java.terminal", ideModule, "found via plugin alias"), this[0])
-    }
+    then(pluginProvider.pluginSearchLog)
+      .hasSize(1)
+      .containsExactly(LogEntry("intellij.java.terminal", ideModule, "found via plugin alias"))
   }
 
   @Test
@@ -1093,15 +1098,13 @@ class DependenciesTest {
     val pluginProvider = EventLogSinglePluginProvider(ideModule)
 
     val dependencyTree = DependencyTree(pluginProvider)
-    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
-      assertEquals(1, size)
-      assertEquals(Dependency.Plugin(ideModule), single())
-    }
+    then(dependencyTree.getTransitiveDependencies(dependantPlugin))
+      .hasSize(1)
+      .containsExactly(Dependency.Plugin(ideModule))
 
-    with(pluginProvider.pluginSearchLog) {
-      assertEquals(1, size)
-      assertEquals(LogEntry("intellij.java.terminal", ideModule, "found via plugin alias"), this[0])
-    }
+    then(pluginProvider.pluginSearchLog)
+      .hasSize(1)
+      .containsExactly(LogEntry("intellij.java.terminal", ideModule, "found via plugin alias"))
   }
 
   @Test
@@ -1142,15 +1145,13 @@ class DependenciesTest {
     val ideModulePredicate = DefaultIdeModulePredicate(setOf("com.intellij.modules.java"))
 
     val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate)
-    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
-      assertEquals(1, size)
-      assertEquals(Dependency.Module(plugin, "com.intellij.modules.java"), single())
-    }
+    then(dependencyTree.getTransitiveDependencies(dependantPlugin))
+      .hasSize(1)
+      .containsExactly(Dependency.Module(plugin, "com.intellij.modules.java"))
 
-    with(pluginProvider.pluginSearchLog) {
-      assertEquals(1, size)
-      assertEquals(LogEntry("com.intellij.modules.java", plugin, "found via plugin alias"), this[0])
-    }
+    then(pluginProvider.pluginSearchLog)
+      .hasSize(1)
+      .containsExactly(LogEntry("com.intellij.modules.java", plugin, "found via plugin alias"))
   }
 
   @Test
@@ -1193,15 +1194,13 @@ class DependenciesTest {
 
     val ideModulePredicate = DefaultIdeModulePredicate(setOf("com.intellij.modules.java"))
     val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate)
-    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
-      assertEquals(1, size)
-      assertEquals(Dependency.Module(plugin, "com.intellij.modules.java"), single())
-    }
+    then(dependencyTree.getTransitiveDependencies(dependantPlugin))
+      .hasSize(1)
+      .containsExactly(Dependency.Module(plugin, "com.intellij.modules.java"))
 
-    with(pluginProvider.pluginSearchLog) {
-      assertEquals(1, size)
-      assertEquals(LogEntry("com.intellij.modules.java", plugin, "found via plugin alias"), this[0])
-    }
+    then(pluginProvider.pluginSearchLog)
+      .hasSize(1)
+      .containsExactly(LogEntry("com.intellij.modules.java", plugin, "found via plugin alias"))
   }
 
   @Test
@@ -1234,22 +1233,20 @@ class DependenciesTest {
     val pluginProvider = EventLogSinglePluginProvider(plugin)
 
     val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
-    with(dependencyTree.getTransitiveDependencies(dependantPlugin)) {
-      assertEquals(1, size)
-      assertEquals(Dependency.Module(plugin, "com.intellij.modules.java"), single())
-    }
+    then(dependencyTree.getTransitiveDependencies(dependantPlugin))
+      .hasSize(1)
+      .containsExactly(Dependency.Module(plugin, "com.intellij.modules.java"))
 
-    with(pluginProvider.pluginSearchLog) {
-      assertEquals(2, size)
-      with(this[0]) {
-        assertEquals("com.intellij.modules.java", pluginId)
-        assertEquals("found via plugin alias", reason)
+    then(pluginProvider.pluginSearchLog)
+      .hasSize(2)
+      .anySatisfy {
+        assertEquals("com.intellij.modules.java", it.pluginId)
+        assertEquals("found via plugin alias", it.reason)
       }
-      with(this[1]) {
-        assertEquals("nonexistent.plugin", pluginId)
-        assertEquals("not found", reason)
+      .anySatisfy {
+        assertEquals("nonexistent.plugin", it.pluginId)
+        assertEquals("not found", it.reason)
       }
-    }
   }
 
   @Test
@@ -1334,7 +1331,8 @@ class DependenciesTest {
         "yaml/lib/modules/intellij.yaml.backend.jar",
         "yaml/lib/modules/intellij.yaml.frontend.split.jar"
       )
-      assertEquals(3, relativeClasspaths.size)
+      then(relativeClasspaths)
+        .hasSize(3)
       suffixes.forEach { suffix ->
         assertTrue(relativeClasspaths.any { it.endsWith(suffix) })
       }
@@ -1343,8 +1341,7 @@ class DependenciesTest {
 
   private val Ide.modulePredicate: IdeModulePredicate
     get() {
-      assertTrue("IDE must be product-info.json based", this is ProductInfoBasedIde)
-      this as ProductInfoBasedIde
+      assertTrue(this is ProductInfoBasedIde, "IDE must be product-info.json based")
       return ProductInfoBasedIdeModulePredicate(productInfo)
     }
 
@@ -1403,35 +1400,6 @@ class DependenciesTest {
 }
 
 private data class DependencyEntry(val id: String, val ownerId: String? = null, val transitive: Boolean = false)
-
-private fun Set<Dependency>.assertContains(id: String): Boolean =
-  filterIsInstance<PluginAware>()
-    .any { it.plugin.pluginId == id }
-
-private fun assertSetsEqual(expected: Set<DependencyEntry>, actual: Set<DependencyEntry>) {
-  val cmp = compareBy<DependencyEntry> { it.id }.thenBy { it.transitive }
-  assertSetsEqual(expected, actual, cmp)
-}
-
-fun <T> assertSetsEqual(expected: Set<T>, actual: Set<T>, comparator: Comparator<T>) {
-  val missing = expected - actual
-  val extra = actual - expected
-
-  if (missing.isNotEmpty() || extra.isNotEmpty()) {
-    val message = buildString {
-      appendLine("Sets are not equal.")
-      if (missing.isNotEmpty()) {
-        appendLine("Missing elements: $missing")
-      }
-      if (extra.isNotEmpty()) {
-        appendLine("Extra elements: $extra")
-      }
-    }
-    throw ComparisonFailure(message,
-                            expected.sortedWith(comparator).joinToString("\n"),
-                            actual.sortedWith(comparator).joinToString("\n"))
-  }
-}
 
 internal fun assertLineByLineEquals(expected: String, actual: String) {
   val expectedLines = expected.split('\n').dropLastWhile { it.isEmpty() }
