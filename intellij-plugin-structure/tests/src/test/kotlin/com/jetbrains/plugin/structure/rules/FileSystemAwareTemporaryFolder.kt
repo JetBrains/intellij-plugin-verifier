@@ -30,7 +30,9 @@ class FileSystemAwareTemporaryFolder(private val fileSystemType: FileSystemType)
   }
 
   override fun after() {
-    root.forceDeleteIfExists()
+    if (System.getenv("TEAMCITY_VERSION") == null) {
+      root.forceDeleteIfExists()
+    }
     fileSystem?.close()
   }
 
