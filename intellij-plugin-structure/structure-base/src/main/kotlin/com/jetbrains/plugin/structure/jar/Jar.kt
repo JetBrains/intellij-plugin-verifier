@@ -20,7 +20,6 @@ import com.jetbrains.plugin.structure.jar.descriptors.PluginDescriptorReference
 import gnu.trove.THashMap
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.io.IOException
 import java.nio.CharBuffer
 import java.nio.file.FileSystem
@@ -201,35 +200,18 @@ class Jar(
     return serviceImplementation.takeIf { it.isNotEmpty() }
   }
 
-  private fun resolve(path: PathWithinJar, separator: Char, suffix: CharSequence): CharSequence {
-    val pathBuf = path.path
-    val noPrefix = if (pathBuf.get(0) == separator) {
-      pathBuf.subSequence(1, pathBuf.length)
-    } else {
-      pathBuf
-    }
-    val neitherPrefixNoSuffix = if (suffix.isNotEmpty() && noPrefix.endsWith(suffix)) {
-      CharBufferCharSequence(noPrefix, 0, noPrefix.length - suffix.length)
-    } else {
-      noPrefix
-    }
-    return if (separator == File.separatorChar) {
-      neitherPrefixNoSuffix
-    } else {
-      CharReplacingCharSequence(neitherPrefixNoSuffix, File.separatorChar, separator)
-    }
-  }
-
   private fun resolveClass(path: PathWithinJar): CharSequence {
-    if (File.separatorChar == JAR_PATH_SEPARATOR_CHAR) {
-      return path.removeSuffix(CLASS_SUFFIX)
-    }
-
-    return resolve(path, JAR_PATH_SEPARATOR_CHAR, CLASS_SUFFIX)
+    return path.removeSuffix(CLASS_SUFFIX)
   }
 
   private fun resolveBundleName(path: PathWithinJar): CharSequence {
-    return resolve(path, RESOURCE_BUNDLE_SEPARATOR, RESOURCE_BUNDLE_SUFFIX)
+    val pathBuf = path.path
+    val neitherPrefixNoSuffix = if (pathBuf.endsWith(RESOURCE_BUNDLE_SUFFIX)) {
+      CharBufferCharSequence(pathBuf, 0, pathBuf.length - RESOURCE_BUNDLE_SUFFIX.length)
+    } else {
+      pathBuf
+    }
+    return CharReplacingCharSequence(neitherPrefixNoSuffix, JAR_PATH_SEPARATOR_CHAR, RESOURCE_BUNDLE_SEPARATOR)
   }
 
   private fun handleDescriptorCandidate(zipEntry: ZipEntry, path: PathWithinJar, descriptorType: DescriptorType) {
@@ -241,15 +223,13 @@ class Jar(
   }
 
   private fun PathWithinJar.hasServiceProviders(): Boolean {
-    val spPath = resolve(this, JAR_PATH_SEPARATOR_CHAR, NO_SUFFIX)
-    return spPath.startsWith("META-INF/services/") && spPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 2
+    return path.startsWith("META-INF/services/") && path.occurrences(JAR_PATH_SEPARATOR_CHAR) == 2
   }
 
   private fun PathWithinJar.matchesDescriptor(): DescriptorType {
     if (!isXml()) return NO_MATCH
-    val descriptorPath = resolve(this, JAR_PATH_SEPARATOR_CHAR, NO_SUFFIX)
-    if (descriptorPath.startsWith("META-INF/") && descriptorPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 1) return PLUGIN
-    if (descriptorPath.occurrences(JAR_PATH_SEPARATOR_CHAR) == 0) return MODULE
+    if (path.startsWith("META-INF/") && path.occurrences(JAR_PATH_SEPARATOR_CHAR) == 1) return PLUGIN
+    if (path.occurrences(JAR_PATH_SEPARATOR_CHAR) == 0) return MODULE
     return NO_MATCH
   }
 
@@ -265,6 +245,10 @@ class Jar(
     return true
   }
 
+  /**
+   * Paths in ZipEntry are always using forward slash aka [JAR_PATH_SEPARATOR_CHAR]
+   * and never start with it.
+   */
   private data class PathWithinJar(val path: CharBuffer) {
     companion object {
       fun of(zipEntry: ZipEntry) = PathWithinJar(CharBuffer.wrap(zipEntry.name))
@@ -276,7 +260,7 @@ class Jar(
 
     fun removePrefix(prefix: String): CharSequence {
       if (!path.startsWith(prefix)) return path
-      return path.subSequence(0, prefix.length)
+      return CharBufferCharSequence(path, prefix.length, path.length)
     }
 
     fun removeSuffix(suffix: CharSequence): CharSequence {
