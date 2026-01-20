@@ -13,6 +13,7 @@ import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 class FilesSystemProviderTest {
   @Rule
@@ -29,7 +30,7 @@ class FilesSystemProviderTest {
 
     assertNotNull(fileSystem)
     val resolvedPath = fileSystem.getPath(pathValue)
-    assertEquals(jarPath.toString(), resolvedPath.toString())
+    assertEquals(jarPath.invariantSeparatorsPathString, resolvedPath.invariantSeparatorsPathString)
   }
 
   @Test

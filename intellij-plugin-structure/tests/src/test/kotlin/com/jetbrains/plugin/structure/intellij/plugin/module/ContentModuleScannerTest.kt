@@ -8,6 +8,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import kotlin.io.path.invariantSeparatorsPathString
 
 class ContentModuleScannerTest {
   @Rule
@@ -52,7 +53,7 @@ class ContentModuleScannerTest {
     - and another time as a module with descriptor in the root of JAR
     */
     val expectedClassPath = listOf("json/lib/json.jar", "json/lib/json.jar", "json/lib/modules/intellij.json.split.jar")
-    val resolvedClassPath = contentModules.resolvedClassPath.map { root.relativize(it).toString() }.sorted()
+    val resolvedClassPath = contentModules.resolvedClassPath.map { root.relativize(it).invariantSeparatorsPathString }.sorted()
 
     assertEquals(expectedClassPath, resolvedClassPath)
   }

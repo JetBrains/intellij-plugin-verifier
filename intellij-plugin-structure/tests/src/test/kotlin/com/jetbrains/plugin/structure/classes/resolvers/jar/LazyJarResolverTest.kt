@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.jar.Jar
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import junit.framework.TestCase.assertTrue
 import net.bytebuddy.ByteBuddy
+import org.assertj.core.api.BDDAssertions.then
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -110,8 +111,8 @@ class LazyJarResolverTest {
     LazyJarResolver(jarPath, Resolver.ReadMode.FULL, fileOrigin, fileSystemProvider = SingletonCachingJarFileSystemProvider).use { resolver ->
       assertEquals(HashSet(jar.classes), HashSet(resolver.allClassNames))
       val resourceBundleResolution = resolver.resolveExactPropertyResourceBundle("com.example.MyClass", Locale.US)
-      assertTrue(resourceBundleResolution is Found)
-      resourceBundleResolution as Found
+      then(resourceBundleResolution).isInstanceOf(Found::class.java)
+      Unit
     }
   }
 
@@ -126,7 +127,7 @@ class LazyJarResolverTest {
     }
     LazyJarResolver(jarPath, Resolver.ReadMode.FULL, fileOrigin).use { resolver ->
       val result = resolver.resolveExactPropertyResourceBundle("com.example.MyClass", Locale.US)
-      assertTrue(result is ResolutionResult.FailedToRead)
+      then(result).isInstanceOf(ResolutionResult.FailedToRead::class.java)
     }
   }
 
