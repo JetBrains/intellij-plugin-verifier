@@ -13,6 +13,8 @@ dependencies {
   testImplementation(project(":structure-youtrack"))
   testImplementation(project(":structure-teamcity-recipes"))
   testImplementation(sharedLibs.junit)
+  testImplementation(sharedLibs.assertj)
+  testImplementation(sharedLibs.kotlin.test)
   testImplementation(sharedLibs.jackson.module.kotlin)
   testImplementation(libs.commons.compress)
   testImplementation(libs.jimfs)
@@ -35,6 +37,12 @@ val testJar by tasks.registering(Jar::class) {
   dependsOn(tasks.testClasses)
 }
 
+kotlin {
+  compilerOptions {
+    optIn.add("kotlin.io.path.ExperimentalPathApi")
+    optIn.add("kotlin.ExperimentalStdlibApi")
+  }
+}
 
 artifacts {
   add("testOutput", testJar)

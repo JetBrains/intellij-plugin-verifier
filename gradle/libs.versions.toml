@@ -1,6 +1,7 @@
 [versions]
 kotlin = "1.9.25"
 
+assertj = "3.20.2"
 asm = "9.8"
 byteBuddy = "1.15.10"
 caffeine = "3.1.8"
@@ -28,6 +29,7 @@ woodstox = "7.1.0"
 xz = "1.9"
 
 [libraries]
+assertj = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
 asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
 byteBuddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "byteBuddy" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
@@ -39,6 +41,7 @@ jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotlin-stdlib = { group = "org.jetbrains.kotlin", name = "kotlin-stdlib", version.ref = "kotlin" }
 kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
 kotson = { group = "com.github.salomonbrys.kotson", name = "kotson", version.ref = "kotson" }
 logback-core = { group = "ch.qos.logback", name = "logback-core", version.ref = "logback-core" }
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }

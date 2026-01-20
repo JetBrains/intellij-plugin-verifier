@@ -11,6 +11,7 @@ import uk.org.webcompere.systemstubs.resource.Resources
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 private const val MOCK_PV_USER_HOME = "/home/pv"
 
@@ -64,6 +65,6 @@ class JdkDescriptorProviderTest {
   }
 
   private fun assertEquals(expected: Path, actual: Path) {
-    assertEquals(expected.toString(), actual.toString())
+    assertEquals(expected.invariantSeparatorsPathString, actual.invariantSeparatorsPathString)
   }
 }

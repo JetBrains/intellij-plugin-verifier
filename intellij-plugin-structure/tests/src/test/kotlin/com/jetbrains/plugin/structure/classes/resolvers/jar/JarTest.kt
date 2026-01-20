@@ -3,16 +3,10 @@ package com.jetbrains.plugin.structure.classes.resolvers.jar
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.emptyClass
 import com.jetbrains.plugin.structure.base.utils.isFile
-import com.jetbrains.plugin.structure.jar.CachingJarFileSystemProvider
-import com.jetbrains.plugin.structure.jar.DefaultJarFileSystemProvider
-import com.jetbrains.plugin.structure.jar.FsHandleFileSystem
-import com.jetbrains.plugin.structure.jar.Jar
-import com.jetbrains.plugin.structure.jar.JarArchiveException
-import com.jetbrains.plugin.structure.jar.JarEntryResolver
-import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
-import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
+import com.jetbrains.plugin.structure.jar.*
 import com.jetbrains.plugin.structure.jar.descriptors.DescriptorReference
 import net.bytebuddy.ByteBuddy
+import org.assertj.core.api.BDDAssertions.then
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
@@ -93,61 +87,43 @@ class JarTest {
   @Test
   fun `JAR is scanned`() {
     createJar(temporaryFolder.newFile("plugin.jar").toPath()).use { jar ->
-      with(jar.classes) {
-        assertEquals(2, size)
-        assertTrue(contains("com/example/MyClass"))
-        assertTrue(contains("com/example/impl/MyImpl"))
-      }
-      with(jar.bundleNames) {
-        assertEquals(2, size)
-        assertTrue(contains("com.example.MyClass"))
-        assertTrue(contains("META-INF.plugin"))
-      }
-      with(jar.packages.all) {
-        assertEquals(3, size)
-        assertTrue(contains("com"))
-        assertTrue(contains("com/example"))
-        assertTrue(contains("com/example/impl"))
-      }
+      then(jar.classes)
+        .containsExactlyInAnyOrder("com/example/MyClass", "com/example/impl/MyImpl")
+
+      then(jar.bundleNames)
+        .hasSize(2)
+        .containsKey("com.example.MyClass")
+        .containsKey("META-INF.plugin")
+
+      then(jar.packages.all).containsExactlyInAnyOrder("com", "com/example", "com/example/impl")
+
       assertTrue(jar.containsPackage("com"))
       assertTrue(jar.containsPackage("com/example"))
       assertTrue(jar.containsPackage("com/example/impl"))
 
-      with(jar.serviceProviders) {
-        assertEquals(3, size)
-        val fileSystemProviderSp = this["java.nio.file.spi.FileSystemProvider"]
-        assertNotNull(fileSystemProviderSp)
-        fileSystemProviderSp!!
-        assertEquals(1, fileSystemProviderSp.size)
-        assertEquals(
-          "com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider",
-          fileSystemProviderSp.single()
-        )
+      then(jar.serviceProviders)
+        .hasSize(3)
+        .containsKey("java.nio.file.spi.FileSystemProvider")
+        .hasEntrySatisfying("java.nio.file.spi.FileSystemProvider") {
+          then(it)
+            .containsExactlyInAnyOrder("com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider")
+        }.hasEntrySatisfying("kotlinx.coroutines.internal.MainDispatcherFactory") {
+          then(it)
+            .containsExactlyInAnyOrder("com.intellij.openapi.application.impl.EdtCoroutineDispatcherFactory")
+        }.hasEntrySatisfying("org.freedesktop.dbus.spi.transport.ITransportProvider") {
+          then(it)
+            .containsExactlyInAnyOrder(
+              "org.freedesktop.dbus.transport.jre.NativeTransportProvider",
+              "org.freedesktop.dbus.transport.tcp.TCPTransportProvider"
+            )
+        }
 
-        val mainDispatcherFactorySp = this["kotlinx.coroutines.internal.MainDispatcherFactory"]
-        assertNotNull(mainDispatcherFactorySp)
-        mainDispatcherFactorySp!!
-        assertEquals(1, mainDispatcherFactorySp.size)
-        assertEquals(
-          "com.intellij.openapi.application.impl.EdtCoroutineDispatcherFactory",
-          mainDispatcherFactorySp.single()
-        )
-
-        val itTransportProvider = this["org.freedesktop.dbus.spi.transport.ITransportProvider"]
-        assertNotNull(itTransportProvider)
-        itTransportProvider!!
-        assertEquals(2, itTransportProvider.size)
-        assertTrue(itTransportProvider.contains("org.freedesktop.dbus.transport.jre.NativeTransportProvider"))
-        assertTrue(itTransportProvider.contains("org.freedesktop.dbus.transport.tcp.TCPTransportProvider"))
-      }
-
-      with(jar.descriptorCandidates) {
-        assertEquals(2, size)
-        val descriptorCandidatePaths =
-          filterIsInstance<DescriptorReference>()
-            .mapTo(mutableSetOf()) { it.path.toString() }
-        assertEquals(setOf("intellij.example.xml", "META-INF/plugin.xml"), descriptorCandidatePaths)
-      }
+      then(jar.descriptorCandidates)
+        .hasSize(2)
+      val descriptorCandidatePaths =
+        jar.descriptorCandidates.filterIsInstance<DescriptorReference>()
+          .mapTo(mutableSetOf()) { it.path.toString() }
+      assertEquals(setOf("intellij.example.xml", "META-INF/plugin.xml"), descriptorCandidatePaths)
     }
   }
 
