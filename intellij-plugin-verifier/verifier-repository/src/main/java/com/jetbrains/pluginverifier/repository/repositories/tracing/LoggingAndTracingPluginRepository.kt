@@ -1,21 +1,7 @@
 package com.jetbrains.pluginverifier.repository.repositories.tracing
 
-import org.jetbrains.intellij.pluginRepository.PluginDownloader
-import org.jetbrains.intellij.pluginRepository.PluginManager
-import org.jetbrains.intellij.pluginRepository.PluginRepository
-import org.jetbrains.intellij.pluginRepository.PluginUpdateManager
-import org.jetbrains.intellij.pluginRepository.model.IntellijUpdateMetadata
-import org.jetbrains.intellij.pluginRepository.model.PluginBean
-import org.jetbrains.intellij.pluginRepository.model.PluginId
-import org.jetbrains.intellij.pluginRepository.model.PluginUpdateBean
-import org.jetbrains.intellij.pluginRepository.model.PluginUserBean
-import org.jetbrains.intellij.pluginRepository.model.PluginXmlBean
-import org.jetbrains.intellij.pluginRepository.model.ProductEnum
-import org.jetbrains.intellij.pluginRepository.model.ProductFamily
-import org.jetbrains.intellij.pluginRepository.model.StringPluginId
-import org.jetbrains.intellij.pluginRepository.model.UpdateBean
-import org.jetbrains.intellij.pluginRepository.model.UpdateDeleteBean
-import org.jetbrains.intellij.pluginRepository.model.UpdateId
+import org.jetbrains.intellij.pluginRepository.*
+import org.jetbrains.intellij.pluginRepository.model.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -57,7 +43,16 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
     ): PluginBean? {
       val familyMsg = family.name.lowercase()
       LOG.debug("Retrieving plugin metadata for '{}' (family: {})", xmlId, familyMsg)
-      return delegate.getPluginByXmlId(xmlId, family).also { plugin ->
+      val pluginBean: PluginBean? = try {
+        delegate.getPluginByXmlId(xmlId, family)
+      } catch (e: PluginRepositoryException) {
+        if (e.message?.contains("\"statusCode\":403") == true) {
+          null
+        } else {
+          throw e
+        }
+      }
+      return pluginBean.also { plugin ->
         if (plugin == null) {
           LOG.debug("No plugin metadata for '{}' were retrieved (family: {})", xmlId, familyMsg)
         } else {

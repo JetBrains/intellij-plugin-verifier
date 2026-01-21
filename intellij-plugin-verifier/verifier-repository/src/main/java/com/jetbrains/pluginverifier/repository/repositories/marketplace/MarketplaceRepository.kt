@@ -9,12 +9,9 @@ import com.github.benmanes.caffeine.cache.LoadingCache
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.tracing.withLogging
+import org.jetbrains.intellij.pluginRepository.PluginRepositoryException
 import org.jetbrains.intellij.pluginRepository.PluginRepositoryFactory
-import org.jetbrains.intellij.pluginRepository.model.IntellijUpdateMetadata
-import org.jetbrains.intellij.pluginRepository.model.PluginId
-import org.jetbrains.intellij.pluginRepository.model.StringPluginId
-import org.jetbrains.intellij.pluginRepository.model.UpdateBean
-import org.jetbrains.intellij.pluginRepository.model.UpdateId
+import org.jetbrains.intellij.pluginRepository.model.*
 import java.net.MalformedURLException
 import java.net.URL
 import java.util.*
@@ -77,7 +74,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
 
   override fun getAllVersionsOfPlugin(pluginId: String): List<UpdateInfo> {
     if (unavailablePluginIdentifiers.getIfPresent(pluginId) != null) return emptyList()
-    val pluginBean = pluginRepositoryInstance.pluginManager.getPluginByXmlId(pluginId)
+    val pluginBean = getPluginByXmlId(pluginId)
     if (pluginBean == null) {
       unavailablePluginIdentifiers.put(pluginId, true)
       return emptyList()
@@ -85,6 +82,18 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
       val pluginVersions = pluginRepositoryInstance.pluginManager.getPluginVersions(pluginBean.id)
       val pluginIdAndUpdateIds = pluginVersions.map { pluginBean.id to it.id }
       return getPluginInfosForManyPluginIdsAndUpdateIds(pluginIdAndUpdateIds).values.toList()
+    }
+  }
+
+  private fun getPluginByXmlId(pluginId: String): PluginBean? {
+    return try {
+      pluginRepositoryInstance.pluginManager.getPluginByXmlId(pluginId)
+    } catch (e: PluginRepositoryException) {
+      if (e.message?.contains("\"statusCode\":403") == true) {
+        null
+      } else {
+        throw e
+      }
     }
   }
 
@@ -171,7 +180,7 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
 
   @Suppress("unused")
   fun getPluginChannels(pluginId: String): List<String> {
-    val pluginBean = pluginRepositoryInstance.pluginManager.getPluginByXmlId(pluginId) ?: return emptyList()
+    val pluginBean = getPluginByXmlId(pluginId) ?: return emptyList()
     return pluginRepositoryInstance.pluginManager.getPluginChannels(pluginBean.id)
   }
 
