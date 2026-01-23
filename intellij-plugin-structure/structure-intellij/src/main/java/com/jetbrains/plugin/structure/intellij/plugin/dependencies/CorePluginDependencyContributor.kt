@@ -20,7 +20,7 @@ private const val CORE_IDE_PLUGIN_ID = "com.intellij"
  * by adding the core plugin as an implicit dependency, ensuring that core platform classes
  * (like `com.intellij.notification.Notification`) are available to all plugins.
  *
- * @see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-content-descriptor.html">Plugin Model documentation</a>
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/modular-plugins.html#class-loaders">Plugin Model documentation</a>
  */
 class CorePluginDependencyContributor(private val ide: PluginProvider) : DependenciesModifier {
 
