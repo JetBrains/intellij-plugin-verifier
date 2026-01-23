@@ -45,6 +45,7 @@ class CompositeDependenciesModifier(
    */
   private class DependencyModifiedPluginView(
     private val delegate: IdePlugin,
+    @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
     override val dependencies: List<PluginDependency>
   ) : IdePlugin by delegate
 }
