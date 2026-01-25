@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.intellij.feature.extractor.extractor
@@ -42,7 +42,7 @@ class ArtifactTypeExtractor : Extractor {
       return null
     }
     val superInitDesc = (instructions[superInitIndex] as? MethodInsnNode)?.desc ?: return null
-    val argumentsNumber = Type.getArgumentTypes(superInitDesc).size
+    val argumentsNumber = Type.getArgumentCount(superInitDesc)
 
     val stringValue = CodeAnalysis().evaluateConstantString(classConstructor, superInitIndex, argumentsNumber - 1)
     if (stringValue != null) {
