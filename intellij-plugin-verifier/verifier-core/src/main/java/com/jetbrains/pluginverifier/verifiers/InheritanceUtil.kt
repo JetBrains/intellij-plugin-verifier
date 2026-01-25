@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.verifiers
@@ -22,6 +22,9 @@ fun Resolver.isSubclassOrSelf(childClassName: String, possibleParentName: String
 }
 
 fun Resolver.isSubclassOf(childClassName: String, possibleParentName: String): Boolean {
+  if (possibleParentName == "java/lang/Object") {
+    return true
+  }
   val childClass = resolveClassOrNull(childClassName) ?: return false
   return isSubclassOf(childClass, possibleParentName)
 }
@@ -31,13 +34,11 @@ fun Resolver.isSubclassOf(child: ClassFile, parentName: String): Boolean {
     return true
   }
 
-  val directParents = resolveAllDirectParents(child)
-
   val queue = LinkedList<ClassFile>()
-  queue.addAll(directParents)
-
   val visited = hashSetOf<String>()
-  visited.addAll(directParents.map { it.name })
+
+  queue.add(child)
+  visited.add(child.name)
 
   while (queue.isNotEmpty()) {
     val node = queue.poll()
@@ -45,9 +46,10 @@ fun Resolver.isSubclassOf(child: ClassFile, parentName: String): Boolean {
       return true
     }
 
-    resolveAllDirectParents(node).filterNot { it.name in visited }.forEach {
-      visited.add(it.name)
-      queue.addLast(it)
+    resolveAllDirectParents(node).forEach {
+      if (visited.add(it.name)) {
+        queue.addLast(it)
+      }
     }
   }
 
