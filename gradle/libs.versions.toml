@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.9.25"
+kotlin = "2.2.21"
 
 asm = "9.8"
 byteBuddy = "1.15.10"
