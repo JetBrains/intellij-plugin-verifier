@@ -256,6 +256,53 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
   }
 
   @Test
+  fun `plugin with content modules in separate JARs`() {
+    val plugin = createPlugin {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml") {
+                """
+                <idea-plugin>
+                  <id>someId</id>
+                  <content>
+                    <module name="module1"/>
+                    <module name="module2" loading="required"/>
+                  </content>
+                </idea-plugin>  
+              """.trimIndent()
+              }
+            }
+          }
+          dir("modules") {
+            zip("module1.jar") {
+              file("module1.xml") { """
+                <idea-plugin>
+                  <dependencies>
+                    <module name="module2"/>
+                  </dependencies>
+                </idea-plugin>
+              """.trimIndent()
+              }
+            }
+            zip("module2.jar") {
+              file("module2.xml") {
+                """<idea-plugin/>"""
+              }
+            }
+          }
+        }
+      }
+    }
+    assertEquals(2, plugin.modulesDescriptors.size)
+    val module1 = plugin.modulesDescriptors[0]
+    assertEquals("module1", module1.name)
+    val dependency = module1.module.contentModuleDependencies.single()
+    assertEquals("module2", dependency.moduleName)
+  }
+
+  @Test
   fun `plugin descriptor contains BOM`() {
     val pluginXml = "<idea-plugin />"
     val bom = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())

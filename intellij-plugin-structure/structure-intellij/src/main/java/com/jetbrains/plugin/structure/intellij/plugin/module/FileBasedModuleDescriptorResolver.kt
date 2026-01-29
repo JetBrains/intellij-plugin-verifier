@@ -5,6 +5,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin.module
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.Module.FileBasedModule
@@ -43,8 +44,10 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOr
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
+    val moduleJarFile = pluginArtifactPath.resolve("lib/modules/${moduleReference.name}.jar")
+    val modulePath = if (moduleJarFile.isFile) moduleJarFile else pluginArtifactPath
     return pluginLoader.loadPlugin(JarOrDirectoryPluginLoader.Context(
-      pluginArtifactPath,
+      modulePath,
       moduleReference.configFile,
       false,
       resourceResolver,
