@@ -18,6 +18,7 @@ import com.jetbrains.pluginverifier.analysis.ExtractedJsonPluginAnalyzer
 import com.jetbrains.pluginverifier.analysis.ReachabilityGraph
 import com.jetbrains.pluginverifier.analysis.buildClassReachabilityGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.ModuleVisibilityChecker
 import com.jetbrains.pluginverifier.dymamic.DynamicPlugins
 import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
 import com.jetbrains.pluginverifier.filtering.ExternalBuildClassesSelector
@@ -25,10 +26,7 @@ import com.jetbrains.pluginverifier.filtering.MainClassesSelector
 import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
-import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
-import com.jetbrains.pluginverifier.results.problems.KotlinCompatibilityModeProblemResolver
-import com.jetbrains.pluginverifier.results.problems.PackageNotFoundProblem
+import com.jetbrains.pluginverifier.results.problems.*
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
@@ -106,6 +104,7 @@ class PluginVerifier(
       pluginDetails.pluginWarnings.forEach { context.registerPluginStructureWarning(PluginStructureWarning(it)) }
       context.findMistakenlyBundledIdeClasses(pluginResolver)
       context.findDependenciesCycles(dependenciesGraph)
+      context.checkModuleVisibility(dependenciesGraph)
 
       val classesToCheck = selectClassesForCheck(pluginDetails).also {
         it.reportTelemetry(pluginDetails, context)
@@ -337,6 +336,33 @@ class PluginVerifier(
     val cycles = dependenciesGraph.getAllCycles()
     for (cycle in cycles) {
       registerCompatibilityWarning(DependenciesCycleWarning(cycle))
+    }
+  }
+
+  private fun PluginVerificationContext.checkModuleVisibility(dependenciesGraph: DependenciesGraph) {
+    val visibilityChecker = ModuleVisibilityChecker.build(this) ?: return // Only works on IDE version 253.* or later
+
+    for ((a, b) in dependenciesGraph.edges) {
+      // The dependency graph can contain legacy plugins as well as content modules.
+      // Visibility checks only apply between content modules, so failure on resolution will simply skip the edge with no warnings
+      val from = visibilityChecker.resolveModuleInfoFrom(a.plugin ?: continue) ?: continue
+      val to = visibilityChecker.resolveModuleInfoTo(b.plugin ?: continue) ?: continue
+
+      val isAllowed = visibilityChecker.isAccessAllowed(from, to)
+
+      if (!isAllowed) {
+        registerProblem(
+          ModuleVisibilityProblem(
+            dependingModuleName = a.plugin.pluginId ?: "unknown",
+            dependingPluginId = from.parent.pluginId ?: "unknown",
+            targetModuleName = b.plugin.pluginId ?: "unknown",
+            targetPluginId = to.parent.pluginId ?: "unknown",
+            targetVisibility = to.visibility,
+            dependingNamespace = from.namespace,
+            targetNamespace = to.namespace
+          )
+        )
+      }
     }
   }
 
