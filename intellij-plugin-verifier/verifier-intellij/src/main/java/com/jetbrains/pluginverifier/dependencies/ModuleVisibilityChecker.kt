@@ -103,8 +103,11 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
   }
 
   companion object {
+    const val VISIBILITY_CHECK_INTRODUCED_VERSION = 253
+
     fun build(context: PluginVerificationContext): ModuleVisibilityChecker? {
-      return if (context.verificationDescriptor is PluginVerificationDescriptor.IDE && context.verificationDescriptor.ideVersion.components[0] >= 253) {
+      return if (context.verificationDescriptor is PluginVerificationDescriptor.IDE
+        && context.verificationDescriptor.ideVersion.components[0] >= VISIBILITY_CHECK_INTRODUCED_VERSION) {
         ModuleVisibilityChecker(context.verificationDescriptor.ide, context.idePlugin)
       } else {
         null
