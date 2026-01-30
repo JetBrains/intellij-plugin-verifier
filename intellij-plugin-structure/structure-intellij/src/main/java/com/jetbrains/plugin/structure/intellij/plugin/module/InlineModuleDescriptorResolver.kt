@@ -40,7 +40,8 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
       moduleReference.name,
       moduleReference.loadingRule,
       module,
-      moduleDescriptorResource
+      moduleDescriptorResource,
+      moduleReference
     )
   }
 

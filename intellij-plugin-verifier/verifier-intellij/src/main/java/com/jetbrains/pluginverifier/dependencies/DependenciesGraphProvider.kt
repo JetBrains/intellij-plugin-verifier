@@ -20,7 +20,7 @@ private const val DEFAULT_MISSING_DEPENDENCY_REASON = "Unavailable"
  */
 class DependenciesGraphProvider {
   fun getDependenciesGraph(dependencyTreeResolution: DependencyTreeResolution): DependenciesGraph {
-    val verifiedPlugin = DependencyNode(dependencyTreeResolution.dependencyRoot.id, version = UNKNOWN_VERSION)
+    val verifiedPlugin = DependencyNode(dependencyTreeResolution.dependencyRoot.id, version = UNKNOWN_VERSION, dependencyTreeResolution.dependencyRoot)
     val transitiveDependencyVertices = dependencyTreeResolution.getTransitiveDependencyVertices()
     val vertices = transitiveDependencyVertices + verifiedPlugin
     val edges = dependencyTreeResolution.getEdges()
@@ -58,7 +58,7 @@ class DependenciesGraphProvider {
 
   private fun DependencyTreeResolution.getMissingDependencies(): Map<DependencyNode, Set<MissingDependency>> {
     return missingDependencies.map { (plugin, dependencies) ->
-      val pluginNode = DependencyNode(plugin.id, version = UNKNOWN_VERSION)
+      val pluginNode = DependencyNode(plugin.id, version = UNKNOWN_VERSION, plugin)
       val dependencyNodes = dependencies.mapTo(mutableSetOf()) {
         MissingDependency(it, DEFAULT_MISSING_DEPENDENCY_REASON)
       }
@@ -68,12 +68,10 @@ class DependenciesGraphProvider {
 
   private fun Dependency.Module.getVertices(): List<DependencyNode> {
     val vertices = mutableListOf<DependencyNode>()
-    vertices += DependencyNode(id, version = UNKNOWN_VERSION)
-    vertices += DependencyNode(plugin.id, version = UNKNOWN_VERSION)
+    vertices += DependencyNode(id, version = UNKNOWN_VERSION, plugin)
+    vertices += DependencyNode(plugin.id, version = UNKNOWN_VERSION, plugin)
 
-    val definedModuleNodes = plugin.definedModules.map { alias -> DependencyNode(alias, version = UNKNOWN_VERSION)
-      DependencyNode(id, version = UNKNOWN_VERSION)
-    }
+    val definedModuleNodes = plugin.definedModules.map { alias -> DependencyNode(alias, version = UNKNOWN_VERSION, plugin) }
     vertices += definedModuleNodes
 
     return vertices

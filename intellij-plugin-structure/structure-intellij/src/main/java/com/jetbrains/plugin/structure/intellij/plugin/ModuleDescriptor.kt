@@ -10,11 +10,18 @@ data class ModuleDescriptor(
   val name: String,
   val loadingRule: ModuleLoadingRule,
   val module: IdePlugin,
-  val configurationFilePath: String
+  val configurationFilePath: String,
+  val moduleDefinition: Module
 ) {
   companion object {
-    fun of(moduleId: String, loadingRule: ModuleLoadingRule, module: IdePlugin, moduleDescriptorResource: DescriptorResource): ModuleDescriptor =
-      ModuleDescriptor(moduleId, loadingRule, module, moduleDescriptorResource.uri.toString())
+    fun of(
+      moduleId: String,
+      loadingRule: ModuleLoadingRule,
+      module: IdePlugin,
+      moduleDescriptorResource: DescriptorResource,
+      moduleDefinition: Module
+    ): ModuleDescriptor =
+      ModuleDescriptor(moduleId, loadingRule, module, moduleDescriptorResource.uri.toString(), moduleDefinition)
   }
 }
 

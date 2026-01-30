@@ -32,7 +32,8 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOr
       moduleReference.name,
       moduleReference.loadingRule,
       module,
-      moduleReference.configFile
+      moduleReference.configFile,
+      moduleReference
     )
   }
 
