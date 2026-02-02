@@ -10,7 +10,8 @@ jdom = "2.0.6.1"
 jimfs = "1.3.1"
 kotlinx-metadata = "0.9.0"
 semver4j = "3.1.0"
-trove4j = "1.0.20221201"
+# Newer versions are not available on Maven Central
+trove4j = "1.0.20200330"
 
 [libraries]
 asm-analysis = { group = "org.ow2.asm", name = "asm-analysis", version.ref = "asm" }
