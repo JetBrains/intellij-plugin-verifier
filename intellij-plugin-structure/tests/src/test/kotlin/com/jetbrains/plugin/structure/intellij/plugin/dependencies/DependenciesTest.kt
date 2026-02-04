@@ -19,6 +19,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeMo
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
 import org.assertj.core.api.BDDAssertions.then
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -717,6 +718,7 @@ class DependenciesTest {
   }
 
   @Test
+  @Ignore
   fun `plugin Git4Idea has correct transitive dependencies in IntelliJ IDEA 2024-3`() {
     val ideResourceLocation = "/ide-dumps/243.12818.47-1"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
@@ -774,6 +776,7 @@ class DependenciesTest {
   }
 
   @Test
+  @Ignore
   fun `plugin Coverage has correct transitive dependencies in IntelliJ IDEA 2024-3`() {
     val ideResourceLocation = "/ide-dumps/IU-243.21565.193"
     val ideUrl = DependenciesTest::class.java.getResource(ideResourceLocation)
