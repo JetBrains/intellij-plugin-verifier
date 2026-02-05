@@ -279,7 +279,7 @@ private class DepGraph2ApiGraphConverter {
   }
 
   private fun DepVertex.toDependencyNode(): DependencyNode =
-    DependencyNode(plugin.pluginId ?: "<empty id>", plugin.pluginVersion ?: "<empty version>")
+    DependencyNode(plugin.pluginId ?: "<empty id>", plugin.pluginVersion ?: "<empty version>", plugin)
 
 }
 
