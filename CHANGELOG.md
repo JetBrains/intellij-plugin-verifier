@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.400 - 2026-02-07
+
+### Added
+
 - Support loading content modules from separate JAR files ([#1416](https://github.com/JetBrains/intellij-plugin-verifier/pull/1416))
 - Depend on `trove4j`
 - Cache ZIP files with weak references
