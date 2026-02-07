@@ -6,12 +6,39 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Support loading content modules from separate JAR files ([#1416](https://github.com/JetBrains/intellij-plugin-verifier/pull/1416))
+- Depend on `trove4j`
+- Cache ZIP files with weak references
+- Run verification of larger plugins first to warm up the cache in batch verifications
+
 ### Changed
 
-- Refactor method parameter resolution and fix inner class annotation indexing [#1374](https://github.com/JetBrains/intellij-plugin-verifier/pull/1374)
-- Update Gradle to 9.2.1
+- Improve dependency resolution for content modules ([#1391](https://github.com/JetBrains/intellij-plugin-verifier/pull/1391))
+- Improve output formatting of `check-trunk-api` command when running in JetBrains TeamCity
+- Improve the performance of ZIP and JAR resolution
+- Improve performance issues in dependency tree resolutions
+- Improve performance in deduplicating plugin resolvers
+- Improve performance in dependency downloads
+- Fix false positive for generated usages of Kotlin default interface 
+- Fix module resolution and speed up module resolution for Marketplace Repository ([#1393](https://github.com/JetBrains/intellij-plugin-verifier/pull/1393))
+- Refactor method parameter resolution and fix inner class annotation indexing ([#1374](https://github.com/JetBrains/intellij-plugin-verifier/pull/1374))
+- Simplify subclass resolution and improve performance
+- Simplify JDK-specific package resolution performance
+- Treat JetBrains Marketplace repository HTTP status 403 as a 404 to handle forbidden or disabled plugins
+- Update Gradle to 9.3.1
+- Update Byte Buddy to 1.18.4
+- Update ASM to 9.9.1
+- Update Bouncy Castle to 1.83
+- Update Apache Commons Text to 1.15.0 
 
 ### Fixed
+
+- Support ZIP entries with dots in entry names ([#1375](https://github.com/JetBrains/intellij-plugin-verifier/pull/1375))
+- Fix unit tests failing on Windows
+- Fix the missing core plugin in V2 plugins. According to the IntelliJ plugin model, the `coreLoader` is always automatically added
+as the last parent classloader for all plugin modules. This modifier emulates that behavior
+by adding the core plugin as an implicit dependency, ensuring that core platform classes
+(like `com.intellij.notification.Notification`) are available to all plugins. ([#1410](https://github.com/JetBrains/intellij-plugin-verifier/pull/1410))
 
 ## [1.398] - 2025-11-03
 
