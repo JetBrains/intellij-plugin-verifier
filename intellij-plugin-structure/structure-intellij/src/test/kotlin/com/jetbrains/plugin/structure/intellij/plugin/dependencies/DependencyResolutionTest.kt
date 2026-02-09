@@ -32,7 +32,7 @@ class DependencyResolutionTest {
     val comIntellijPlugin = mockk<IdePlugin>()
     every { comIntellijPlugin.pluginId } returns comIntellijPluginId
 
-    val dependencyGraph = DependencyTree.DiGraph<PluginId, Dependency>().apply {
+    val dependencyGraph = DependencyTree.DependencyGraph(Dependency.Plugin(somePlugin)).apply {
       addEdge(somePluginId, Dependency.Plugin(alphaPlugin))
       addEdge(somePluginId, Dependency.Plugin(betaPlugin))
       addEdge(alphaPluginId, Dependency.Plugin(comIntellijPlugin))
@@ -48,8 +48,8 @@ class DependencyResolutionTest {
 
     val edges = mutableListOf<Edge>()
     val dependencyTreeResolution = DefaultDependencyTreeResolution(somePlugin, transitiveDependencies, missingDependencies = emptyMap(), dependencyGraph)
-    dependencyTreeResolution.forEach { id, dependency ->
-      edges += Edge(id, dependency.id, dependency)
+    dependencyTreeResolution.forEach { from, dependency ->
+      edges += Edge(from.id, dependency.id, dependency.pluginDependency!!)
     }
 
     val expectedEdges = mutableListOf<Edge>().apply {
@@ -75,7 +75,7 @@ class DependencyResolutionTest {
     every { vcsImpl.pluginId } returns vcsImplPluginId
     every { vcsImpl.definedModules } returns setOf(vcsModuleId)
 
-    val dependencyGraph = DependencyTree.DiGraph<PluginId, Dependency>().apply {
+    val dependencyGraph = DependencyTree.DependencyGraph(Dependency.Plugin(somePlugin)).apply {
       addEdge(somePluginId, Dependency.Module(vcsImpl, vcsModuleId, false))
     }
 

@@ -74,8 +74,8 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
       .resolveDuplicateDependencies(dependencyResolutionContext)
   }
 
-  private fun getDependencyGraph(plugin: IdePlugin, context: ResolutionContext): DiGraph<PluginId, Dependency> {
-    val graph = DiGraph<PluginId, Dependency>()
+  private fun getDependencyGraph(plugin: IdePlugin, context: ResolutionContext): DependencyGraph {
+    val graph = DependencyGraph(Plugin(plugin))
     val missingDependencies = MissingDependencies()
     getDependencyGraph(
       plugin = plugin,
@@ -90,7 +90,7 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
 
   private fun getDependencyGraph(
     plugin: IdePlugin,
-    graph: DiGraph<PluginId, Dependency>,
+    graph: DependencyGraph,
     visitedPlugins: MutableSet<IdePlugin>,
     resolutionDepth: Int,
     dependencyIndex: Int,
@@ -227,13 +227,13 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
       None -> null
     }
 
-  private fun DiGraph<PluginId, Dependency>.collectDependencies(id: PluginId): Set<Dependency> {
+  private fun DependencyGraph.collectDependencies(id: PluginId): Set<Dependency> {
     return mutableSetOf<Dependency>().apply {
       collectDependencies(id, this)
     }
   }
 
-  private fun DiGraph<PluginId, Dependency>.collectDependencies(
+  private fun DependencyGraph.collectDependencies(
     id: PluginId,
     dependencies: MutableSet<Dependency>,
     layer: Int = 0
@@ -304,7 +304,7 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     return unique.values.toSet()
   }
 
-  private fun DiGraph<PluginId, Dependency>.toDebugString(
+  private fun DependencyGraph.toDebugString(
     id: PluginId,
     indentSize: Int,
     visited: MutableSet<PluginId>,
@@ -352,25 +352,37 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     }
   }
 
-  internal class DiGraph<I, O> {
-    private val adjacency = hashMapOf<I, MutableList<O>>()
+  internal class DependencyGraph {
+    private val nodeIndex = hashMapOf<PluginId, Dependency>() // Maps a plugin id to its Dependency object
+    private val adjacency = hashMapOf<PluginId, MutableList<Dependency>>()
 
-    operator fun get(from: I): List<O> = adjacency[from] ?: emptyList()
+    constructor(rootPlugin: Dependency) {
+      require(rootPlugin is Plugin || rootPlugin is Module)
+      nodeIndex[rootPlugin.id] = rootPlugin
+    }
 
-    fun addEdge(from: I, to: O) {
+    operator fun get(from: PluginId): List<Dependency> = adjacency[from] ?: emptyList()
+
+    fun addEdge(from: PluginId, to: Dependency) {
+      // We are building the graph in `getDependencyGraph` method recursively,
+      // so with the root plugin added at construction time, we will always have a tree.
+      nodeIndex.putIfAbsent(to.id, to).also { if (it != null && it != to) { LOG.warn("A different plugin was already associated with id '${to.id}'") } }
       adjacency.getOrPut(from) { mutableListOf() } += to
     }
 
-    fun contains(from: I, to: O): Boolean = adjacency[from]?.contains(to) == true
+    fun contains(from: PluginId, to: Dependency): Boolean = adjacency[from]?.contains(to) == true
 
-    fun contains(from: I, toIdPredicate: (O) -> Boolean): Boolean {
+    fun contains(from: PluginId, toIdPredicate: (Dependency) -> Boolean): Boolean {
       return adjacency[from]?.let { adj ->
         adj.any { toIdPredicate(it) }
       } ?: false
     }
 
-    internal fun forEachAdjacency(action: (I, List<O>) -> Unit) {
-      adjacency.forEach(action)
+    internal fun forEachAdjacency(action: (Dependency, List<Dependency>) -> Unit) {
+      adjacency.forEach { (from, to) ->
+        val fromNode = nodeIndex[from] ?: throw IllegalStateException("Node not found for $from")
+        action(fromNode, to)
+      }
     }
   }
 

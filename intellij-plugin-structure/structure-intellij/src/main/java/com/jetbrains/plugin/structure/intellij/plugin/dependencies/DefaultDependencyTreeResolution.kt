@@ -11,14 +11,12 @@ class DefaultDependencyTreeResolution internal constructor(
   override val dependencyRoot: IdePlugin,
   override val transitiveDependencies: Collection<Dependency>,
   override val missingDependencies: Map<IdePlugin, Set<PluginDependency>>,
-  private val graph: DependencyTree.DiGraph<PluginId, Dependency>
+  private val graph: DependencyTree.DependencyGraph
 ) : DependencyTreeResolution {
 
-  override fun forEach(action: (PluginId, PluginDependency) -> Unit) {
-    graph.forEachAdjacency { pluginId, dependencies ->
-      dependencies.forEach { dep ->
-        dep.pluginDependency?.let { action(pluginId, it) }
-      }
+  override fun forEach(action: (Dependency, Dependency) -> Unit) {
+    graph.forEachAdjacency { from, dependencies ->
+      dependencies.forEach { action(from, it) }
     }
   }
 }

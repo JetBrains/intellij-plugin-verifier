@@ -170,7 +170,7 @@ class ModuleVisibilityCheckerTest {
     )
 
     val dependenciesGraph = DependenciesGraph(
-      verifiedPlugin = DependencyNode(mainPlugin.pluginId ?: "unknown", mainPlugin.pluginVersion ?: "unknown"),
+      verifiedPlugin = DependencyNode(mainPlugin.pluginId ?: "unknown", mainPlugin.pluginVersion ?: "unknown", mainPlugin),
       vertices = emptySet(),
       edges = emptySet(),
       missingDependencies = emptyMap()

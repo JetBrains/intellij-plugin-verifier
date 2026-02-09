@@ -7,7 +7,9 @@ package com.jetbrains.pluginverifier.dependencies
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.pluginDependency
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 
@@ -33,7 +35,7 @@ class DependenciesGraphProvider {
     return transitiveDependencies.flatMapTo(LinkedHashSet()) {
       when (it) {
         is Dependency.Module -> it.getVertices()
-        is Dependency.Plugin -> setOf(DependencyNode(it.id, version = UNKNOWN_VERSION))
+        is Dependency.Plugin -> setOf(DependencyNode(it.id, version = UNKNOWN_VERSION, it.plugin))
         Dependency.None -> emptySet()
       }
     }
@@ -41,12 +43,16 @@ class DependenciesGraphProvider {
 
   private fun DependencyTreeResolution.getEdges(): Set<DependencyEdge> {
     val edges = LinkedHashSet<DependencyEdge>()
-    forEach { id, dependency ->
-      edges += DependencyEdge(
-        DependencyNode(id, UNKNOWN_VERSION).intern(),
-        DependencyNode(dependency.id, UNKNOWN_VERSION).intern(),
-        dependency.intern()
-      )
+    forEach { from, dependency ->
+      dependency.pluginDependency?.let { pluginDependency ->
+        require(from is PluginAware && dependency is PluginAware) // Invariant by the pluginDependency getter returning non-null
+
+        edges += DependencyEdge(
+          DependencyNode(from.id, UNKNOWN_VERSION, from.plugin).intern(),
+          DependencyNode(dependency.id, UNKNOWN_VERSION, dependency.plugin).intern(),
+          pluginDependency
+        )
+      }
     }
     return edges
   }

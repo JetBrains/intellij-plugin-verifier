@@ -65,7 +65,7 @@ data class DependencyEdge(
  * The node is a plugin [pluginId] and [version].
  */
 data class DependencyNode(val pluginId: String, val version: String, val plugin: IdePlugin? = null) {
-  override fun toString() = "$pluginId:$version"
+  override fun toString() = if (plugin != null) "$pluginId:$version:${plugin.pluginId}" else "$pluginId:$version"
 }
 
 /**
