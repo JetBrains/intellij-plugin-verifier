@@ -2,6 +2,8 @@ import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
 
@@ -76,10 +78,10 @@ allprojects {
   }
 
   tasks.withType<KotlinCompile> {
-    kotlinOptions {
-      jvmTarget = "11"
-      apiVersion = "1.4"
-      languageVersion = "1.4"
+    compilerOptions {
+      jvmTarget = JvmTarget.JVM_11
+      apiVersion = KotlinVersion.KOTLIN_1_8
+      languageVersion = KotlinVersion.KOTLIN_1_8
     }
   }
 }
