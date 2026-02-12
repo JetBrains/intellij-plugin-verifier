@@ -18,11 +18,17 @@ class CacheResolver(
 
   private data class BundleCacheKey(val baseName: String, val locale: Locale)
 
-  private val classCache: LoadingCache<BinaryClassName, ResolutionResult<ClassNode>> =
+  /**
+   * Do not use caffeine cache with custom CharSequences as keys, it ends up with duplicated keys with the same hash:
+   * One key is a custom implementation of CharSequence, another is String.
+   *
+   * See https://youtrack.jetbrains.com/issue/MP-7979
+   */
+  private val classCache: LoadingCache<String, ResolutionResult<ClassNode>> =
     Caffeine.newBuilder()
       .softValues()
       .maximumSize(cacheSize.toLong())
-      .build { key -> delegate.resolveClass(key) }
+      .build { key -> delegate.resolveClass(key as BinaryClassName) }
 
   private val propertyBundleCache: LoadingCache<BundleCacheKey, ResolutionResult<PropertyResourceBundle>> =
     Caffeine.newBuilder()
@@ -54,7 +60,7 @@ class CacheResolver(
   override fun resolveClass(className: String): ResolutionResult<ClassNode> = resolveClass(className as BinaryClassName)
 
   override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> = try {
-    classCache.get(className)
+    classCache.get(className.toString())
   } catch (e: ExecutionException) {
     throw e.cause ?: e
   }
