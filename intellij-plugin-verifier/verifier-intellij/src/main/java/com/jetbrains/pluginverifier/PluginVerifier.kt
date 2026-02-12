@@ -343,25 +343,16 @@ class PluginVerifier(
     val visibilityChecker = ModuleVisibilityChecker.build(this) ?: return // Only works on IDE version 253.* or later
 
     for ((a, b) in dependenciesGraph.edges) {
+      if (a.plugin == null || b.plugin == null) { 
+        continue 
+      } 
       // The dependency graph can contain legacy plugins as well as content modules.
       // Visibility checks only apply between content modules, so failure on resolution will simply skip the edge with no warnings
-      val from = visibilityChecker.resolveModuleInfoFrom(a.plugin ?: continue) ?: continue
-      val to = visibilityChecker.resolveModuleInfoTo(b.plugin ?: continue) ?: continue
+      val from = visibilityChecker.resolveModuleInfoFrom(a.plugin) ?: continue
+      val to = visibilityChecker.resolveModuleInfoTo(b.plugin) ?: continue
 
-      val isAllowed = visibilityChecker.isAccessAllowed(from, to)
-
-      if (!isAllowed) {
-        registerProblem(
-          ModuleVisibilityProblem(
-            dependingModuleName = a.plugin.pluginId ?: "unknown",
-            dependingPluginId = from.parent.pluginId ?: "unknown",
-            targetModuleName = b.plugin.pluginId ?: "unknown",
-            targetPluginId = to.parent.pluginId ?: "unknown",
-            targetVisibility = to.visibility,
-            dependingNamespace = from.namespace,
-            targetNamespace = to.namespace
-          )
-        )
+      if (!visibilityChecker.isAccessAllowed(from, to)) {
+        registerProblem(ModuleVisibilityProblem.create(a.plugin, from, b.plugin, to))
       }
     }
   }

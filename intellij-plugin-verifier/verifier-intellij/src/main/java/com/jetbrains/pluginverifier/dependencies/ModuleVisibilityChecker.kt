@@ -12,6 +12,12 @@ import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 
 /**
+ * A magic constant given to non-module plugins, so that we can uniformly handle namespace checks
+ */
+const val MODULE_PLACEHOLDER_STRING = "\$main_module"
+
+
+/**
  * Checks visibility rules for content module dependencies.
  *
  * By default, a content module has `private` visibility:
@@ -70,11 +76,11 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
       return ResolvedModuleInfoFrom(parentPlugin, moduleDescriptor.moduleDefinition.actualNamespace)
     } else {
       // We assume that all modules in a plugin share the same namespace, including the main module.
-      // If there are no modules at all, we give the magic string "$main_module", so that relevant visibility checks
+      // If there are no modules at all, we give the magic string `MODULE_PLACEHOLDER_STRING`, so that relevant visibility checks
       // can still be computed.
       // See {@link PluginModuleResolver::resolvePluginModules}
       val namespace = plugin.modulesDescriptors.firstOrNull()?.moduleDefinition?.namespace
-        ?: if (mainPlugin == plugin) { "\$main_module" } else { return null }
+        ?: if (mainPlugin == plugin) { MODULE_PLACEHOLDER_STRING } else { return null }
 
       return ResolvedModuleInfoFrom(plugin, namespace)
     }

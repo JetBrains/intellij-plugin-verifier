@@ -4,7 +4,9 @@
 
 package com.jetbrains.pluginverifier.results.problems
 
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleVisibility
+import com.jetbrains.pluginverifier.dependencies.ModuleVisibilityChecker
 
 /**
  * Reported when a content module attempts to depend on another content module
@@ -19,6 +21,25 @@ data class ModuleVisibilityProblem(
   val dependingNamespace: String?,
   val targetNamespace: String?
 ) : CompatibilityProblem() {
+
+  companion object {
+    private const val UNKNOWN_ID = "unknown"
+
+    fun create(
+      dependingPlugin: IdePlugin,
+      dependingInfo: ModuleVisibilityChecker.ResolvedModuleInfoFrom,
+      targetPlugin: IdePlugin,
+      targetInfo: ModuleVisibilityChecker.ResolvedModuleInfoTo
+    ): ModuleVisibilityProblem = ModuleVisibilityProblem(
+      dependingModuleName = dependingPlugin.pluginId ?: UNKNOWN_ID,
+      dependingPluginId = dependingInfo.parent.pluginId ?: UNKNOWN_ID,
+      targetModuleName = targetPlugin.pluginId ?: UNKNOWN_ID,
+      targetPluginId = targetInfo.parent.pluginId ?: UNKNOWN_ID,
+      targetVisibility = targetInfo.visibility,
+      dependingNamespace = dependingInfo.namespace,
+      targetNamespace = targetInfo.namespace
+    )
+  }
 
   override val problemType: String
     get() = "Module visibility violation"
