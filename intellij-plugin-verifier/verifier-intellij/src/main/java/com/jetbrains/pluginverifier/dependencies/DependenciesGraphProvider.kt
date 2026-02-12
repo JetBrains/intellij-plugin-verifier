@@ -7,7 +7,9 @@ package com.jetbrains.pluginverifier.dependencies
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.pluginDependency
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 
@@ -20,7 +22,7 @@ private const val DEFAULT_MISSING_DEPENDENCY_REASON = "Unavailable"
  */
 class DependenciesGraphProvider {
   fun getDependenciesGraph(dependencyTreeResolution: DependencyTreeResolution): DependenciesGraph {
-    val verifiedPlugin = DependencyNode(dependencyTreeResolution.dependencyRoot.id, version = UNKNOWN_VERSION)
+    val verifiedPlugin = DependencyNode(dependencyTreeResolution.dependencyRoot.id, version = UNKNOWN_VERSION, dependencyTreeResolution.dependencyRoot)
     val transitiveDependencyVertices = dependencyTreeResolution.getTransitiveDependencyVertices()
     val vertices = transitiveDependencyVertices + verifiedPlugin
     val edges = dependencyTreeResolution.getEdges()
@@ -33,7 +35,7 @@ class DependenciesGraphProvider {
     return transitiveDependencies.flatMapTo(LinkedHashSet()) {
       when (it) {
         is Dependency.Module -> it.getVertices()
-        is Dependency.Plugin -> setOf(DependencyNode(it.id, version = UNKNOWN_VERSION))
+        is Dependency.Plugin -> setOf(DependencyNode(it.id, version = UNKNOWN_VERSION, it.plugin))
         Dependency.None -> emptySet()
       }
     }
@@ -41,12 +43,16 @@ class DependenciesGraphProvider {
 
   private fun DependencyTreeResolution.getEdges(): Set<DependencyEdge> {
     val edges = LinkedHashSet<DependencyEdge>()
-    forEach { id, dependency ->
-      edges += DependencyEdge(
-        DependencyNode(id, UNKNOWN_VERSION).intern(),
-        DependencyNode(dependency.id, UNKNOWN_VERSION).intern(),
-        dependency.intern()
-      )
+    forEach { from, dependency ->
+      dependency.pluginDependency?.let { pluginDependency ->
+        require(from is PluginAware && dependency is PluginAware) // Invariant by the pluginDependency getter returning non-null
+
+        edges += DependencyEdge(
+          DependencyNode(from.id, UNKNOWN_VERSION, from.plugin).intern(),
+          DependencyNode(dependency.id, UNKNOWN_VERSION, dependency.plugin).intern(),
+          pluginDependency
+        )
+      }
     }
     return edges
   }
@@ -58,7 +64,7 @@ class DependenciesGraphProvider {
 
   private fun DependencyTreeResolution.getMissingDependencies(): Map<DependencyNode, Set<MissingDependency>> {
     return missingDependencies.map { (plugin, dependencies) ->
-      val pluginNode = DependencyNode(plugin.id, version = UNKNOWN_VERSION)
+      val pluginNode = DependencyNode(plugin.id, version = UNKNOWN_VERSION, plugin)
       val dependencyNodes = dependencies.mapTo(mutableSetOf()) {
         MissingDependency(it, DEFAULT_MISSING_DEPENDENCY_REASON)
       }
@@ -68,12 +74,10 @@ class DependenciesGraphProvider {
 
   private fun Dependency.Module.getVertices(): List<DependencyNode> {
     val vertices = mutableListOf<DependencyNode>()
-    vertices += DependencyNode(id, version = UNKNOWN_VERSION)
-    vertices += DependencyNode(plugin.id, version = UNKNOWN_VERSION)
+    vertices += DependencyNode(id, version = UNKNOWN_VERSION, plugin)
+    vertices += DependencyNode(plugin.id, version = UNKNOWN_VERSION, plugin)
 
-    val definedModuleNodes = plugin.definedModules.map { alias -> DependencyNode(alias, version = UNKNOWN_VERSION)
-      DependencyNode(id, version = UNKNOWN_VERSION)
-    }
+    val definedModuleNodes = plugin.definedModules.map { alias -> DependencyNode(alias, version = UNKNOWN_VERSION, plugin) }
     vertices += definedModuleNodes
 
     return vertices

@@ -108,16 +108,21 @@ class OptionalDependenciesTest {
       )
     )
 
+    val optionalPlugin = MockIdePlugin(pluginId = "optionalPluginId", pluginVersion = "1.0")
+    val otherOptionalPlugin = MockIdePlugin(pluginId = "otherOptionalPluginId", pluginVersion = "1.0")
+    val optionalMandatoryPlugin = MockIdePlugin(pluginId = "optionalMandatoryPluginId", pluginVersion = "1.0")
+    val duplicatedMandatoryPlugin = MockIdePlugin(pluginId = "duplicatedMandatoryDependencyId", pluginVersion = "1.0")
+
     val dependencyFinder = object : DependencyFinder {
       override val presentableName: String
         get() = "test"
 
       override fun findPluginDependency(dependencyId: String, isModule: Boolean): DependencyFinder.Result {
         return when (dependencyId) {
-          "optionalPluginId" -> DependencyFinder.Result.FoundPlugin(MockIdePlugin(pluginId = "optionalPluginId", pluginVersion = "1.0"))
-          "otherOptionalPluginId" -> DependencyFinder.Result.FoundPlugin(MockIdePlugin(pluginId = "otherOptionalPluginId", pluginVersion = "1.0"))
-          "optionalMandatoryPluginId" -> DependencyFinder.Result.FoundPlugin(MockIdePlugin(pluginId = "optionalMandatoryPluginId", pluginVersion = "1.0"))
-          "duplicatedMandatoryDependencyId" -> DependencyFinder.Result.FoundPlugin(MockIdePlugin(pluginId = "duplicatedMandatoryDependencyId", pluginVersion = "1.0"))
+          "optionalPluginId" -> DependencyFinder.Result.FoundPlugin(optionalPlugin)
+          "otherOptionalPluginId" -> DependencyFinder.Result.FoundPlugin(otherOptionalPlugin)
+          "optionalMandatoryPluginId" -> DependencyFinder.Result.FoundPlugin(optionalMandatoryPlugin)
+          "duplicatedMandatoryDependencyId" -> DependencyFinder.Result.FoundPlugin(duplicatedMandatoryPlugin)
 
           "missingMandatoryPluginId" -> DependencyFinder.Result.NotFound("missingMandatoryPluginId mandatory plugin is not found")
           "missingOptionalPluginId" -> DependencyFinder.Result.NotFound("missingOptionalPluginId optional plugin is not found")
@@ -135,11 +140,11 @@ class OptionalDependenciesTest {
 
     //Build dependencies graph and compare it to what is expected.
     val (dependenciesGraph) = DependenciesGraphBuilder(dependencyFinder).buildDependenciesGraph(somePluginDescriptor, ide)
-    val somePluginNode = DependencyNode("someId", "1.0")
-    val optionalPluginNode = DependencyNode("optionalPluginId", "1.0")
-    val optionalMandatoryPluginNode = DependencyNode("optionalMandatoryPluginId", "1.0")
-    val otherOptionalPluginNode = DependencyNode("otherOptionalPluginId", "1.0")
-    val duplicatedMandatoryPluginNode = DependencyNode("duplicatedMandatoryDependencyId", "1.0")
+    val somePluginNode = DependencyNode("someId", "1.0", somePluginDescriptor)
+    val optionalPluginNode = DependencyNode("optionalPluginId", "1.0", optionalPlugin)
+    val optionalMandatoryPluginNode = DependencyNode("optionalMandatoryPluginId", "1.0", optionalMandatoryPlugin)
+    val otherOptionalPluginNode = DependencyNode("otherOptionalPluginId", "1.0", otherOptionalPlugin)
+    val duplicatedMandatoryPluginNode = DependencyNode("duplicatedMandatoryDependencyId", "1.0", duplicatedMandatoryPlugin)
 
     assertEquals(somePluginNode, dependenciesGraph.verifiedPlugin)
     assertEquals(setOf(somePluginNode, optionalPluginNode, optionalMandatoryPluginNode, otherOptionalPluginNode, duplicatedMandatoryPluginNode), dependenciesGraph.vertices.toSet())

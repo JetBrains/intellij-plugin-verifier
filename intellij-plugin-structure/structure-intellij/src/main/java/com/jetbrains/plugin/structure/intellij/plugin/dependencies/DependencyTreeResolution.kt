@@ -11,5 +11,5 @@ interface DependencyTreeResolution {
   val dependencyRoot: IdePlugin
   val missingDependencies: Map<IdePlugin, Set<PluginDependency>>
   val transitiveDependencies: Collection<Dependency>
-  fun forEach(action: (PluginId, PluginDependency) -> Unit)
+  fun forEach(action: (Dependency, Dependency) -> Unit)
 }

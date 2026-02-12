@@ -11,13 +11,16 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-class DependencyTreeDiGraphTest {
+class DependencyTreeDependencyGraphTest {
   @Test
   fun `graph is generated correctly`() {
     val somePluginId = "com.example.SomePlugin"
     val alphaPluginId = "com.example.Alpha"
     val betaPluginId = "com.example.Beta"
     val comIntellijPluginId = "com.intellij"
+
+    val somePlugin = mockk<IdePlugin>()
+    every { somePlugin.pluginId } returns somePluginId
 
     val alphaPlugin = mockk<IdePlugin>()
     every { alphaPlugin.pluginId } returns alphaPluginId
@@ -28,15 +31,15 @@ class DependencyTreeDiGraphTest {
     val comIntellijPlugin = mockk<IdePlugin>()
     every { comIntellijPlugin.pluginId } returns comIntellijPluginId
 
-    val graph = DependencyTree.DiGraph<PluginId, Dependency>()
+    val graph = DependencyTree.DependencyGraph(Dependency.Plugin(somePlugin))
     graph.addEdge(somePluginId, Dependency.Plugin(alphaPlugin))
     graph.addEdge(somePluginId, Dependency.Plugin(betaPlugin))
     graph.addEdge(alphaPluginId, Dependency.Plugin(comIntellijPlugin))
     graph.addEdge(betaPluginId, Dependency.Plugin(comIntellijPlugin))
 
     val vertices = mutableSetOf<PluginId>()
-    graph.forEachAdjacency { pluginId, dependencies ->
-      vertices.add(pluginId)
+    graph.forEachAdjacency { from, dependencies ->
+      vertices.add(from.id)
       dependencies.forEach {
         vertices += it.id
       }

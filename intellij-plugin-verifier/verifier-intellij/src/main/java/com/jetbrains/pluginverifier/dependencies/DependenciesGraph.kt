@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.dependencies
 
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphCycleFinder
@@ -63,8 +64,8 @@ data class DependencyEdge(
  *
  * The node is a plugin [pluginId] and [version].
  */
-data class DependencyNode(val pluginId: String, val version: String) {
-  override fun toString() = "$pluginId:$version"
+data class DependencyNode(val pluginId: String, val version: String, val plugin: IdePlugin? = null) {
+  override fun toString() = if (plugin != null) "$pluginId:$version:${plugin.pluginId}" else "$pluginId:$version"
 }
 
 /**
