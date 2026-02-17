@@ -33,10 +33,10 @@ class DependencyResolutionTest {
     every { comIntellijPlugin.pluginId } returns comIntellijPluginId
 
     val dependencyGraph = DependencyTree.DependencyGraph(Dependency.Plugin(somePlugin)).apply {
-      addEdge(somePluginId, Dependency.Plugin(alphaPlugin))
-      addEdge(somePluginId, Dependency.Plugin(betaPlugin))
-      addEdge(alphaPluginId, Dependency.Plugin(comIntellijPlugin))
-      addEdge(betaPluginId, Dependency.Plugin(comIntellijPlugin))
+      addEdge(NodeId(somePluginId, null), Dependency.Plugin(alphaPlugin))
+      addEdge(NodeId(somePluginId, null), Dependency.Plugin(betaPlugin))
+      addEdge(NodeId(alphaPluginId, null), Dependency.Plugin(comIntellijPlugin))
+      addEdge(NodeId(betaPluginId, null), Dependency.Plugin(comIntellijPlugin))
     }
 
     val transitiveDependencies = mutableSetOf<Dependency>()
@@ -76,7 +76,7 @@ class DependencyResolutionTest {
     every { vcsImpl.definedModules } returns setOf(vcsModuleId)
 
     val dependencyGraph = DependencyTree.DependencyGraph(Dependency.Plugin(somePlugin)).apply {
-      addEdge(somePluginId, Dependency.Module(vcsImpl, vcsModuleId, false))
+      addEdge(NodeId(somePluginId, null), Dependency.Module(vcsImpl, vcsModuleId, false))
     }
 
     dependencyGraph.forEachAdjacency { pluginId, dependencies ->
