@@ -89,6 +89,20 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     return graph
   }
 
+  /**
+   * Recursively resolves dependencies of [plugin] and populates [graph] with edges.
+   *
+   * @param plugin the plugin whose dependencies are being resolved.
+   * @param nodeId the graph node identity of [plugin], used as the "from" key when adding edges.
+   * @param graph the dependency graph being built.
+   * @param visitedPlugins tracks already-visited plugins to prevent infinite recursion on cycles.
+   * @param resolutionDepth current recursion depth, used for debug log indentation.
+   * @param dependencyIndex index of this dependency in the parent's dependency list, or -1 for the root.
+   * @param parentDependencyIndex the [dependencyIndex] of the parent, used for debug log indentation.
+   * @param missingDependencies accumulates dependencies that could not be resolved, so they are
+   *   skipped on subsequent encounters.
+   * @param context resolution configuration (listeners, dependency modifiers, etc.).
+   */
   private fun getDependencyGraph(
     plugin: IdePlugin,
     nodeId: NodeId,
