@@ -32,10 +32,10 @@ class DependencyTreeDependencyGraphTest {
     every { comIntellijPlugin.pluginId } returns comIntellijPluginId
 
     val graph = DependencyTree.DependencyGraph(Dependency.Plugin(somePlugin))
-    graph.addEdge(somePluginId, Dependency.Plugin(alphaPlugin))
-    graph.addEdge(somePluginId, Dependency.Plugin(betaPlugin))
-    graph.addEdge(alphaPluginId, Dependency.Plugin(comIntellijPlugin))
-    graph.addEdge(betaPluginId, Dependency.Plugin(comIntellijPlugin))
+    graph.addEdge(NodeId(somePluginId, null), Dependency.Plugin(alphaPlugin))
+    graph.addEdge(NodeId(somePluginId, null), Dependency.Plugin(betaPlugin))
+    graph.addEdge(NodeId(alphaPluginId, null), Dependency.Plugin(comIntellijPlugin))
+    graph.addEdge(NodeId(betaPluginId, null), Dependency.Plugin(comIntellijPlugin))
 
     val vertices = mutableSetOf<PluginId>()
     graph.forEachAdjacency { from, dependencies ->
@@ -46,7 +46,7 @@ class DependencyTreeDependencyGraphTest {
     }
     assertEquals(setOf(somePluginId, alphaPluginId, betaPluginId, comIntellijPluginId), vertices)
 
-    val somePluginDependsOnAlpha = graph.contains(somePluginId) {
+    val somePluginDependsOnAlpha = graph.contains(NodeId(somePluginId, null)) {
       it.matches(alphaPluginId)
     }
     assertTrue(somePluginDependsOnAlpha)
