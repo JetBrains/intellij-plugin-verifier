@@ -352,6 +352,12 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     }
   }
 
+  /**
+   * A directed graph of plugin and module dependencies, keyed by [NodeId].
+   *
+   * Using [NodeId] rather than plain plugin IDs ensures that distinct modules
+   * provided by the same plugin are represented as separate nodes in the graph.
+   */
   internal class DependencyGraph {
     private val nodeIndex = hashMapOf<NodeId, Dependency>()
     private val adjacency = linkedMapOf<NodeId, MutableList<Dependency>>()

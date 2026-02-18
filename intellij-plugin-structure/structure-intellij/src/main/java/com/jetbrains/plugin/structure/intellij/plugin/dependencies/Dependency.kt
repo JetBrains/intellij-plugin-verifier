@@ -6,6 +6,12 @@ package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 
+/**
+ * Identifies a dependency graph node as a (plugin, module) tuple.
+ *
+ * For plugin dependencies, [moduleId] is `null` and only [pluginId] is set.
+ * For module dependencies, [moduleId] is non-null and [pluginId] refers to the plugin that provides the module.
+ */
 data class NodeId(val pluginId: PluginId, val moduleId: PluginId?)
 
 interface PluginAware {
