@@ -74,10 +74,6 @@ tasks.named("test") {
   dependsOn(prepareMockPlugin, prepareAfterIdea)
 }
 
-tasks.named("jar") {
-  dependsOn("test")
-}
-
 val lib = "lib"
 
 private fun kotlinStdLibCopySpec(destPath: String) = copySpec {
