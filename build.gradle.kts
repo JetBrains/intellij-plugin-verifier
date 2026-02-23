@@ -25,13 +25,13 @@ tasks.register<JavaExec>("checkPlugin") {
   classpath = files(classpathFiles)
   systemProperties = System.getProperties().mapKeysTo(mutableMapOf()) { it.key.toString() }
 
-  val ideValue: String? by project
-  val ide = ideValue
+  val ide: String? by project
+  val ideValue = ide
     ?: throw InvalidUserDataException("Target IDE must be set in a Gradle project property. Use 'ide' project property, such as -Pide=<value>")
 
-  val pluginValue: String? by project
-  val plugin = pluginValue
+  val plugin: String? by project
+  val pluginValue = plugin
     ?: throw InvalidUserDataException("The plugin to be verified must be set in a Gradle project property. Use 'plugin' project property, such as -Pplugin=<value>")
 
-  args("check-plugin", plugin, ide)
+  args("check-plugin", pluginValue, ideValue)
 }
