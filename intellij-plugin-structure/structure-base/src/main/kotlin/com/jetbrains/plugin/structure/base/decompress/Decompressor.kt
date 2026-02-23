@@ -6,8 +6,6 @@ package com.jetbrains.plugin.structure.base.decompress
 
 import com.jetbrains.plugin.structure.base.utils.bufferedInputStream
 import com.jetbrains.plugin.structure.base.utils.createDir
-import com.jetbrains.plugin.structure.base.utils.createParentDirs
-import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.CompressorException
@@ -30,6 +28,7 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
 
   @Throws(DecompressorException::class)
   fun extract(outputDir: Path) {
+    val createdDirs = HashSet<Path>()
     val event = DecompressionEvent(archivePath.toString(), archiveType)
     event.begin()
     openStream()
@@ -41,7 +40,10 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
         val outputFile = getEntryFile(outputDir, entry)
         when (entry.type) {
           Type.DIR -> {
-            outputFile.createDir()
+            if (createdDirs.add(outputFile)) {
+              outputFile.createDir()
+              recordAncestors(outputFile, outputDir, createdDirs)
+            }
           }
           Type.FILE -> {
             val entryStream = nextEntryStream() ?: continue@loop
@@ -52,7 +54,11 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
                 .setPropagateClose(false)
                 .get()
 
-              outputFile.createParentDirs()
+              val parent = outputFile.parent
+              if (parent != null && createdDirs.add(parent)) {
+                parent.createDir()
+                recordAncestors(parent, outputDir, createdDirs)
+              }
               Files.copy(countingStream, outputFile)
               remainingSize -= countingStream.count
               if (remainingSize < 0) {
@@ -68,6 +74,14 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
     } finally {
       closeStream()
       event.commit()
+    }
+  }
+
+  private fun recordAncestors(dir: Path, stopAt: Path, createdDirs: MutableSet<Path>) {
+    var p = dir.parent
+    while (p != null && p != stopAt) {
+      if (!createdDirs.add(p)) break  // already recorded — all further ancestors are too
+      p = p.parent
     }
   }
 
@@ -128,7 +142,7 @@ internal class ZipDecompressor(private val zipFile: Path, sizeLimit: Long?) : De
   private lateinit var stream: ZipInputStream
 
   override fun openStream() {
-    stream = ZipInputStream(zipFile.inputStream())
+    stream = ZipInputStream(zipFile.bufferedInputStream())
   }
 
   override fun nextEntry(): Entry? {
