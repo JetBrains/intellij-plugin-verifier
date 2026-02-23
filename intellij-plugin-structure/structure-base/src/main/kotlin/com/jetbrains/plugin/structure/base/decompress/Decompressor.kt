@@ -25,8 +25,13 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
     const val FILE_NAME_LENGTH_LIMIT = 255
   }
 
+  abstract val archivePath: Path
+  abstract val archiveType: String
+
   @Throws(DecompressorException::class)
   fun extract(outputDir: Path) {
+    val event = DecompressionEvent(archivePath.toString(), archiveType)
+    event.begin()
     openStream()
     try {
       val actualSizeLimit = outputSizeLimit ?: Long.MAX_VALUE
@@ -62,6 +67,7 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
       }
     } finally {
       closeStream()
+      event.commit()
     }
   }
 
@@ -116,6 +122,9 @@ private fun normalizePathTraversal(entry: Decompressor.Entry, pathElements: List
 }
 
 internal class ZipDecompressor(private val zipFile: Path, sizeLimit: Long?) : Decompressor(sizeLimit) {
+  override val archivePath: Path get() = zipFile
+  override val archiveType: String get() = "zip"
+
   private lateinit var stream: ZipInputStream
 
   override fun openStream() {
@@ -142,6 +151,9 @@ internal class ZipDecompressor(private val zipFile: Path, sizeLimit: Long?) : De
 }
 
 internal class TarDecompressor(private val tarFile: Path, sizeLimit: Long?) : Decompressor(sizeLimit) {
+  override val archivePath: Path get() = tarFile
+  override val archiveType: String get() = "tar"
+
   private var stream: TarArchiveInputStream? = null
 
   override fun openStream() {

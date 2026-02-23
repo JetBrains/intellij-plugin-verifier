@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.jar
 
+import com.jetbrains.plugin.structure.JarScanEvent
 import com.jetbrains.plugin.structure.base.utils.charseq.CharBufferCharSequence
 import com.jetbrains.plugin.structure.base.utils.charseq.CharReplacingCharSequence
 import com.jetbrains.plugin.structure.base.utils.getBundleBaseName
@@ -95,6 +96,8 @@ class Jar(
 
   @Throws(JarArchiveException::class)
   fun init(): Jar = apply {
+    val ioEvent = JarScanEvent(jarPath.toString())
+    ioEvent.begin()
     try {
       jarPath
         .newZipHandler()
@@ -111,6 +114,8 @@ class Jar(
       throw JarArchiveException("JAR archive is not found at [$jarPath]: ${e.message} ", e)
     } catch (e: IOException) {
       throw JarArchiveException("JAR archive could not be opened at [$jarPath]: ${e.message} ", e)
+    } finally {
+      ioEvent.commit()
     }
   }
 

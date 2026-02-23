@@ -20,25 +20,37 @@ class ZipFileHandler(private val zipFile: File) : ZipHandler<ZipResource.ZipFile
 
   @Throws(ZipArchiveException::class)
   override fun <T> iterate(handler: (ZipEntry, ZipResource.ZipFileResource) -> T?): List<T> {
+    val event = ZipIterateEvent(zipFile.path)
+    event.begin()
     val results = mutableListOf<T>()
-    withZip { zip ->
-      val entries = zip.entries()
-      val zipResource = ZipResource.ZipFileResource(zip)
-      while (entries.hasMoreElements()) {
-        val entry: ZipEntry? = entries.nextElement()
-        entry?.let { handler(entry, zipResource) }
-          ?.let { results += it }
+    try {
+      withZip { zip ->
+        val entries = zip.entries()
+        val zipResource = ZipResource.ZipFileResource(zip)
+        while (entries.hasMoreElements()) {
+          val entry: ZipEntry? = entries.nextElement()
+          entry?.let { handler(entry, zipResource) }
+            ?.let { results += it }
+        }
       }
+    } finally {
+      event.commit()
     }
     return results
   }
 
   @Throws(ZipArchiveException::class)
   override fun <T> handleEntry(entryName: CharSequence, handler: (ZipEntry, ZipResource.ZipFileResource) -> T?): T? {
-    return withZip { zip ->
-      val zipResource = ZipResource.ZipFileResource(zip)
-      val entry: ZipEntry? = zip.getEntry(entryName.toString())
-      entry?.let { handler(entry, zipResource) }
+    val event = ZipHandleEntryEvent(zipFile.path, entryName.toString())
+    event.begin()
+    return try {
+      withZip { zip ->
+        val zipResource = ZipResource.ZipFileResource(zip)
+        val entry: ZipEntry? = zip.getEntry(entryName.toString())
+        entry?.let { handler(entry, zipResource) }
+      }
+    } finally {
+      event.commit()
     }
   }
 

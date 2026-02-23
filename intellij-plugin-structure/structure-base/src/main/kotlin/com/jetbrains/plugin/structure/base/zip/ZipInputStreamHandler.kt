@@ -11,27 +11,39 @@ import java.util.zip.ZipInputStream
 
 class ZipInputStreamHandler(private val zipPath: Path) : ZipHandler<ZipResource.ZipStreamResource> {
   override fun <T> iterate(handler: (ZipEntry, ZipResource.ZipStreamResource) -> T?): List<T> {
-    return zipPath.useZipInputStream { zipInputStream ->
-      zipInputStream
-        .asSequence()
-        .mapNotNull { (zipEntry, zipInputStream) ->
-          val resource = ZipResource.ZipStreamResource(zipInputStream)
-          handler(zipEntry, resource)
-        }
-        .toList()
+    val event = ZipIterateEvent(zipPath.toString())
+    event.begin()
+    return try {
+      zipPath.useZipInputStream { zipInputStream ->
+        zipInputStream
+          .asSequence()
+          .mapNotNull { (zipEntry, zipInputStream) ->
+            val resource = ZipResource.ZipStreamResource(zipInputStream)
+            handler(zipEntry, resource)
+          }
+          .toList()
+      }
+    } finally {
+      event.commit()
     }
   }
 
   override fun <T> handleEntry(entryName: CharSequence, handler: (ZipEntry, ZipResource.ZipStreamResource) -> T?): T? {
-    return zipPath.useZipInputStream { zipInputStream ->
-      zipInputStream
-        .asSequence()
-        .firstOrNull { (zipEntry, _) ->
-          zipEntry.name.contentEquals(entryName)
-        }?.let { (zipEntry, zipInputStream) ->
-          val resource = ZipResource.ZipStreamResource(zipInputStream)
-          return handler(zipEntry, resource)
-        }
+    val event = ZipHandleEntryEvent(zipPath.toString(), entryName.toString())
+    event.begin()
+    return try {
+      zipPath.useZipInputStream { zipInputStream ->
+        zipInputStream
+          .asSequence()
+          .firstOrNull { (zipEntry, _) ->
+            zipEntry.name.contentEquals(entryName)
+          }?.let { (zipEntry, zipInputStream) ->
+            val resource = ZipResource.ZipStreamResource(zipInputStream)
+            return handler(zipEntry, resource)
+          }
+      }
+    } finally {
+      event.commit()
     }
   }
 

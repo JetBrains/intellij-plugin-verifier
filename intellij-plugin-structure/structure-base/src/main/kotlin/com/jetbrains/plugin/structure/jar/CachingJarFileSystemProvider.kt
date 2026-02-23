@@ -39,10 +39,16 @@ class CachingJarFileSystemProvider(
   val eventLog = EventLog()
 
   private fun createFileSystem(jarPath: Path, jarUri: URI): FsHandleFileSystem {
-    val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
-      LOG.debug("Creating a filesystem handler via delegate for <{}> (Cache size: {})", jarUri, fsCache.estimatedSize())
+    val event = JarFileSystemCreationEvent(jarPath.toString())
+    event.begin()
+    return try {
+      val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
+        LOG.debug("Creating a filesystem handler via delegate for <{}> (Cache size: {})", jarUri, fsCache.estimatedSize())
+      }
+      FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath)
+    } finally {
+      event.commit()
     }
-    return FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath)
   }
 
   override fun getFileSystem(jarPath: Path): FileSystem {
