@@ -343,9 +343,9 @@ class PluginVerifier(
     val visibilityChecker = ModuleVisibilityChecker.build(this) ?: return // Only works on IDE version 253.* or later
 
     for ((a, b) in dependenciesGraph.edges) {
-      if (a.plugin == null || b.plugin == null) { 
-        continue 
-      } 
+      if (a != dependenciesGraph.verifiedPlugin || a.plugin == null || b.plugin == null) {
+        continue
+      }
       // The dependency graph can contain legacy plugins as well as content modules.
       // Visibility checks only apply between content modules, so failure on resolution will simply skip the edge with no warnings
       val from = visibilityChecker.resolveModuleInfoFrom(a.plugin) ?: continue
