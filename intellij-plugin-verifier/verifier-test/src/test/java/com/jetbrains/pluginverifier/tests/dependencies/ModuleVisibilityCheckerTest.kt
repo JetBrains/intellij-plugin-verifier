@@ -122,19 +122,19 @@ class ModuleVisibilityCheckerTest {
   }
 
   @Test
-  fun `build returns null for IDE version below 253`() {
-    val ideVersion = IdeVersion.createIdeVersion("IU-252.1")
+  fun `build returns null for IDE version below 261`() {
+    val ideVersion = IdeVersion.createIdeVersion("IU-253.1")
     val context = createMockPluginVerificationContext(ideVersion)
 
     val result = ModuleVisibilityChecker.build(context)
 
-    assertNull("Should return null for IDE version < 253", result)
+    assertNull("Should return null for IDE version < 261", result)
   }
 
   // --- Helper methods ---
 
   private fun createCheckerForVisibilityTests(): ModuleVisibilityChecker {
-    val ideVersion = IdeVersion.createIdeVersion("IU-253.1")
+    val ideVersion = IdeVersion.createIdeVersion("IU-261.1")
     val mainPlugin = MockIdePlugin(pluginId = "main.plugin", pluginVersion = "1.0")
     val context = createMockPluginVerificationContext(ideVersion, mainPlugin, listOf(mainPlugin))
     return ModuleVisibilityChecker.build(context)!!
