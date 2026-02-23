@@ -32,6 +32,8 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier
   ): DependencyTreeResolution {
     requireNotNull(plugin.pluginId) { missingId(plugin) }
+    val event = DependencyTreeResolutionEvent(plugin.pluginId!!)
+    event.begin()
     val missingDependencies = mutableMapOf<IdePlugin, Set<PluginDependency>>()
     val missingDependencyListener: MissingDependencyListener =
       { idePlugin: IdePlugin, missingDependency: PluginDependency ->
@@ -42,11 +44,15 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
     val dependencyGraph = getDependencyGraph(plugin, dependencyResolutionContext)
 
     val transitiveDependencies = mutableSetOf<Dependency>()
-    dependencyGraph.forEachAdjacency { _, dependencies ->
-      transitiveDependencies += dependencies
+    try {
+      dependencyGraph.forEachAdjacency { _, dependencies ->
+        transitiveDependencies += dependencies
+      }
+      return DefaultDependencyTreeResolution(plugin, transitiveDependencies, missingDependencies, dependencyGraph)
+    } finally {
+      event.dependencyCount = transitiveDependencies.size
+      event.commit()
     }
-
-    return DefaultDependencyTreeResolution(plugin, transitiveDependencies, missingDependencies, dependencyGraph)
   }
 
   @Throws(IllegalArgumentException::class)

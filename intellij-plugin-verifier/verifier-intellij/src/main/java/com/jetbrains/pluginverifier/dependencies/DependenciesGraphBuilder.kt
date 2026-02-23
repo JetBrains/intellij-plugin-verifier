@@ -27,14 +27,22 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
   }
 
   fun buildDependenciesGraph(plugin: IdePlugin, ide: Ide): Pair<DependenciesGraph, List<DependencyFinder.Result>> {
+    val event = DependencyGraphBuildEvent(plugin.pluginId ?: "", ide.version.asString())
+    event.begin()
     val graph = DefaultDirectedGraph<DepVertex, DepEdge>(DepEdge::class.java)
     val missingDependencies = hashMapOf<DepId, MutableSet<DepMissingVertex>>()
 
     val start = DepVertex(plugin, DependencyFinder.Result.FoundPlugin(plugin))
-    addTransitiveDependencies(ide, graph, start, missingDependencies)
-    if (plugin.pluginId != CORE_IDE_PLUGIN_ID) {
-      maybeAddOptionalJavaPluginDependency(plugin, ide, graph, missingDependencies)
-      maybeAddBundledPluginsWithUseIdeaClassLoader(ide, graph, missingDependencies)
+    try {
+      addTransitiveDependencies(ide, graph, start, missingDependencies)
+      if (plugin.pluginId != CORE_IDE_PLUGIN_ID) {
+        maybeAddOptionalJavaPluginDependency(plugin, ide, graph, missingDependencies)
+        maybeAddBundledPluginsWithUseIdeaClassLoader(ide, graph, missingDependencies)
+      }
+    } finally {
+      event.vertexCount = graph.vertexSet().size
+      event.edgeCount = graph.edgeSet().size
+      event.commit()
     }
 
     val dependenciesGraph = DepGraph2ApiGraphConverter().convert(graph, start, missingDependencies)

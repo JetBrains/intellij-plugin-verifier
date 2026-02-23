@@ -81,16 +81,25 @@ class UrlDownloader<in K>(private val urlProvider: (K) -> URL?) : Downloader<K> 
   }
 
   private fun downloadFileOrDirectory(downloadUrl: URL, tempDirectory: Path, key: K): DownloadResult {
-    val response = downloadConnector.download(downloadUrl.toExternalForm())
-    val extension = response.extension
-    val downloadedTempFile = Files.createTempFile(tempDirectory, "", ".$extension")
-    return try {
-      LOG.debug("Downloading {} to {}", key, downloadedTempFile)
-      copyResponseTo(response, downloadedTempFile)
-      DownloadResult.Downloaded(downloadedTempFile, extension, false)
-    } catch (e: Throwable) {
-      downloadedTempFile.deleteLogged()
-      throw e
+    val urlString = downloadUrl.toExternalForm()
+    val event = PluginDownloadEvent(urlString)
+    event.begin()
+    try {
+      val response = downloadConnector.download(urlString)
+      event.contentLength = response.contentLength
+      event.extension = response.extension
+      val extension = response.extension
+      val downloadedTempFile = Files.createTempFile(tempDirectory, "", ".$extension")
+      return try {
+        LOG.debug("Downloading {} to {}", key, downloadedTempFile)
+        copyResponseTo(response, downloadedTempFile)
+        DownloadResult.Downloaded(downloadedTempFile, extension, false)
+      } catch (e: Throwable) {
+        downloadedTempFile.deleteLogged()
+        throw e
+      }
+    } finally {
+      event.commit()
     }
   }
 

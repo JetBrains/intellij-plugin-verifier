@@ -33,7 +33,14 @@ abstract class AbstractPluginDetailsProvider(protected val archiveManager: Plugi
 
   override fun providePluginDetails(pluginInfo: PluginInfo, pluginFileLock: FileLock) =
     pluginFileLock.closeOnException {
-      with(createPlugin(pluginInfo, pluginFileLock)) {
+      val creationEvent = PluginCreationEvent(pluginInfo.pluginId, pluginFileLock.file.toString())
+      creationEvent.begin()
+      val creationResult = try {
+        createPlugin(pluginInfo, pluginFileLock)
+      } finally {
+        creationEvent.commit()
+      }
+      with(creationResult) {
         when (this) {
           is PluginCreationSuccess<IdePlugin> -> {
             readPluginClasses(
@@ -65,6 +72,8 @@ abstract class AbstractPluginDetailsProvider(protected val archiveManager: Plugi
     warnings: List<PluginProblem>,
     pluginFileLock: FileLock?
   ): PluginDetailsProvider.Result {
+    val event = PluginClassReadingEvent(pluginInfo.pluginId)
+    event.begin()
     return try {
       readPluginClasses(pluginInfo, idePlugin)
         .let { pluginClassesLocations ->
@@ -82,6 +91,8 @@ abstract class AbstractPluginDetailsProvider(protected val archiveManager: Plugi
       e.rethrowIfInterrupted()
       val message = e.message ?: e.javaClass.simpleName
       PluginDetailsProvider.Result.InvalidPlugin(pluginInfo, listOf(UnableToReadPluginFile(message)))
+    } finally {
+      event.commit()
     }
   }
 

@@ -89,6 +89,9 @@ class PluginVerifier(
 
 
   fun verify(pluginDetails: PluginDetails): PluginVerificationResult {
+    val event = PluginVerificationEvent(pluginDetails.idePlugin.pluginId ?: "", verificationDescriptor.presentableName)
+    event.begin()
+    try {
     verificationDescriptor.classResolverProvider.provide(pluginDetails).use { (pluginResolver, allResolver, dependenciesGraph) ->
       val externalClassesPackageFilter = verificationDescriptor.classResolverProvider.provideExternalClassesPackageFilter()
 
@@ -109,6 +112,7 @@ class PluginVerifier(
       val classesToCheck = selectClassesForCheck(pluginDetails).also {
         it.reportTelemetry(pluginDetails, context)
       }
+      event.classCount = classesToCheck.size
 
       BytecodeVerifier(
         classFilters,
@@ -160,6 +164,9 @@ class PluginVerifier(
           context.telemetry
         )
       }
+    }
+    } finally {
+      event.commit()
     }
   }
 
