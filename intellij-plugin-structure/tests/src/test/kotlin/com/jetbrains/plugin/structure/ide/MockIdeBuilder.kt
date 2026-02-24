@@ -15,7 +15,7 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
     dir("lib") {
       zip("app-client.jar") {
         dir("META-INF") {
-          file("PlatformLangPlugin.xml", platformLangPluginXml)
+          file("ideaPlugin.xml", platformLangPluginXml)
         }
       }
       dir("modules") {

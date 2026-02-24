@@ -671,7 +671,7 @@ class DependenciesTest {
 
     val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_CLASSPATH)
       .createIde(ideRoot)
-    then(ide.bundledPlugins).hasSize(280)
+    then(ide.bundledPlugins).hasSize(279)
 
     val git4Idea = ide.findPluginById("Git4Idea")
     assertNotNull(git4Idea, "No Git4Idea plugin found in the IDE")
@@ -726,7 +726,7 @@ class DependenciesTest {
     val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_CLASSPATH)
       .createIde(ideRoot)
 
-    then(ide.bundledPlugins).hasSize(504)
+    then(ide.bundledPlugins).hasSize(503)
 
     val git4Idea = ide.findPluginById("Git4Idea")
     assertNotNull(git4Idea, "No Git4Idea plugin found in the IDE")
