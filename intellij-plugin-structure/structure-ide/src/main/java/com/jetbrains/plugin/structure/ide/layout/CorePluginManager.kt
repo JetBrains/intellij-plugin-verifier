@@ -2,7 +2,6 @@ package com.jetbrains.plugin.structure.ide.layout
 
 import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.PLATFORM_PLUGIN_XML
 import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Companion.logFailures
@@ -83,7 +82,6 @@ internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader
       return arrayOf(
         META_INF / "${platformPrefix}Plugin.xml",
         META_INF / PLUGIN_XML,
-        META_INF / PLATFORM_PLUGIN_XML
       )
     }
 
