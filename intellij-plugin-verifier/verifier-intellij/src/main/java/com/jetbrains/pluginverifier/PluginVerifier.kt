@@ -340,8 +340,8 @@ class PluginVerifier(
   }
 
   private fun PluginVerificationContext.checkModuleVisibility(dependenciesGraph: DependenciesGraph) {
-    val visibilityChecker = ModuleVisibilityChecker.build(this) ?: return // Only works on IDE version 253.* or later
-    visibilityChecker.checkEdges(dependenciesGraph, this)
+    if (!ModuleVisibilityChecker.isApplicable(this)) return
+    ModuleVisibilityChecker.build(this).checkEdges(dependenciesGraph, this)
   }
 
   private fun PluginVerificationContext.findMistakenlyBundledIdeClasses(pluginResolver: Resolver) {

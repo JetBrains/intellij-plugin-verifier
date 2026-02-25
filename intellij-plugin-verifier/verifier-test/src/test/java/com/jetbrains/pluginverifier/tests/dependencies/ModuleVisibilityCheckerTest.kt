@@ -130,13 +130,20 @@ class ModuleVisibilityCheckerTest {
   }
 
   @Test
-  fun `build returns null for IDE version below 261`() {
-    val ideVersion = IdeVersion.createIdeVersion("IU-253.1")
-    val context = createMockPluginVerificationContext(ideVersion)
+  fun `isApplicable returns false for IDE version below 261`() {
+    val context = createMockPluginVerificationContext(IdeVersion.createIdeVersion("IU-253.1"))
+    assertFalse("Should not be applicable for IDE version < 261", ModuleVisibilityChecker.isApplicable(context))
+  }
 
-    val result = ModuleVisibilityChecker.build(context)
-
-    assertNull("Should return null for IDE version < 261", result)
+  @Test
+  fun `build throws when isApplicable is false`() {
+    val context = createMockPluginVerificationContext(IdeVersion.createIdeVersion("IU-253.1"))
+    try {
+      ModuleVisibilityChecker.build(context)
+      fail("Expected IllegalStateException when build() is called on an inapplicable context")
+    } catch (e: IllegalStateException) {
+      // expected
+    }
   }
 
   // --- checkEdges: only direct dependencies of the verified plugin are checked ---
@@ -169,8 +176,8 @@ class ModuleVisibilityCheckerTest {
     )
 
     // Build checker with parentPluginA as the verified (main) plugin.
-    val context = createMockPluginVerificationContext(IdeVersion.createIdeVersion("IU-253.1"), parentPluginA)
-    val checker = ModuleVisibilityChecker.build(context)!!
+    val context = createMockPluginVerificationContext(IdeVersion.createIdeVersion("IU-261.1"), parentPluginA)
+    val checker = ModuleVisibilityChecker.build(context)
 
     val problems = mutableListOf<CompatibilityProblem>()
     val registrar = object : ProblemRegistrar {
@@ -210,7 +217,7 @@ class ModuleVisibilityCheckerTest {
     val ideVersion = IdeVersion.createIdeVersion("IU-261.1")
     val mainPlugin = MockIdePlugin(pluginId = "main.plugin", pluginVersion = "1.0")
     val context = createMockPluginVerificationContext(ideVersion, mainPlugin, listOf(mainPlugin))
-    return ModuleVisibilityChecker.build(context)!!
+    return ModuleVisibilityChecker.build(context)
   }
 
   private fun createMockPluginVerificationContext(

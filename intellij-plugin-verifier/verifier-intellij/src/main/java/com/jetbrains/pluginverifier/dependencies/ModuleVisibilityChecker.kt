@@ -138,13 +138,24 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
   companion object {
     const val VISIBILITY_CHECK_INTRODUCED_VERSION = 261
 
-    fun build(context: PluginVerificationContext): ModuleVisibilityChecker? {
-      return if (context.verificationDescriptor is PluginVerificationDescriptor.IDE
-        && context.verificationDescriptor.ideVersion.components[0] >= VISIBILITY_CHECK_INTRODUCED_VERSION) {
-        ModuleVisibilityChecker(context.verificationDescriptor.ide, context.idePlugin)
-      } else {
-        null
+    /**
+     * Returns `true` if [context] targets an IDE version that supports module visibility checks.
+     * Must be called before [build].
+     */
+    fun isApplicable(context: PluginVerificationContext): Boolean =
+      context.verificationDescriptor is PluginVerificationDescriptor.IDE
+        && context.verificationDescriptor.ideVersion.components[0] >= VISIBILITY_CHECK_INTRODUCED_VERSION
+
+    /**
+     * Builds a [ModuleVisibilityChecker] for the given [context].
+     * Requires [isApplicable] to return `true`; throws [IllegalStateException] otherwise.
+     */
+    fun build(context: PluginVerificationContext): ModuleVisibilityChecker {
+      check(isApplicable(context)) {
+        "ModuleVisibilityChecker is not applicable for this context. Call isApplicable() before build()."
       }
+      val descriptor = context.verificationDescriptor as PluginVerificationDescriptor.IDE
+      return ModuleVisibilityChecker(descriptor.ide, context.idePlugin)
     }
   }
 }
