@@ -142,16 +142,16 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
      * Returns `true` if [context] targets an IDE version that supports module visibility checks.
      * Must be called before [build].
      */
-    fun isApplicable(context: PluginVerificationContext): Boolean =
+    fun supports(context: PluginVerificationContext): Boolean =
       context.verificationDescriptor is PluginVerificationDescriptor.IDE
         && context.verificationDescriptor.ideVersion.components[0] >= VISIBILITY_CHECK_INTRODUCED_VERSION
 
     /**
      * Builds a [ModuleVisibilityChecker] for the given [context].
-     * Requires [isApplicable] to return `true`; throws [IllegalStateException] otherwise.
+     * Requires [supports] to return `true`; throws [IllegalStateException] otherwise.
      */
     fun build(context: PluginVerificationContext): ModuleVisibilityChecker {
-      check(isApplicable(context)) {
+      check(supports(context)) {
         "ModuleVisibilityChecker is not applicable for this context. Call isApplicable() before build()."
       }
       val descriptor = context.verificationDescriptor as PluginVerificationDescriptor.IDE

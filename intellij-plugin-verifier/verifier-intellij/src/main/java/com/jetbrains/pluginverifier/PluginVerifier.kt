@@ -340,7 +340,7 @@ class PluginVerifier(
   }
 
   private fun PluginVerificationContext.checkModuleVisibility(dependenciesGraph: DependenciesGraph) {
-    if (!ModuleVisibilityChecker.isApplicable(this)) return
+    if (!ModuleVisibilityChecker.supports(this)) return
     ModuleVisibilityChecker.build(this).checkEdges(dependenciesGraph, this)
   }
 

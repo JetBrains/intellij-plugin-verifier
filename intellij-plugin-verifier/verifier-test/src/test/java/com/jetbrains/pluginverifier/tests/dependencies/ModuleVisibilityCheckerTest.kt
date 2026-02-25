@@ -132,7 +132,7 @@ class ModuleVisibilityCheckerTest {
   @Test
   fun `isApplicable returns false for IDE version below 261`() {
     val context = createMockPluginVerificationContext(IdeVersion.createIdeVersion("IU-253.1"))
-    assertFalse("Should not be applicable for IDE version < 261", ModuleVisibilityChecker.isApplicable(context))
+    assertFalse("Should not be applicable for IDE version < 261", ModuleVisibilityChecker.supports(context))
   }
 
   @Test
