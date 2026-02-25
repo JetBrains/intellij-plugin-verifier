@@ -6,11 +6,16 @@ package com.jetbrains.pluginverifier.tests.dependencies
 
 import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.Module
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleLoadingRule
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleVisibility
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.ModuleVisibilityChecker
 import com.jetbrains.pluginverifier.dependencies.ModuleVisibilityChecker.ResolvedModuleInfoFrom
@@ -21,10 +26,13 @@ import com.jetbrains.pluginverifier.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.jdk.JdkVersion
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.results.problems.ModuleVisibilityProblem
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.createPluginArchiveManager
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
+import com.jetbrains.pluginverifier.verifiers.ProblemRegistrar
 import com.jetbrains.pluginverifier.verifiers.packages.DefaultPackageFilter
 import org.junit.Assert.*
 import org.junit.Before
@@ -129,6 +137,71 @@ class ModuleVisibilityCheckerTest {
     val result = ModuleVisibilityChecker.build(context)
 
     assertNull("Should return null for IDE version < 261", result)
+  }
+
+  // --- checkEdges: only direct dependencies of the verified plugin are checked ---
+
+  @Test
+  fun `checkEdges reports a visibility problem for a direct dependency but not for a transitive one`() {
+    // Graph: verified plugin A → private module B → private module C
+    //
+    // Without the guard `a != dependenciesGraph.verifiedPlugin`, both A→B and B→C would be
+    //    // checked and two ModuleVisibilityProblems would be reported.
+    //    // With the guard, only A→B is checked: B→C is a transitive edge and must be skipped.
+
+    // Set up plugin B with a PRIVATE module so resolveModuleInfoTo(B) succeeds.
+    val pluginB = pluginWithPrivateModule("plugin.b", "com.example.b")
+    // Set up plugin C likewise (ensures B→C *would* have been caught without the fix).
+    val pluginC = pluginWithPrivateModule("plugin.c", "com.example.c")
+
+    val nodeA = DependencyNode("plugin.a", "1.0", parentPluginA) // verified plugin (no module descriptors → uses MODULE_PLACEHOLDER_STRING)
+    val nodeB = DependencyNode("plugin.b", "1.0", pluginB)
+    val nodeC = DependencyNode("plugin.c", "1.0", pluginC)
+
+    val graph = DependenciesGraph(
+      verifiedPlugin = nodeA,
+      vertices = setOf(nodeA, nodeB, nodeC),
+      edges = setOf(
+        DependencyEdge(nodeA, nodeB, PluginDependencyImpl("plugin.b", false, false)), // direct
+        DependencyEdge(nodeB, nodeC, PluginDependencyImpl("plugin.c", false, false))  // transitive
+      ),
+      missingDependencies = emptyMap()
+    )
+
+    // Build checker with parentPluginA as the verified (main) plugin.
+    val context = createMockPluginVerificationContext(IdeVersion.createIdeVersion("IU-253.1"), parentPluginA)
+    val checker = ModuleVisibilityChecker.build(context)!!
+
+    val problems = mutableListOf<CompatibilityProblem>()
+    val registrar = object : ProblemRegistrar {
+      override fun registerProblem(problem: CompatibilityProblem) = problems.add(problem).let {}
+    }
+
+    checker.checkEdges(graph, registrar)
+
+    val visibilityProblems = problems.filterIsInstance<ModuleVisibilityProblem>()
+    assertEquals("Exactly one visibility problem should be reported (for the direct A→B edge)", 1, visibilityProblems.size)
+    assertEquals("plugin.b", visibilityProblems.single().targetModuleName)
+    assertFalse(
+      "No problem should be reported for the transitive B→C edge",
+      visibilityProblems.any { it.targetModuleName == "plugin.c" }
+    )
+  }
+
+  /**
+   * Creates a [MockIdePlugin] that exposes a single PRIVATE content module, making
+   * [ModuleVisibilityChecker.resolveModuleInfoTo] return a non-null result.
+   */
+  private fun pluginWithPrivateModule(pluginId: String, namespace: String): MockIdePlugin {
+    val modulePlugin = MockIdePlugin(pluginId = pluginId) // moduleVisibility defaults to PRIVATE in MockIdePlugin
+    val descriptor = ModuleDescriptor(
+      name = pluginId,
+      loadingRule = ModuleLoadingRule.REQUIRED,
+      module = modulePlugin,
+      configurationFilePath = "$pluginId.xml",
+      moduleDefinition = Module.FileBasedModule(pluginId, namespace, namespace, ModuleLoadingRule.REQUIRED, "$pluginId.xml")
+    )
+    return MockIdePlugin(pluginId = pluginId, pluginVersion = "1.0", modulesDescriptors = listOf(descriptor))
   }
 
   // --- Helper methods ---

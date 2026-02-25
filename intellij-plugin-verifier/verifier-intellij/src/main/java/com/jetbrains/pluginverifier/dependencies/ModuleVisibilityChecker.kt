@@ -9,7 +9,9 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleVisibility
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
+import com.jetbrains.pluginverifier.results.problems.ModuleVisibilityProblem
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
+import com.jetbrains.pluginverifier.verifiers.ProblemRegistrar
 
 /**
  * A magic constant given to non-module plugins, so that we can uniformly handle namespace checks
@@ -105,6 +107,31 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
       val moduleDescriptor = plugin.modulesDescriptors.firstOrNull { it.name == plugin.pluginId } ?: return null
 
       return ResolvedModuleInfoTo(plugin, moduleDescriptor.moduleDefinition.actualNamespace, moduleDescriptor.module.moduleVisibility)
+    }
+  }
+
+  /**
+   * Iterates over [dependenciesGraph] edges and registers a [ModuleVisibilityProblem] for every
+   * **direct** dependency of the [verified plugin][DependenciesGraph.verifiedPlugin] that violates
+   * module-visibility rules.
+   *
+   * Edges that do **not** originate from the verified plugin (i.e. transitive dependency edges
+   * such as B → C in a chain A → B → C) are intentionally skipped: visibility rules are
+   * only enforced for dependencies declared directly by the plugin under verification.
+   */
+  fun checkEdges(dependenciesGraph: DependenciesGraph, problemRegistrar: ProblemRegistrar) {
+    for ((a, b) in dependenciesGraph.edges) {
+      if (a != dependenciesGraph.verifiedPlugin || a.plugin == null || b.plugin == null) {
+        continue
+      }
+      // The dependency graph can contain legacy plugins as well as content modules.
+      // Visibility checks only apply between content modules, so failure on resolution will simply skip the edge with no warnings
+      val from = resolveModuleInfoFrom(a.plugin) ?: continue
+      val to = resolveModuleInfoTo(b.plugin) ?: continue
+
+      if (!isAccessAllowed(from, to)) {
+        problemRegistrar.registerProblem(ModuleVisibilityProblem.create(a.plugin, from, b.plugin, to))
+      }
     }
   }
 
