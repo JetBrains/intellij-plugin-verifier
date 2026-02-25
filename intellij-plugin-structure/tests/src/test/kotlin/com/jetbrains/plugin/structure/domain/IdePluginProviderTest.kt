@@ -34,12 +34,12 @@ class IdePluginProviderTest {
   @Before
   fun setUp() {
     val ideRoot = buildDirectory(temporaryFolder.newFolder("idea").toPath()) {
-      file("build.txt", "IE-221.5591.62")
+      file("build.txt", "IC-221.5591.62")
 
       dir("lib") {
         zip("app.jar") {
           dir("META-INF") {
-            file("PlatformLangPlugin.xml") {
+            file("IdeaPlugin.xml") {
               perfectXmlBuilder.modify {
                 id = "<id>com.intellij</id>"
                 name = "<name>IDEA CORE</name>"

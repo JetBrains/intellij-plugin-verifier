@@ -130,7 +130,7 @@ class IdeManagerImpl : AbstractIdeManager() {
     ideVersion: IdeVersion
   ): List<IdePlugin> {
     val platformPlugins = arrayListOf<IdePlugin>()
-    val descriptorPaths = listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml", PLATFORM_PLUGIN_XML)
+    val descriptorPaths = listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml")
 
     for (jarFile in jarFiles) {
       val descriptorPath = FileSystems.newFileSystem(jarFile, IdeManagerImpl::class.java.classLoader).use { jarFs ->
@@ -175,9 +175,6 @@ class IdeManagerImpl : AbstractIdeManager() {
   companion object {
 
     private val LOG = LoggerFactory.getLogger(IdeManagerImpl::class.java)
-
-    // in idea-IE com.intellij plugin is defined in PlatformLangPlugin.xml file
-    internal const val PLATFORM_PLUGIN_XML = "PlatformLangPlugin.xml"
 
     fun isDistributionIde(ideaDir: Path) = ideaDir.resolve("lib").isDirectory &&
       !ideaDir.resolve(".idea").isDirectory

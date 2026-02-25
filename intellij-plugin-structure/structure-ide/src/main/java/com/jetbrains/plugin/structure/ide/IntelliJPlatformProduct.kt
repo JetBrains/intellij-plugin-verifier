@@ -18,7 +18,7 @@ enum class IntelliJPlatformProduct(
 
   IDEA("IU", "IntelliJ IDEA Ultimate", "idea", "IIU"),
   IDEA_IC("IC", "IntelliJ IDEA Community", "Idea", "IIC"),
-  IDEA_IE("IE", "IntelliJ IDEA Educational", "Idea", "IIC"),
+  IDEA_IE("IE", "IntelliJ IDEA Educational", "IdeaEdu", "IIC"),
   RUBY_MINE("RM", "RubyMine", "Ruby"),
   PY_CHARM("PY", "PyCharm Professional", "Python", "PCP"),
   PY_CHARM_PC("PC", "PyCharm Community", "PyCharmCore", "PCC"),

@@ -2,7 +2,6 @@ package com.jetbrains.plugin.structure.ide.layout
 
 import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.ide.IdeManagerImpl.Companion.PLATFORM_PLUGIN_XML
 import com.jetbrains.plugin.structure.ide.IntelliJPlatformProduct
 import com.jetbrains.plugin.structure.ide.InvalidIdeException
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Companion.logFailures
@@ -77,13 +76,15 @@ internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader
       }
     }
 
+  /**
+   * Core plugin filename naming convention is described in the [Knowledge Base](https://youtrack.jetbrains.com/articles/IJPL-A-31).
+   */
   private val IdeVersion.descriptorPaths: Array<String>
     get() {
       operator fun String.div(fileName: String) = "$this${File.separator}$fileName"
       return arrayOf(
         META_INF / "${platformPrefix}Plugin.xml",
         META_INF / PLUGIN_XML,
-        META_INF / PLATFORM_PLUGIN_XML
       )
     }
 

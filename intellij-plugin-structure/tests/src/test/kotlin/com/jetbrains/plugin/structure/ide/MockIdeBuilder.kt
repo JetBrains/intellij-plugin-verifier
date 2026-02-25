@@ -9,13 +9,17 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
     temporaryFolder.newFolder("idea$folderSuffix").toPath()
   }
 
+  /**
+   * @see [com.jetbrains.plugin.structure.ide.layout.CorePluginManager]
+   */
   fun buildIdeaDirectory(productInfo: ProductInfo.() -> Unit = {}) = buildDirectory(ideRoot) {
     file("build.txt", "IU-242.10180.25")
     file("product-info.json", productInfoJson(productInfo))
     dir("lib") {
-      zip("app-client.jar") {
+      zip("product.jar") {
         dir("META-INF") {
-          file("PlatformLangPlugin.xml", platformLangPluginXml)
+          // for IU, the Core plugin's filename is hardcoded to `plugin.xml`, so the use of platform prefix is not required
+          file("plugin.xml", corePluginXml)
         }
       }
       dir("modules") {
@@ -261,7 +265,7 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
     """.trimIndent()
   }
 
-  private val platformLangPluginXml: String
+  private val corePluginXml: String
     get() = """
     <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
       <id>com.intellij</id>
