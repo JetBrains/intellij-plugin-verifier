@@ -76,6 +76,9 @@ internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader
       }
     }
 
+  /**
+   * Core plugin filename naming convention is described in the [Knowledge Base](https://youtrack.jetbrains.com/articles/IJPL-A-31).
+   */
   private val IdeVersion.descriptorPaths: Array<String>
     get() {
       operator fun String.div(fileName: String) = "$this${File.separator}$fileName"
