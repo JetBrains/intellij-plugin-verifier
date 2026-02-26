@@ -71,13 +71,17 @@ sealed class DependencyNode {
   data class PluginDependency(override val plugin: IdePlugin): DependencyNode(), PluginAware {
     override val id: String get() = plugin.id
     override val version: String get() = plugin.pluginVersion ?: UNKNOWN_VERSION
+    override fun toString() = "$id:$version"
   }
 
   data class AliasedPluginDependency(override val id: String, override val plugin: IdePlugin): DependencyNode(), PluginAware {
     override val version: String get() = plugin.pluginVersion ?: UNKNOWN_VERSION
+    override fun toString() = "$id:$version (aliased ${plugin.pluginId})"
   }
 
-  data class IdAndVersionDependency(override val id: String, override val version: String): DependencyNode()
+  data class IdAndVersionDependency(override val id: String, override val version: String) : DependencyNode() {
+    override fun toString() = "$id:$version"
+  }
 
   companion object {
     fun dependencyNode(id: String, version: String) = IdAndVersionDependency(id, version)
