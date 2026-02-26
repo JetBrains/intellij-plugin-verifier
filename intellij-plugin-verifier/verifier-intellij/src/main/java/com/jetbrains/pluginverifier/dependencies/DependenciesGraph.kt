@@ -69,13 +69,13 @@ sealed class DependencyNode {
   abstract val version: String
 
   data class PluginDependency(override val plugin: IdePlugin): DependencyNode(), PluginAware {
-    override val id: String get() = plugin.id
-    override val version: String get() = plugin.pluginVersion ?: UNKNOWN_VERSION
+    override val id = plugin.id
+    override val version = plugin.pluginVersion ?: UNKNOWN_VERSION
     override fun toString() = "$id:$version"
   }
 
   data class AliasedPluginDependency(override val id: String, override val plugin: IdePlugin): DependencyNode(), PluginAware {
-    override val version: String get() = plugin.pluginVersion ?: UNKNOWN_VERSION
+    override val version = plugin.pluginVersion ?: UNKNOWN_VERSION
     override fun toString() = "$id:$version (aliased ${plugin.pluginId})"
   }
 
