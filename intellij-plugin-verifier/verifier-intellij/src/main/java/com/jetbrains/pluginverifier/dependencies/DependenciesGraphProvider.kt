@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.pluginDependency
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
@@ -74,8 +75,10 @@ class DependenciesGraphProvider {
 
   private fun Dependency.Module.getVertices(): List<DependencyNode> {
     val vertices = mutableListOf<DependencyNode>()
-    vertices += newDependencyNode(id, plugin)
     vertices += newDependencyNode(plugin)
+    if (id != plugin.id) {
+      vertices += newDependencyNode(id, plugin)
+    }
 
     val definedModuleNodes = plugin.definedModules.map { alias -> newDependencyNode(alias, plugin) }
     vertices += definedModuleNodes
