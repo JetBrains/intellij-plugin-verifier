@@ -268,13 +268,13 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
     with(classResolver.dependenciesGraph) {
       assertEquals(1, vertices.size)
       val vertex = vertices.first()
-      assertEquals("com.intellij", vertex.pluginId)
+      assertEquals("com.intellij", vertex.id)
       assertEquals("251.23774.435", vertex.version)
 
       with(missingDependencies) {
         assertEquals(1, size)
         val missingDependencyDeclarer = missingDependencies.keys.first()
-        assertEquals("com.intellij", missingDependencyDeclarer.pluginId)
+        assertEquals("com.intellij", missingDependencyDeclarer.id)
         assertEquals("251.23774.435", missingDependencyDeclarer.version)
 
         val missingComIntellijDependencies = missingDependencies[missingDependencyDeclarer] ?: emptySet()

@@ -50,7 +50,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
         compareBy<DependencyEdge> { if (it.dependency.isOptional) 1 else -1 }
           .thenBy { if (it.dependency.isModule) 1 else -1 }
           .thenBy { it.dependency.id }
-          .thenBy { it.to.pluginId }
+          .thenBy { it.to.id }
           .thenBy { it.to.version }
       )
 
@@ -70,7 +70,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
     }
 
     val result = arrayListOf<String>()
-    result += "${currentNode.pluginId}:${currentNode.version}"
+    result += "${currentNode.id}:${currentNode.version}"
 
     if (childrenLines.isNotEmpty()) {
       val headingChildren = childrenLines.dropLast(1)

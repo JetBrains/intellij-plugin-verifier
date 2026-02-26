@@ -120,7 +120,7 @@ class IdeDependencyFinderTest {
 
     val (dependenciesGraph, _) = DependenciesGraphBuilder(ideDependencyFinder).buildDependenciesGraph(startPlugin, ide)
 
-    val deps = dependenciesGraph.vertices.map { it.pluginId }
+    val deps = dependenciesGraph.vertices.map { it.id }
     assertEquals(setOf("myPlugin", "test", "moduleContainer", "somePlugin", "com.intellij", MOCK_IDE_MODULE_ID), deps.toSet())
 
     assertEquals(setOf(MissingDependency(externalModuleDependency, "Failed to fetch plugin.")), dependenciesGraph.getDirectMissingDependencies())

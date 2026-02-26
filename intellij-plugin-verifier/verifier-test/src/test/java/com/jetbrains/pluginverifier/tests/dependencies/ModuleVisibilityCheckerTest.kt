@@ -16,7 +16,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
-import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import com.jetbrains.pluginverifier.dependencies.ModuleVisibilityChecker
 import com.jetbrains.pluginverifier.dependencies.ModuleVisibilityChecker.ResolvedModuleInfoFrom
 import com.jetbrains.pluginverifier.dependencies.ModuleVisibilityChecker.ResolvedModuleInfoTo
@@ -161,9 +161,9 @@ class ModuleVisibilityCheckerTest {
     // Set up plugin C likewise (ensures B→C *would* have been caught without the fix).
     val pluginC = pluginWithPrivateModule("plugin.c", "com.example.c")
 
-    val nodeA = DependencyNode("plugin.a", "1.0", parentPluginA) // verified plugin (no module descriptors → uses MODULE_PLACEHOLDER_STRING)
-    val nodeB = DependencyNode("plugin.b", "1.0", pluginB)
-    val nodeC = DependencyNode("plugin.c", "1.0", pluginC)
+    val nodeA = dependencyNode(parentPluginA) // verified plugin (no module descriptors → uses MODULE_PLACEHOLDER_STRING)
+    val nodeB = dependencyNode(pluginB)
+    val nodeC = dependencyNode(pluginC)
 
     val graph = DependenciesGraph(
       verifiedPlugin = nodeA,
@@ -250,7 +250,7 @@ class ModuleVisibilityCheckerTest {
     )
 
     val dependenciesGraph = DependenciesGraph(
-      verifiedPlugin = DependencyNode(mainPlugin.pluginId ?: "unknown", mainPlugin.pluginVersion ?: "unknown", mainPlugin),
+      verifiedPlugin = dependencyNode(mainPlugin),
       vertices = emptySet(),
       edges = emptySet(),
       missingDependencies = emptyMap()

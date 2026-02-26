@@ -127,7 +127,7 @@ private fun DependencyEdge.convert() =
     dependency.convert()
   )
 
-private fun DependencyNode.convert() = DependenciesGraphDto.DependencyNodeDto(pluginId, version)
+private fun DependencyNode.convert() = DependenciesGraphDto.DependencyNodeDto(id, version)
 
 private fun MissingDependency.convert() =
   DependenciesGraphDto.MissingDependencyDto(
