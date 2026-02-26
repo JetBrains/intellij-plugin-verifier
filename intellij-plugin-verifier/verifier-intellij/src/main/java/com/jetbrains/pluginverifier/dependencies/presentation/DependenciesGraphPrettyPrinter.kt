@@ -74,7 +74,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
     }
 
     val result = arrayListOf<String>()
-    result += "${currentNode.id}:${currentNode.version}"
+    result += currentNode.toString()
 
     if (childrenLines.isNotEmpty()) {
       val headingChildren = childrenLines.dropLast(1)
