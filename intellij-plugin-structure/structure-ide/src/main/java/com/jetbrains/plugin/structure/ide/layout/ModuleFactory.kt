@@ -36,7 +36,7 @@ internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, pr
     return when (moduleLoadingResult) {
       is Success -> {
         IdeModule
-          .clone(moduleLoadingResult.plugin, moduleName, classpath = getClasspath(moduleName, idePath))
+          .clone(moduleLoadingResult.plugin, moduleName, classpath = getClasspath(moduleName, idePath), ideVersion)
           .apply {
             moduleDependencies += moduleDescriptor.dependencies
             resources += moduleDescriptor.resources
