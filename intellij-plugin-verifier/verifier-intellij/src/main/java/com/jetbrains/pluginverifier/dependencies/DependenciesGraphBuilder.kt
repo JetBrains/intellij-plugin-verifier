@@ -7,6 +7,7 @@ package com.jetbrains.pluginverifier.dependencies
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import org.jgrapht.Graph
@@ -278,9 +279,7 @@ private class DepGraph2ApiGraphConverter {
     return DependenciesGraph(startNode, vertices, edges, missingDependencies)
   }
 
-  private fun DepVertex.toDependencyNode(): DependencyNode =
-    DependencyNode(plugin.pluginId ?: "<empty id>", plugin.pluginVersion ?: "<empty version>", plugin)
-
+  private fun DepVertex.toDependencyNode(): DependencyNode = dependencyNode(plugin)
 }
 
 private data class ProxyModulePluginDependency(override val id: String, override val isOptional: Boolean) : PluginDependency {

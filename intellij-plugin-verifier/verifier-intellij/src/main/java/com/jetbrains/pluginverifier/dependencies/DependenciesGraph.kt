@@ -6,6 +6,8 @@ package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphCycleFinder
 
@@ -61,12 +63,32 @@ data class DependencyEdge(
 
 /**
  * Represents a node in the [DependenciesGraph].
- *
- * The node is a plugin [pluginId] and [version].
  */
-data class DependencyNode(val pluginId: String, val version: String, val plugin: IdePlugin? = null) {
-  override fun toString() = if (plugin != null) "$pluginId:$version:${plugin.pluginId}" else "$pluginId:$version"
+sealed class DependencyNode {
+  abstract val id: String
+  abstract val version: String
+
+  data class PluginDependency(override val plugin: IdePlugin): DependencyNode(), PluginAware {
+    override val id = plugin.id
+    override val version = plugin.pluginVersion ?: UNKNOWN_VERSION
+    override fun toString() = "$id:$version"
+  }
+
+  data class AliasedPluginDependency(override val id: String, override val plugin: IdePlugin): DependencyNode(), PluginAware {
+    override val version = plugin.pluginVersion ?: UNKNOWN_VERSION
+    override fun toString() = "$id:$version (aliased ${plugin.pluginId})"
+  }
+
+  data class IdAndVersionDependency(override val id: String, override val version: String) : DependencyNode() {
+    override fun toString() = "$id:$version"
+  }
+
+  companion object {
+    fun dependencyNode(id: String, version: String) = IdAndVersionDependency(id, version)
+    fun dependencyNode(plugin: IdePlugin) = PluginDependency(plugin)
+  }
 }
+
 
 /**
  * Represents a [dependency] of the [verified plugin] [DependenciesGraph.verifiedPlugin]

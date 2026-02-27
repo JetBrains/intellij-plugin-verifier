@@ -10,7 +10,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import com.jetbrains.pluginverifier.jdk.JdkVersion
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -46,7 +46,7 @@ class LoggingPluginVerificationReportageAggregatorTest {
   @Test
   fun `verification results are aggregated`() {
     val dependenciesGraph = DependenciesGraph(
-      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
+      verifiedPlugin = dependencyNode(PLUGIN_ID, PLUGIN_VERSION),
       vertices = emptySet(),
       edges = emptySet(),
       missingDependencies = emptyMap()
@@ -77,7 +77,7 @@ class LoggingPluginVerificationReportageAggregatorTest {
   @Test
   fun `verification results are emitted from multiple plugins`() {
     val dependenciesGraph = DependenciesGraph(
-      verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
+      verifiedPlugin = dependencyNode(PLUGIN_ID, PLUGIN_VERSION),
       vertices = emptySet(),
       edges = emptySet(),
       missingDependencies = emptyMap()
@@ -86,7 +86,7 @@ class LoggingPluginVerificationReportageAggregatorTest {
     val targetDirectory = createTempDirectory()
 
     val anotherDependenciesGraph = DependenciesGraph(
-      verifiedPlugin = DependencyNode(ANOTHER_PLUGIN_ID, ANOTHER_PLUGIN_VERSION),
+      verifiedPlugin = dependencyNode(ANOTHER_PLUGIN_ID, ANOTHER_PLUGIN_VERSION),
       vertices = emptySet(),
       edges = emptySet(),
       missingDependencies = emptyMap()

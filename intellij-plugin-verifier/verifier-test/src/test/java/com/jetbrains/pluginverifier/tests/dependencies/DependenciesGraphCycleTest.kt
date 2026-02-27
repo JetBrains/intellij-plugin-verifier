@@ -7,7 +7,7 @@ package com.jetbrains.pluginverifier.tests.dependencies
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
-import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import org.junit.Assert
 import org.junit.Test
 
@@ -28,10 +28,10 @@ class DependenciesGraphCycleTest {
    */
   @Test
   fun `only cycles containing the verified plugin should be reported`() {
-    val a = DependencyNode("a", "1.0")
-    val b = DependencyNode("b", "1.0")
-    val c = DependencyNode("c", "1.0")
-    val d = DependencyNode("d", "1.0")
+    val a = dependencyNode("a", "1.0")
+    val b = dependencyNode("b", "1.0")
+    val c = dependencyNode("c", "1.0")
+    val d = dependencyNode("d", "1.0")
 
     val dependenciesGraph = DependenciesGraph(
       a,
