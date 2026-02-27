@@ -7,19 +7,19 @@ package com.jetbrains.plugin.structure.intellij.plugin
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
 
 data class ModuleDescriptor(
-  val name: String,
   val module: IdePlugin,
   val configurationFilePath: String,
   val moduleDefinition: Module
 ) {
+  val name = moduleDefinition.name
+
   companion object {
     fun of(
-      moduleId: String,
       module: IdePlugin,
       moduleDescriptorResource: DescriptorResource,
       moduleDefinition: Module
     ): ModuleDescriptor =
-      ModuleDescriptor(moduleId, module, moduleDescriptorResource.uri.toString(), moduleDefinition)
+      ModuleDescriptor(module, moduleDescriptorResource.uri.toString(), moduleDefinition)
   }
 }
 
