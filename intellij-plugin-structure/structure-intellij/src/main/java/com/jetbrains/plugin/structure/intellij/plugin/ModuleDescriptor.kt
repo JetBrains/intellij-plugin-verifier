@@ -4,8 +4,11 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
-
+/**
+ * Represents a plugin content module with metadata and type-safe parsed content module descriptor.
+ * @param module content module descriptor in a resolved type-safe form.
+ * @param moduleDefinition content module metadata such as loading rules, namespaces and path to descriptor.
+ */
 data class ModuleDescriptor(
   val module: IdePlugin,
   val moduleDefinition: Module
