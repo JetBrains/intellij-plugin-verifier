@@ -69,8 +69,16 @@ interface IdePlugin : Plugin {
 
   val optionalDescriptors: List<OptionalPluginDescriptor>
 
+  /**
+   * Fully resolved content modules with metadata in [Module] and data in
+   * the [IdePlugin] typesafe form.
+   * @see contentModules
+   */
   val modulesDescriptors: List<ModuleDescriptor>
 
+  /**
+   * Content module metadata. Generally, this matches the [modulesDescriptors].
+   */
   val contentModules: List<Module>
 
   /**
