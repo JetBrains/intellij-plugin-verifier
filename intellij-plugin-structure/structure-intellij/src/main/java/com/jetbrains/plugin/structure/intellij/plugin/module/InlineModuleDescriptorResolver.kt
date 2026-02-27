@@ -34,13 +34,8 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
     moduleReference: InlineModule
   ): ModuleDescriptor {
     pluginCreator.plugin.dependencies += getDependencies(pluginCreator.plugin, module, moduleReference)
-    val moduleDescriptorResource =
-      getModuleDescriptorResource(moduleReference, pluginArtifactPath, pluginCreator.descriptorPath)
     return ModuleDescriptor.of(
-      moduleReference.name,
-      moduleReference.loadingRule,
       module,
-      moduleDescriptorResource,
       moduleReference
     )
   }

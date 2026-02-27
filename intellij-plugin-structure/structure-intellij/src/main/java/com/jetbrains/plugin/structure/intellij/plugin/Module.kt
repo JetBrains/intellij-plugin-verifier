@@ -5,7 +5,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
 /**
- * Represents a content module of IntelliJ plugin defined by a `<module` tag in a `<content>` tag.
+ * Represents a content module metadata of IntelliJ plugin defined by a `<module>` tag in a `<content>` tag.
  * @param name name of the module as specified in 'name' attribute of the `<module>` tag
  * @param namespace namespace of the module as specified in 'namespace' attribute of the `<module>` tag
  * @param actualNamespace equals to `namespace` if it's specified; if not, defaults to a synthetic implicit namespace

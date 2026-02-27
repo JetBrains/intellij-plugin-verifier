@@ -4,24 +4,23 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
-
+/**
+ * Represents a plugin content module with metadata and type-safe parsed content module descriptor.
+ * @param module content module descriptor in a resolved type-safe form.
+ * @param moduleDefinition content module metadata such as loading rules, namespaces and path to descriptor.
+ */
 data class ModuleDescriptor(
-  val name: String,
-  val loadingRule: ModuleLoadingRule,
   val module: IdePlugin,
-  val configurationFilePath: String,
   val moduleDefinition: Module
 ) {
+  val name = moduleDefinition.name
+
   companion object {
     fun of(
-      moduleId: String,
-      loadingRule: ModuleLoadingRule,
       module: IdePlugin,
-      moduleDescriptorResource: DescriptorResource,
       moduleDefinition: Module
     ): ModuleDescriptor =
-      ModuleDescriptor(moduleId, loadingRule, module, moduleDescriptorResource.uri.toString(), moduleDefinition)
+      ModuleDescriptor(module, moduleDefinition)
   }
 }
 

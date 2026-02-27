@@ -202,10 +202,7 @@ class ModuleVisibilityCheckerTest {
   private fun pluginWithPrivateModule(pluginId: String, namespace: String): MockIdePlugin {
     val modulePlugin = MockIdePlugin(pluginId = pluginId) // moduleVisibility defaults to PRIVATE in MockIdePlugin
     val descriptor = ModuleDescriptor(
-      name = pluginId,
-      loadingRule = ModuleLoadingRule.REQUIRED,
       module = modulePlugin,
-      configurationFilePath = "$pluginId.xml",
       moduleDefinition = Module.FileBasedModule(pluginId, namespace, namespace, ModuleLoadingRule.REQUIRED, "$pluginId.xml")
     )
     return MockIdePlugin(pluginId = pluginId, pluginVersion = "1.0", modulesDescriptors = listOf(descriptor))

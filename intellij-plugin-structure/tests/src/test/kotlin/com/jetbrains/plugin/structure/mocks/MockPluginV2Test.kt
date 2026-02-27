@@ -14,6 +14,7 @@ import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
+import com.jetbrains.plugin.structure.intellij.plugin.Module
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
@@ -193,7 +194,13 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
   private fun checkModulesDescriptors(plugin: IdePlugin) {
     val modulesDescriptors = plugin.modulesDescriptors
 
-    val moduleConfigs = modulesDescriptors.map { it.configurationFilePath }
+    val moduleConfigs = modulesDescriptors
+      .filter { it.name != "intellij.v2.missing" }
+      .filter { it.moduleDefinition is Module.FileBasedModule }
+      .map {
+        val moduleMetadata = it.moduleDefinition as Module.FileBasedModule
+        moduleMetadata.configFile
+      }
     assertThat(
       moduleConfigs, `is`(
         listOf(
