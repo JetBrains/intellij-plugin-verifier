@@ -38,7 +38,6 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
       getModuleDescriptorResource(moduleReference, pluginArtifactPath, pluginCreator.descriptorPath)
     return ModuleDescriptor.of(
       moduleReference.name,
-      moduleReference.loadingRule,
       module,
       moduleDescriptorResource,
       moduleReference

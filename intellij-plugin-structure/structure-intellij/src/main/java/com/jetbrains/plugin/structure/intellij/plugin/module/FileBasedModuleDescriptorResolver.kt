@@ -31,7 +31,6 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOr
     pluginCreator.plugin.dependencies += getDependencies(pluginCreator.plugin, module, moduleReference)
     return ModuleDescriptor(
       moduleReference.name,
-      moduleReference.loadingRule,
       module,
       moduleReference.configFile,
       moduleReference
