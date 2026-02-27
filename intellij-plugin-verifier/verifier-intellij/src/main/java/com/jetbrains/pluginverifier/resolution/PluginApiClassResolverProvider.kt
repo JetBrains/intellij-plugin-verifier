@@ -7,10 +7,12 @@ package com.jetbrains.pluginverifier.resolution
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import com.jetbrains.pluginverifier.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.verifiers.packages.NegatedPackageFilter
@@ -46,17 +48,8 @@ class PluginApiClassResolverProvider(
        */
       val resolver = CompositeResolver.create(checkedPluginClassResolver, basePluginResolver, jdkDescriptor.jdkResolver).caching()
 
-      val checkedPluginNode = DependencyNode(
-        checkedPluginDetails.pluginInfo.pluginId,
-        checkedPluginDetails.pluginInfo.version,
-        checkedPluginDetails.idePlugin
-      )
-
-      val basePluginNode = DependencyNode(
-        basePluginDetails.pluginInfo.pluginId,
-        basePluginDetails.pluginInfo.version,
-        basePluginDetails.idePlugin
-      )
+      val checkedPluginNode = newDependencyNode(checkedPluginDetails)
+      val basePluginNode = newDependencyNode(basePluginDetails)
 
       val dependenciesGraph = DependenciesGraph(
         checkedPluginNode,
@@ -65,7 +58,7 @@ class PluginApiClassResolverProvider(
           DependencyEdge(
             checkedPluginNode,
             basePluginNode,
-            PluginDependencyImpl(basePluginNode.pluginId, false, false)
+            PluginDependencyImpl(basePluginNode.id, false, false)
           )
         ),
         emptyMap()
@@ -82,4 +75,13 @@ class PluginApiClassResolverProvider(
 
   override fun provideExternalClassesPackageFilter() = NegatedPackageFilter(basePluginPackageFilter)
 
+  private fun newDependencyNode(pluginDetails: PluginDetails): DependencyNode {
+    val infoPluginId = pluginDetails.pluginInfo.pluginId
+    val plugin = pluginDetails.idePlugin
+    return if (infoPluginId != plugin.id) {
+      DependencyNode.AliasedPluginDependency(infoPluginId, plugin)
+    } else {
+      dependencyNode(plugin)
+    }
+  }
 }
