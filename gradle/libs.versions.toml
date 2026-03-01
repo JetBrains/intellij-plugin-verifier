@@ -1,5 +1,5 @@
 [versions]
-kotlin = "1.9.25"
+kotlin = "2.2.21"
 
 assertj = "3.20.2"
 asm = "9.8"

@@ -1,4 +1,6 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -57,12 +59,12 @@ artifacts {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = "11"
-        apiVersion = "1.4"
-        languageVersion = "1.4"
-        freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
-    }
+  compilerOptions {
+    jvmTarget = JvmTarget.JVM_11
+    apiVersion = KotlinVersion.KOTLIN_1_8
+    languageVersion = KotlinVersion.KOTLIN_1_8
+    freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
+  }
 }
 
 dependencies {
