@@ -4,46 +4,24 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.plugin.PluginIcon
-import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
+import com.jetbrains.plugin.structure.base.plugin.*
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.simpleName
-import com.jetbrains.plugin.structure.intellij.beans.PluginBean
-import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
+import com.jetbrains.plugin.structure.intellij.plugin.PluginBeanToIdePluginConverter.UnsupportedClientAttributeValue
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDescriptorParser.ParseResult.Parsed
 import com.jetbrains.plugin.structure.intellij.plugin.ValidationContext.ValidationResult
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginThemeLoader
-import com.jetbrains.plugin.structure.intellij.problems.DependencyConstraintsDuplicates
-import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
-import com.jetbrains.plugin.structure.intellij.problems.ElementMissingAttribute
-import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorCycleProblem
-import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.problems.SinceBuildGreaterThanUntilBuild
-import com.jetbrains.plugin.structure.intellij.problems.UnknownServiceClientValue
+import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.resources.PluginArchiveResource
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
-import com.jetbrains.plugin.structure.intellij.verifiers.ExposedModulesVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.K2IdeModeCompatibilityVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.ProjectAndApplicationListenerAvailabilityVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.ServiceExtensionPointPreloadVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.StatusBarWidgetFactoryExtensionPointVerifier
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
+import com.jetbrains.plugin.structure.intellij.verifiers.*
 import org.jdom2.Document
-import org.jdom2.Element
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 internal class PluginCreator private constructor(
   val pluginFileName: String,
@@ -322,7 +300,7 @@ internal class PluginCreator private constructor(
     }
 
     plugin.underlyingDocument = document
-    beanToPluginConverter.convert(bean, document, descriptorPath, parentPlugin, ::registerProblem, plugin).also { (v1DependencyDescriptors) ->
+    beanToPluginConverter.convert(bean, document, parentPlugin, ::registerProblem, plugin).also { (v1DependencyDescriptors) ->
       optionalDependenciesConfigFiles += v1DependencyDescriptors.descriptors
     }
 
@@ -336,9 +314,11 @@ internal class PluginCreator private constructor(
     validatePlugin(plugin)
   }
 
-
   internal fun registerProblem(problem: PluginProblem) {
-    problems += problem
+    problems += when (problem) {
+      is UnsupportedClientAttributeValue -> UnknownServiceClientValue(descriptorPath, problem.unsupportedValue)
+      else -> problem
+    }
   }
 
   private fun PluginCreationResult<IdePlugin>.reassignStructureProblems() =

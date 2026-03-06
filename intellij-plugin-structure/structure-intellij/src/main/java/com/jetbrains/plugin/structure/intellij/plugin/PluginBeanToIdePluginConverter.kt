@@ -29,7 +29,6 @@ internal class PluginBeanToIdePluginConverter {
   fun convert(
     bean: PluginBean,
     document: Document,
-    descriptorPath: String,
     parentPlugin: PluginCreator?,
     problemRegistrar: ProblemRegistrar,
     targetPlugin: IdePluginImpl
@@ -50,7 +49,7 @@ internal class PluginBeanToIdePluginConverter {
         sinceBuild =
           if (ideaVersionBean.sinceBuild != null) IdeVersion.createIdeVersion(ideaVersionBean.sinceBuild) else null
         var untilBuild: String? = ideaVersionBean.untilBuild
-        if (untilBuild != null && untilBuild.isNotEmpty()) {
+        if (!untilBuild.isNullOrEmpty()) {
           if (untilBuild.endsWith(".*")) {
             val idx = untilBuild.lastIndexOf('.')
             untilBuild = untilBuild.substring(0, idx + 1) + Integer.MAX_VALUE
@@ -114,12 +113,11 @@ internal class PluginBeanToIdePluginConverter {
       val rootElement = document.rootElement
       readActions(rootElement, this)
 
-      val problems = RemappingProblemRegistrar(descriptorPath, problemRegistrar)
-      readExtensions(rootElement, this, problems)
+      readExtensions(rootElement, this, problemRegistrar)
       readExtensionPoints(rootElement, this, pluginIdProvider)
 
-      readListeners(rootElement, "applicationListeners", appContainerDescriptor, problems)
-      readListeners(rootElement, "projectListeners", projectContainerDescriptor, problems)
+      readListeners(rootElement, "applicationListeners", appContainerDescriptor, problemRegistrar)
+      readListeners(rootElement, "projectListeners", projectContainerDescriptor, problemRegistrar)
 
       readComponents(rootElement, "application-components", appContainerDescriptor)
       readComponents(rootElement, "project-components", projectContainerDescriptor)
@@ -355,19 +353,9 @@ internal class PluginBeanToIdePluginConverter {
   /**
    * Maps to [UnknownServiceClientValue] but without plugin descriptor reference.
    */
-  private class UnsupportedClientAttributeValue(val unsupportedValue: String) : PluginProblem() {
+  internal class UnsupportedClientAttributeValue(val unsupportedValue: String) : PluginProblem() {
     override val level = Level.WARNING
     override val message = "Unsupported value of attribute 'client': [$unsupportedValue]"
-  }
-
-  private class RemappingProblemRegistrar(private val descriptorPath: String, private val problemRegistrar: ProblemRegistrar) : ProblemRegistrar {
-    override fun registerProblem(problem: PluginProblem) {
-      val remappedProblem = when (problem) {
-        is UnsupportedClientAttributeValue -> UnknownServiceClientValue(descriptorPath, problem.unsupportedValue)
-        else -> problem
-      }
-      problemRegistrar.registerProblem(remappedProblem)
-    }
   }
 
   data class ConversionResult(val v1DependencyDescriptors: V1DependencyDescriptors)
