@@ -57,8 +57,6 @@ class ValidationContext(val descriptorPath: String, val problemResolver: PluginC
   sealed class ValidationResult {
     object Valid : ValidationResult()
     class ValidWithWarnings(val warnings: List<PluginProblem>) : ValidationResult()
-    data class Invalid(val invalidPlugin: InvalidPlugin, val problems: List<PluginProblem>) : ValidationResult() {
-
-    }
+    data class Invalid(val invalidPlugin: InvalidPlugin, val problems: List<PluginProblem>) : ValidationResult()
   }
 }
