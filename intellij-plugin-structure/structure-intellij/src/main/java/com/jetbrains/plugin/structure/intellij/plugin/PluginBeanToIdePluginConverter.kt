@@ -256,7 +256,7 @@ internal class PluginBeanToIdePluginConverter {
     rootElement: Element,
     listenersName: String,
     containerDescriptor: MutableIdePluginContentDescriptor,
-    problemsRegistrar: ProblemRegistrar
+    problemRegistrar: ProblemRegistrar
   ) {
     for (listenersRoot in rootElement.getChildren(listenersName)) {
       for (listener in listenersRoot.children) {
@@ -266,10 +266,10 @@ internal class PluginBeanToIdePluginConverter {
         val isActiveInHeadlessMode = listener.getAttributeBooleanValue("activeInHeadlessMode", true)
         val os: IdePluginContentDescriptor.Os? = listener.readOs()
         if (className == null) {
-          problemsRegistrar.registerProblem(ElementMissingAttribute("listener", "class"))
+          problemRegistrar.registerProblem(ElementMissingAttribute("listener", "class"))
         }
         if (topicName == null) {
-          problemsRegistrar.registerProblem(ElementMissingAttribute("listener", "topic"))
+          problemRegistrar.registerProblem(ElementMissingAttribute("listener", "topic"))
         }
         if (className != null && topicName != null) {
           val listenerType =
