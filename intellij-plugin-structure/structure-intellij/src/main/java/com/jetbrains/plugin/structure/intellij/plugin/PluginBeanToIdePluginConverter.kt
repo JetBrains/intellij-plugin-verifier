@@ -44,12 +44,8 @@ internal class PluginBeanToIdePluginConverter {
       useIdeClassLoader = bean.useIdeaClassLoader == true
       isImplementationDetail = bean.implementationDetail == true
 
-      val ideaVersionBean = bean.ideaVersion
-      if (ideaVersionBean != null) {
-        sinceBuild =
-          if (ideaVersionBean.sinceBuild != null) IdeVersion.createIdeVersion(ideaVersionBean.sinceBuild) else null
-        untilBuild = bean.readUntilBuild()
-      }
+      sinceBuild = bean.readSinceBuild()
+      untilBuild = bean.readUntilBuild()
 
       hasPackagePrefix = bean.packageName != null
       moduleVisibility = bean.readVisibility()
@@ -99,6 +95,10 @@ internal class PluginBeanToIdePluginConverter {
       readComponents(rootElement, "project-components", projectContainerDescriptor)
       readComponents(rootElement, "module-components", moduleContainerDescriptor)
     }
+  }
+
+  private fun PluginBean.readSinceBuild(): IdeVersion? = ideaVersion?.sinceBuild?.let {
+    IdeVersion.createIdeVersion(it)
   }
 
   private fun PluginBean.readUntilBuild(): IdeVersion? {
