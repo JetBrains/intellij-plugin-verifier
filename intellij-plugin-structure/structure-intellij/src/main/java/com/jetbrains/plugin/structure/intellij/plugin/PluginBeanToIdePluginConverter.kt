@@ -63,12 +63,7 @@ internal class PluginBeanToIdePluginConverter {
         incompatibleWith += it
       }
 
-      val vendorBean = bean.vendor
-      if (vendorBean != null) {
-        vendor = if (vendorBean.name != null) vendorBean.name.trim { it <= ' ' } else null
-        vendorUrl = vendorBean.url
-        vendorEmail = vendorBean.email
-      }
+      readVendor(bean)
       val productDescriptorBean = bean.productDescriptor
       if (productDescriptorBean != null) {
         productDescriptor = ProductDescriptor(
@@ -109,6 +104,14 @@ internal class PluginBeanToIdePluginConverter {
       untilBuild
     }
     return IdeVersion.createIdeVersion(resolvedUntilBuild)
+  }
+
+  private fun IdePluginImpl.readVendor(bean: PluginBean) {
+    bean.vendor?.let { vendorBean ->
+      vendor = if (vendorBean.name != null) vendorBean.name.trim { it <= ' ' } else null
+      vendorUrl = vendorBean.url
+      vendorEmail = vendorBean.email
+    }
   }
 
   /**
