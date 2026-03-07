@@ -64,16 +64,8 @@ internal class PluginBeanToIdePluginConverter {
       }
 
       readVendor(bean)
-      val productDescriptorBean = bean.productDescriptor
-      if (productDescriptorBean != null) {
-        productDescriptor = ProductDescriptor(
-          productDescriptorBean.code,
-          LocalDate.parse(productDescriptorBean.releaseDate, releaseDateFormatter),
-          ProductReleaseVersion.parse(productDescriptorBean.releaseVersion),
-          productDescriptorBean.eap == "true",
-          productDescriptorBean.optional == "true"
-        )
-      }
+      readProductDescriptor(bean)
+
       changeNotes = bean.changeNotes
       description = bean.description
 
@@ -111,6 +103,18 @@ internal class PluginBeanToIdePluginConverter {
       vendor = if (vendorBean.name != null) vendorBean.name.trim { it <= ' ' } else null
       vendorUrl = vendorBean.url
       vendorEmail = vendorBean.email
+    }
+  }
+
+  private fun IdePluginImpl.readProductDescriptor(bean: PluginBean) {
+    bean.productDescriptor?.run {
+      productDescriptor = ProductDescriptor(
+        code,
+        LocalDate.parse(releaseDate, releaseDateFormatter),
+        ProductReleaseVersion.parse(releaseVersion),
+        eap == "true",
+        optional == "true"
+      )
     }
   }
 
