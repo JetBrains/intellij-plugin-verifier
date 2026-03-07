@@ -239,7 +239,7 @@ internal class PluginBeanToIdePluginConverter {
           "IDEA_MODULE" -> idePlugin.moduleContainerDescriptor
           else -> null
         } ?: continue
-        val isDynamic = extensionPoint.getAttributeValue("dynamic")?.toBoolean() ?: false
+        val isDynamic = extensionPoint.getAttributeBooleanValue("dynamic", false)
         containerDescriptor.extensionPoints += IdePluginContentDescriptor.ExtensionPoint(extensionPointName, isDynamic)
       }
     }
@@ -310,8 +310,8 @@ internal class PluginBeanToIdePluginConverter {
     extensions.getOrPut(epName) { arrayListOf() }.add(extensionElement)
   }
 
-  fun Element.getAttributeBooleanValue(attname: String, default: Boolean): Boolean {
-    return getAttributeValue(attname)?.toBoolean() ?: default
+  private fun Element.getAttributeBooleanValue(attributeName: String, default: Boolean): Boolean {
+    return getAttributeValue(attributeName)?.toBoolean() ?: default
   }
 
   private fun readKotlinPluginMode(extensionElement: Element): KotlinPluginMode {
