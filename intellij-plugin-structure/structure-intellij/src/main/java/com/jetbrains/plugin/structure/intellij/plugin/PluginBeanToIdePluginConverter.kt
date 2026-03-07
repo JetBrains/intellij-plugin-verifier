@@ -48,14 +48,7 @@ internal class PluginBeanToIdePluginConverter {
       if (ideaVersionBean != null) {
         sinceBuild =
           if (ideaVersionBean.sinceBuild != null) IdeVersion.createIdeVersion(ideaVersionBean.sinceBuild) else null
-        var untilBuild: String? = ideaVersionBean.untilBuild
-        if (!untilBuild.isNullOrEmpty()) {
-          if (untilBuild.endsWith(".*")) {
-            val idx = untilBuild.lastIndexOf('.')
-            untilBuild = untilBuild.substring(0, idx + 1) + Integer.MAX_VALUE
-          }
-          this.untilBuild = IdeVersion.createIdeVersion(untilBuild)
-        }
+        untilBuild = bean.readUntilBuild()
       }
 
       hasPackagePrefix = bean.packageName != null
@@ -129,6 +122,16 @@ internal class PluginBeanToIdePluginConverter {
     } else {
       PluginV1Dependency.Mandatory(dependencyId)
     }
+  }
+
+  private fun PluginBean.readUntilBuild(): IdeVersion? {
+    val untilBuild = ideaVersion?.untilBuild?.takeIf { it.isNotEmpty() } ?: return null
+    val resolvedUntilBuild = if (untilBuild.endsWith(".*")) {
+      untilBuild.substringBeforeLast('.') + ".${Int.MAX_VALUE}"
+    } else {
+      untilBuild
+    }
+    return IdeVersion.createIdeVersion(resolvedUntilBuild)
   }
 
   private fun readActions(rootElement: Element, idePlugin: IdePluginImpl) {
