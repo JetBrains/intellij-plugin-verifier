@@ -37,7 +37,7 @@ internal class PluginBeanToIdePluginConverter {
     targetPlugin.apply {
       pluginName = bean.name?.trim()
       pluginId = bean.id?.trim() ?: pluginName
-      val pluginIdProvider = PluginIdProvider(this, parentPlugin)
+      val idProvider = IdProvider(this, parentPlugin)
       url = bean.url?.trim()
       pluginVersion = if (bean.pluginVersion != null) bean.pluginVersion.trim() else null
       bean.pluginAliases.forEach { pluginId -> addPluginAlias(pluginId) }
@@ -73,7 +73,7 @@ internal class PluginBeanToIdePluginConverter {
       readActions(rootElement, this)
 
       readExtensions(rootElement, this, problemRegistrar)
-      readExtensionPoints(rootElement, this, pluginIdProvider)
+      readExtensionPoints(rootElement, this, idProvider)
 
       readListeners(rootElement, "applicationListeners", appContainerDescriptor, problemRegistrar)
       readListeners(rootElement, "projectListeners", projectContainerDescriptor, problemRegistrar)
@@ -228,10 +228,10 @@ internal class PluginBeanToIdePluginConverter {
     )
   }
 
-  private fun readExtensionPoints(rootElement: Element, idePlugin: IdePluginImpl, pluginIdProvider: PluginIdProvider) {
+  private fun readExtensionPoints(rootElement: Element, idePlugin: IdePluginImpl, idProvider: IdProvider) {
     for (extensionPointsRoot in rootElement.getChildren("extensionPoints")) {
       for (extensionPoint in extensionPointsRoot.children) {
-        val extensionPointName = getExtensionPointName(extensionPoint, pluginIdProvider) ?: continue
+        val extensionPointName = getExtensionPointName(extensionPoint, idProvider) ?: continue
         val containerDescriptor = when (extensionPoint.getAttributeValue("area")) {
           null -> idePlugin.appContainerDescriptor
           "IDEA_APPLICATION" -> idePlugin.appContainerDescriptor
@@ -245,10 +245,10 @@ internal class PluginBeanToIdePluginConverter {
     }
   }
 
-  private fun getExtensionPointName(extensionPoint: Element, pluginIdProvider: PluginIdProvider): String? {
+  private fun getExtensionPointName(extensionPoint: Element, idProvider: IdProvider): String? {
     extensionPoint.getAttributeValue("qualifiedName")?.let { return it }
     val name = extensionPoint.getAttributeValue("name") ?: return null
-    val pluginId = pluginIdProvider.getPluginId() ?: return null
+    val pluginId = idProvider.getId() ?: return null
     return "$pluginId.$name"
   }
 
@@ -376,8 +376,8 @@ internal class PluginBeanToIdePluginConverter {
         ?.actualNamespace ?: "jetbrains"
   }
 
-  private class PluginIdProvider(private val plugin: Plugin, val parentPlugin: PluginCreator?) {
-    fun getPluginId(): String? = plugin.pluginId ?: parentPlugin?.pluginId
+  private class IdProvider(private val plugin: Plugin, val parentPlugin: PluginCreator?) {
+    fun getId(): String? = plugin.pluginId ?: parentPlugin?.pluginId
   }
 
   /**
