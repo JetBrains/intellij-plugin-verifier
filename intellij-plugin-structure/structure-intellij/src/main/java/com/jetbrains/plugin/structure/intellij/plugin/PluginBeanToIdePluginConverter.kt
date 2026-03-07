@@ -32,8 +32,7 @@ internal class PluginBeanToIdePluginConverter {
     parentPlugin: PluginCreator?,
     problemRegistrar: ProblemRegistrar,
     targetPlugin: IdePluginImpl
-  ): ConversionResult {
-    val v1DependencyDescriptors = V1DependencyDescriptors()
+  ) {
     targetPlugin.apply {
       pluginName = bean.name?.trim()
       pluginId = bean.id?.trim() ?: pluginName
@@ -57,9 +56,8 @@ internal class PluginBeanToIdePluginConverter {
       // dependencies from `<depends>`
       bean.dependenciesV1.forEach {
         addDepends(DependsPluginDependency(it.dependencyId, it.isOptional, it.configFile))
-      }
-      dependencies += bean.dependenciesV1.map { depBean ->
-        depBean.asV1Dependency().also { v1DependencyDescriptors.registerIfOptional(it, depBean) }
+        // add to the legacy all-aggregating list of dependencies
+        dependencies += it.asV1Dependency()
       }
       // dependencies from `<dependencies>`
       bean.contentModuleDependencies.forEach { dep ->
@@ -113,7 +111,6 @@ internal class PluginBeanToIdePluginConverter {
       readComponents(rootElement, "project-components", projectContainerDescriptor)
       readComponents(rootElement, "module-components", moduleContainerDescriptor)
     }
-    return ConversionResult(v1DependencyDescriptors)
   }
 
   private fun PluginDependencyBean.asV1Dependency(): PluginV1Dependency {
@@ -363,6 +360,4 @@ internal class PluginBeanToIdePluginConverter {
     override val level = Level.WARNING
     override val message = "Unsupported value of attribute 'client': [$unsupportedValue]"
   }
-
-  data class ConversionResult(val v1DependencyDescriptors: V1DependencyDescriptors)
 }

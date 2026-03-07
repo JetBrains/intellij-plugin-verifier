@@ -120,8 +120,6 @@ internal class PluginCreator private constructor(
 
   private val beanToPluginConverter = PluginBeanToIdePluginConverter()
 
-  val optionalDependenciesConfigFiles: MutableMap<PluginDependency, String> = linkedMapOf()
-
   internal val plugin = IdePluginImpl()
 
   private var invalidPlugin: InvalidPlugin? = null
@@ -300,9 +298,7 @@ internal class PluginCreator private constructor(
     }
 
     plugin.underlyingDocument = document
-    beanToPluginConverter.convert(bean, document, parentPlugin, ::registerProblem, plugin).also { (v1DependencyDescriptors) ->
-      optionalDependenciesConfigFiles += v1DependencyDescriptors.descriptors
-    }
+    beanToPluginConverter.convert(bean, document, parentPlugin, ::registerProblem, plugin)
 
     val themeResolution = themeLoader.load(plugin, documentPath, pathResolver, ::registerProblem)
     when (themeResolution) {

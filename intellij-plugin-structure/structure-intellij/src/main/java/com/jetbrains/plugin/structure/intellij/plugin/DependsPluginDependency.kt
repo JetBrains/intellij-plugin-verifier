@@ -4,6 +4,8 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.v2ModulePrefix
+
 /**
  * Represents a `<depends>` element from the plugin.xml (v1-style dependency)
  */
@@ -13,5 +15,19 @@ class DependsPluginDependency(val pluginId: String, val isOptional: Boolean, val
       if (isOptional) ", optional" else "" +
       if (configFile != null) ", configFile=$configFile" else "" +
       ")"
+  }
+
+  fun asPluginDependency() = if (isOptional) {
+    PluginV1Dependency.Optional(pluginId)
+  } else {
+    PluginV1Dependency.Mandatory(pluginId)
+  }
+
+  fun resolveDescriptorPath(): String? {
+    return if (isOptional && configFile != null) {
+      if (v2ModulePrefix.matches(configFile)) "../${configFile}" else configFile
+    } else {
+      null
+    }
   }
 }
