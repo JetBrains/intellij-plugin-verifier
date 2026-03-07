@@ -6,6 +6,7 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.Plugin
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.intellij.beans.ContentModuleDependencyBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
 import com.jetbrains.plugin.structure.intellij.problems.ElementMissingAttribute
@@ -54,22 +55,9 @@ internal class PluginBeanToIdePluginConverter {
       moduleVisibility = bean.readVisibility()
 
       // dependencies from `<depends>`
-      bean.dependenciesV1.forEach {
-        addDepends(DependsPluginDependency(it.dependencyId, it.isOptional, it.configFile))
-        // add to the legacy all-aggregating list of dependencies
-        dependencies += it.asV1Dependency()
-      }
+      readV1Dependencies(bean)
       // dependencies from `<dependencies>`
-      bean.contentModuleDependencies.forEach { dep ->
-        val namespace = dep.namespace
-          ?: parentPlugin?.plugin?.contentModules?.find { it.name == dep.moduleName }?.actualNamespace ?: "jetbrains"
-        addContentModuleDependency(ContentModuleDependency(dep.moduleName, namespace))
-      }
-      dependencies += bean.contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) }
-      bean.pluginMainModuleDependencies.forEach {
-        addPluginMainModuleDependency(PluginMainModuleDependency(it.dependencyId))
-      }
-      dependencies += bean.pluginMainModuleDependencies.map { PluginV2Dependency(it.dependencyId) }
+      readV2Dependencies(bean, parentPlugin)
 
       if (pluginModuleResolver.supports(bean)) {
         contentModules += pluginModuleResolver.resolvePluginModules(bean)
@@ -113,14 +101,6 @@ internal class PluginBeanToIdePluginConverter {
     }
   }
 
-  private fun PluginDependencyBean.asV1Dependency(): PluginV1Dependency {
-    return if (isOptional) {
-      PluginV1Dependency.Optional(dependencyId)
-    } else {
-      PluginV1Dependency.Mandatory(dependencyId)
-    }
-  }
-
   private fun PluginBean.readUntilBuild(): IdeVersion? {
     val untilBuild = ideaVersion?.untilBuild?.takeIf { it.isNotEmpty() } ?: return null
     val resolvedUntilBuild = if (untilBuild.endsWith(".*")) {
@@ -129,6 +109,31 @@ internal class PluginBeanToIdePluginConverter {
       untilBuild
     }
     return IdeVersion.createIdeVersion(resolvedUntilBuild)
+  }
+
+  /**
+   * Read dependencies from `<depends>`.
+   */
+  private fun IdePluginImpl.readV1Dependencies(bean: PluginBean) {
+    bean.dependenciesV1.forEach {
+      addDepends(DependsPluginDependency(it.dependencyId, it.isOptional, it.configFile))
+      // add to the legacy all-aggregating list of dependencies
+      dependencies += it.asV1Dependency()
+    }
+  }
+
+  /**
+   * Read dependencies from `<dependencies>`
+   */
+  private fun IdePluginImpl.readV2Dependencies(bean: PluginBean, parentPlugin: PluginCreator?) {
+    bean.contentModuleDependencies.forEach { dep ->
+      addContentModuleDependency(ContentModuleDependency(dep.moduleName, dep.resolveNamespace(parentPlugin)))
+    }
+    dependencies += bean.contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) }
+    bean.pluginMainModuleDependencies.forEach {
+      addPluginMainModuleDependency(PluginMainModuleDependency(it.dependencyId))
+    }
+    dependencies += bean.pluginMainModuleDependencies.map { PluginV2Dependency(it.dependencyId) }
   }
 
   private fun readActions(rootElement: Element, idePlugin: IdePluginImpl) {
@@ -347,6 +352,21 @@ internal class PluginBeanToIdePluginConverter {
     "public" -> ModuleVisibility.PUBLIC
     "internal" -> ModuleVisibility.INTERNAL
     else -> ModuleVisibility.PRIVATE
+  }
+
+  private fun PluginDependencyBean.asV1Dependency(): PluginV1Dependency {
+    return if (isOptional) {
+      PluginV1Dependency.Optional(dependencyId)
+    } else {
+      PluginV1Dependency.Mandatory(dependencyId)
+    }
+  }
+
+  private fun ContentModuleDependencyBean.resolveNamespace(parentPlugin: PluginCreator?): String {
+    return namespace
+      ?: parentPlugin?.plugin?.contentModules
+        ?.find { it.name == moduleName }
+        ?.actualNamespace ?: "jetbrains"
   }
 
   private class PluginIdProvider(private val plugin: Plugin, val parentPlugin: PluginCreator?) {

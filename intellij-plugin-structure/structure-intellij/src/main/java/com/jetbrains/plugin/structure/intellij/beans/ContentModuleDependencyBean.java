@@ -4,10 +4,11 @@
 
 package com.jetbrains.plugin.structure.intellij.beans;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlValue;
 
 public class ContentModuleDependencyBean {
   @XmlAttribute(name = "name") public String moduleName;
-  @XmlAttribute(name = "namespace") public String namespace;
+  @XmlAttribute(name = "namespace") @Nullable public String namespace;
 }
