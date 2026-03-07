@@ -33,7 +33,7 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     if (!dependencyChain.extend(this)) {
       return
     }
-    for ((pluginDependency, configurationFile) in optionalDependenciesConfigFiles) {
+    for ((pluginDependency, configurationFile) in optionalV1DependencyDescriptors) {
       if (dependencyChain.detectCycle(configurationFile)) {
         continue
       }
@@ -58,5 +58,12 @@ internal class OptionalDependencyResolver(private val pluginLoader: PluginLoader
     dependencyChain.dropLast()
   }
 
-
+  private val PluginCreator.optionalV1DependencyDescriptors: Map<PluginDependency, String>
+    get() = plugin.dependsList
+      .mapNotNull { dep ->
+        dep.resolveDescriptorPath()?.let { descriptor ->
+          dep.asPluginDependency() to descriptor
+        }
+      }
+      .toMap()
 }
