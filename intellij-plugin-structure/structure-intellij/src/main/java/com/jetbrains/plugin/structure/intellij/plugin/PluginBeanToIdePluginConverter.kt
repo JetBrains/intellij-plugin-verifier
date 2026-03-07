@@ -59,11 +59,8 @@ internal class PluginBeanToIdePluginConverter {
       }
 
       hasPackagePrefix = bean.packageName != null
-      moduleVisibility = when (bean.visibility) {
-        "public" -> ModuleVisibility.PUBLIC
-        "internal" -> ModuleVisibility.INTERNAL
-        else -> ModuleVisibility.PRIVATE
-      }
+      moduleVisibility = bean.readVisibility()
+
       // dependencies from `<depends>`
       bean.dependenciesV1.forEach {
         addDepends(DependsPluginDependency(it.dependencyId, it.isOptional, it.configFile))
@@ -344,6 +341,12 @@ internal class PluginBeanToIdePluginConverter {
     "freebsd" -> IdePluginContentDescriptor.Os.freebsd
     null -> null
     else -> null.also { LOG.error("Unknown OS: $os") }
+  }
+
+  private fun PluginBean.readVisibility() = when (visibility) {
+    "public" -> ModuleVisibility.PUBLIC
+    "internal" -> ModuleVisibility.INTERNAL
+    else -> ModuleVisibility.PRIVATE
   }
 
   private class PluginIdProvider(private val plugin: Plugin, val parentPlugin: PluginCreator?) {
