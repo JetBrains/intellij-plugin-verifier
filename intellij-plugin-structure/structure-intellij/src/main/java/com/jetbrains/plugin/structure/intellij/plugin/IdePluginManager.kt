@@ -8,23 +8,11 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginManager
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.problems.IncorrectZipOrJarFile
-import com.jetbrains.plugin.structure.base.utils.exists
-import com.jetbrains.plugin.structure.base.utils.isDirectory
-import com.jetbrains.plugin.structure.base.utils.isJar
-import com.jetbrains.plugin.structure.base.utils.isZip
-import com.jetbrains.plugin.structure.base.utils.pluginSize
-import com.jetbrains.plugin.structure.base.utils.simpleName
+import com.jetbrains.plugin.structure.base.utils.*
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager.Result.Extracted
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager.Result.Failed
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
-import com.jetbrains.plugin.structure.intellij.plugin.loaders.ContentModuleLoader
-import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarModuleLoader
-import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarOrDirectoryPluginLoader
-import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarPluginLoader
-import com.jetbrains.plugin.structure.intellij.plugin.loaders.LibDirectoryPluginLoader
-import com.jetbrains.plugin.structure.intellij.plugin.loaders.ModuleFromDescriptorLoader
-import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginDirectoryLoader
-import com.jetbrains.plugin.structure.intellij.plugin.loaders.PluginLoaderProvider
+import com.jetbrains.plugin.structure.intellij.plugin.loaders.*
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
@@ -33,7 +21,6 @@ import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Path
 import java.time.Duration
@@ -242,7 +229,6 @@ class IdePluginManager private constructor(
   }
 
   companion object {
-    private val LOG = LoggerFactory.getLogger(IdePluginManager::class.java)
     const val PLUGIN_XML = "plugin.xml"
     const val META_INF = "META-INF"
 
