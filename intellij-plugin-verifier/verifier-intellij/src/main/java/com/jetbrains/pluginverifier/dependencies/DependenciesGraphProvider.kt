@@ -5,7 +5,6 @@
 package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.*
 import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import java.util.concurrent.ConcurrentHashMap
@@ -19,6 +18,10 @@ private const val DEFAULT_MISSING_DEPENDENCY_REASON = "Unavailable"
  * An adapter between the dependency tree provided by _IntelliJ Structure Library_ and Plugin Verifier dependency tree.
  */
 class DependenciesGraphProvider {
+
+  private val dependencyNodeCache = ConcurrentHashMap<DependencyNode, DependencyNode>()
+  private fun DependencyNode.intern(): DependencyNode = dependencyNodeCache.computeIfAbsent(this, Function.identity())
+
   fun getDependenciesGraph(dependencyTreeResolution: DependencyTreeResolution): DependenciesGraph {
     val verifiedPlugin = newDependencyNode(dependencyTreeResolution.dependencyRoot)
     val transitiveDependencyVertices = dependencyTreeResolution.getTransitiveDependencyVertices()
@@ -54,11 +57,6 @@ class DependenciesGraphProvider {
     }
     return edges
   }
-
-  private val pluginDependencyCache = ConcurrentHashMap<PluginDependency, PluginDependency>()
-  private fun PluginDependency.intern(): PluginDependency = pluginDependencyCache.computeIfAbsent(this, Function.identity())
-  private val dependencyNodeCache = ConcurrentHashMap<DependencyNode, DependencyNode>()
-  private fun DependencyNode.intern(): DependencyNode = dependencyNodeCache.computeIfAbsent(this, Function.identity())
 
   private fun DependencyTreeResolution.getMissingDependencies(): Map<DependencyNode, Set<MissingDependency>> {
     return missingDependencies.map { (plugin, dependencies) ->
