@@ -46,12 +46,12 @@ class LegacyIntelliJIdeaPluginVerifier {
 
   fun verify(plugin: IdePlugin): VerificationResult {
     if (plugin is IdeModule || plugin.hasPackagePrefix || plugin.contentModules.isNotEmpty()) return NotLegacyPlugin
-    if (plugin.hasAnyV2Dependencies()) return NotLegacyPlugin
 
     val dependencies = plugin.dependencies
     if (dependencies.isEmpty()) {
       return VerificationResult.NoDependencies
     } else {
+      if (plugin.hasAnyV2Dependencies()) return NotLegacyPlugin
       val v1Dependencies = dependencies.filterIsInstance<PluginV1Dependency>()
       // Due to confusing semantics we might need to check old-style module declarations
       val oldSemanticsModuleDependencies = dependencies.filterIsInstance<PluginDependencyImpl>()
@@ -71,14 +71,14 @@ class LegacyIntelliJIdeaPluginVerifier {
     if (dependencies.any { it.id == PLATFORM_MODULE_ID }) {
       return true
     } else {
-      LOG.debug("Undeclared dependency on module '$PLATFORM_MODULE_ID'. " +
-                  "Plugin should declare this dependency to indicate dependence on shared functionality")
+      LOG.debug("Undeclared dependency on module '{}'. " +
+                  "Plugin should declare this dependency to indicate dependence on shared functionality", PLATFORM_MODULE_ID)
     }
     if (dependencies.any { it.id in ADDITIONAL_MODULES_AVAILABLE_IN_ALL_PRODUCTS }) {
       return true
     } else {
-      LOG.debug("Undeclared dependency on any of the modules that are available in all Products." +
-                  "This is not an issue if a dependency on the '$PLATFORM_MODULE_ID' is declared explicitly.")
+      LOG.debug("Undeclared dependency on any of the modules that are available in all Products. " +
+                  "This is not an issue if a dependency on the '{}' is declared explicitly.", PLATFORM_MODULE_ID)
     }
     return false
   }
