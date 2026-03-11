@@ -46,12 +46,12 @@ class LegacyIntelliJIdeaPluginVerifier {
 
   fun verify(plugin: IdePlugin): VerificationResult {
     if (plugin is IdeModule || plugin.hasPackagePrefix || plugin.contentModules.isNotEmpty()) return NotLegacyPlugin
+    if (plugin.hasAnyV2Dependencies()) return NotLegacyPlugin
 
     val dependencies = plugin.dependencies
     if (dependencies.isEmpty()) {
       return VerificationResult.NoDependencies
     } else {
-      if (plugin.hasAnyV2Dependencies()) return NotLegacyPlugin
       val v1Dependencies = dependencies.filterIsInstance<PluginV1Dependency>()
       // Due to confusing semantics we might need to check old-style module declarations
       val oldSemanticsModuleDependencies = dependencies.filterIsInstance<PluginDependencyImpl>()
