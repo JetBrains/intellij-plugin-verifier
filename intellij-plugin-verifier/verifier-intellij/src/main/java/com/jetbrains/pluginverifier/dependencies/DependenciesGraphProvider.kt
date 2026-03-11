@@ -6,11 +6,8 @@ package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.pluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.*
+import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 
@@ -86,7 +83,7 @@ class DependenciesGraphProvider {
     return vertices
   }
 
-  private fun newDependencyNode(plugin: IdePlugin) = DependencyNode.PluginDependency(plugin).intern()
+  private fun newDependencyNode(plugin: IdePlugin) = dependencyNode(plugin).intern()
 
-  private fun newDependencyNode(alias: String, plugin: IdePlugin) = DependencyNode.AliasedPluginDependency(alias, plugin).intern()
+  private fun newDependencyNode(alias: String, plugin: IdePlugin) = dependencyNode(alias, plugin).intern()
 }

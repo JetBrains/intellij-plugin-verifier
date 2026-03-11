@@ -6,7 +6,6 @@ package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.dependencies.processing.DependenciesGraphCycleFinder
@@ -68,27 +67,23 @@ sealed class DependencyNode {
   abstract val id: String
   abstract val version: String
 
-  data class PluginDependency(override val plugin: IdePlugin): DependencyNode(), PluginAware {
-    override val id = plugin.id
-    override val version = plugin.pluginVersion ?: UNKNOWN_VERSION
-    override fun toString() = "$id:$version"
-  }
-
-  data class AliasedPluginDependency(override val id: String, override val plugin: IdePlugin): DependencyNode(), PluginAware {
-    override val version = plugin.pluginVersion ?: UNKNOWN_VERSION
-    override fun toString() = "$id:$version (aliased ${plugin.pluginId})"
-  }
-
   data class IdAndVersionDependency(override val id: String, override val version: String) : DependencyNode() {
     override fun toString() = "$id:$version"
   }
 
+  data class AliasedPluginDependency(override val id: String, private val originalVersion: String, private val originalId: String): DependencyNode() {
+    override val version = originalVersion
+    override fun toString() = "$id:$version (aliased ${originalId})"
+  }
+
   companion object {
     fun dependencyNode(id: String, version: String) = IdAndVersionDependency(id, version)
-    fun dependencyNode(plugin: IdePlugin) = PluginDependency(plugin)
+    fun dependencyNode(plugin: IdePlugin) = IdAndVersionDependency(plugin.id, plugin.pluginVersion ?: UNKNOWN_VERSION)
+    fun dependencyNode(alias: String, plugin: IdePlugin) = AliasedPluginDependency(
+      alias, plugin.pluginVersion ?: UNKNOWN_VERSION, plugin.id
+    )
   }
 }
-
 
 /**
  * Represents a [dependency] of the [verified plugin] [DependenciesGraph.verifiedPlugin]
