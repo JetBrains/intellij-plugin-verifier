@@ -4,12 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.verifiers
 
-import com.jetbrains.plugin.structure.intellij.plugin.INTELLIJ_MODULE_PREFIX
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
@@ -51,6 +46,7 @@ class LegacyIntelliJIdeaPluginVerifier {
 
   fun verify(plugin: IdePlugin): VerificationResult {
     if (plugin is IdeModule || plugin.hasPackagePrefix || plugin.contentModules.isNotEmpty()) return NotLegacyPlugin
+    if (plugin.hasAnyV2Dependencies()) return NotLegacyPlugin
 
     val dependencies = plugin.dependencies
     if (dependencies.isEmpty()) {
@@ -62,7 +58,6 @@ class LegacyIntelliJIdeaPluginVerifier {
       val moduleCandidates = v1Dependencies + oldSemanticsModuleDependencies
       if (dependsOnAnyModuleAvailableInAllProducts(moduleCandidates)) return NotLegacyPlugin
       if (dependsOnAnyModuleWithComIntellijModulesPrefix(moduleCandidates)) return NotLegacyPlugin
-      if (dependencies.any { it is PluginV2Dependency }) return NotLegacyPlugin
 
       return VerificationResult.NoModuleDependencies
     }
@@ -87,4 +82,8 @@ class LegacyIntelliJIdeaPluginVerifier {
     }
     return false
   }
+
+  private fun IdePlugin.hasAnyV2Dependencies() = dependencies.any { it is PluginV2Dependency || it is ModuleV2Dependency }
+    || contentModuleDependencies.isNotEmpty()
+    || pluginMainModuleDependencies.isNotEmpty()
 }
