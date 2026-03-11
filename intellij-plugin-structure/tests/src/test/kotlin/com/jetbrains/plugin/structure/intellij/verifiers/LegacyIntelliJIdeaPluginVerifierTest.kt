@@ -4,7 +4,10 @@
 
 package com.jetbrains.plugin.structure.intellij.verifiers
 
+import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
@@ -57,6 +60,31 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
     val plugin = MockIdePlugin(dependencies = listOf(PluginV1Dependency.Mandatory("com.intellij.modules.ultimate")))
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
 
+    assertEquals(0, problems.size)
+  }
+
+  @Test
+  fun `plugin with a single v2 dependency as a ModuleV2Dependency`() {
+    val plugin = MockIdePlugin(
+      pluginId = "com.intellij.classic.ui",
+      incompatibleWith = listOf("com.intellij.jetbrains.client"),
+      dependencies = listOf(ModuleV2Dependency("intellij.platform.monolith")),
+      contentModuleDependencies = listOf(ContentModuleDependency("intellij.platform.monolith", "jetbrains"))
+    )
+    verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
+    assertEquals(0, problems.size)
+  }
+
+  @Test
+  fun `plugin with a single v2 dependency as a plugin v2 dependency`() {
+    val plugin = MockIdePlugin(
+      pluginId = "com.intellij.classic.ui",
+      incompatibleWith = listOf("com.intellij.jetbrains.client"),
+      // using legacy class for dependency
+      dependencies = listOf(PluginV2Dependency ("intellij.platform.monolith")),
+      contentModuleDependencies = listOf(ContentModuleDependency("intellij.platform.monolith", "jetbrains"))
+    )
+    verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
     assertEquals(0, problems.size)
   }
 }
