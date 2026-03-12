@@ -39,11 +39,13 @@ data class DependenciesGraphCycleFinder(val dependenciesGraph: DependenciesGraph
     }
 
     val stronglyConnectedVerticesSubgraph = AsSubgraph(graph, stronglyConnectedVertices)
-    return JohnsonSimpleCycles(stronglyConnectedVerticesSubgraph).findSimpleCycles().filter {
-      verifiedPluginVertex in it
-    }.map {
-      it.rotateToFront(verifiedPluginVertex)
+    val cycles = mutableListOf<List<DependencyNode>>()
+    JohnsonSimpleCycles(stronglyConnectedVerticesSubgraph).findSimpleCycles {
+      if (verifiedPluginVertex in it) {
+        cycles += it.rotateToFront(verifiedPluginVertex)
+      }
     }
+    return cycles
   }
 
   private fun <T> List<T>.rotateToFront(target: T): List<T> {
