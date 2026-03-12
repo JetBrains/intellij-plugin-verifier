@@ -5,10 +5,11 @@
 package com.jetbrains.pluginverifier.tests.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import org.junit.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class DependenciesGraphCycleTest {
@@ -46,9 +47,47 @@ class DependenciesGraphCycleTest {
       emptyMap()
     )
 
-    val allCycles = dependenciesGraph.getAllCycles()
-    Assert.assertEquals(listOf(listOf(a, b, d)), allCycles)
+    val cycles = dependenciesGraph.getAllCyclesWithVerifiedPlugin()
+    assertEquals(listOf(listOf(a, b, d)), cycles)
   }
 
+  @Test
+  fun `three-node cycle is detected`() {
+    val a = DependencyNode("a", "1.0")
+    val b = DependencyNode("b", "1.0")
+    val c = DependencyNode("c", "1.0")
 
+    val dependenciesGraph = DependenciesGraph(
+      a,
+      setOf(a, b, c),
+      setOf(
+        DependencyEdge(a, b, PluginV1Dependency.Mandatory ("b")),
+        DependencyEdge(b, c, PluginV1Dependency.Mandatory("c")),
+        DependencyEdge(c, a, PluginV1Dependency.Mandatory("a")),
+      ),
+      emptyMap()
+    )
+
+    val cycles = dependenciesGraph.getAllCyclesWithVerifiedPlugin()
+    assertEquals(listOf(listOf(a, b, c)), cycles)
+  }
+
+  @Test
+  fun `two-node cycle is detected`() {
+    val a = DependencyNode("a", "1.0")
+    val b = DependencyNode("b", "1.0")
+
+    val dependenciesGraph = DependenciesGraph(
+      a,
+      setOf(a, b),
+      setOf(
+        DependencyEdge(a, b, PluginV1Dependency.Mandatory ("b")),
+        DependencyEdge(b, a, PluginV1Dependency.Mandatory("a")),
+      ),
+      emptyMap()
+    )
+
+    val cycles = dependenciesGraph.getAllCyclesWithVerifiedPlugin()
+    assertEquals(listOf(listOf(a, b)), cycles)
+  }
 }

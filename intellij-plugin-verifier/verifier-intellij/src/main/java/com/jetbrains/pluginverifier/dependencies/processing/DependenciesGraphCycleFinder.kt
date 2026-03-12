@@ -11,6 +11,7 @@ import org.jgrapht.alg.cycle.JohnsonSimpleCycles
 import org.jgrapht.graph.AsSubgraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
+import java.util.*
 
 data class DependenciesGraphCycleFinder(val dependenciesGraph: DependenciesGraph) {
 
@@ -40,6 +41,17 @@ data class DependenciesGraphCycleFinder(val dependenciesGraph: DependenciesGraph
     val stronglyConnectedVerticesSubgraph = AsSubgraph(graph, stronglyConnectedVertices)
     return JohnsonSimpleCycles(stronglyConnectedVerticesSubgraph).findSimpleCycles().filter {
       verifiedPluginVertex in it
+    }.map {
+      it.rotateToFront(verifiedPluginVertex)
     }
+  }
+
+  private fun <T> List<T>.rotateToFront(target: T): List<T> {
+    val result = this.toMutableList()
+    val index = indexOf(target)
+    require(index != -1) { "Target element not found: $target" }
+
+    Collections.rotate(result, -index)
+    return result
   }
 }
