@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.400 - [2026-03-12]
+
+### Added
+
 - Add module visibility checks for 2026.1 and newer JetBrains IDEs ([#1423](https://github.com/JetBrains/intellij-plugin-verifier/pull/1423), [#1431](https://github.com/JetBrains/intellij-plugin-verifier/pull/1431), [#1432](https://github.com/JetBrains/intellij-plugin-verifier/pull/1432), [#1434](https://github.com/JetBrains/intellij-plugin-verifier/pull/1434), [MP-7782](https://youtrack.jetbrains.com/issue/MP-7782), [MP-7991](https://youtrack.jetbrains.com/issue/MP-7991), [MP-7992](https://youtrack.jetbrains.com/issue/MP-7992))
 
 ### Changed
