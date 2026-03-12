@@ -26,7 +26,10 @@ import com.jetbrains.pluginverifier.filtering.MainClassesSelector
 import com.jetbrains.pluginverifier.filtering.ProblemsFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetails
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
-import com.jetbrains.pluginverifier.results.problems.*
+import com.jetbrains.pluginverifier.results.problems.ClassNotFoundProblem
+import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
+import com.jetbrains.pluginverifier.results.problems.KotlinCompatibilityModeProblemResolver
+import com.jetbrains.pluginverifier.results.problems.PackageNotFoundProblem
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalMethodOverridingProcessor
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
@@ -333,9 +336,8 @@ class PluginVerifier(
   }
 
   private fun PluginVerificationContext.findDependenciesCycles(dependenciesGraph: DependenciesGraph) {
-    val cycles = dependenciesGraph.getAllCycles()
-    for (cycle in cycles) {
-      registerCompatibilityWarning(DependenciesCycleWarning(cycle))
+    dependenciesGraph.getAllCyclesWithVerifiedPlugin().forEach {
+      registerCompatibilityWarning(DependenciesCycleWarning(it))
     }
   }
 

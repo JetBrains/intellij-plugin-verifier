@@ -6,23 +6,38 @@ package com.jetbrains.pluginverifier.dependencies.processing
 
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import org.jgrapht.Graph
+import org.jgrapht.alg.connectivity.GabowStrongConnectivityInspector
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles
+import org.jgrapht.graph.AsSubgraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
 
 data class DependenciesGraphCycleFinder(val dependenciesGraph: DependenciesGraph) {
 
-  fun findAllCycles(): List<List<DependencyNode>> {
-    val graph: Graph<DependencyNode, DefaultEdge> = DefaultDirectedGraph(DefaultEdge::class.java)
+  /**
+   * Returns all cycles in the [dependenciesGraph] that contain the [dependenciesGraph.verifiedPlugin].
+   */
+  fun findAllCyclesWithVerifiedPlugin(): List<List<DependencyNode>> {
+    val graph = DefaultDirectedGraph<DependencyNode, DefaultEdge>(DefaultEdge::class.java)
     dependenciesGraph.vertices.forEach { graph.addVertex(it) }
     dependenciesGraph.edges.forEach { graph.addEdge(it.from, it.to) }
-    //TODO: solve the problem here actually
-    return try {
-      JohnsonSimpleCycles(graph).findSimpleCycles()
-    } catch (e: Exception) {
-      emptyList()
-    }
-  }
 
+    val verifiedPluginVertex = dependenciesGraph.verifiedPlugin
+    if (!graph.containsVertex(verifiedPluginVertex)) {
+      return emptyList()
+    }
+
+    val stronglyConnectedVertices = GabowStrongConnectivityInspector(graph)
+      .stronglyConnectedSets()
+      .find { verifiedPluginVertex in it } ?: return emptyList()
+
+    // Less than 2 strongly connected vertices indicate no cycles.
+    // Usually, it is a disconnected graph.
+    if (stronglyConnectedVertices.size < 2) {
+      return emptyList()
+    }
+
+    val stronglyConnectedVerticesSubgraph = AsSubgraph(graph, stronglyConnectedVertices)
+    return JohnsonSimpleCycles(stronglyConnectedVerticesSubgraph).findSimpleCycles()
+  }
 }

@@ -35,13 +35,12 @@ data class DependenciesGraph(
     edges.filter { it.from == dependencyNode }
 
   /**
-   * Returns all cycles in this graph.
+   * Returns all cycles in this graph that involve the verified plugin.
    * The dependencies cycles are harmful and should be fixed.
    */
-  fun getAllCycles(): List<List<DependencyNode>> =
+  fun getAllCyclesWithVerifiedPlugin(): List<List<DependencyNode>> =
     DependenciesGraphCycleFinder(this)
-      .findAllCycles()
-      .filter { verifiedPlugin in it }
+      .findAllCyclesWithVerifiedPlugin()
 
   override fun toString() = DependenciesGraphPrettyPrinter(this).prettyPresentation()
 
