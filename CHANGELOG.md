@@ -6,9 +6,22 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Add module visibility checks for 2026.1 and newer JetBrains IDEs ([#1423](https://github.com/JetBrains/intellij-plugin-verifier/pull/1423), [#1431](https://github.com/JetBrains/intellij-plugin-verifier/pull/1431), [#1432](https://github.com/JetBrains/intellij-plugin-verifier/pull/1432), [#1434](https://github.com/JetBrains/intellij-plugin-verifier/pull/1434), [MP-7782](https://youtrack.jetbrains.com/issue/MP-7782), [MP-7991](https://youtrack.jetbrains.com/issue/MP-7991), [MP-7992](https://youtrack.jetbrains.com/issue/MP-7992))
+
 ### Changed
 
+- Optimize class caching in class resolution ([MP-7979](https://youtrack.jetbrains.com/issue/MP-7979))
+- Fix names of properties used in the `checkPlugin` Gradle task ([#1433](https://github.com/JetBrains/intellij-plugin-verifier/pull/1433), [MP-7993](https://youtrack.jetbrains.com/issue/MP-7979))
+- Update Gradle to 9.4.0
+- Update ByteBuddy to 1.18.7
+
 ### Fixed
+
+- Optimize dependency cycle search ([#1453](https://github.com/JetBrains/intellij-plugin-verifier/pull/1453))
+- Properly report dependency versions in `dependencies.txt` ([#1441](https://github.com/JetBrains/intellij-plugin-verifier/pull/1441))
+- Fix legacy plugin detection in Plugin V2 Model ([#1450](https://github.com/JetBrains/intellij-plugin-verifier/pull/1450), [MP-8015](https://youtrack.jetbrains.com/issue/MP-8015))
+- Fix semantics of a Core plugin in IDEA tests ([#1436](https://github.com/JetBrains/intellij-plugin-verifier/pull/1436))
+- Fix IDEA Edu product with a proper platform prefix
 
 ## 1.400 - 2026-02-07
 
