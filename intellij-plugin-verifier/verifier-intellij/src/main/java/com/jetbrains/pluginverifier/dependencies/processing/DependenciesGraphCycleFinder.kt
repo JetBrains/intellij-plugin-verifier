@@ -10,6 +10,7 @@ import org.jgrapht.alg.connectivity.GabowStrongConnectivityInspector
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles
 import org.jgrapht.graph.AsSubgraph
 import org.jgrapht.graph.DefaultDirectedGraph
+import org.jgrapht.graph.DefaultEdge
 import java.util.*
 
 data class DependenciesGraphCycleFinder(val dependenciesGraph: DependenciesGraph) {
@@ -38,22 +39,24 @@ data class DependenciesGraphCycleFinder(val dependenciesGraph: DependenciesGraph
       return emptyList()
     }
 
-    val stronglyConnectedVerticesSubgraph = AsSubgraph(graph, stronglyConnectedVertices)
-    val cycles = mutableListOf<List<DependencyNode>>()
-    JohnsonSimpleCycles(stronglyConnectedVerticesSubgraph).findSimpleCycles {
-      if (verifiedPluginVertex in it) {
-        cycles += it.rotateToFront(verifiedPluginVertex)
+  /**
+   * Dumps the dependency graph as two CSV files for use with graph visualizers:
+   * - `graph-<timestamp>-nodes.csv`: `id,label` — one row per node
+   * - `graph-<timestamp>-links.csv`: `source,target` — one row per edge
+   */
+  fun dumpGraph(graph: Graph<DependencyNode, DefaultEdge>) {
+    val timestamp = LocalDateTime.now()
+    Files.newBufferedWriter(Path("graph-$timestamp-nodes.csv")).use { writer ->
+      writer.appendLine("id,label")
+      for (node in graph.vertexSet()) {
+        writer.appendLine("${node.graphId()},$node")
       }
     }
-    return cycles
-  }
-
-  private fun <T> List<T>.rotateToFront(target: T): List<T> {
-    val result = this.toMutableList()
-    val index = indexOf(target)
-    require(index != -1) { "Target element not found: $target" }
-
-    Collections.rotate(result, -index)
-    return result
+    Files.newBufferedWriter(Path("graph-$timestamp-links.csv")).use { writer ->
+      writer.appendLine("source,target")
+      for (edge in graph.edgeSet()) {
+        writer.appendLine("${graph.getEdgeSource(edge).graphId()},${graph.getEdgeTarget(edge).graphId()}")
+      }
+    }
   }
 }
