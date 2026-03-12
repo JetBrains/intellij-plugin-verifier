@@ -10,7 +10,6 @@ import org.jgrapht.alg.connectivity.GabowStrongConnectivityInspector
 import org.jgrapht.alg.cycle.JohnsonSimpleCycles
 import org.jgrapht.graph.AsSubgraph
 import org.jgrapht.graph.DefaultDirectedGraph
-import org.jgrapht.graph.DefaultEdge
 import java.util.*
 
 data class DependenciesGraphCycleFinder(val dependenciesGraph: DependenciesGraph) {
@@ -19,7 +18,8 @@ data class DependenciesGraphCycleFinder(val dependenciesGraph: DependenciesGraph
    * Returns all cycles in the [dependenciesGraph] that contain the [dependenciesGraph.verifiedPlugin].
    */
   fun findAllCyclesWithVerifiedPlugin(): List<List<DependencyNode>> {
-    val graph = DefaultDirectedGraph<DependencyNode, DefaultEdge>(DefaultEdge::class.java)
+    // 'Any' edge corresponds to `java.lang.Object` as per https://jgrapht.org/guide/VertexAndEdgeTypes#anonymous-edges
+    val graph = DefaultDirectedGraph<DependencyNode, Any>(Any::class.java)
     dependenciesGraph.vertices.forEach { graph.addVertex(it) }
     dependenciesGraph.edges.forEach { graph.addEdge(it.from, it.to) }
 
