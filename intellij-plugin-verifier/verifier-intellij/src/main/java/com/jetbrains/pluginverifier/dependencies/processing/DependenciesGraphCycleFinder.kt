@@ -38,6 +38,8 @@ data class DependenciesGraphCycleFinder(val dependenciesGraph: DependenciesGraph
     }
 
     val stronglyConnectedVerticesSubgraph = AsSubgraph(graph, stronglyConnectedVertices)
-    return JohnsonSimpleCycles(stronglyConnectedVerticesSubgraph).findSimpleCycles()
+    return JohnsonSimpleCycles(stronglyConnectedVerticesSubgraph).findSimpleCycles().filter {
+      verifiedPluginVertex in it
+    }
   }
 }
