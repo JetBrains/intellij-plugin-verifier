@@ -1,11 +1,9 @@
 /*
- * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.dependencies.presentation
 
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
-import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
@@ -52,7 +50,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
         compareBy<DependencyEdge> { if (it.dependency.isOptional) 1 else -1 }
           .thenBy { if (it.dependency.isModule) 1 else -1 }
           .thenBy { it.dependency.id }
-          .thenBy { it.to.id }
+          .thenBy { it.to.pluginId }
           .thenBy { it.to.version }
       )
 
@@ -63,9 +61,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
           append("(optional) ")
         }
         append(childLines.first())
-        if (edge.to is PluginAware && edge.to.plugin is IdeModule) {
-          append(" [product module]")
-        } else if (edge.dependency.isModule) {
+        if (edge.dependency.isModule) {
           append(" [declaring module ${edge.dependency.id}]")
         }
       }
@@ -74,7 +70,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
     }
 
     val result = arrayListOf<String>()
-    result += currentNode.toString()
+    result += "${currentNode.pluginId}:${currentNode.version}"
 
     if (childrenLines.isNotEmpty()) {
       val headingChildren = childrenLines.dropLast(1)

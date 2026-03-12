@@ -7,7 +7,6 @@ package com.jetbrains.pluginverifier.dependencies
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleVisibility
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.results.problems.ModuleVisibilityProblem
@@ -122,7 +121,7 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
    */
   fun checkEdges(dependenciesGraph: DependenciesGraph, problemRegistrar: ProblemRegistrar) {
     for ((a, b) in dependenciesGraph.edges) {
-      if (a != dependenciesGraph.verifiedPlugin || a !is PluginAware || b !is PluginAware) {
+      if (a != dependenciesGraph.verifiedPlugin || a.plugin == null || b.plugin == null) {
         continue
       }
       // The dependency graph can contain legacy plugins as well as content modules.

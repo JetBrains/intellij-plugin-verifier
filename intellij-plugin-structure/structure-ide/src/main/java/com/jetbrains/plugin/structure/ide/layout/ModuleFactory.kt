@@ -1,7 +1,3 @@
-/*
- * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
 package com.jetbrains.plugin.structure.ide.layout
 
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Failure
@@ -40,7 +36,7 @@ internal class ModuleFactory(private val moduleLoader: LayoutComponentLoader, pr
     return when (moduleLoadingResult) {
       is Success -> {
         IdeModule
-          .clone(moduleLoadingResult.plugin, moduleName, classpath = getClasspath(moduleName, idePath), ideVersion)
+          .clone(moduleLoadingResult.plugin, moduleName, classpath = getClasspath(moduleName, idePath))
           .apply {
             moduleDependencies += moduleDescriptor.dependencies
             resources += moduleDescriptor.resources

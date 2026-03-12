@@ -10,7 +10,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import org.junit.Assert
@@ -63,7 +62,7 @@ class DependenciesGraphPrettyPrinterTest {
   }
 
   private fun createDependencyNode(pluginIdAndVersion: PluginIdAndVersion) =
-    dependencyNode(pluginIdAndVersion.pluginId, pluginIdAndVersion.version)
+    DependencyNode(pluginIdAndVersion.pluginId, pluginIdAndVersion.version)
 
   @Test
   fun `test pretty print`() {
@@ -89,11 +88,8 @@ class DependenciesGraphPrettyPrinterTest {
       }
     }
 
-    val startVertex = vertices.find { it.id == "start" }!!
-    val missingDeps: Map<DependencyNode, Set<MissingDependency>> = missingDependencies.map { (idAndVersion, deps) ->
-      val (id, version) = idAndVersion
-      dependencyNode(id, version) to deps.toSet()
-    }.toMap()
+    val startVertex = vertices.find { it.pluginId == "start" }!!
+    val missingDeps = missingDependencies.map { DependencyNode(it.key.pluginId, it.key.version) to missingDependencies[it.key].orEmpty().toSet() }.toMap()
     val dependenciesGraph = DependenciesGraph(startVertex, vertices, edges, missingDeps)
     val prettyPrinter = DependenciesGraphPrettyPrinter(dependenciesGraph)
     val prettyPresentation = prettyPrinter.prettyPresentation().trim()
