@@ -4,10 +4,8 @@
 
 package com.jetbrains.plugin.structure.intellij.verifiers
 
-import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
@@ -83,6 +81,23 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
       // using legacy class for dependency
       dependencies = listOf(PluginV2Dependency ("intellij.platform.monolith")),
       contentModuleDependencies = listOf(ContentModuleDependency("intellij.platform.monolith", "jetbrains"))
+    )
+    verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
+    assertEquals(0, problems.size)
+  }
+
+  @Test
+  fun `plugin without any dependencies, but with a content module is not legacy`() {
+    val contentModuleMetadata = InlineModule("someContentModule", "someNamespace", "someNamespace", ModuleLoadingRule.REQUIRED, "<idea-plugin />")
+    val contentModule = MockIdePlugin()
+    val contentModuleDescriptor = ModuleDescriptor(contentModule, contentModuleMetadata)
+    val plugin = MockIdePlugin(
+      pluginId = "somePlugin",
+      dependencies = emptyList(),
+      pluginMainModuleDependencies = emptyList(),
+      contentModuleDependencies = emptyList(),
+      contentModules = listOf(contentModuleMetadata),
+      modulesDescriptors = listOf(contentModuleDescriptor)
     )
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
     assertEquals(0, problems.size)

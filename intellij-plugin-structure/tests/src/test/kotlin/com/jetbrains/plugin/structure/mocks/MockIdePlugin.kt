@@ -37,12 +37,13 @@ data class MockIdePlugin(
   override val projectContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
   override val moduleContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
-  override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
   @Deprecated("See IdePlugin::isV2")
   override val isV2: Boolean = false,
   override val hasPackagePrefix: Boolean = false,
   override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit,
-  override val classpath: Classpath = Classpath.EMPTY
+  override val classpath: Classpath = Classpath.EMPTY,
+  override val contentModules: List<Module> = emptyList(),
+  override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
 ) : IdePlugin {
 
   override val useIdeClassLoader = false
@@ -51,7 +52,6 @@ data class MockIdePlugin(
   override val hasDotNetPart: Boolean = false
   @Deprecated("use either pluginAliases or contentModules")
   override val definedModules: Set<String> = pluginAliases
-  override val contentModules: List<Module> = emptyList()
 
   override val declaredThemes = emptyList<IdeTheme>()
 
