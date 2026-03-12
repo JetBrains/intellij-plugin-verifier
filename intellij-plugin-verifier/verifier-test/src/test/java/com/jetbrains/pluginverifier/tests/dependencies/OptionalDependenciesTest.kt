@@ -1,7 +1,3 @@
-/*
- * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
-
 package com.jetbrains.pluginverifier.tests.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
@@ -11,7 +7,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
-import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
+import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
@@ -144,11 +140,11 @@ class OptionalDependenciesTest {
 
     //Build dependencies graph and compare it to what is expected.
     val (dependenciesGraph) = DependenciesGraphBuilder(dependencyFinder).buildDependenciesGraph(somePluginDescriptor, ide)
-    val somePluginNode = dependencyNode(somePluginDescriptor)
-    val optionalPluginNode = dependencyNode(optionalPlugin)
-    val optionalMandatoryPluginNode = dependencyNode(optionalMandatoryPlugin)
-    val otherOptionalPluginNode = dependencyNode(otherOptionalPlugin)
-    val duplicatedMandatoryPluginNode = dependencyNode(duplicatedMandatoryPlugin)
+    val somePluginNode = DependencyNode("someId", "1.0", somePluginDescriptor)
+    val optionalPluginNode = DependencyNode("optionalPluginId", "1.0", optionalPlugin)
+    val optionalMandatoryPluginNode = DependencyNode("optionalMandatoryPluginId", "1.0", optionalMandatoryPlugin)
+    val otherOptionalPluginNode = DependencyNode("otherOptionalPluginId", "1.0", otherOptionalPlugin)
+    val duplicatedMandatoryPluginNode = DependencyNode("duplicatedMandatoryDependencyId", "1.0", duplicatedMandatoryPlugin)
 
     assertEquals(somePluginNode, dependenciesGraph.verifiedPlugin)
     assertEquals(setOf(somePluginNode, optionalPluginNode, optionalMandatoryPluginNode, otherOptionalPluginNode, duplicatedMandatoryPluginNode), dependenciesGraph.vertices.toSet())
