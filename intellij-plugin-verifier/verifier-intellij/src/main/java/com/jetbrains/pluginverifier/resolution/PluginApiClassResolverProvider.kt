@@ -79,7 +79,7 @@ class PluginApiClassResolverProvider(
     val infoPluginId = pluginDetails.pluginInfo.pluginId
     val plugin = pluginDetails.idePlugin
     return if (infoPluginId != plugin.id) {
-      DependencyNode.AliasedPluginDependency(infoPluginId, plugin)
+      dependencyNode(infoPluginId, plugin)
     } else {
       dependencyNode(plugin)
     }

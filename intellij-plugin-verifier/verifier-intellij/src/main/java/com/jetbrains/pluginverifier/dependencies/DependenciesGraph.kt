@@ -37,12 +37,12 @@ data class DependenciesGraph(
     edges.filter { it.from == dependencyNode }
 
   /**
-   * Returns all cycles in this graph that involve the verified plugin.
+   * Checks for cycles in this graph that involve the verified plugin. If one is found, [fn] is invoked with it.
    * The dependencies cycles are harmful and should be fixed.
    */
-  fun getAllCyclesWithVerifiedPlugin(): List<List<DependencyNode>> =
+  fun checkForCycle(fn: (List<DependencyNode>) -> Unit) =
     DependenciesGraphCycleFinder(this)
-      .findAllCyclesWithVerifiedPlugin()
+      .checkForCycle(fn)
 
   override fun toString() = DependenciesGraphPrettyPrinter(this).prettyPresentation()
 
@@ -67,15 +67,35 @@ sealed class DependencyNode {
   abstract val id: String
   abstract val version: String
 
-  data class PluginDependency(override val plugin: IdePlugin): DependencyNode(), PluginAware {
+  /**
+   * Represents a dependency of the underlying [IdePlugin], optionally storing aliases as metadata.
+   * Only the IdePlugin takes part in equality/hashCode checks!
+   */
+  class PluginDependency(override val plugin: IdePlugin): DependencyNode(), PluginAware {
     override val id = plugin.id
     override val version = plugin.pluginVersion ?: UNKNOWN_VERSION
-    override fun toString() = "$id:$version"
-  }
 
-  data class AliasedPluginDependency(override val id: String, override val plugin: IdePlugin): DependencyNode(), PluginAware {
-    override val version = plugin.pluginVersion ?: UNKNOWN_VERSION
-    override fun toString() = "$id:$version (aliased ${plugin.pluginId})"
+    private val _aliases: MutableSet<String> = mutableSetOf()
+    val aliases: Set<String> get() = _aliases
+
+    fun addAlias(alias: String) {
+      _aliases += alias
+    }
+
+    override fun toString() = "$id:$version" + if (aliases.isNotEmpty()) " (aliased ${aliases.joinToString(" ")})" else ""
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as PluginDependency
+
+      return plugin == other.plugin
+    }
+
+    override fun hashCode(): Int {
+      return plugin.hashCode()
+    }
   }
 
   data class IdAndVersionDependency(override val id: String, override val version: String) : DependencyNode() {
@@ -85,9 +105,14 @@ sealed class DependencyNode {
   companion object {
     fun dependencyNode(id: String, version: String) = IdAndVersionDependency(id, version)
     fun dependencyNode(plugin: IdePlugin) = PluginDependency(plugin)
+    fun dependencyNode(alias: String, plugin: IdePlugin) = PluginDependency(plugin).also { it.addAlias(alias) }
+
+    fun mergeAliasesIntoFirst(node1: DependencyNode.PluginDependency, node2: DependencyNode.PluginDependency): DependencyNode.PluginDependency {
+      node2.aliases.forEach(node1::addAlias)
+      return node1
+    }
   }
 }
-
 
 /**
  * Represents a [dependency] of the [verified plugin] [DependenciesGraph.verifiedPlugin]
