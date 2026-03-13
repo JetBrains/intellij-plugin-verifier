@@ -39,7 +39,7 @@ open class BaseOutputPrintTest<T : ResultPrinter>: BaseOutputTest() {
   }
 
   private val dependenciesGraph: DependenciesGraph = DependenciesGraph(
-        verifiedPlugin = DependencyNode(PLUGIN_ID, PLUGIN_VERSION),
+        verifiedPlugin = DependencyNode.IdAndVersionDependency(PLUGIN_ID, PLUGIN_VERSION),
         vertices = emptySet(),
         edges = emptySet(),
         missingDependencies = emptyMap())
@@ -69,7 +69,7 @@ open class BaseOutputPrintTest<T : ResultPrinter>: BaseOutputTest() {
   }
 
   open fun `when plugin has missing dependencies`(testRunner: VerifiedPluginHandler) {
-    val pluginDependency = DependencyNode(PLUGIN_ID, PLUGIN_VERSION)
+    val pluginDependency = DependencyNode.IdAndVersionDependency(PLUGIN_ID, PLUGIN_VERSION)
     val expectedDependency = MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-211.500")
 
     val dependenciesGraph = DependenciesGraph(

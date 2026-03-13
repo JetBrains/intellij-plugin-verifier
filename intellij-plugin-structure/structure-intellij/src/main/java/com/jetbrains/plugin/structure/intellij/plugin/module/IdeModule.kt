@@ -16,7 +16,9 @@ import org.jdom2.Element
 typealias Dependency = ModuleBean.ModuleDependency
 typealias Resource = ModuleBean.ResourceRoot
 
-class IdeModule(override val pluginId: String, override val classpath: Classpath = EMPTY,
+class IdeModule(override val pluginId: String,
+                override val pluginVersion: String? = null,
+                override val classpath: Classpath = EMPTY,
                 override val hasPackagePrefix: Boolean) : IdePlugin {
   val moduleDependencies = mutableListOf<Dependency>()
   val resources = mutableListOf<Resource>()
@@ -61,7 +63,6 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
   override val modulesDescriptors = emptyList<ModuleDescriptor>()
 
   override val pluginName = null
-  override val pluginVersion = null
   override val originalFile = null
   override val productDescriptor = null
   override val useIdeClassLoader = false
@@ -89,9 +90,22 @@ class IdeModule(override val pluginId: String, override val classpath: Classpath
   override fun toString(): String = "module: $pluginId"
 
   companion object {
+    /**
+     * Converts general plugin into an [com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule] instance.
+     * This is a module that is an integral part of the IDE Platform.
+     * Always returns a new, fresh, copy of the [plugin].
+     * @param plugin the plugin to be converted.
+     * @param pluginId the identifier of the module.
+     * Usually, this needs to be provided explicitly,
+     * as the IDE module does not have an identifier in the plugin descriptor `<id>` element.
+     * @param classpath a specific classpath that is used for this IDE module
+     * @param ideVersion the version of the IDE Platform that this IDE module belongs to.
+     * Usually, this needs to be provided explicitly,
+     * as the IDE module does not have a version in the plugin descriptor `<version>` element.
+     */
     @Throws(IllegalArgumentException::class)
-    fun clone(plugin: IdePlugin, pluginId: String, classpath: Classpath): IdeModule {
-      return IdeModule(pluginId,classpath, hasPackagePrefix = plugin.hasPackagePrefix).apply {
+    fun clone(plugin: IdePlugin, pluginId: String, classpath: Classpath, ideVersion: IdeVersion): IdeModule {
+      return IdeModule(pluginId, pluginVersion = ideVersion.asStringWithoutProductCode(), classpath, hasPackagePrefix = plugin.hasPackagePrefix).apply {
         underlyingDocument = plugin.underlyingDocument.clone()
 
         extensions.putAll(plugin.extensions)

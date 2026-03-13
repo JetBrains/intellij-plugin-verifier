@@ -9,7 +9,10 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class DependenciesGraphCycleTest {
@@ -29,10 +32,10 @@ class DependenciesGraphCycleTest {
    */
   @Test
   fun `only cycles containing the verified plugin should be reported`() {
-    val a = DependencyNode("a", "1.0")
-    val b = DependencyNode("b", "1.0")
-    val c = DependencyNode("c", "1.0")
-    val d = DependencyNode("d", "1.0")
+    val a = dependencyNode("a", "1.0")
+    val b = dependencyNode("b", "1.0")
+    val c = dependencyNode("c", "1.0")
+    val d = dependencyNode("d", "1.0")
 
     val dependenciesGraph = DependenciesGraph(
       a,
@@ -47,47 +50,77 @@ class DependenciesGraphCycleTest {
       emptyMap()
     )
 
-    val cycles = dependenciesGraph.getAllCyclesWithVerifiedPlugin()
-    assertEquals(listOf(listOf(a, b, d)), cycles)
+    var callCount = 0
+    var cycle: List<DependencyNode>? = null
+    dependenciesGraph.checkForCycle { callCount++; cycle = it }
+    assertEquals(1, callCount)
+    assertNotNull(cycle)
+    assertEquals(a, cycle!!.first())
+    assertEquals(setOf(a, b, d), cycle!!.toSet()) // The rest of the vertices' order may not be deterministic in bigger graphs
   }
 
   @Test
   fun `three-node cycle is detected`() {
-    val a = DependencyNode("a", "1.0")
-    val b = DependencyNode("b", "1.0")
-    val c = DependencyNode("c", "1.0")
+    val a = dependencyNode("a", "1.0")
+    val b = dependencyNode("b", "1.0")
+    val c = dependencyNode("c", "1.0")
 
     val dependenciesGraph = DependenciesGraph(
       a,
       setOf(a, b, c),
       setOf(
-        DependencyEdge(a, b, PluginV1Dependency.Mandatory ("b")),
+        DependencyEdge(a, b, PluginV1Dependency.Mandatory("b")),
         DependencyEdge(b, c, PluginV1Dependency.Mandatory("c")),
         DependencyEdge(c, a, PluginV1Dependency.Mandatory("a")),
       ),
       emptyMap()
     )
 
-    val cycles = dependenciesGraph.getAllCyclesWithVerifiedPlugin()
-    assertEquals(listOf(listOf(a, b, c)), cycles)
+    var cycle: List<DependencyNode>? = null
+    dependenciesGraph.checkForCycle { cycle = it }
+    assertNotNull(cycle)
+    assertEquals(a, cycle!!.first())
+    assertEquals(setOf(a, b, c), cycle!!.toSet())
   }
 
   @Test
   fun `two-node cycle is detected`() {
-    val a = DependencyNode("a", "1.0")
-    val b = DependencyNode("b", "1.0")
+    val a = dependencyNode("a", "1.0")
+    val b = dependencyNode("b", "1.0")
 
     val dependenciesGraph = DependenciesGraph(
       a,
       setOf(a, b),
       setOf(
-        DependencyEdge(a, b, PluginV1Dependency.Mandatory ("b")),
+        DependencyEdge(a, b, PluginV1Dependency.Mandatory("b")),
         DependencyEdge(b, a, PluginV1Dependency.Mandatory("a")),
       ),
       emptyMap()
     )
 
-    val cycles = dependenciesGraph.getAllCyclesWithVerifiedPlugin()
-    assertEquals(listOf(listOf(a, b)), cycles)
+    var cycle: List<DependencyNode>? = null
+    dependenciesGraph.checkForCycle { cycle = it }
+    assertNotNull(cycle)
+    assertEquals(a, cycle!!.first())
+    assertEquals(setOf(a, b), cycle!!.toSet())
+  }
+
+  @Test
+  fun `no cycle is not reported`() {
+    val a = dependencyNode("a", "1.0")
+    val b = dependencyNode("b", "1.0")
+
+    val dependenciesGraph = DependenciesGraph(
+      a,
+      setOf(a, b),
+      setOf(
+        DependencyEdge(a, b, PluginV1Dependency.Mandatory("b")),
+      ),
+      emptyMap()
+    )
+
+    var cycle: List<DependencyNode>? = null
+    dependenciesGraph.checkForCycle { cycle = it }
+    assertNull(cycle)
   }
 }

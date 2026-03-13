@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.response
@@ -127,7 +127,7 @@ private fun DependencyEdge.convert() =
     dependency.convert()
   )
 
-private fun DependencyNode.convert() = DependenciesGraphDto.DependencyNodeDto(pluginId, version)
+private fun DependencyNode.convert() = DependenciesGraphDto.DependencyNodeDto(id, version)
 
 private fun MissingDependency.convert() =
   DependenciesGraphDto.MissingDependencyDto(
