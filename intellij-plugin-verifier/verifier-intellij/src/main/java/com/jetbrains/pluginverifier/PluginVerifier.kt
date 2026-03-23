@@ -336,7 +336,7 @@ class PluginVerifier(
   }
 
   private fun PluginVerificationContext.findDependenciesCycles(dependenciesGraph: DependenciesGraph) {
-    dependenciesGraph.getAllCyclesWithVerifiedPlugin().forEach {
+    dependenciesGraph.checkForCycle {
       registerCompatibilityWarning(DependenciesCycleWarning(it))
     }
   }
