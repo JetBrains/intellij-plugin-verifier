@@ -2,7 +2,8 @@ import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import java.util.*
 
 plugins {
@@ -37,14 +38,23 @@ allprojects {
     plugin("com.github.ben-manes.versions")
   }
 
+  val javaVersion = 11
   java {
     toolchain {
-      languageVersion = JavaLanguageVersion.of(11)
+      languageVersion = JavaLanguageVersion.of(javaVersion)
     }
   }
 
   tasks.withType<JavaCompile>().configureEach {
-    options.release = 11
+    options.release = javaVersion
+  }
+
+  kotlin {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.fromTarget(javaVersion.toString()))
+      apiVersion.set(KotlinVersion.KOTLIN_1_4)
+      languageVersion.set(KotlinVersion.KOTLIN_1_4)
+    }
   }
 
   repositories {
@@ -73,14 +83,6 @@ allprojects {
   artifacts {
     archives(sourcesJar)
     archives(javadocJar)
-  }
-
-  tasks.withType<KotlinCompile> {
-    kotlinOptions {
-      jvmTarget = "11"
-      apiVersion = "1.4"
-      languageVersion = "1.4"
-    }
   }
 }
 

@@ -1,4 +1,5 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
   alias(sharedLibs.plugins.kotlin.jvm)
@@ -24,21 +25,23 @@ allprojects {
     mavenLocal()
   }
 
+  val javaVersion = 11
   java {
     toolchain {
-      languageVersion = JavaLanguageVersion.of(11)
+      languageVersion = JavaLanguageVersion.of(javaVersion)
     }
   }
 
   tasks.withType<JavaCompile>().configureEach {
-    options.release = 11
+    options.release = javaVersion
   }
 
-  tasks.withType<KotlinCompile> {
-    kotlinOptions {
-      jvmTarget = "11"
-      apiVersion = "1.4"
-      languageVersion = "1.4"
+
+  kotlin {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.fromTarget(javaVersion.toString()))
+      apiVersion.set(KotlinVersion.KOTLIN_1_4)
+      languageVersion.set(KotlinVersion.KOTLIN_1_4)
     }
   }
 }

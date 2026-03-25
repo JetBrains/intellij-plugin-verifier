@@ -2,13 +2,14 @@ import org.gradle.kotlin.dsl.get
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.ChangelogPluginExtension
 import org.jetbrains.changelog.tasks.BaseChangelogTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Base64
 import org.gradle.api.publish.Publication as GradlePublication
 import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
 plugins {
   `maven-publish`
@@ -47,22 +48,23 @@ allprojects {
   group = "org.jetbrains.intellij.plugins"
   version = projectVersion
 
+  val javaVersion = 11
   java {
     toolchain {
-      languageVersion = JavaLanguageVersion.of(11)
+      languageVersion = JavaLanguageVersion.of(javaVersion)
     }
   }
 
   tasks.withType<JavaCompile>().configureEach {
-    options.release = 11
+    options.release = javaVersion
   }
 
-  tasks.withType<KotlinCompile> {
-    kotlinOptions {
-      jvmTarget = "11"
-      apiVersion = "1.5"
-      languageVersion = "1.5"
-      freeCompilerArgs += listOf("-Xjvm-default=all-compatibility")
+  kotlin {
+    compilerOptions {
+      jvmTarget.set(JvmTarget.fromTarget(javaVersion.toString()))
+      apiVersion.set(KotlinVersion.KOTLIN_1_5)
+      languageVersion.set(KotlinVersion.KOTLIN_1_5)
+      freeCompilerArgs.add("-Xjvm-default=all-compatibility")
     }
   }
 

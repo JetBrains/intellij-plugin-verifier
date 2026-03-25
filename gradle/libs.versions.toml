@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.2.21"
+kotlin = "2.0.21"
 
 assertj = "3.27.7"
 asm = "9.9.1"
@@ -17,6 +17,8 @@ logback-core = "1.4.14"
 logback-classic = "1.4.14"
 mockk = "1.14.2"
 nexus-publish = "1.3.0"
+okhttp = "4.12.0"
+okhttp-loggingInterceptor = "4.12.0"
 retrofit = "3.0.0"
 retrofit-gson = "3.0.0"
 shadow = "8.3.0"
@@ -44,6 +46,8 @@ kotson = { group = "com.github.salomonbrys.kotson", name = "kotson", version.ref
 logback-core = { group = "ch.qos.logback", name = "logback-core", version.ref = "logback-core" }
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback-classic" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-loggingInterceptor = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp-loggingInterceptor" }
 retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
 retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit-gson" }
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j-api" }
