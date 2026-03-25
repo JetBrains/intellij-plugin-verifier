@@ -246,6 +246,51 @@ class KotlinMethodsTest {
     )
   }
 
+  /**
+   * When a Kotlin class overrides an interface method with a covariant return type,
+   * the compiler generates a synthetic bridge method with the original return type.
+   * This bridge method should NOT be flagged by MethodReturnTypeVerifier.
+   */
+  @Test
+  fun `bridge method generated for covariant return type is skipped by MethodReturnTypeVerifier`() {
+    val interfaceName = "com/example/bridge/MyInterface"
+    val methodName = "getCollector"
+    val bridgeDesc = "()Lcom/example/bridge/InternalType;"
+
+    val classNode = ClassNode(Opcodes.ASM9).apply {
+      version = Opcodes.V17
+      access = Opcodes.ACC_PUBLIC
+      name = "com/example/bridge/MyImpl"
+      superName = "java/lang/Object"
+      interfaces = listOf(interfaceName)
+      visibleAnnotations = listOf(kotlinMetadataAnnotation())
+
+      // The bridge method: ACC_PUBLIC | ACC_BRIDGE | ACC_SYNTHETIC
+      methods.add(MethodNode().apply {
+        access = Opcodes.ACC_PUBLIC or Opcodes.ACC_BRIDGE or Opcodes.ACC_SYNTHETIC
+        name = methodName
+        desc = bridgeDesc
+        instructions.add(VarInsnNode(Opcodes.ALOAD, 0))
+        instructions.add(MethodInsnNode(
+          Opcodes.INVOKEVIRTUAL,
+          "com/example/bridge/MyImpl",
+          methodName,
+          "()Lcom/example/bridge/PublicSubtype;",
+          false
+        ))
+        instructions.add(InsnNode(Opcodes.ARETURN))
+      })
+    }
+
+    val classFile = ClassFileAsm(classNode, origin)
+    val bridgeMethod = classFile.methods.find { it.name == methodName }!!
+
+    assertTrue(
+      "Bridge method should be detected as bridge",
+      bridgeMethod.isBridgeMethod
+    )
+  }
+
   private fun createKotlinClassWithJava8DefaultDelegation(
     className: String,
     interfaceName: String,
