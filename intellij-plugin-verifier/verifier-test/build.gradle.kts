@@ -74,7 +74,7 @@ tasks.named("test") {
   dependsOn(prepareMockPlugin, prepareAfterIdea)
 }
 
-tasks.named("jar") {
+tasks.named("build") {
   dependsOn("test")
 }
 
