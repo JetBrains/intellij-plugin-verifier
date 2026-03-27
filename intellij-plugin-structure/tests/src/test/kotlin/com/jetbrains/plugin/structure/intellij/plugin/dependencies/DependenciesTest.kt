@@ -19,11 +19,13 @@ import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeMo
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
 import org.assertj.core.api.BDDAssertions.then
+import org.assertj.core.api.CollectionAssert
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.util.function.Consumer
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.math.max
 import kotlin.test.*
@@ -1007,7 +1009,7 @@ class DependenciesTest {
     val pluginProvider = EventLogSinglePluginProvider(plugin)
 
     val dependencyTree = DependencyTree(pluginProvider)
-    then(dependencyTree.getTransitiveDependencies(dependantPlugin))
+    CollectionAssert(dependencyTree.getTransitiveDependencies(dependantPlugin))
       .hasSize(1)
       .containsExactly(Dependency.Module(plugin, "intellij.platform.vcs.impl"))
 
@@ -1053,11 +1055,11 @@ class DependenciesTest {
     val pluginProvider = EventLogSinglePluginProvider(ideModule)
 
     val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate)
-    then(dependencyTree.getTransitiveDependencies(dependantPlugin))
+    CollectionAssert(dependencyTree.getTransitiveDependencies(dependantPlugin))
       .hasSize(1)
       .containsExactly(Dependency.Module(ideModule, "intellij.java.terminal"))
 
-    then(pluginProvider.pluginSearchLog)
+    CollectionAssert(pluginProvider.pluginSearchLog)
       .hasSize(1)
       .containsExactly(LogEntry("intellij.java.terminal", ideModule, "found via plugin alias"))
   }
@@ -1098,11 +1100,11 @@ class DependenciesTest {
     val pluginProvider = EventLogSinglePluginProvider(ideModule)
 
     val dependencyTree = DependencyTree(pluginProvider)
-    then(dependencyTree.getTransitiveDependencies(dependantPlugin))
+    CollectionAssert(dependencyTree.getTransitiveDependencies(dependantPlugin))
       .hasSize(1)
       .containsExactly(Dependency.Plugin(ideModule))
 
-    then(pluginProvider.pluginSearchLog)
+    CollectionAssert(pluginProvider.pluginSearchLog)
       .hasSize(1)
       .containsExactly(LogEntry("intellij.java.terminal", ideModule, "found via plugin alias"))
   }
@@ -1145,11 +1147,11 @@ class DependenciesTest {
     val ideModulePredicate = DefaultIdeModulePredicate(setOf("com.intellij.modules.java"))
 
     val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate)
-    then(dependencyTree.getTransitiveDependencies(dependantPlugin))
+    CollectionAssert(dependencyTree.getTransitiveDependencies(dependantPlugin))
       .hasSize(1)
       .containsExactly(Dependency.Module(plugin, "com.intellij.modules.java"))
 
-    then(pluginProvider.pluginSearchLog)
+    CollectionAssert(pluginProvider.pluginSearchLog)
       .hasSize(1)
       .containsExactly(LogEntry("com.intellij.modules.java", plugin, "found via plugin alias"))
   }
@@ -1194,11 +1196,11 @@ class DependenciesTest {
 
     val ideModulePredicate = DefaultIdeModulePredicate(setOf("com.intellij.modules.java"))
     val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate)
-    then(dependencyTree.getTransitiveDependencies(dependantPlugin))
+    CollectionAssert(dependencyTree.getTransitiveDependencies(dependantPlugin))
       .hasSize(1)
       .containsExactly(Dependency.Module(plugin, "com.intellij.modules.java"))
 
-    then(pluginProvider.pluginSearchLog)
+    CollectionAssert(pluginProvider.pluginSearchLog)
       .hasSize(1)
       .containsExactly(LogEntry("com.intellij.modules.java", plugin, "found via plugin alias"))
   }
@@ -1233,20 +1235,20 @@ class DependenciesTest {
     val pluginProvider = EventLogSinglePluginProvider(plugin)
 
     val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
-    then(dependencyTree.getTransitiveDependencies(dependantPlugin))
+    CollectionAssert(dependencyTree.getTransitiveDependencies(dependantPlugin))
       .hasSize(1)
       .containsExactly(Dependency.Module(plugin, "com.intellij.modules.java"))
 
-    then(pluginProvider.pluginSearchLog)
+    CollectionAssert(pluginProvider.pluginSearchLog)
       .hasSize(2)
-      .anySatisfy {
+      .anySatisfy(Consumer {
         assertEquals("com.intellij.modules.java", it.pluginId)
         assertEquals("found via plugin alias", it.reason)
-      }
-      .anySatisfy {
+      })
+      .anySatisfy(Consumer {
         assertEquals("nonexistent.plugin", it.pluginId)
         assertEquals("not found", it.reason)
-      }
+      })
   }
 
   @Test
