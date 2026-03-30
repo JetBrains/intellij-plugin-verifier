@@ -53,11 +53,29 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
 
   override fun getLastCompatiblePlugins(ideVersion: IdeVersion): List<UpdateInfo> {
     val pluginManager = pluginRepositoryInstance.pluginManager
-    @Suppress("DEPRECATION")
-    val pluginsXmlIds = pluginManager.getCompatiblePluginsXmlIds(ideVersion.asString(), MAX_AVAILABLE_PLUGINS_IN_REPOSITORY, 0)
+    val pluginsXmlIds = getCompatiblePluginsXmlIds(ideVersion)
     val updates = pluginManager.searchCompatibleUpdates(pluginsXmlIds, ideVersion.asString(), channel = "")
     val pluginIdAndUpdateIds = updates.map { it.pluginId to it.id }
     return getPluginInfosForManyPluginIdsAndUpdateIds(pluginIdAndUpdateIds).values.toList()
+  }
+
+  private fun getCompatiblePluginsXmlIds(ideVersion: IdeVersion): List<String> {
+    val pluginManager = pluginRepositoryInstance.pluginManager
+    val ids = mutableListOf<String>()
+    var offset = 0
+    val batchSize = 1000 // Max page size allowed by the backing Plugin Search Service
+
+    while (true) {
+      @Suppress("DEPRECATION")
+      val batch = pluginManager.getCompatiblePluginsXmlIds(ideVersion.asString(), batchSize, offset)
+      ids.addAll(batch)
+      offset += batch.size
+
+      if (batch.size < batchSize) break
+      Thread.sleep(1000) // The backing endpoint implemented paging to lower resource usage. To respect that, we add some rate limiting
+    }
+
+    return ids
   }
 
   override fun getLastCompatibleVersionOfPlugin(ideVersion: IdeVersion, pluginId: String): UpdateInfo? {
@@ -241,10 +259,6 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
 
     private val DEFAULT_URL = URL("https://plugins.jetbrains.com")
 
-    //In the late future this will need to be updated. Currently, there are ~= 4000 plugins in the repository available.
-    // This magic constant is the limit of the Elastic Search used in the Plugin Search Service.
-    // Contact JetBrains Marketplace team for details.
-    private const val MAX_AVAILABLE_PLUGINS_IN_REPOSITORY = 10000
   }
 
   private fun IdeVersion?.intern() = ideVersionInterner.intern(this)
