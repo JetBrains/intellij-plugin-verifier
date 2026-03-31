@@ -7,6 +7,16 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Added
 
 ### Changed
+- Reconsolidate graph cycle calculations to minimize OOMs ([#1456](https://github.com/JetBrains/intellij-plugin-verifier/pull/1456)) 
+- Update Kotlin to 2.0.21
+- Update AssertJ to 3.27.7
+- Update ByteBuddy to 1.18.5
+- Update Gson to 2.12.1
+- Update jackson-module-kotlin to 2.20.2
+- Update jetbrains-annotations to 26.1.0
+- Update logback to 1.4.14
+- Update okhttp to 4.12.0
+- Update retrofit to 3.0.0
 
 ### Fixed
 
