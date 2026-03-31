@@ -9,7 +9,7 @@ private const val OS_MODULE_PREFIX = "com.intellij.modules.os."
 enum class OS(private val suffix: String) {
   Windows("windows"),
   Unix("unix"),
-  MacOS("macos"),
+  MacOS("mac"),
   Linux("linux"),
   FreeBSD("freebsd");
 

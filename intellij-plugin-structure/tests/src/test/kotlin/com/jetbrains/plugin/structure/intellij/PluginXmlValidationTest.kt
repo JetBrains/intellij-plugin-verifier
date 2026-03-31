@@ -203,7 +203,7 @@ class PluginXmlValidationTest {
             <idea-plugin>
               $HEADER
               <depends>com.intellij.modules.arch.x86_64</depends>
-              <depends>com.intellij.modules.os.macos</depends>
+              <depends>com.intellij.modules.os.mac</depends>
             </idea-plugin>
           """
         }
@@ -226,7 +226,7 @@ class PluginXmlValidationTest {
             <idea-plugin>
               $HEADER
               <depends optional="true" config-file="test.xml">com.intellij.modules.arch.x86_64</depends>
-              <depends optional="true" config-file="test2.xml">com.intellij.modules.os.macos</depends>
+              <depends optional="true" config-file="test2.xml">com.intellij.modules.os.mac</depends>
             </idea-plugin>
           """
         }
@@ -263,7 +263,7 @@ class PluginXmlValidationTest {
               
               <dependencies>
                 <plugin id="com.intellij.modules.arch.x86_64" />
-                <plugin id="com.intellij.modules.os.macos" />
+                <plugin id="com.intellij.modules.os.mac" />
               </dependencies>
              
             </idea-plugin>
@@ -309,7 +309,7 @@ class PluginXmlValidationTest {
             <idea-plugin>
               $HEADER
          
-              <depends>com.intellij.modules.os.macos</depends>
+              <depends>com.intellij.modules.os.mac</depends>
               <depends>com.intellij.modules.os.windows</depends>
             </idea-plugin>
           """
