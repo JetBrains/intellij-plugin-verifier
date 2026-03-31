@@ -7,6 +7,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Added
 
 ### Changed
+- Paginate compatible plugin ID retrieval to circumvent batch size limit issue in JetBrains Marketplace API ([#1466](https://github.com/JetBrains/intellij-plugin-verifier/pull/1466))
 - Reconsolidate graph cycle calculations to minimize OOMs ([#1456](https://github.com/JetBrains/intellij-plugin-verifier/pull/1456)) 
 - Fix macOS constraint module name ([#1467](https://github.com/JetBrains/intellij-plugin-verifier/pull/1467))
 - Update Kotlin to 2.0.21
