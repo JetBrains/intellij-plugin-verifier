@@ -8,6 +8,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 - Reconsolidate graph cycle calculations to minimize OOMs ([#1456](https://github.com/JetBrains/intellij-plugin-verifier/pull/1456)) 
+- Fix macOS constraint module name ([#1467](https://github.com/JetBrains/intellij-plugin-verifier/pull/1467))
 - Update Kotlin to 2.0.21
 - Update AssertJ to 3.27.7
 - Update ByteBuddy to 1.18.5
