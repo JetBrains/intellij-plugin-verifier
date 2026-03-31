@@ -63,16 +63,15 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
     val pluginManager = pluginRepositoryInstance.pluginManager
     val ids = mutableListOf<String>()
     var offset = 0
-    val batchSize = 1000 // Max page size allowed by the backing Plugin Search Service
 
     while (true) {
       @Suppress("DEPRECATION")
-      val batch = pluginManager.getCompatiblePluginsXmlIds(ideVersion.asString(), batchSize, offset)
+      val batch = pluginManager.getCompatiblePluginsXmlIds(ideVersion.asString(), COMPATIBLE_PLUGINS_PAGE_SIZE, offset)
       ids.addAll(batch)
       offset += batch.size
 
-      if (batch.size < batchSize) break
-      Thread.sleep(1000) // The backing endpoint implemented paging to lower resource usage. To respect that, we add some rate limiting
+      if (batch.size < COMPATIBLE_PLUGINS_PAGE_SIZE) break
+      Thread.sleep(COMPATIBLE_PLUGINS_PAGE_FETCH_DELAY_MS) // The backing endpoint implemented paging to lower resource usage. To respect that, we add some rate limiting
     }
 
     return ids
@@ -258,6 +257,10 @@ class MarketplaceRepository(val repositoryURL: URL = DEFAULT_URL) : PluginReposi
   private companion object {
 
     private val DEFAULT_URL = URL("https://plugins.jetbrains.com")
+
+    private const val COMPATIBLE_PLUGINS_PAGE_SIZE = 1000 // Max page size allowed by the backing Plugin Search Service
+
+    private const val COMPATIBLE_PLUGINS_PAGE_FETCH_DELAY_MS = 1000L // Rate limiting between pages
 
   }
 
