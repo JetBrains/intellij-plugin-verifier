@@ -7,6 +7,13 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Added
 
 ### Changed
+
+### Fixed
+
+## 1.402 - 2026-04-01
+
+### Changed
+
 - Paginate compatible plugin ID retrieval to circumvent batch size limit issue in JetBrains Marketplace API ([#1466](https://github.com/JetBrains/intellij-plugin-verifier/pull/1466))
 - Reconsolidate graph cycle calculations to minimize OOMs ([#1456](https://github.com/JetBrains/intellij-plugin-verifier/pull/1456)) 
 - Fix macOS constraint module name ([#1467](https://github.com/JetBrains/intellij-plugin-verifier/pull/1467))
@@ -19,8 +26,6 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 - Update logback to 1.4.14
 - Update okhttp to 4.12.0
 - Update retrofit to 3.0.0
-
-### Fixed
 
 ## 1.401 - [2026-03-12]
 
