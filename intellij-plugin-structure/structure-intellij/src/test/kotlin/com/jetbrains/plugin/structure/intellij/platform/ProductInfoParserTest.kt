@@ -42,6 +42,37 @@ class ProductInfoParserTest {
   }
 
   @Test
+  fun `productModuleV2 with missing classPath field is deserialized as empty classpath`() {
+    val json = """
+      {
+        "name": "Gateway",
+        "version": "2026.1",
+        "versionSuffix": null,
+        "buildNumber": "261.1234.56",
+        "productCode": "GW",
+        "dataDirectoryName": "JetBrainsGateway2026.1",
+        "svgIconPath": "bin/gateway.svg",
+        "productVendor": "JetBrains",
+        "launch": [],
+        "bundledPlugins": [],
+        "modules": [],
+        "layout": [
+          {
+            "name": "intellij.gateway.backend.core",
+            "kind": "productModuleV2"
+          }
+        ]
+      }
+    """.trimIndent()
+
+    val productInfo = productInfoParser.parse(json.byteInputStream(), "test")
+
+    val productModules = productInfo.layout.filterIsInstance<LayoutComponent.ProductModuleV2>()
+    assertEquals(1, productModules.size)
+    assertEquals(emptyList<String>(), productModules.single().classPaths)
+  }
+
+  @Test
   fun `product-info JSON is serialized`() {
     val jackson = ObjectMapper()
 
