@@ -73,10 +73,19 @@ sealed class LayoutComponent(val kind: String) {
   }
 
   data class ProductModuleV2(
-    @JsonProperty("name") override val name: String,
-    @JsonProperty("classPath")
+    override val name: String,
     val classPaths: List<String>,
   ) : LayoutComponent("productModuleV2"), Classpathable {
+
+    companion object {
+      @JvmStatic
+      @JsonCreator
+      fun create(
+        @JsonProperty("name") name: String,
+        @JsonProperty("classPath") classPaths: List<String>?,
+      ): ProductModuleV2 = ProductModuleV2(name, classPaths ?: emptyList())
+    }
+
     override fun getClasspath() = classPaths.paths
   }
 
