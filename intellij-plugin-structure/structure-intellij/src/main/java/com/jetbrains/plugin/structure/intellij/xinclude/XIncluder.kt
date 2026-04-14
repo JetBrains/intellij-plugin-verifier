@@ -65,6 +65,16 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     }
   }
 
+  private fun addResolvedContent(target: Element, element: Element, bases: MutableList<XIncludeEntry>) {
+    if (isIncludeElement(element)) {
+      if (shouldXInclude(element, bases)) {
+        target.addContent(resolveXIncludeElements(element, bases))
+      }
+      return
+    }
+    target.addContent(resolveNonXIncludeElement(element, bases))
+  }
+
   /**
    * Handle conditional resolution of XInclude.
    *
@@ -129,7 +139,11 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
         val xIncludeElements = resolveXIncludesOfRemoteDocument(remoteDocument, xincludeElement, xincludeEntry, bases)
         val startComment = Comment("Start $presentableXInclude")
         val endComment = Comment("End $presentableXInclude")
-        return listOf(startComment) + xIncludeElements + listOf(endComment)
+        return ArrayList<Content>(xIncludeElements.size + 2).apply {
+          add(startComment)
+          addAll(xIncludeElements)
+          add(endComment)
+        }
       }
       is ResourceResolver.Result.NotFound -> {
         val fallbackElement = xincludeElement.getChild("fallback", xincludeElement.namespace)
@@ -220,7 +234,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
 
     for (content in element.content) {
       if (content is Element) {
-        result.addContent(resolveIncludeOrNonInclude(content, bases))
+        addResolvedContent(result, content, bases)
       } else {
         result.addContent(content.clone())
       }

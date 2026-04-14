@@ -25,8 +25,6 @@ private val LOG = LoggerFactory.getLogger(PluginBeanToIdePluginConverter::class.
 internal class PluginBeanToIdePluginConverter {
   private val pluginModuleResolver = PluginModuleResolver()
 
-  private val releaseDateFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-
   fun convert(
     bean: PluginBean,
     document: Document,
@@ -110,7 +108,7 @@ internal class PluginBeanToIdePluginConverter {
     bean.productDescriptor?.run {
       productDescriptor = ProductDescriptor(
         code,
-        LocalDate.parse(releaseDate, releaseDateFormatter),
+        LocalDate.parse(releaseDate, RELEASE_DATE_FORMATTER),
         ProductReleaseVersion.parse(releaseVersion),
         eap == "true",
         optional == "true"
@@ -386,5 +384,9 @@ internal class PluginBeanToIdePluginConverter {
   internal class UnsupportedClientAttributeValue(val unsupportedValue: String) : PluginProblem() {
     override val level = Level.WARNING
     override val message = "Unsupported value of attribute 'client': [$unsupportedValue]"
+  }
+
+  private companion object {
+    val RELEASE_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
   }
 }

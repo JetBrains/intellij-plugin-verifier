@@ -64,9 +64,17 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
   private fun ProductInfoLayoutComponentsPluginCollectionSource.readPlugins(): List<IdePlugin> {
     val platformResourceResolver = ProductInfoResourceResolver(layoutComponents, jarFileSystemProvider)
     val moduleManager = BundledModulesManager(BundledModulesResolver(idePath, jarFileSystemProvider))
+    val idePluginManager = IdePluginManager.createManager(platformResourceResolver)
 
-    val moduleV2Factory = ModuleFactory(::createModule, LayoutComponentsClasspathProvider(layoutComponents))
-    val pluginFactory = PluginFactory(::createPlugin)
+    val moduleV2Factory = ModuleFactory(
+      { pluginArtifactPath, descriptorName, resourceResolver, ideVersion, layoutComponentName ->
+        createModule(idePluginManager, pluginArtifactPath, descriptorName, resourceResolver, ideVersion, layoutComponentName)
+      },
+      LayoutComponentsClasspathProvider(layoutComponents)
+    )
+    val pluginFactory = PluginFactory { pluginArtifactPath, descriptorPath, resourceResolver, ideVersion, layoutComponentName ->
+      createPlugin(idePluginManager, pluginArtifactPath, descriptorPath, resourceResolver, ideVersion, layoutComponentName)
+    }
 
     val moduleLoadingResults = layoutComponents.content.mapNotNull { layoutComponent ->
       when (layoutComponent) {
@@ -91,8 +99,19 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
   }
 
   private fun ProductInfoLayoutComponentsPluginCollectionSource.readCorePlugin(): List<IdePlugin> {
-    val corePluginManager =
-      CorePluginManager(::createPlugin, jarFileSystemProvider)
+    val corePluginManager = CorePluginManager(
+      { pluginArtifactPath, descriptorPath, resourceResolver, ideVersion, layoutComponentName ->
+        createPlugin(
+          IdePluginManager.createManager(resourceResolver),
+          pluginArtifactPath,
+          descriptorPath,
+          resourceResolver,
+          ideVersion,
+          layoutComponentName
+        )
+      },
+      jarFileSystemProvider
+    )
     return corePluginManager.loadCorePlugins(idePath, ideVersion)
   }
 
@@ -102,26 +121,26 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
   }
 
   private fun createModule(
+    idePluginManager: IdePluginManager,
     pluginArtifactPath: Path,
     descriptorName: String,
-    pathResolver: ResourceResolver,
+    @Suppress("UNUSED_PARAMETER") _resourceResolver: ResourceResolver,
     ideVersion: IdeVersion,
-    @Suppress("unused") layoutComponentName: String
+    @Suppress("UNUSED_PARAMETER") _layoutComponentName: String
   ): PluginWithArtifactPathResult {
-    return IdePluginManager
-      .createManager(pathResolver)
+    return idePluginManager
       .createBundledModule(pluginArtifactPath, ideVersion, descriptorName, bundledPluginCreationResultResolver)
       .withPath(pluginArtifactPath)
   }
 
   private fun createPlugin(
+    idePluginManager: IdePluginManager,
     pluginArtifactPath: Path,
     descriptorPath: String = PLUGIN_XML,
-    resourceResolver: ResourceResolver,
+    @Suppress("UNUSED_PARAMETER") _resourceResolver: ResourceResolver,
     ideVersion: IdeVersion,
     layoutComponentName: String
-  ) = IdePluginManager
-    .createManager(resourceResolver)
+  ) = idePluginManager
     .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath, layoutComponentName)
     .withPath(pluginArtifactPath)
 

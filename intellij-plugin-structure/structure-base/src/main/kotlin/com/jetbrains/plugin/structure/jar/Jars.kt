@@ -14,12 +14,12 @@ const val JAR_SCHEME = "jar"
  * All other paths are retained as-is.
  */
 fun Path.toJarFileUri(): URI {
-  val uri = toUri()
-  if (uri.scheme != FILE_SCHEMA) {
-    return uri
+  val originalUri = toUri()
+  if (originalUri.scheme != FILE_SCHEMA) {
+    return originalUri
   }
 
-  val resolvedPath = toAbsolutePath().run {
+  val resolvedPath = (if (isAbsolute) this else toAbsolutePath()).run {
     if (exists()) toRealPath() else normalize()
   }
 

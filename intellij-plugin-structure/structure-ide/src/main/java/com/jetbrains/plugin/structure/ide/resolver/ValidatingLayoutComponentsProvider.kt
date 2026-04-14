@@ -50,11 +50,18 @@ class ValidatingLayoutComponentsProvider(private val missingLayoutFileMode: Miss
     val okComponents = mutableListOf<ResolvedLayoutComponent>()
     val failedComponents = mutableListOf<InvalidLayoutComponent>()
     forEach { component ->
-      val missingPaths = component.resolveClasspaths().filterNot { it.exists }
-      if (missingPaths.isEmpty()) {
+      val resolvedClasspaths = component.resolveClasspaths()
+      val missingClasspaths = mutableListOf<IdeRelativePath>()
+      for (resolvedClasspath in resolvedClasspaths) {
+        if (!resolvedClasspath.exists) {
+          missingClasspaths += resolvedClasspath
+        }
+      }
+
+      if (missingClasspaths.isEmpty()) {
         okComponents += component
       } else {
-        failedComponents += InvalidLayoutComponent(component, missingPaths)
+        failedComponents += InvalidLayoutComponent(component, resolvedClasspaths, missingClasspaths)
       }
     }
     return ValidatedLayoutComponents(okComponents, failedComponents)
@@ -76,7 +83,11 @@ class ValidatingLayoutComponentsProvider(private val missingLayoutFileMode: Miss
     LOG.warn(logMsg)
   }
 
-  private data class InvalidLayoutComponent(val component: ResolvedLayoutComponent, val missingClasspaths: List<IdeRelativePath>)
+  private data class InvalidLayoutComponent(
+    val component: ResolvedLayoutComponent,
+    val resolvedClasspaths: List<IdeRelativePath>,
+    val missingClasspaths: List<IdeRelativePath>,
+  )
 
   private data class ValidatedLayoutComponents(
     val successes: List<ResolvedLayoutComponent>,
@@ -88,9 +99,17 @@ class ValidatingLayoutComponentsProvider(private val missingLayoutFileMode: Miss
     fun hasFailures() = failures.isNotEmpty()
 
     fun skipMissingClasspathElements(): List<ResolvedLayoutComponent> =
-      failedComponents.map { it.skipMissingClasspathElements() }
+      failures.map { it.skipMissingClasspathElements() }
 
-    private fun ResolvedLayoutComponent.skipMissingClasspathElements() = with(layoutComponent) {
+    private fun InvalidLayoutComponent.skipMissingClasspathElements() = with(component.layoutComponent) {
+      val missingClasspathsSet = missingClasspaths.toHashSet()
+      val existingClasspaths = ArrayList<String>(resolvedClasspaths.size - missingClasspaths.size)
+      for (resolvedClasspath in resolvedClasspaths) {
+        if (resolvedClasspath !in missingClasspathsSet) {
+          existingClasspaths += resolvedClasspath.relativePath.toString()
+        }
+      }
+
       when (this) {
         is LayoutComponent.ModuleV2 -> copy(classPaths = existingClasspaths)
         is LayoutComponent.Plugin -> copy(classPaths = existingClasspaths)
@@ -98,12 +117,7 @@ class ValidatingLayoutComponentsProvider(private val missingLayoutFileMode: Miss
         is LayoutComponent.PluginAlias -> this
       }
     }.let {
-      ResolvedLayoutComponent(idePath, it)
+      ResolvedLayoutComponent(component.idePath, it)
     }
-
-    private val ResolvedLayoutComponent.existingClasspaths
-      get() = resolveClasspaths()
-        .filter { it.exists }
-        .map { it.relativePath.toString() }
   }
 }

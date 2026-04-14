@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.jar
 
-import com.jetbrains.plugin.structure.base.utils.extension
+import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.isZip
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.net.URI
@@ -42,5 +43,5 @@ class UriJarFileSystemProvider(private val pathToUri: (Path) -> URI = { it.toUri
     }
   }
 
-  private fun Path.isZipOrJar() = extension in listOf("zip", "jar")
+  private fun Path.isZipOrJar() = isJar() || isZip()
 }
