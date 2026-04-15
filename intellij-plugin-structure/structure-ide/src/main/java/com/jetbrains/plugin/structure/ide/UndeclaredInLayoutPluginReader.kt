@@ -16,6 +16,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArtifactPath
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import org.slf4j.Logger
@@ -38,7 +39,6 @@ class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<Stri
     if (!supports(pluginMetadataSource)) return emptyList()
 
     val resourceResolver = PlatformResourceResolver.of(idePath)
-    val idePluginManager = IdePluginManager.createManager(resourceResolver)
 
     val identifiersInPluginsDir = bundledPluginManager.getBundledPluginIds(idePath)
     val identifiersInLayout = layoutComponentNameSource.getNames()
@@ -47,7 +47,7 @@ class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<Stri
       .filterNotIn(identifiersInLayout)
       .mapNotNull {
         try {
-          createBundledPlugin(idePath, it.path, idePluginManager, ideVersion)
+          createBundledPlugin(idePath, it.path, resourceResolver, ideVersion)
         } catch (e: InvalidIdeException) {
           // TODO layout issues log level should be configurable
           LOG.debug(e.reason)
@@ -68,9 +68,11 @@ class UndeclaredInLayoutPluginReader(private val supportedProductCodes: Set<Stri
   private fun createBundledPlugin(
     idePath: Path,
     pluginFile: Path,
-    idePluginManager: IdePluginManager,
+    resourceResolver: ResourceResolver,
     ideVersion: IdeVersion
-  ): IdePlugin = when (val creationResult = idePluginManager
+  ): IdePlugin = when (val creationResult = IdePluginManager
+    .createManager(resourceResolver)
+    // TODO consolidate bundled plugin construction across multiple invocations
     .createBundledPlugin(
       pluginFile,
       ideVersion,

@@ -54,10 +54,9 @@ internal class PluginCreator private constructor(
       validateDescriptor: Boolean,
       document: Document,
       documentPath: Path,
-      pathResolver: ResourceResolver,
-      mayHaveXIncludes: Boolean = true,
+      pathResolver: ResourceResolver
     ) = createPlugin(
-      pluginFile.simpleName, descriptorPath, parentPlugin, validateDescriptor, document, documentPath, pathResolver, mayHaveXIncludes
+      pluginFile.simpleName, descriptorPath, parentPlugin, validateDescriptor, document, documentPath, pathResolver
     )
 
     @JvmStatic
@@ -68,15 +67,13 @@ internal class PluginCreator private constructor(
       validateDescriptor: Boolean,
       document: Document,
       documentPath: Path,
-      pathResolver: ResourceResolver,
-      mayHaveXIncludes: Boolean = true,
+      pathResolver: ResourceResolver
     ): PluginCreator = createPlugin(
       pluginFileName, descriptorPath,
       parentPlugin, validateDescriptor,
       document, documentPath,
       pathResolver,
-      IntelliJPluginCreationResultResolver(),
-      mayHaveXIncludes
+      IntelliJPluginCreationResultResolver()
     )
 
     @JvmStatic
@@ -88,12 +85,11 @@ internal class PluginCreator private constructor(
       document: Document,
       documentPath: Path,
       pathResolver: ResourceResolver,
-      problemResolver: PluginCreationResultResolver,
-      mayHaveXIncludes: Boolean = true,
+      problemResolver: PluginCreationResultResolver
     ): PluginCreator {
       val pluginCreator = PluginCreator(pluginFileName, descriptorPath, parentPlugin, problemResolver)
       pluginCreator.resolveDocumentAndValidateBean(
-        document, documentPath, descriptorPath, pathResolver, validateDescriptor, mayHaveXIncludes
+        document, documentPath, descriptorPath, pathResolver, validateDescriptor
       )
       return pluginCreator
     }
@@ -104,18 +100,12 @@ internal class PluginCreator private constructor(
       parentPlugin: PluginCreator?,
       document: Document,
       pathResolver: ResourceResolver,
-      problemResolver: PluginCreationResultResolver,
-      mayHaveXIncludes: Boolean = true,
+      problemResolver: PluginCreationResultResolver
     ): PluginCreator {
       val pluginCreator =
         PluginCreator(descriptorResource.artifactFileName, descriptorResource.fileName, parentPlugin, problemResolver)
       pluginCreator.resolveDocumentAndValidateBean(
-        document,
-        descriptorResource.filePath,
-        descriptorResource.fileName,
-        pathResolver,
-        validateDescriptor = true,
-        mayHaveXIncludes = mayHaveXIncludes,
+        document, descriptorResource.filePath, descriptorResource.fileName, pathResolver, validateDescriptor = true
       )
       return pluginCreator
     }
@@ -278,8 +268,7 @@ internal class PluginCreator private constructor(
     documentPath: Path,
     documentName: String,
     pathResolver: ResourceResolver,
-    validateDescriptor: Boolean,
-    mayHaveXIncludes: Boolean,
+    validateDescriptor: Boolean
   ) {
     val validationContext = ValidationContext(descriptorPath, problemResolver)
 
@@ -290,7 +279,6 @@ internal class PluginCreator private constructor(
       documentPath,
       documentName,
       pathResolver,
-      mayHaveXIncludes,
       validationContext
     )
     if (parsingResult !is Parsed) {

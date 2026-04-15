@@ -27,7 +27,6 @@ class PluginDescriptorParser {
     documentPath: Path,
     documentName: String,
     pathResolver: ResourceResolver,
-    mayHaveXIncludes: Boolean,
     validationContext: ValidationContext
   ): ParseResult {
     val document = resolveXIncludesOfDocument(
@@ -37,7 +36,6 @@ class PluginDescriptorParser {
       documentName,
       pathResolver,
       documentPath,
-      mayHaveXIncludes,
       validationContext
     ) ?: return ParseResult.InvalidXml
     return readDocumentIntoXmlBean(descriptorPath, pluginFileName, document, validationContext)
@@ -66,20 +64,13 @@ class PluginDescriptorParser {
     presentablePath: String,
     pathResolver: ResourceResolver,
     documentPath: Path,
-    mayHaveXIncludes: Boolean,
     validationContext: ValidationContext
-  ): Document? {
-    if (!mayHaveXIncludes) {
-      return document
-    }
-
-    return try {
-      XIncluder.resolveXIncludes(document, presentablePath, pathResolver, documentPath)
-    } catch (e: XIncluderException) {
-      LOG.info("Unable to resolve <xi:include> elements of descriptor '$descriptorPath' from '$pluginFileName'", e)
-      validationContext += XIncludeResolutionErrors(descriptorPath, e.message)
-      null
-    }
+  ): Document? = try {
+    XIncluder.resolveXIncludes(document, presentablePath, pathResolver, documentPath)
+  } catch (e: XIncluderException) {
+    LOG.info("Unable to resolve <xi:include> elements of descriptor '$descriptorPath' from '$pluginFileName'", e)
+    validationContext += XIncludeResolutionErrors(descriptorPath, e.message)
+    null
   }
 
   sealed class ParseResult {

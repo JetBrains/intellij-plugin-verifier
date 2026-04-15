@@ -2,8 +2,10 @@ package com.jetbrains.plugin.structure.intellij.platform
 
 import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
 
-class BundledModulesManager(private val modulesResolver: BundledModulesResolver) {
+class BundledModulesManager(modulesResolver: BundledModulesResolver) {
+  private val modules = modulesResolver.resolveModules()
+
   fun findModuleByName(name: String): ModuleBean? {
-    return modulesResolver.findModuleByName(name)
+    return modules.find { it.name == name }
   }
 }

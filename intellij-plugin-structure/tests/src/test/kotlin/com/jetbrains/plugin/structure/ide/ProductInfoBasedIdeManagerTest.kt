@@ -37,30 +37,6 @@ class ProductInfoBasedIdeManagerTest {
   }
 
   @Test
-  fun `find module without eagerly loading all bundled plugins`() {
-    val ide = ProductInfoBasedIdeManager().createIde(ideRoot)
-    assertTrue(ide is ProductInfoBasedIde)
-    ide as ProductInfoBasedIde
-
-    assertFalse(ide.isPluginCollectionLoaded())
-    val module = ide.findPluginByModule("intellij.notebooks.ui")
-    assertNotNull(module)
-    assertFalse(ide.isPluginCollectionLoaded())
-  }
-
-  @Test
-  fun `find core plugin by id without eagerly loading all bundled plugins`() {
-    val ide = ProductInfoBasedIdeManager().createIde(ideRoot)
-    assertTrue(ide is ProductInfoBasedIde)
-    ide as ProductInfoBasedIde
-
-    assertFalse(ide.isPluginCollectionLoaded())
-    val plugin = ide.findPluginById("com.intellij")
-    assertNotNull(plugin)
-    assertFalse(ide.isPluginCollectionLoaded())
-  }
-
-  @Test
   fun `create IDE manager from mock IDE on macOS`() {
     val ideManager = ProductInfoBasedIdeManager()
     val ideRoot = MockIdeBuilder(temporaryFolder, folderSuffix = "-mac").buildCoreIdeDirectoryForMacOs(miniProductInfoJson)

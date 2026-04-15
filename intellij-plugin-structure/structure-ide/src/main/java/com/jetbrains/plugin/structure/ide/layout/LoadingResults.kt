@@ -22,9 +22,11 @@ internal class LoadingResults() {
     get() = successes.map { it.plugin }
 
   fun add(results: List<PluginWithArtifactPathResult>) {
-    for (result in results) {
-      add(result)
+    val (successes, failures) = results.partition {
+      it is Success
     }
+    _successes += successes.map { it as Success }
+    _failures += failures.map { it as Failure }
   }
 
   fun add(result: PluginWithArtifactPathResult): LoadingResults {

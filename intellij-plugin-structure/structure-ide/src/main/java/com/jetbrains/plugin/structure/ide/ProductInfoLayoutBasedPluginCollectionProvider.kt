@@ -35,7 +35,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
 
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoLayoutBasedPluginCollectionProvider::class.java)
 
@@ -43,8 +42,6 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
   private val additionalPluginReader: ProductInfoBasedIdeManager.PluginReader<LayoutComponents>,
   private val jarFileSystemProvider: JarFileSystemProvider,
 ) : PluginCollectionProvider<Path> {
-
-  private val loadingContexts = ConcurrentHashMap<ProductInfoLayoutComponentsPluginCollectionSource, LoadingContext>()
 
   /**
    * Problem level remapping used for bundled plugins.
@@ -57,28 +54,46 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
     if (source !is ProductInfoLayoutComponentsPluginCollectionSource) {
       return emptySet()
     }
-    val context = getLoadingContext(source)
-    val corePlugin = context.readCorePlugin()
-    val plugins = context.readPlugins()
+    val corePlugin = source.readCorePlugin()
+    val plugins = source.readPlugins()
     val additionalPlugins = source.readAdditionalPlugins()
 
     return corePlugin + plugins + additionalPlugins
   }
 
-  fun getCorePlugin(source: ProductInfoLayoutComponentsPluginCollectionSource, pluginId: String): IdePlugin? {
-    return getLoadingContext(source).readCorePlugin().firstOrNull { it.pluginId == pluginId || it.pluginName == pluginId }
+  private fun ProductInfoLayoutComponentsPluginCollectionSource.readPlugins(): List<IdePlugin> {
+    val platformResourceResolver = ProductInfoResourceResolver(layoutComponents, jarFileSystemProvider)
+    val moduleManager = BundledModulesManager(BundledModulesResolver(idePath, jarFileSystemProvider))
+
+    val moduleV2Factory = ModuleFactory(::createModule, LayoutComponentsClasspathProvider(layoutComponents))
+    val pluginFactory = PluginFactory(::createPlugin)
+
+    val moduleLoadingResults = layoutComponents.content.mapNotNull { layoutComponent ->
+      when (layoutComponent) {
+        is LayoutComponent.ModuleV2,
+        is LayoutComponent.ProductModuleV2 -> {
+          moduleV2Factory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
+        }
+
+        is LayoutComponent.Plugin -> {
+          pluginFactory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
+        }
+
+        is LayoutComponent.PluginAlias -> {
+          // References to plugin IDs that are already loaded in the other types of layout components
+          null
+        }
+      }
+    }.fold(LoadingResults(), LoadingResults::add)
+
+    logFailures(LOG, moduleLoadingResults.failures, idePath)
+    return moduleLoadingResults.successfulPlugins
   }
 
-  fun getPlugin(source: ProductInfoLayoutComponentsPluginCollectionSource, layoutComponentName: String): IdePlugin? {
-    return getLoadingContext(source).readLayoutComponent(layoutComponentName)
-  }
-
-  fun getModule(source: ProductInfoLayoutComponentsPluginCollectionSource, moduleName: String): IdePlugin? {
-    return getLoadingContext(source).readModule(moduleName)
-  }
-
-  private fun getLoadingContext(source: ProductInfoLayoutComponentsPluginCollectionSource): LoadingContext {
-    return loadingContexts.computeIfAbsent(source, ::LoadingContext)
+  private fun ProductInfoLayoutComponentsPluginCollectionSource.readCorePlugin(): List<IdePlugin> {
+    val corePluginManager =
+      CorePluginManager(::createPlugin, jarFileSystemProvider)
+    return corePluginManager.loadCorePlugins(idePath, ideVersion)
   }
 
   private fun ProductInfoLayoutComponentsPluginCollectionSource.readAdditionalPlugins(): List<IdePlugin> {
@@ -86,126 +101,27 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
     return additionalPluginReader.readPlugins(idePath, layoutComponents, layoutComponentNames, ideVersion)
   }
 
-  private inner class LoadingContext(
-    private val source: ProductInfoLayoutComponentsPluginCollectionSource,
-  ) {
-    private val layoutComponentsByName = source.layoutComponents.content
-      .filterNot { it is LayoutComponent.PluginAlias }
-      .associateBy { it.name }
-
-    private val platformResourceResolver by lazy {
-      ProductInfoResourceResolver(source.layoutComponents, jarFileSystemProvider)
-    }
-    private val moduleManager by lazy {
-      BundledModulesManager(BundledModulesResolver(source.idePath, jarFileSystemProvider))
-    }
-    private val idePluginManager by lazy {
-      IdePluginManager.createManager(platformResourceResolver)
-    }
-    private val moduleFactory by lazy {
-      ModuleFactory(
-        { pluginArtifactPath, descriptorName, resourceResolver, ideVersion, layoutComponentName ->
-          createModule(idePluginManager, pluginArtifactPath, descriptorName, resourceResolver, ideVersion, layoutComponentName)
-        },
-        LayoutComponentsClasspathProvider(source.layoutComponents)
-      )
-    }
-    private val pluginFactory by lazy {
-      PluginFactory { pluginArtifactPath, descriptorPath, resourceResolver, ideVersion, layoutComponentName ->
-        createPlugin(idePluginManager, pluginArtifactPath, descriptorPath, resourceResolver, ideVersion, layoutComponentName)
-      }
-    }
-    private val loadedLayoutComponents = ConcurrentHashMap<String, PluginWithArtifactPathResult?>()
-    private val corePlugins by lazy {
-      val corePluginManager = CorePluginManager(
-        { pluginArtifactPath, descriptorPath, resourceResolver, ideVersion, layoutComponentName ->
-          createPlugin(
-            IdePluginManager.createManager(resourceResolver),
-            pluginArtifactPath,
-            descriptorPath,
-            resourceResolver,
-            ideVersion,
-            layoutComponentName
-          )
-        },
-        jarFileSystemProvider
-      )
-      corePluginManager.loadCorePlugins(source.idePath, source.ideVersion)
-    }
-    private val plugins by lazy {
-      val loadingResults = source.layoutComponents.content.mapNotNull { layoutComponent ->
-        readLayoutComponentResult(layoutComponent.name)
-      }.fold(LoadingResults(), LoadingResults::add)
-
-      logFailures(LOG, loadingResults.failures, source.idePath)
-      loadingResults.successfulPlugins
-    }
-
-    fun readCorePlugin(): List<IdePlugin> = corePlugins
-
-    fun readPlugins(): List<IdePlugin> = plugins
-
-    fun readModule(moduleName: String): IdePlugin? {
-      val layoutComponent = layoutComponentsByName[moduleName]
-      if (layoutComponent !is LayoutComponent.ModuleV2 && layoutComponent !is LayoutComponent.ProductModuleV2) {
-        return null
-      }
-      return readLayoutComponent(moduleName)
-    }
-
-    fun readLayoutComponent(layoutComponentName: String): IdePlugin? {
-      return when (val result = readLayoutComponentResult(layoutComponentName)) {
-        is Success -> result.plugin
-        else -> null
-      }
-    }
-
-    private fun readLayoutComponentResult(layoutComponentName: String): PluginWithArtifactPathResult? {
-      return loadedLayoutComponents.computeIfAbsent(layoutComponentName) {
-        readLayoutComponentResult(layoutComponentsByName[it])
-      }
-    }
-
-    private fun readLayoutComponentResult(layoutComponent: LayoutComponent?): PluginWithArtifactPathResult? {
-      if (layoutComponent == null) {
-        return null
-      }
-      return when (layoutComponent) {
-        is LayoutComponent.ModuleV2,
-        is LayoutComponent.ProductModuleV2 -> {
-          moduleFactory.read(layoutComponent, source.idePath, source.ideVersion, platformResourceResolver, moduleManager)
-        }
-
-        is LayoutComponent.Plugin -> {
-          pluginFactory.read(layoutComponent, source.idePath, source.ideVersion, platformResourceResolver, moduleManager)
-        }
-
-        is LayoutComponent.PluginAlias -> null
-      }
-    }
-  }
-
   private fun createModule(
-    idePluginManager: IdePluginManager,
     pluginArtifactPath: Path,
     descriptorName: String,
-    @Suppress("UNUSED_PARAMETER") _resourceResolver: ResourceResolver,
+    pathResolver: ResourceResolver,
     ideVersion: IdeVersion,
-    @Suppress("UNUSED_PARAMETER") _layoutComponentName: String
+    @Suppress("unused") layoutComponentName: String
   ): PluginWithArtifactPathResult {
-    return idePluginManager
+    return IdePluginManager
+      .createManager(pathResolver)
       .createBundledModule(pluginArtifactPath, ideVersion, descriptorName, bundledPluginCreationResultResolver)
       .withPath(pluginArtifactPath)
   }
 
   private fun createPlugin(
-    idePluginManager: IdePluginManager,
     pluginArtifactPath: Path,
     descriptorPath: String = PLUGIN_XML,
-    @Suppress("UNUSED_PARAMETER") _resourceResolver: ResourceResolver,
+    resourceResolver: ResourceResolver,
     ideVersion: IdeVersion,
     layoutComponentName: String
-  ) = idePluginManager
+  ) = IdePluginManager
+    .createManager(resourceResolver)
     .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath, layoutComponentName)
     .withPath(pluginArtifactPath)
 

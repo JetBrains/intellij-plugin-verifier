@@ -34,18 +34,8 @@ internal class JarPluginLoader(private val fileSystemProvider: JarFileSystemProv
         when (val descriptor = jar.getPluginDescriptor("$META_INF/$descriptorPath")) {
           is Found -> {
             try {
-              val loadedXml = descriptor.loadXml()
-              createPlugin(
-                jarPath.simpleName,
-                descriptorPath,
-                parentPlugin,
-                validateDescriptor,
-                loadedXml.document,
-                descriptor.path,
-                resourceResolver,
-                problemResolver,
-                loadedXml.mayHaveXIncludes,
-              ).apply {
+              val descriptorXml = descriptor.loadXml()
+              createPlugin(jarPath.simpleName, descriptorPath, parentPlugin, validateDescriptor, descriptorXml, descriptor.path, resourceResolver, problemResolver).apply {
                 setIcons(jar.getIcons())
                 setThirdPartyDependencies(jar.getThirdPartyDependencies())
                 setHasDotNetPart(hasDotNetDirectory)

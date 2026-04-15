@@ -1,7 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin.module
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
-import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import com.jetbrains.plugin.structure.zipBombs.getZipWithoutEocd
 import org.junit.Assert.assertEquals
@@ -72,48 +71,5 @@ class ContentModuleScannerTest {
     val contentModuleScanner = ContentModuleScanner(jarFileSystemProvider)
     val contentModules = contentModuleScanner.getContentModules(pluginPath)
     assertTrue(contentModules.modules.isEmpty())
-  }
-
-  @Test
-  fun `content modules are cached per plugin artifact`() {
-    val pluginPath = buildDirectory(temporaryFolder.newFolder("cached").toPath()) {
-      dir("lib") {
-        zip("cached.jar") {
-          dir("META-INF") {
-            file("plugin.xml", "<idea-plugin />")
-          }
-          file("cached.module.xml", "<idea-plugin />")
-        }
-      }
-    }
-
-    val countingProvider = CountingJarFileSystemProvider(jarFileSystemProvider)
-    val contentModuleScanner = ContentModuleScanner(countingProvider)
-
-    val first = contentModuleScanner.getContentModules(pluginPath)
-    val second = contentModuleScanner.getContentModules(pluginPath.resolve("lib").resolve(".."))
-
-    assertEquals(first, second)
-    assertEquals(1, countingProvider.openCount)
-  }
-
-  private class CountingJarFileSystemProvider(
-    private val delegate: JarFileSystemProvider,
-  ) : JarFileSystemProvider {
-    var openCount = 0
-      private set
-
-    override fun getFileSystem(jarPath: java.nio.file.Path): java.nio.file.FileSystem {
-      openCount += 1
-      return delegate.getFileSystem(jarPath)
-    }
-
-    override fun getFileSystem(
-      jarPath: java.nio.file.Path,
-      configuration: JarFileSystemProvider.Configuration,
-    ): java.nio.file.FileSystem {
-      openCount += 1
-      return delegate.getFileSystem(jarPath, configuration)
-    }
   }
 }

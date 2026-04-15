@@ -96,32 +96,4 @@ class BundledModulesResolverTest {
     assertEquals(1, modules.size)
   }
 
-  @Test
-  fun `module is resolved by name lazily`() {
-    buildZipFile(moduleDescriptorsJar) {
-      file("moduleOne.xml") {
-        """
-        <module name="moduleOne">
-          <dependencies>
-            <module name="intellij.platform.lang"/>
-          </dependencies>
-          <resources>
-            <resource-root path="../lib/modules/moduleOne.jar"/>
-          </resources>
-        </module>
-        """.trimIndent()
-      }
-      file("illegal.xml") {
-        """
-        <random-element />
-        """.trimIndent()
-      }
-    }
-
-    val bundledModulesResolver = BundledModulesResolver(mockIde, fileSystemProvider)
-    val module = bundledModulesResolver.findModuleByName("moduleOne")
-
-    assertEquals("moduleOne", module?.name)
-  }
-
 }

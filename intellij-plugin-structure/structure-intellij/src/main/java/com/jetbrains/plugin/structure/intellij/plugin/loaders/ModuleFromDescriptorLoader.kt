@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.cr
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -23,14 +24,13 @@ internal class ModuleFromDescriptorLoader : PluginLoader<ModuleFromDescriptorLoa
     return descriptorResource.inputStream.use {
       try {
         val problemResolver = AnyProblemToWarningPluginCreationResultResolver
-        val loadedXml = it.loadXml()
+        val descriptorXml = JDOMUtil.loadDocument(it)
         createPlugin(
           descriptorResource,
           parentPlugin,
-          loadedXml.document,
+          descriptorXml,
           resourceResolver,
-          problemResolver,
-          loadedXml.mayHaveXIncludes,
+          problemResolver
         ).also {
           logPluginCreationWarnings(moduleId, it)
         }

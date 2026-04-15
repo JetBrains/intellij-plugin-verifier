@@ -35,7 +35,7 @@ fun Path.isZip(): Boolean = this.hasExtension("zip")
 fun Path.isJar(): Boolean = this.hasExtension("jar")
 
 fun Path.hasExtension(expected: String) =
-        Files.isRegularFile(this) && expected == extension
+  Files.isRegularFile(this) && expected == extension
 
 fun Path.listRecursivelyAllFilesWithExtension(extension: String): List<Path> {
   return Files.walk(this, FileVisitOption.FOLLOW_LINKS)
