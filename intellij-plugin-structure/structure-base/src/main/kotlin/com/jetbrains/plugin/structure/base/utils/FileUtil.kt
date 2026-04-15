@@ -34,19 +34,8 @@ fun Path.isZip(): Boolean = this.hasExtension("zip")
 
 fun Path.isJar(): Boolean = this.hasExtension("jar")
 
-fun Path.hasExtension(expected: String): Boolean {
-  if (!Files.isRegularFile(this)) {
-    return false
-  }
-
-  val fileName = fileName?.toString() ?: return false
-  val expectedLength = expected.length
-  val extensionStart = fileName.length - expectedLength
-
-  return extensionStart > 1 &&
-    fileName[extensionStart - 1] == '.' &&
-    fileName.regionMatches(extensionStart, expected, 0, expectedLength, ignoreCase = false)
-}
+fun Path.hasExtension(expected: String) =
+        Files.isRegularFile(this) && expected == extension
 
 fun Path.listRecursivelyAllFilesWithExtension(extension: String): List<Path> {
   return Files.walk(this, FileVisitOption.FOLLOW_LINKS)
