@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.xml.bind.JAXBException
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.streams.asSequence
 
 private val LOG: Logger = LoggerFactory.getLogger(BundledModulesResolver::class.java)
@@ -20,6 +21,7 @@ private const val MODULE_DESCRIPTORS_JAR= "module-descriptors.jar"
 class BundledModulesResolver(val idePath: Path, private val fileSystemProvider: JarFileSystemProvider) : ModulesResolver {
 
   private val moduleDescriptorsJarPath: Path = idePath.resolve(MODULES_DIR).resolve(MODULE_DESCRIPTORS_JAR)
+  private val modulesByName = ConcurrentHashMap<String, ModuleBean?>()
 
   init {
     if (!moduleDescriptorsJarPath.exists()) {
@@ -35,6 +37,18 @@ class BundledModulesResolver(val idePath: Path, private val fileSystemProvider: 
           .filter { it.hasExtension("xml") }
           .mapNotNull(::unmarshallModule)
           .toList()
+      }
+    }
+  }
+
+  fun findModuleByName(name: String): ModuleBean? {
+    return modulesByName.computeIfAbsent(name) {
+      fileSystemProvider.getFileSystem(moduleDescriptorsJarPath).use { jarFs ->
+        val xmlPath = jarFs.rootDirectories.first().resolve("$name.xml")
+        if (!xmlPath.exists()) {
+          return@use null
+        }
+        unmarshallModule(xmlPath)
       }
     }
   }

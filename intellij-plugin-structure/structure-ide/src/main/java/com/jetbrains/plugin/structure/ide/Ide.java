@@ -56,7 +56,7 @@ public abstract class Ide implements PluginProvider {
    */
   @Nullable
   @Override
-  final public IdePlugin findPluginById(@NotNull String pluginId) {
+  public IdePlugin findPluginById(@NotNull String pluginId) {
     for (IdePlugin plugin : getBundledPlugins()) {
       String id = getId(plugin);
       if (Objects.equals(id, pluginId))
@@ -73,7 +73,7 @@ public abstract class Ide implements PluginProvider {
    */
   @Nullable
   @Override
-  final public IdePlugin findPluginByModule(@NotNull String moduleId) {
+  public IdePlugin findPluginByModule(@NotNull String moduleId) {
     for (IdePlugin plugin : getBundledPlugins()) {
       if (plugin.hasDefinedModuleWithId(moduleId)) {
         return plugin;
@@ -90,13 +90,13 @@ public abstract class Ide implements PluginProvider {
    */
   @Override
   public @Nullable PluginProviderResult findPluginByIdOrModuleId(@NotNull String pluginIdOrModuleId) {
-    for (IdePlugin plugin : getBundledPlugins()) {
-      String id = getPluginId(plugin);
-      if (Objects.equals(id, pluginIdOrModuleId)) {
-        return new PluginProviderResult(PLUGIN, plugin);
-      } else if (plugin.hasDefinedModuleWithId(pluginIdOrModuleId)) {
-        return new PluginProviderResult(MODULE, plugin);
-      }
+    IdePlugin plugin = findPluginById(pluginIdOrModuleId);
+    if (plugin != null) {
+      return new PluginProviderResult(PLUGIN, plugin);
+    }
+    plugin = findPluginByModule(pluginIdOrModuleId);
+    if (plugin != null) {
+      return new PluginProviderResult(MODULE, plugin);
     }
     return null;
   }
