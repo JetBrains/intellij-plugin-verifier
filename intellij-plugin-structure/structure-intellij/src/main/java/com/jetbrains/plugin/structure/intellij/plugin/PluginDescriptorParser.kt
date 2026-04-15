@@ -27,6 +27,7 @@ class PluginDescriptorParser {
     documentPath: Path,
     documentName: String,
     pathResolver: ResourceResolver,
+    mayHaveXIncludes: Boolean,
     validationContext: ValidationContext
   ): ParseResult {
     val document = resolveXIncludesOfDocument(
@@ -36,6 +37,7 @@ class PluginDescriptorParser {
       documentName,
       pathResolver,
       documentPath,
+      mayHaveXIncludes,
       validationContext
     ) ?: return ParseResult.InvalidXml
     return readDocumentIntoXmlBean(descriptorPath, pluginFileName, document, validationContext)
@@ -64,9 +66,10 @@ class PluginDescriptorParser {
     presentablePath: String,
     pathResolver: ResourceResolver,
     documentPath: Path,
+    mayHaveXIncludes: Boolean,
     validationContext: ValidationContext
   ): Document? {
-    if (!XIncluder.hasXIncludes(document)) {
+    if (!mayHaveXIncludes) {
       return document
     }
 

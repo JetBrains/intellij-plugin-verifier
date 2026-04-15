@@ -15,7 +15,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.cr
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
-import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import org.jdom2.input.JDOMParseException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -47,13 +46,13 @@ internal class PluginDirectoryLoader(private val pluginLoaderRegistry: PluginLoa
           )
         )
     } else try {
-      val document = JDOMUtil.loadDocument(Files.newInputStream(descriptorFile))
+      val loadedXml = Files.newInputStream(descriptorFile).use { stream -> stream.loadXml() }
       val icons = pluginIconLoader.load(pluginDirectory)
       val dependencies = thirdPartyDependencyLoader.load(pluginDirectory)
       createPlugin(
         pluginDirectory.simpleName, descriptorPath, parentPlugin,
-        validateDescriptor, document, descriptorFile,
-        resourceResolver, problemResolver
+        validateDescriptor, loadedXml.document, descriptorFile,
+        resourceResolver, problemResolver, loadedXml.mayHaveXIncludes
       ).apply {
         setIcons(icons)
         setThirdPartyDependencies(dependencies)

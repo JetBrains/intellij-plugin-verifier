@@ -12,7 +12,6 @@ import org.jdom2.JDOMException
 import org.jdom2.output.Format
 import org.jdom2.output.XMLOutputter
 import org.junit.Assert
-import org.junit.Assert.assertFalse
 import org.junit.Test
 import java.io.IOException
 import java.net.URISyntaxException
@@ -169,13 +168,6 @@ class XIncluderTest {
   @Test
   fun `include document in META-INF from resource root and from that include a file in the META-INF`() {
     testSuccess("metaInfResolveInResourceRootAndBack/META-INF")
-  }
-
-  @Test
-  fun `document without xinclude is detected`() {
-    val document = JDOMUtil.loadDocument("<idea-plugin />".byteInputStream())
-
-    assertFalse(XIncluder.hasXIncludes(document))
   }
 
 }

@@ -31,14 +31,14 @@ internal class JarModuleLoader(private val fileSystemProvider: JarFileSystemProv
         when (val descriptor = jar.getPluginDescriptor(descriptorPath)) {
           is Found -> {
             try {
-              val descriptorXml = descriptor.loadXml()
+              val loadedXml = descriptor.loadXml()
               createPlugin(
                 jarPath.simpleName,
                 descriptorPath,
                 parentPlugin = null,
                 validateDescriptor = false,
-                descriptorXml,
-                descriptor.path, resourceResolver, problemResolver
+                loadedXml.document,
+                descriptor.path, resourceResolver, problemResolver, loadedXml.mayHaveXIncludes
               )
             } catch (e: Exception) {
               LOG.warn("Unable to read descriptor [$descriptorPath] from [$jarPath]", e)
