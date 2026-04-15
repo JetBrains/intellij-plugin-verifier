@@ -34,6 +34,9 @@ private val LOG: Logger = LoggerFactory.getLogger(XIncluder::class.java)
 class XIncluder private constructor(private val resourceResolver: ResourceResolver, private val properties: Properties) {
 
   companion object {
+    fun hasXIncludes(document: Document): Boolean =
+      containsXIncludeElement(document.rootElement)
+
     @Throws(XIncluderException::class)
     fun resolveXIncludes(
       document: Document,
@@ -41,6 +44,20 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
       resourceResolver: ResourceResolver,
       documentPath: Path
     ): Document = XIncluder(resourceResolver, System.getProperties()).resolveXIncludes(document, presentablePath, documentPath)
+
+    private fun containsXIncludeElement(element: Element): Boolean {
+      if (element.name == INCLUDE && element.namespace == HTTP_XINCLUDE_NAMESPACE) {
+        return true
+      }
+
+      for (child in element.children) {
+        if (containsXIncludeElement(child)) {
+          return true
+        }
+      }
+
+      return false
+    }
   }
 
   private fun resolveXIncludes(document: Document, presentablePath: String, documentPath: Path): Document {

@@ -13,6 +13,7 @@ import com.jetbrains.plugin.structure.jar.PluginJar
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 
 private const val MODULES_DIR = "modules"
@@ -25,8 +26,17 @@ private val LOG: Logger = LoggerFactory.getLogger(ContentModuleScanner::class.ja
 
 class ContentModuleScanner(private val fileSystemProvider: JarFileSystemProvider) {
   private val ideaPluginXmlDetector = createIdeaPluginXmlDetector()
+  private val contentModulesByPluginArtifact = ConcurrentHashMap<Path, ContentModules>()
+  private val contentModulesByJar = ConcurrentHashMap<Path, List<ContentModule>>()
 
   fun getContentModules(pluginArtifact: Path) : ContentModules {
+    val cacheKey = pluginArtifact.cacheKey()
+    return contentModulesByPluginArtifact.computeIfAbsent(cacheKey) {
+      resolveContentModules(it)
+    }
+  }
+
+  private fun resolveContentModules(pluginArtifact: Path): ContentModules {
     val libDir = pluginArtifact.resolve(LIB_DIRECTORY)
     if (!libDir.exists()) {
       return ContentModules(pluginArtifact, emptyList())
@@ -40,10 +50,15 @@ class ContentModuleScanner(private val fileSystemProvider: JarFileSystemProvider
     return ContentModules(pluginArtifact, contentModules)
   }
 
-  private fun getJarContentModules(jarPath: Path): List<ContentModule> = withPluginJar(jarPath) { jar ->
-    jar.resolveDescriptors { it.isDescriptor() }
-      .map { resolveContentModule(jarPath, it) }
-  } ?: emptyList()
+  private fun getJarContentModules(jarPath: Path): List<ContentModule> {
+    val cacheKey = jarPath.cacheKey()
+    return contentModulesByJar.computeIfAbsent(cacheKey) {
+      withPluginJar(it) { jar ->
+        jar.resolveDescriptors { descriptor -> descriptor.isDescriptor() }
+          .map { descriptor -> resolveContentModule(it, descriptor) }
+      } ?: emptyList()
+    }
+  }
 
   private fun resolveContentModule(jarPath: Path, descriptorPath: Path): ContentModule {
     val moduleName = if (descriptorPath.isMetaInfPluginXml()) {
@@ -88,4 +103,6 @@ class ContentModuleScanner(private val fileSystemProvider: JarFileSystemProvider
   private fun Path.getModuleName(): String {
     return this.fileName.toString().removeSuffix(".$XML_EXTENSION")
   }
+
+  private fun Path.cacheKey() = toAbsolutePath().normalize()
 }

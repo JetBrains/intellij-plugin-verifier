@@ -1,6 +1,5 @@
 package com.jetbrains.plugin.structure.jar
 
-import com.jetbrains.plugin.structure.base.utils.exists
 import java.net.URI
 import java.nio.file.Path
 
@@ -19,9 +18,7 @@ fun Path.toJarFileUri(): URI {
     return originalUri
   }
 
-  val resolvedPath = (if (isAbsolute) this else toAbsolutePath()).run {
-    if (exists()) toRealPath() else normalize()
-  }
+  val resolvedPath = (if (isAbsolute) this else toAbsolutePath()).normalize()
 
   return resolvedPath.asJarFileUri()
 }

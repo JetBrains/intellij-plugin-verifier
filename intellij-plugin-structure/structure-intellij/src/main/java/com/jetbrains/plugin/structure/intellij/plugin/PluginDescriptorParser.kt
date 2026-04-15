@@ -65,12 +65,18 @@ class PluginDescriptorParser {
     pathResolver: ResourceResolver,
     documentPath: Path,
     validationContext: ValidationContext
-  ): Document? = try {
-    XIncluder.resolveXIncludes(document, presentablePath, pathResolver, documentPath)
-  } catch (e: XIncluderException) {
-    LOG.info("Unable to resolve <xi:include> elements of descriptor '$descriptorPath' from '$pluginFileName'", e)
-    validationContext += XIncludeResolutionErrors(descriptorPath, e.message)
-    null
+  ): Document? {
+    if (!XIncluder.hasXIncludes(document)) {
+      return document
+    }
+
+    return try {
+      XIncluder.resolveXIncludes(document, presentablePath, pathResolver, documentPath)
+    } catch (e: XIncluderException) {
+      LOG.info("Unable to resolve <xi:include> elements of descriptor '$descriptorPath' from '$pluginFileName'", e)
+      validationContext += XIncludeResolutionErrors(descriptorPath, e.message)
+      null
+    }
   }
 
   sealed class ParseResult {

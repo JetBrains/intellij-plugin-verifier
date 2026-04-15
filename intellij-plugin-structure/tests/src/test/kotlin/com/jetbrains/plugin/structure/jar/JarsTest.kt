@@ -24,7 +24,7 @@ class JarsTest {
     val jarUri = existingPath.toJarFileUri()
     assertEquals(JAR_SCHEME, jarUri.scheme)
     assertTrue(jarUri.toString().startsWith(JAR_FILE_SCHEMA_PREFIX))
-    assertTrue(jarUri.toString().contains(existingPath.toRealPath().toSystemIndependentString()))
+    assertTrue(jarUri.toString().contains(existingPath.toAbsolutePath().normalize().toSystemIndependentString()))
   }
 
   @Test
@@ -38,7 +38,7 @@ class JarsTest {
   }
 
   @Test
-  fun `relative path with 'scheme' file that exists is converted to JAR-protocol URI with real path`() {
+  fun `relative path with 'scheme' file that exists is converted to JAR-protocol URI with normalized absolute path`() {
     val existingPath = temporaryFolder.newFile("relative-existing.jar").toPath()
 
     val currentDir = Paths.get("").toAbsolutePath()
@@ -48,7 +48,7 @@ class JarsTest {
 
     assertEquals(JAR_SCHEME, jarUri.scheme)
     assertTrue(jarUri.toString().startsWith(JAR_FILE_SCHEMA_PREFIX))
-    assertTrue(jarUri.toString().contains(existingPath.toRealPath().toSystemIndependentString()))
+    assertTrue(jarUri.toString().contains(existingPath.toAbsolutePath().normalize().toSystemIndependentString()))
   }
 
   @Test
