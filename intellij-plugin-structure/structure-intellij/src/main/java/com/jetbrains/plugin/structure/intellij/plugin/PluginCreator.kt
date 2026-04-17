@@ -36,6 +36,15 @@ internal class PluginCreator private constructor(
     val v2ModulePrefix = Regex("^intellij\\..*")
 
     private val themeLoader = PluginThemeLoader()
+    private val descriptorParser = PluginDescriptorParser()
+    private val beanValidator = PluginBeanValidator()
+    private val beanToPluginConverter = PluginBeanToIdePluginConverter()
+    private val legacyIntelliJIdeaPluginVerifier = LegacyIntelliJIdeaPluginVerifier()
+    private val projectAndApplicationListenerAvailabilityVerifier = ProjectAndApplicationListenerAvailabilityVerifier()
+    private val serviceExtensionPointPreloadVerifier = ServiceExtensionPointPreloadVerifier()
+    private val statusBarWidgetFactoryExtensionPointVerifier = StatusBarWidgetFactoryExtensionPointVerifier()
+    private val k2IdeModeCompatibilityVerifier = K2IdeModeCompatibilityVerifier()
+    private val exposedModulesVerifier = ExposedModulesVerifier()
 
     @JvmStatic
     fun createPlugin(
@@ -117,8 +126,6 @@ internal class PluginCreator private constructor(
       return pluginCreator
     }
   }
-
-  private val beanToPluginConverter = PluginBeanToIdePluginConverter()
 
   internal val plugin = IdePluginImpl()
 
@@ -248,12 +255,12 @@ internal class PluginCreator private constructor(
       registerProblem(SinceBuildGreaterThanUntilBuild(descriptorPath, sinceBuild, untilBuild))
     }
 
-    LegacyIntelliJIdeaPluginVerifier().verify(plugin, descriptorPath, ::registerProblem)
-    ProjectAndApplicationListenerAvailabilityVerifier().verify(plugin, ::registerProblem)
-    ServiceExtensionPointPreloadVerifier().verify(plugin, ::registerProblem)
-    StatusBarWidgetFactoryExtensionPointVerifier().verify(plugin, ::registerProblem)
-    K2IdeModeCompatibilityVerifier().verify(plugin, ::registerProblem, descriptorPath)
-    ExposedModulesVerifier().verify(plugin, ::registerProblem, descriptorPath)
+    legacyIntelliJIdeaPluginVerifier.verify(plugin, descriptorPath, ::registerProblem)
+    projectAndApplicationListenerAvailabilityVerifier.verify(plugin, ::registerProblem)
+    serviceExtensionPointPreloadVerifier.verify(plugin, ::registerProblem)
+    statusBarWidgetFactoryExtensionPointVerifier.verify(plugin, ::registerProblem)
+    k2IdeModeCompatibilityVerifier.verify(plugin, ::registerProblem, descriptorPath)
+    exposedModulesVerifier.verify(plugin, ::registerProblem, descriptorPath)
   }
 
   private fun resolveDocumentAndValidateBean(
@@ -263,12 +270,9 @@ internal class PluginCreator private constructor(
     pathResolver: ResourceResolver,
     validateDescriptor: Boolean
   ) {
-    val pluginDescriptorParser = PluginDescriptorParser()
-    val pluginBeanValidator = PluginBeanValidator()
-
     val validationContext = ValidationContext(descriptorPath, problemResolver)
 
-    val parsingResult = pluginDescriptorParser.parse(
+    val parsingResult = descriptorParser.parse(
       descriptorPath,
       pluginFileName,
       originalDocument,
@@ -283,7 +287,7 @@ internal class PluginCreator private constructor(
     }
     val (document, bean) = parsingResult
 
-    pluginBeanValidator.validate(bean, validationContext, validateDescriptor)
+    beanValidator.validate(bean, validationContext, validateDescriptor)
     val validationResult = validationContext.getResult {
       newInvalidPlugin(bean, document)
     }

@@ -18,6 +18,7 @@ import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.intellij.plugin.LibDirJarsClasspathProvider
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
+import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleScanner
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty
@@ -110,10 +111,12 @@ internal class LibDirectoryPluginLoader(
   }
 
   private fun PluginCreator.withResolvedClasspath(path: Path): PluginCreator = apply {
-    val contentModules = contentModuleScanner.getContentModules(path)
-    val contentModuleClasspath = contentModules.asClasspath()
-
     val libDirClasspath = libDirClasspathProvider.getClasspath(path)
+    val contentModuleClasspath = if (plugin.contentModules.isEmpty()) {
+      Classpath.EMPTY
+    } else {
+      contentModuleScanner.getContentModules(path).asClasspath()
+    }
 
     val classpath = contentModuleClasspath.mergeWith(libDirClasspath)
 
@@ -143,4 +146,3 @@ internal class LibDirectoryPluginLoader(
     problemResolver,
   )
 }
-

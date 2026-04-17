@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.createZip
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
+import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.META_INF
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
@@ -15,6 +16,7 @@ import org.junit.Assert.*
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.nio.file.FileSystem
 import java.nio.file.Path
 
 class JarOrDirectoryPluginLoaderTest {
@@ -80,5 +82,47 @@ class JarOrDirectoryPluginLoaderTest {
     val cpFileNames = classpath.entries.map { it.path.fileName.toString() }.sorted()
     assertEquals(listOf("auxiliary.jar", "main.jar"), cpFileNames)
     assertTrue(classpath.entries.all { it.origin == ClasspathOrigin.PLUGIN_ARTIFACT })
+  }
+
+  @Test
+  fun `plugin without declared content modules skips content module scanning`() {
+    val countingProvider = CountingJarFileSystemProvider(SingletonCachingJarFileSystemProvider)
+    val pluginLoaderRegistry = PluginLoaderProvider().apply {
+      register(LibDirectoryPluginLoader.Context::class.java, LibDirectoryPluginLoader(pluginLoaderRegistry = this, countingProvider))
+      register(JarPluginLoader.Context::class.java, JarPluginLoader(countingProvider))
+    }
+    val loader = pluginLoaderRegistry.get(LibDirectoryPluginLoader.Context::class.java)
+
+    val pluginLibDirPath: Path = temporaryFolder.newFolder("plain-plugin", "lib").toPath()
+
+    createZip(pluginLibDirPath.resolve("main.jar"), mapOf("$META_INF/$PLUGIN_XML" to "<idea-plugin />"))
+    createZip(pluginLibDirPath.resolve("auxiliary.jar"), mapOf("$META_INF/scala.xml" to "<idea-plugin />"))
+
+    val context = LibDirectoryPluginLoader.Context(
+      pluginLibDirPath.parent, PLUGIN_XML, validateDescriptor = false, DefaultResourceResolver, parentPlugin = null,
+      AnyProblemToWarningPluginCreationResultResolver, hasDotNetDirectory = false
+    )
+
+    val pluginCreator = loader.loadPlugin(context)
+
+    assertTrue(pluginCreator.isSuccess)
+    assertEquals(2, countingProvider.getFileSystemCalls)
+  }
+
+  private class CountingJarFileSystemProvider(
+    private val delegate: JarFileSystemProvider,
+  ) : JarFileSystemProvider {
+    var getFileSystemCalls = 0
+      private set
+
+    override fun getFileSystem(jarPath: Path): FileSystem {
+      getFileSystemCalls += 1
+      return delegate.getFileSystem(jarPath)
+    }
+
+    override fun getFileSystem(jarPath: Path, configuration: JarFileSystemProvider.Configuration): FileSystem {
+      getFileSystemCalls += 1
+      return delegate.getFileSystem(jarPath, configuration)
+    }
   }
 }

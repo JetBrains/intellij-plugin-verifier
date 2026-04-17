@@ -19,7 +19,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.Boolean.parseBoolean
 import java.nio.file.Path
-import java.util.*
+import java.util.ArrayList
+import java.util.Properties
 import java.util.regex.Pattern
 
 private val LOG: Logger = LoggerFactory.getLogger(XIncluder::class.java)
@@ -47,13 +48,12 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     if (isIncludeElement(document.rootElement)) {
       throw XIncluderException(listOf(startEntry), "Invalid root element ${document.rootElement.getElementNameAndAttributes()}")
     }
-    val bases = Stack<XIncludeEntry>()
-    bases.push(startEntry)
+    val bases = ArrayList<XIncludeEntry>(4).apply { add(startEntry) }
     val rootElement = resolveNonXIncludeElement(document.rootElement, bases)
     return Document(rootElement)
   }
 
-  private fun resolveIncludeOrNonInclude(element: Element, bases: Stack<XIncludeEntry>): List<Content> {
+  private fun resolveIncludeOrNonInclude(element: Element, bases: MutableList<XIncludeEntry>): List<Content> {
     return if (isIncludeElement(element)) {
       if (shouldXInclude(element, bases)) {
         resolveXIncludeElements(element, bases)
@@ -65,6 +65,16 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     }
   }
 
+  private fun addResolvedContent(target: Element, element: Element, bases: MutableList<XIncludeEntry>) {
+    if (isIncludeElement(element)) {
+      if (shouldXInclude(element, bases)) {
+        target.addContent(resolveXIncludeElements(element, bases))
+      }
+      return
+    }
+    target.addContent(resolveNonXIncludeElement(element, bases))
+  }
+
   /**
    * Handle conditional resolution of XInclude.
    *
@@ -74,7 +84,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
    * Note: Although this feature is used by the Kotlin plugin, it should not be employed as a general purpose
    * conditional inclusion method for other plugins.
    */
-  private fun shouldXInclude(element: Element, bases: Stack<XIncludeEntry>): Boolean {
+  private fun shouldXInclude(element: Element, bases: MutableList<XIncludeEntry>): Boolean {
     val includeUnless: String? = element.getAttributeValueByLocalName(INCLUDE_UNLESS_ATTR_NAME)
     val includeIf: String? = element.getAttributeValueByLocalName(INCLUDE_IF_ATTR_NAME)
     if (isResolvingConditionalIncludes && includeUnless != null && includeIf != null) {
@@ -91,7 +101,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
       || (includeUnless != null && properties.isFalse(includeUnless))
   }
 
-  private fun resolveXIncludeElements(xincludeElement: Element, bases: Stack<XIncludeEntry>): List<Content> {
+  private fun resolveXIncludeElements(xincludeElement: Element, bases: MutableList<XIncludeEntry>): List<Content> {
     //V2 included configs can be located only in root
     val href = xincludeElement.getAttributeValue(HREF).let { if (PluginCreator.v2ModulePrefix.matches(it)) "/$it" else it}
     val presentableXInclude = xincludeElement.getElementNameAndAttributes()
@@ -109,7 +119,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
       throw XIncluderException(bases, "'base' attribute of xi:include is not supported!")
     }
 
-    val basePath = bases.peek()!!.documentPath
+    val basePath = bases.last().documentPath
     val resolver = CompositeResourceResolver(mutableListOf<ResourceResolver>().apply {
       add(resourceResolver)
       if (basePath.isInMetaInf()) add(InParentPathResourceResolver(resourceResolver))
@@ -129,7 +139,11 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
         val xIncludeElements = resolveXIncludesOfRemoteDocument(remoteDocument, xincludeElement, xincludeEntry, bases)
         val startComment = Comment("Start $presentableXInclude")
         val endComment = Comment("End $presentableXInclude")
-        return listOf(startComment) + xIncludeElements + listOf(endComment)
+        return ArrayList<Content>(xIncludeElements.size + 2).apply {
+          add(startComment)
+          addAll(xIncludeElements)
+          add(endComment)
+        }
       }
       is ResourceResolver.Result.NotFound -> {
         val fallbackElement = xincludeElement.getChild("fallback", xincludeElement.namespace)
@@ -149,7 +163,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     return parent?.simpleName == "META-INF"
   }
 
-  private fun basesHaveMetaInfResolution(bases: Stack<XIncludeEntry>): Boolean {
+  private fun basesHaveMetaInfResolution(bases: List<XIncludeEntry>): Boolean {
     return bases.any { it.documentPath.isInMetaInf() }
   }
 
@@ -157,7 +171,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     remoteDocument: Document,
     xincludeElement: Element,
     xincludeEntry: XIncludeEntry,
-    bases: Stack<XIncludeEntry>
+    bases: MutableList<XIncludeEntry>
   ): List<Content> {
     val presentableXInclude = xincludeElement.getElementNameAndAttributes()
     checkCyclicReference(xincludeEntry, bases)
@@ -170,11 +184,11 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
       throw XIncluderException(bases, "Multiple root elements in document referenced in $presentableXInclude")
     }
 
-    bases.push(xincludeEntry)
+    bases += xincludeEntry
     val remoteContents = try {
       resolveIncludeOrNonInclude(remoteDocument.rootElement, bases)
     } finally {
-      bases.pop()
+      bases.removeAt(bases.lastIndex)
     }
 
     if (remoteContents.isEmpty()) {
@@ -191,7 +205,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     return selectContents(xincludeElement, xincludeEntry, remoteRootElement, bases)
   }
 
-  private fun checkCyclicReference(xincludeEntry: XIncludeEntry, bases: Stack<XIncludeEntry>) {
+  private fun checkCyclicReference(xincludeEntry: XIncludeEntry, bases: List<XIncludeEntry>) {
     val index = bases.indexOf(xincludeEntry)
     if (index >= 0) {
       val cycle = bases.drop(index) + listOf(xincludeEntry)
@@ -200,7 +214,11 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     }
   }
 
-  private fun resolveNonXIncludeElement(element: Element, bases: Stack<XIncludeEntry>): Element {
+  private fun resolveNonXIncludeElement(element: Element, bases: MutableList<XIncludeEntry>): Element {
+    if (element.content.none { it is Element }) {
+      return element.clone()
+    }
+
     val result = Element(element.name, element.namespace)
     if (element.hasAttributes()) {
       for (attribute in element.attributes) {
@@ -216,7 +234,7 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
 
     for (content in element.content) {
       if (content is Element) {
-        result.addContent(resolveIncludeOrNonInclude(content, bases))
+        addResolvedContent(result, content, bases)
       } else {
         result.addContent(content.clone())
       }
@@ -229,10 +247,10 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     xincludeElement: Element,
     xincludeEntry: XIncludeEntry,
     remoteRootElement: Element,
-    bases: Stack<XIncludeEntry>
+    bases: List<XIncludeEntry>
   ): List<Content> {
     val xPointer = xincludeElement.getAttributeValue(XPOINTER)
-      ?: return remoteRootElement.content.toList().map { it.detach() }
+      ?: return remoteRootElement.content.detachAll()
 
     val pointerMatcher = XPOINTER_PATTERN.matcher(xPointer)
     if (!pointerMatcher.matches()) {
@@ -259,10 +277,9 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
       child.content
     } else {
       remoteRootElement.content
-    }.toList()
+    }
 
-    selectedChildren.forEach { it.detach() }
-    return selectedChildren
+    return selectedChildren.detachAll()
   }
 
   private fun Element.getElementNameAndAttributes(): String {
@@ -287,23 +304,24 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     return this.toString()
   }
 
-  private fun Stack<XIncludeEntry>.toDebugString(): String {
+  private fun List<XIncludeEntry>.toDebugString(): String {
     return joinToString("->") { it.description }
   }
 
   private fun logXInclude(
     xincludeElement: Element,
     resourceResult: ResourceResolver.Result.Found,
-    bases: Stack<XIncludeEntry>
+    bases: List<XIncludeEntry>
   ) {
     if (!LOG.isDebugEnabled) return
     val include = xincludeElement.toDebugString()
-    val chain = if (bases.toDebugString().isNotEmpty()) {
-      bases.toDebugString() + "->" + resourceResult.description
+    val basesDescription = bases.toDebugString()
+    val chain = if (basesDescription.isNotEmpty()) {
+      basesDescription + "->" + resourceResult.description
     } else {
       include
     }
-    val includedFrom = if (bases.isNotEmpty()) bases.peek()!!.description else "Unknown XInclude origin of declaration"
+    val includedFrom = if (bases.isNotEmpty()) bases.last().description else "Unknown XInclude origin of declaration"
     LOG.debug("XIncluding '{}' from '{}'. Chain {}", include, includedFrom, chain)
   }
 
@@ -319,6 +337,14 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
   private val isResolvingConditionalIncludes: Boolean
     get() = properties.isTrue(IS_RESOLVING_CONDITIONAL_INCLUDES_PROPERTY)
 
+  private fun List<Content>.detachAll(): List<Content> {
+    val snapshot = ArrayList(this)
+    val result = ArrayList<Content>(snapshot.size)
+    for (content in snapshot) {
+      result += content.detach()
+    }
+    return result
+  }
 }
 
 private const val HTTP_WWW_W3_ORG_2001_XINCLUDE = "http://www.w3.org/2001/XInclude"
