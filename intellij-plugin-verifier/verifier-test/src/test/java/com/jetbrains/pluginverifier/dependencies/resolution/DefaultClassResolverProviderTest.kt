@@ -6,7 +6,9 @@ package com.jetbrains.pluginverifier.dependencies.resolution
 
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
+import com.jetbrains.plugin.structure.ide.ProductInfoAware
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
+import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
@@ -284,6 +286,142 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       }
     }
   }
+
+  @Test
+  fun `optional dependency missing from product-info IDE is tracked in missingDependencies`() {
+    val ideVersionString = "261.22158.291"
+
+    val ideRoot = buildDirectory(temporaryFolder.newFolder("goland-${UUID.randomUUID()}").toPath()) {
+      dir("lib") {
+        file("app.jar", createEmptyZipByteArray())
+        file("idea_rt.jar", createEmptyZipByteArray())
+      }
+      file("build.txt", "GO-$ideVersionString")
+      file("product-info.json", productInfoJsonGO261)
+    }
+
+    val productInfoParser = ProductInfoParser()
+    val jdkDescriptorProvider = DefaultJdkDescriptorProvider()
+
+    val productInfo = productInfoParser.parse(ByteArrayInputStream(productInfoJsonGO261.toByteArray()), "Unit Test")
+    // GoLand-like IDE: has com.intellij core and com.intellij.tasks (which also depends on com.intellij.java),
+    // but does NOT have com.intellij.java itself.
+    // This reproduces the bug where DFS resolves com.intellij.tasks first, encounters com.intellij.java as missing
+    // for com.intellij.tasks, and then when the hermit plugin's own com.intellij.java dependency is processed,
+    // it was already in the shared missingDependencies set and the notification was skipped for the hermit plugin.
+    val optionalJavaDependencyForTasks = PluginDependencyImpl("com.intellij.java", true, false)
+    val bundledPlugins = listOf(
+      MockIdePlugin("com.intellij", pluginName = "IDEA Core", pluginVersion = ideVersionString,
+        pluginAliases = setOf("com.intellij.modules.platform"),
+        dependencies = listOf(
+          // com.intellij declares a dependency on com.intellij.tasks
+          PluginDependencyImpl("com.intellij.tasks", true, false)
+        )),
+      MockIdePlugin("com.intellij.tasks", pluginName = "Tasks", pluginVersion = ideVersionString,
+        dependencies = listOf(
+          // com.intellij.tasks depends on com.intellij.java (optional) — this gets resolved first in DFS
+          optionalJavaDependencyForTasks
+        ))
+    )
+    val ide = MockProductInfoAwareIde(ideRoot, productInfo, bundledPlugins)
+    val ideResolver = IdeResolverCreator.createIdeResolver(ide)
+    val jdkResult = jdkDescriptorProvider.getJdkDescriptor(ide, defaultJdkPath = null)
+    assertTrue(jdkResult is JdkDescriptorProvider.Result.Found)
+    jdkResult as JdkDescriptorProvider.Result.Found
+
+    val ideDescriptor = IdeDescriptor(ide, ideResolver, jdkResult.jdkDescriptor, ideFileLock = null)
+
+    // Verify we're on the product-info path
+    assertTrue(
+      "ideResolver should be ProductInfoClassResolver but was ${ideResolver::class.simpleName}",
+      ideResolver is ProductInfoClassResolver
+    )
+    assertTrue(
+      "ide should be ProductInfoAware",
+      ide is com.jetbrains.plugin.structure.ide.ProductInfoAware
+    )
+
+    // Plugin with mandatory platform dep + optional Java dep (like hermit-ij-plugin)
+    val optionalJavaDependency = PluginDependencyImpl("com.intellij.java", true, false)
+    val hermitLikePlugin = MockIdePlugin(
+      pluginId = "org.example.hermit",
+      pluginVersion = "1.0",
+      dependencies = listOf(platformModuleDependency, optionalJavaDependency)
+    )
+
+    val emptyDependencyFinder = RuleBasedDependencyFinder.create(ide)
+    val resolverProvider =
+      DefaultClassResolverProvider(emptyDependencyFinder, ideDescriptor, packageFilter, archiveManager = archiveManager)
+
+    val classResolver = resolverProvider.provide(hermitLikePlugin.getDetails())
+    with(classResolver.dependenciesGraph) {
+      // The optional com.intellij.java should be in missingDependencies
+      val allMissingDeps = missingDependencies.values.flatten()
+      val javaMissing = allMissingDeps.find { it.dependency.id == "com.intellij.java" }
+      assertTrue(
+        "com.intellij.java should be in missingDependencies on product-info path, but missingDependencies=$missingDependencies",
+        javaMissing != null
+      )
+      assertTrue(
+        "com.intellij.java should be marked as optional",
+        javaMissing!!.dependency.isOptional
+      )
+
+      // Verify getDirectMissingDependencies also works (this is what analyzeMissingClassesCausedByMissingOptionalDependencies uses)
+      val directMissing = getDirectMissingDependencies()
+      val javaDirectMissing = directMissing.find { it.dependency.id == "com.intellij.java" }
+      assertTrue(
+        "com.intellij.java should be in getDirectMissingDependencies(), but got: $directMissing, verifiedPlugin=$verifiedPlugin, missingDependencies keys=${missingDependencies.keys}",
+        javaDirectMissing != null
+      )
+    }
+  }
+
+  @Language("JSON")
+  private val productInfoJsonGO261 = """
+    {
+      "name": "GoLand",
+      "version": "2026.1",
+      "buildNumber": "261.22158.291",
+      "productCode": "GO",
+      "envVarBaseName": "GOLAND",
+      "dataDirectoryName": "GoLand2026.1",
+      "svgIconPath": "../bin/goland.svg",
+      "productVendor": "JetBrains",
+      "launch": [
+        {
+          "os": "Linux",
+          "arch": "amd64",
+          "launcherPath": "bin/goland",
+          "javaExecutablePath": "jbr/bin/java",
+          "vmOptionsFilePath": "bin/goland64.vmoptions",
+          "bootClassPathJarNames": [
+            "app.jar",
+            "idea_rt.jar"
+          ]
+        }
+      ],
+      "bundledPlugins": [],
+      "modules": [],
+      "layout": [
+        {
+          "name": "com.intellij",
+          "kind": "plugin",
+          "classPath": [
+            "lib/app.jar",
+            "lib/idea_rt.jar"
+          ]
+        },
+        {
+          "name": "com.intellij.tasks",
+          "kind": "plugin",
+          "classPath": [
+            "lib/app.jar"
+          ]
+        }
+      ]
+    }
+  """.trimIndent()
 
   private fun createEmptyZipByteArray(): ByteArray {
     val buffer = ByteArrayOutputStream()
