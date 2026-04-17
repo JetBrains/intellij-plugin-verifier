@@ -1,5 +1,5 @@
 [versions]
-bcpkix-jdk18on = "1.83"
+bcpkix-jdk18on = "1.84"
 byteBuddy = "1.18.8"
 commons-compress = "1.28.0"
 jgrapht-core = "1.5.2"
