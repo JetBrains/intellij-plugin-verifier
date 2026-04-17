@@ -15,6 +15,8 @@ import java.util.Objects;
 
 import static com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult.Type.MODULE;
 import static com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult.Type.PLUGIN;
+import static com.jetbrains.plugin.structure.intellij.plugin.PluginProvision.Source.ALIAS;
+import static com.jetbrains.plugin.structure.intellij.plugin.PluginProvision.Source.ID;
 
 /**
  * An IDE instance consisting of the class-files and plugins.
@@ -57,6 +59,14 @@ public abstract class Ide implements PluginProvider {
   @Nullable
   @Override
   final public IdePlugin findPluginById(@NotNull String pluginId) {
+    PluginLookupResult lookupResult = findLoadedPluginById(pluginId);
+    if (lookupResult.isFound()) {
+      return lookupResult.getPlugin();
+    }
+    if (lookupResult.isNotFound()) {
+      return null;
+    }
+
     for (IdePlugin plugin : getBundledPlugins()) {
       String id = getId(plugin);
       if (Objects.equals(id, pluginId))
@@ -74,6 +84,14 @@ public abstract class Ide implements PluginProvider {
   @Nullable
   @Override
   final public IdePlugin findPluginByModule(@NotNull String moduleId) {
+    PluginLookupResult lookupResult = findLoadedPluginByModule(moduleId);
+    if (lookupResult.isFound()) {
+      return lookupResult.getPlugin();
+    }
+    if (lookupResult.isNotFound()) {
+      return null;
+    }
+
     for (IdePlugin plugin : getBundledPlugins()) {
       if (plugin.hasDefinedModuleWithId(moduleId)) {
         return plugin;
@@ -90,6 +108,24 @@ public abstract class Ide implements PluginProvider {
    */
   @Override
   public @Nullable PluginProviderResult findPluginByIdOrModuleId(@NotNull String pluginIdOrModuleId) {
+    boolean fallbackRequired = false;
+
+    PluginLookupResult byId = findLoadedPluginById(pluginIdOrModuleId);
+    if (byId.isFound()) {
+      return new PluginProviderResult(PLUGIN, byId.getPlugin());
+    }
+    fallbackRequired = byId.isUnsupported();
+
+    PluginLookupResult byModule = findLoadedPluginByModule(pluginIdOrModuleId);
+    if (byModule.isFound()) {
+      return new PluginProviderResult(MODULE, byModule.getPlugin());
+    }
+    fallbackRequired = fallbackRequired || byModule.isUnsupported();
+
+    if (!fallbackRequired) {
+      return null;
+    }
+
     for (IdePlugin plugin : getBundledPlugins()) {
       String id = getPluginId(plugin);
       if (Objects.equals(id, pluginIdOrModuleId)) {
@@ -109,6 +145,38 @@ public abstract class Ide implements PluginProvider {
    */
   @Override
   public @NotNull PluginProvision query(@NotNull PluginQuery query) {
+    if (query.searchName() || query.searchContentModuleId()) {
+      for (IdePlugin plugin : getBundledPlugins()) {
+        PluginProvision pluginProvision = queryMatcher.matches(plugin, query);
+        if (pluginProvision instanceof PluginProvision.Found) {
+          return pluginProvision;
+        }
+      }
+      return PluginProvision.NotFound.INSTANCE;
+    }
+
+    boolean fallbackRequired = false;
+
+    if (query.searchId()) {
+      PluginLookupResult byId = findLoadedPluginById(query.getIdentifier());
+      if (byId.isFound()) {
+        return new PluginProvision.Found(byId.getPlugin(), ID);
+      }
+      fallbackRequired = fallbackRequired || byId.isUnsupported();
+    }
+
+    if (query.searchPluginAliases()) {
+      PluginLookupResult byModule = findLoadedPluginByModule(query.getIdentifier());
+      if (byModule.isFound()) {
+        return new PluginProvision.Found(byModule.getPlugin(), ALIAS);
+      }
+      fallbackRequired = fallbackRequired || byModule.isUnsupported();
+    }
+
+    if (!fallbackRequired) {
+      return PluginProvision.NotFound.INSTANCE;
+    }
+
     for (IdePlugin plugin : getBundledPlugins()) {
       PluginProvision pluginProvision = queryMatcher.matches(plugin, query);
       if (pluginProvision instanceof PluginProvision.Found) {
@@ -150,6 +218,14 @@ public abstract class Ide implements PluginProvider {
   @Nullable
   protected String getPluginId(IdePlugin plugin) {
     return plugin.getPluginId() != null ? plugin.getPluginId() : plugin.getPluginName();
+  }
+
+  protected @NotNull PluginLookupResult findLoadedPluginById(@NotNull String pluginId) {
+    return PluginLookupResult.unsupported();
+  }
+
+  protected @NotNull PluginLookupResult findLoadedPluginByModule(@NotNull String moduleId) {
+    return PluginLookupResult.unsupported();
   }
 
   @Override

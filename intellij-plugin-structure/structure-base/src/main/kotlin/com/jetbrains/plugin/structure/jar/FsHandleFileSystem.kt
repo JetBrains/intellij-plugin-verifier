@@ -36,11 +36,14 @@ private val LOG: Logger = LoggerFactory.getLogger(FsHandleFileSystem::class.java
 class FsHandleFileSystem(
   val initialDelegateFileSystem: FileSystem,
   private val provider: JarFileSystemProvider,
-  private val path: Path
+  private val path: Path,
+  private val retainDelegateWhenReleased: Boolean = false,
 ) : FileSystem() {
 
-  // '-1' for closed
+  // '-1' means the wrapper is fully closed and can no longer be reused.
   private val referenceCount = AtomicInteger(1)
+  @Volatile
+  private var hasRetainedReference = retainDelegateWhenReleased
 
   private var _delegateFileSystem = initialDelegateFileSystem
   val delegateFileSystem: FileSystem get() = getOrReopenDelegateFileSystem()
@@ -98,12 +101,27 @@ class FsHandleFileSystem(
       if (!referenceCount.compareAndSet(current, current - 1)) {
         continue
       }
-      if (current == 1) {
-        // was the last one, means referenceCount == 0, let's close and mark as closed
+      if (current == 1 && !hasRetainedReference) {
         closeDelegate()
         referenceCount.set(-1)
       }
       return
+    }
+  }
+
+  fun releaseRetainedReference() {
+    if (!hasRetainedReference) {
+      return
+    }
+    synchronized(this) {
+      if (!hasRetainedReference) {
+        return
+      }
+      hasRetainedReference = false
+      if (referenceCount.get() == 0) {
+        closeDelegate()
+        referenceCount.set(-1)
+      }
     }
   }
 
@@ -123,7 +141,7 @@ class FsHandleFileSystem(
     }
   }
 
-  override fun isOpen(): Boolean = referenceCount.get() >= 0 && delegateFileSystem.isOpen
+  override fun isOpen(): Boolean = referenceCount.get() > 0 && delegateFileSystem.isOpen
 
   override fun isReadOnly(): Boolean = delegateFileSystem.isReadOnly
 

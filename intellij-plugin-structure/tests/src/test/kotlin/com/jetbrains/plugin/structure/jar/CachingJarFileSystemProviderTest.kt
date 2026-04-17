@@ -87,8 +87,7 @@ class CachingJarFileSystemProviderTest {
     assertFalse(anotherFs.isOpen)
 
     val yetAnotherFs = fileSystemProvider.getFileSystem(jarPath)
-    assertTrue(yetAnotherFs !== fs)
-    assertTrue(yetAnotherFs !== anotherFs)
+    assertSame(fs, yetAnotherFs)
     assertTrue(yetAnotherFs.isOpen)
     assertTrue((yetAnotherFs as? FsHandleFileSystem)?.delegateFileSystem?.isOpen == true)
   }
@@ -109,9 +108,12 @@ class CachingJarFileSystemProviderTest {
     assertTrue(underlying.isOpen)
     fs.close()
 
-    // no clients left, the underlying FS delegate is closed
+    // no clients are left, but the cached retained reference keeps the delegate open
     assertFalse(fs.isOpen)
     assertFalse(anotherFs.isOpen)
+    assertTrue(underlying.isOpen)
+
+    fileSystemProvider.close()
     assertFalse(underlying.isOpen)
   }
 
@@ -183,7 +185,7 @@ class CachingJarFileSystemProviderTest {
 
     val anotherFs1 = fileSystemProvider.getFileSystem(jarPath)
     assertTrue(anotherFs1.isOpen)
-    assertFalse(fs1 == anotherFs1)
+    assertSame(fs1, anotherFs1)
 
     val yetAnotherFs1 = fileSystemProvider.getFileSystem(jarPath)
     assertTrue(yetAnotherFs1.isOpen)
@@ -191,7 +193,7 @@ class CachingJarFileSystemProviderTest {
 
     val anotherFs2 = fileSystemProvider.getFileSystem(anotherJarPath)
     assertTrue(anotherFs2.isOpen)
-    assertFalse(fs2 == anotherFs2)
+    assertSame(anotherFs1, anotherFs2)
 
     val yetAnotherFs2 = fileSystemProvider.getFileSystem(anotherJarPath)
     assertTrue(yetAnotherFs2.isOpen)

@@ -39,6 +39,16 @@ class BundledModulesResolver(val idePath: Path, private val fileSystemProvider: 
     }
   }
 
+  override fun findModuleByName(name: String): ModuleBean? {
+    return fileSystemProvider.getFileSystem(moduleDescriptorsJarPath).use { jarFs ->
+      val descriptorPath = jarFs.getPath("$name.xml")
+      if (!descriptorPath.exists()) {
+        return null
+      }
+      unmarshallModule(descriptorPath)
+    }
+  }
+
   private fun unmarshallModule(xmlPath: Path): ModuleBean? {
     try {
       return ModuleUnmarshaller.unmarshall(xmlPath)

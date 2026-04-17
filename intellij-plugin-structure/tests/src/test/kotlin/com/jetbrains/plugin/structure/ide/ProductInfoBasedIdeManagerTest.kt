@@ -210,6 +210,7 @@ class ProductInfoBasedIdeManagerTest {
           "name": "com.intellij.java",
           "kind": "plugin",
           "classPath": [
+            "plugins/java/lib/javac2.jar",
             "plugins/java/lib/java-impl.jar"
           ]
         }        

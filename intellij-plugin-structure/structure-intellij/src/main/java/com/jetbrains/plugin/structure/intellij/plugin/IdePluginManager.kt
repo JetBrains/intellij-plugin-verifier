@@ -116,11 +116,12 @@ class IdePluginManager private constructor(
     return when (val archive = pluginArchiveManager.extractArchive(pluginFile)) {
       is Extracted -> {
         getPluginCreator(
-          archive.extractedPath,
-          descriptorPath,
-          validateDescriptor,
-          resourceResolver,
-          problemResolver
+          pluginFile = archive.extractedPath,
+          pluginArtifactPath = archive.extractedPath,
+          descriptorPath = descriptorPath,
+          validateDescriptor = validateDescriptor,
+          resourceResolver = resourceResolver,
+          problemResolver = problemResolver,
         ).apply {
           resources += PluginArchiveResource.of(pluginFile, archive.extractedPath, plugin)
         }
@@ -143,10 +144,10 @@ class IdePluginManager private constructor(
     problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
   ): PluginCreationResult<IdePlugin> {
     val pluginCreator = getPluginCreatorWithResult(
-      pluginFile,
-      validateDescriptor,
-      descriptorPath,
-      problemResolver
+      pluginFile = pluginFile,
+      validateDescriptor = validateDescriptor,
+      descriptorPath = descriptorPath,
+      problemResolver = problemResolver,
     )
     return pluginCreator.pluginCreationResult
   }
@@ -158,12 +159,19 @@ class IdePluginManager private constructor(
     descriptorPath: String,
     problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
     fallbackPluginId: String? = null,
+    pluginArtifactPath: Path = pluginFile,
+    classpath: Classpath? = null,
   ): PluginCreationResult<IdePlugin> {
     val pluginCreator = getPluginCreatorWithResult(
-      pluginFile, false, descriptorPath, problemResolver,
+      pluginFile,
+      pluginArtifactPath,
+      false,
+      descriptorPath,
+      problemResolver,
     )
     pluginCreator.setPluginVersion(ideVersion.asStringWithoutProductCode())
     fallbackPluginId?.let { pluginCreator.setPluginIdIfNull(it) }
+    classpath?.let(pluginCreator::setClasspath)
     return pluginCreator.pluginCreationResult
   }
 
@@ -184,6 +192,7 @@ class IdePluginManager private constructor(
   @Throws(PluginFileNotFoundException::class)
   private fun getPluginCreatorWithResult(
     pluginFile: Path,
+    pluginArtifactPath: Path = pluginFile,
     validateDescriptor: Boolean,
     descriptorPath: String,
     problemResolver: PluginCreationResultResolver
@@ -194,25 +203,26 @@ class IdePluginManager private constructor(
       if (pluginFile.isZip()) {
         pluginCreator = extractPluginCreator(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, problemResolver)
       } else if (pluginFile.isJar() || pluginFile.isDirectory) {
-        pluginCreator = getPluginCreator(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, problemResolver)
+        pluginCreator = getPluginCreator(pluginFile, pluginArtifactPath, descriptorPath, validateDescriptor, myResourceResolver, problemResolver)
       } else {
         pluginCreator = getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
       }
-      pluginCreator.setOriginalFile(pluginFile)
+      pluginCreator.setOriginalFile(pluginArtifactPath)
     }.let { pluginCreationDuration -> pluginCreator.setTelemetry(pluginFile, pluginCreationDuration)}
     return pluginCreator
   }
 
   private fun getPluginCreator(
     pluginFile: Path,
+    pluginArtifactPath: Path,
     descriptorPath: String,
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
     val pluginCreator = jarOrDirLoader.loadPlugin(JarOrDirectoryPluginLoader.Context(pluginFile, descriptorPath, validateDescriptor, resourceResolver, null, problemResolver))
-    resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver, problemResolver)
-    resolveContentModules(pluginFile, pluginCreator, myResourceResolver, problemResolver)
+    resolveOptionalDependencies(pluginArtifactPath, pluginCreator, myResourceResolver, problemResolver)
+    resolveContentModules(pluginArtifactPath, pluginCreator, myResourceResolver, problemResolver)
 
     return pluginCreator
   }

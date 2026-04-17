@@ -11,4 +11,7 @@ object SingletonCachingJarFileSystemProvider : JarFileSystemProvider {
   private val delegate = CachingJarFileSystemProvider()
 
   override fun getFileSystem(jarPath: Path): FileSystem = delegate.getFileSystem(jarPath)
+
+  override fun getFileSystem(jarPath: Path, configuration: JarFileSystemProvider.Configuration): FileSystem =
+    delegate.getFileSystem(jarPath, configuration)
 }

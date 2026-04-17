@@ -26,6 +26,13 @@ class ProductInfoIdeManagerLazyLoadingTest {
     ide.assertEfficiency()
     val javaPlugin = ide.findPluginById("com.intellij.java")
     assertNotNull(javaPlugin)
+    ide.assertEfficiency()
+
+    val langPlugin = ide.findPluginByModule("com.intellij.modules.lang")
+    assertNotNull(langPlugin)
+    ide.assertEfficiency()
+
+    assertFalse(ide.bundledPlugins.isEmpty())
     assertTrue(ide.isPluginCollectionLoaded())
   }
 

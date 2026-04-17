@@ -34,6 +34,9 @@ class CachingJarFileSystemProvider(
   private val fsCache = Caffeine.newBuilder()
     .maximumSize(MAX_OPEN_JAR_FILE_SYSTEMS)
     .expireAfterAccess(retentionTimeInSeconds, TimeUnit.SECONDS)
+    .removalListener<String, FsHandleFileSystem> { _, fs, _ ->
+      fs?.releaseRetainedReference()
+    }
     .build<String, FsHandleFileSystem>()
 
   val eventLog = EventLog()
@@ -42,7 +45,12 @@ class CachingJarFileSystemProvider(
     val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
       LOG.debug("Creating a filesystem handler via delegate for <{}> (Cache size: {})", jarUri, fsCache.estimatedSize())
     }
-    return FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath)
+    return FsHandleFileSystem(
+      initialDelegateFileSystem = jarFs,
+      provider = delegateJarFileSystemProvider,
+      path = jarPath,
+      retainDelegateWhenReleased = true,
+    )
   }
 
   override fun getFileSystem(jarPath: Path): FileSystem {
@@ -66,7 +74,12 @@ class CachingJarFileSystemProvider(
           val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
             LOG.debug("Recreating an already closed a filesystem handler for <{}> (Cache size: {})", key, fsCache.estimatedSize())
           }
-          fs = FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath)
+          fs = FsHandleFileSystem(
+            initialDelegateFileSystem = jarFs,
+            provider = delegateJarFileSystemProvider,
+            path = jarPath,
+            retainDelegateWhenReleased = true,
+          )
           fsCache.put(key, fs)
           logRecreatedFs(key)
         }
@@ -80,7 +93,9 @@ class CachingJarFileSystemProvider(
   }
 
   override fun close() {
+    fsCache.asMap().values.forEach(FsHandleFileSystem::releaseRetainedReference)
     fsCache.invalidateAll()
+    fsCache.cleanUp()
   }
 
   private fun logCreatedFs(uriString: String) {

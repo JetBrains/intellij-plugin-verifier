@@ -1,47 +1,60 @@
 /*
- * Copyright 2000-2025 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.jetbrains.plugin.structure.ide
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.problems.MissedFile
+import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.ide.layout.CorePluginManager
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponentsClasspathProvider
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponentsNames
-import com.jetbrains.plugin.structure.ide.layout.LoadingResults
+import com.jetbrains.plugin.structure.ide.layout.LayoutComponentLoader
 import com.jetbrains.plugin.structure.ide.layout.ModuleFactory
-import com.jetbrains.plugin.structure.ide.layout.PluginFactory
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult
 import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Companion.logFailures
-import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Failure
-import com.jetbrains.plugin.structure.ide.layout.PluginWithArtifactPathResult.Success
+import com.jetbrains.plugin.structure.ide.layout.ResolvedLayoutComponent
 import com.jetbrains.plugin.structure.ide.resolver.ProductInfoResourceResolver
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesManager
 import com.jetbrains.plugin.structure.intellij.platform.BundledModulesResolver
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
+import com.jetbrains.plugin.structure.intellij.plugin.Classpath
+import com.jetbrains.plugin.structure.intellij.plugin.ClasspathOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.LibDirJarsClasspathProvider
+import com.jetbrains.plugin.structure.intellij.plugin.PluginFileNotFoundException
+import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleScanner
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.JetBrainsPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.resources.CompositeResourceResolver
+import com.jetbrains.plugin.structure.intellij.resources.JarsResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
+import com.jetbrains.plugin.structure.jar.PluginJar
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoLayoutBasedPluginCollectionProvider::class.java)
+
+private const val CORE_IDE_PLUGIN_ID = "com.intellij"
 
 class ProductInfoLayoutBasedPluginCollectionProvider(
   private val additionalPluginReader: ProductInfoBasedIdeManager.PluginReader<LayoutComponents>,
   private val jarFileSystemProvider: JarFileSystemProvider,
-) : PluginCollectionProvider<Path> {
+) : TargetedPluginCollectionProvider<Path> {
+  private val libDirJarsClasspathProvider = LibDirJarsClasspathProvider()
+  private val contentModuleScanner = ContentModuleScanner(jarFileSystemProvider)
 
   /**
    * Problem level remapping used for bundled plugins.
@@ -49,56 +62,223 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
   private val bundledPluginCreationResultResolver: PluginCreationResultResolver
     get() = JetBrainsPluginCreationResultResolver.fromClassPathJson(IntelliJPluginCreationResultResolver())
 
+  private val stateBySource = ConcurrentHashMap<ProductInfoLayoutComponentsPluginCollectionSource, State>()
+
   @Throws(IOException::class)
   override fun getPlugins(source: PluginCollectionSource<Path, *>): Collection<IdePlugin> {
-    if (source !is ProductInfoLayoutComponentsPluginCollectionSource) {
-      return emptySet()
+    return if (source is ProductInfoLayoutComponentsPluginCollectionSource) {
+      state(source).getPlugins()
+    } else {
+      emptySet()
     }
-    val corePlugin = source.readCorePlugin()
-    val plugins = source.readPlugins()
-    val additionalPlugins = source.readAdditionalPlugins()
-
-    return corePlugin + plugins + additionalPlugins
   }
 
-  private fun ProductInfoLayoutComponentsPluginCollectionSource.readPlugins(): List<IdePlugin> {
-    val platformResourceResolver = ProductInfoResourceResolver(layoutComponents, jarFileSystemProvider)
-    val moduleManager = BundledModulesManager(BundledModulesResolver(idePath, jarFileSystemProvider))
+  override fun findPluginById(source: PluginCollectionSource<Path, *>, pluginId: String): PluginLookupResult {
+    return if (source is ProductInfoLayoutComponentsPluginCollectionSource) {
+      state(source).findPluginById(pluginId)
+    } else {
+      PluginLookupResult.unsupported()
+    }
+  }
 
-    val moduleV2Factory = ModuleFactory(::createModule, LayoutComponentsClasspathProvider(layoutComponents))
-    val pluginFactory = PluginFactory(::createPlugin)
+  override fun findPluginByModule(source: PluginCollectionSource<Path, *>, moduleId: String): PluginLookupResult {
+    return if (source is ProductInfoLayoutComponentsPluginCollectionSource) {
+      state(source).findPluginByModule(moduleId)
+    } else {
+      PluginLookupResult.unsupported()
+    }
+  }
 
-    val moduleLoadingResults = layoutComponents.content.mapNotNull { layoutComponent ->
-      when (layoutComponent) {
-        is LayoutComponent.ModuleV2,
-        is LayoutComponent.ProductModuleV2 -> {
-          moduleV2Factory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
-        }
+  private fun state(source: ProductInfoLayoutComponentsPluginCollectionSource): State {
+    return stateBySource.computeIfAbsent(source) { State(it) }
+  }
 
-        is LayoutComponent.Plugin -> {
-          pluginFactory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
-        }
+  private inner class State(
+    private val source: ProductInfoLayoutComponentsPluginCollectionSource,
+  ) {
+    private val platformResourceResolver by lazy {
+      ProductInfoResourceResolver(source.layoutComponents, jarFileSystemProvider)
+    }
+    private val moduleManager by lazy {
+      BundledModulesManager(BundledModulesResolver(source.idePath, jarFileSystemProvider))
+    }
+    private val moduleFactory by lazy {
+      ModuleFactory(::createModule, LayoutComponentsClasspathProvider(source.layoutComponents))
+    }
+    private val corePluginManager by lazy {
+      CorePluginManager(LayoutComponentLoader(::createPlugin), jarFileSystemProvider)
+    }
 
-        is LayoutComponent.PluginAlias -> {
-          // References to plugin IDs that are already loaded in the other types of layout components
-          null
+    private val loadedLayoutComponents = linkedMapOf<ResolvedLayoutComponent, PluginWithArtifactPathResult?>()
+    private val pluginsById = linkedMapOf<String, IdePlugin>()
+    private val pluginsByModuleId = linkedMapOf<String, IdePlugin>()
+
+    private var corePlugins: List<IdePlugin>? = null
+    private var additionalPlugins: List<IdePlugin>? = null
+
+    @Synchronized
+    fun getPlugins(): List<IdePlugin> {
+      val core = loadCorePlugins()
+      val layoutPlugins = source.layoutComponents.layoutComponents.mapNotNull { loadLayoutComponent(it) }
+      val failures = loadedLayoutComponents.values.filterIsInstance<PluginWithArtifactPathResult.Failure>()
+      logFailures(LOG, failures, source.idePath)
+      return core + layoutPlugins + loadAdditionalPlugins()
+    }
+
+    @Synchronized
+    fun findPluginById(pluginId: String): PluginLookupResult {
+      pluginsById[pluginId]?.let { return PluginLookupResult.found(it) }
+
+      if (pluginId == CORE_IDE_PLUGIN_ID) {
+        loadCorePlugins()
+        pluginsById[pluginId]?.let { return PluginLookupResult.found(it) }
+      }
+
+      findLayoutComponentByName(pluginId)?.let { component ->
+        loadLayoutComponent(component)
+        pluginsById[pluginId]?.let { return PluginLookupResult.found(it) }
+      }
+
+      return PluginLookupResult.notFound()
+    }
+
+    @Synchronized
+    fun findPluginByModule(moduleId: String): PluginLookupResult {
+      pluginsByModuleId[moduleId]?.let { return PluginLookupResult.found(it) }
+
+      loadCorePlugins()
+      pluginsByModuleId[moduleId]?.let { return PluginLookupResult.found(it) }
+
+      findDirectModuleComponent(moduleId)?.let { component ->
+        loadLayoutComponent(component)
+        pluginsByModuleId[moduleId]?.let { return PluginLookupResult.found(it) }
+      }
+
+      source.layoutComponents.layoutComponents.forEach { component ->
+        loadLayoutComponent(component)
+        pluginsByModuleId[moduleId]?.let { return PluginLookupResult.found(it) }
+      }
+
+      return PluginLookupResult.notFound()
+    }
+
+    private fun findLayoutComponentByName(name: String): ResolvedLayoutComponent? {
+      return source.layoutComponents.layoutComponents.firstOrNull { it.name == name }
+    }
+
+    private fun findDirectModuleComponent(moduleId: String): ResolvedLayoutComponent? {
+      return source.layoutComponents.layoutComponents.firstOrNull { resolvedLayoutComponent ->
+        when (resolvedLayoutComponent.layoutComponent) {
+          is LayoutComponent.ModuleV2,
+          is LayoutComponent.ProductModuleV2 -> resolvedLayoutComponent.name == moduleId
+          else -> false
         }
       }
-    }.fold(LoadingResults(), LoadingResults::add)
+    }
 
-    logFailures(LOG, moduleLoadingResults.failures, idePath)
-    return moduleLoadingResults.successfulPlugins
-  }
+    private fun loadCorePlugins(): List<IdePlugin> {
+      return corePlugins ?: corePluginManager.loadCorePlugins(source.idePath, source.ideVersion).also { plugins ->
+        corePlugins = plugins
+        plugins.forEach(::indexPlugin)
+      }
+    }
 
-  private fun ProductInfoLayoutComponentsPluginCollectionSource.readCorePlugin(): List<IdePlugin> {
-    val corePluginManager =
-      CorePluginManager(::createPlugin, jarFileSystemProvider)
-    return corePluginManager.loadCorePlugins(idePath, ideVersion)
-  }
+    private fun loadAdditionalPlugins(): List<IdePlugin> {
+      return additionalPlugins ?: run {
+        val layoutComponentNames = LayoutComponentsNames(source.layoutComponents)
+        additionalPluginReader.readPlugins(
+          source.idePath,
+          source.layoutComponents,
+          layoutComponentNames,
+          source.ideVersion,
+        ).also { plugins ->
+          additionalPlugins = plugins
+          plugins.forEach(::indexPlugin)
+        }
+      }
+    }
 
-  private fun ProductInfoLayoutComponentsPluginCollectionSource.readAdditionalPlugins(): List<IdePlugin> {
-    val layoutComponentNames = LayoutComponentsNames(layoutComponents)
-    return additionalPluginReader.readPlugins(idePath, layoutComponents, layoutComponentNames, ideVersion)
+    private fun loadLayoutComponent(layoutComponent: ResolvedLayoutComponent): IdePlugin? {
+      if (layoutComponent.layoutComponent is LayoutComponent.PluginAlias || layoutComponent.name == CORE_IDE_PLUGIN_ID) {
+        return null
+      }
+
+      val result = loadedLayoutComponents.getOrPut(layoutComponent) {
+        when (val component = layoutComponent.layoutComponent) {
+          is LayoutComponent.ModuleV2,
+          is LayoutComponent.ProductModuleV2 -> moduleFactory.read(
+            component,
+            source.idePath,
+            source.ideVersion,
+            platformResourceResolver,
+            moduleManager,
+          )
+
+          is LayoutComponent.Plugin -> loadPluginComponent(component)
+          is LayoutComponent.PluginAlias -> null
+        }
+      }
+
+      val success = result as? PluginWithArtifactPathResult.Success ?: return null
+      indexPlugin(success.plugin)
+      return success.plugin
+    }
+
+    private fun loadPluginComponent(layoutComponent: LayoutComponent.Plugin): PluginWithArtifactPathResult? {
+      val relativeClasspath = layoutComponent.getClasspath()
+      if (relativeClasspath.isEmpty()) {
+        return null
+      }
+      val classpath = relativeClasspath.map(source.idePath::resolve)
+      val pluginArtifactPath = source.idePath.resolve(resolvePluginArtifact(relativeClasspath)).normalize()
+      val existingJars = classpath.filter { it.exists() && it.isJar() }
+      val pluginResourceResolver = pluginResourceResolver(existingJars)
+
+      val pluginLoadPath = findDescriptorHolder(existingJars) ?: pluginArtifactPath
+      val resolvedClasspath = resolvePluginClasspath(pluginArtifactPath, existingJars)
+
+      return createPlugin(
+        pluginLoadPath = pluginLoadPath,
+        pluginArtifactPath = pluginArtifactPath,
+        descriptorPath = PLUGIN_XML,
+        resourceResolver = pluginResourceResolver,
+        ideVersion = source.ideVersion,
+        layoutComponentName = layoutComponent.name,
+        classpath = resolvedClasspath,
+      )
+    }
+
+    private fun pluginResourceResolver(pluginClasspaths: List<Path>): ResourceResolver {
+      val pluginJarsResolver = if (pluginClasspaths.isEmpty()) {
+        null
+      } else {
+        JarsResourceResolver(pluginClasspaths, jarFileSystemProvider)
+      }
+
+      return when (pluginJarsResolver) {
+        null -> platformResourceResolver
+        else -> CompositeResourceResolver(listOf(pluginJarsResolver, platformResourceResolver))
+      }
+    }
+
+    private fun findDescriptorHolder(classpath: List<Path>): Path? {
+      return classpath.firstOrNull { path ->
+        runCatching {
+          PluginJar(path, jarFileSystemProvider).use { pluginJar ->
+            pluginJar.resolveDescriptorPath() != null
+          }
+        }.getOrDefault(false)
+      }
+    }
+    private fun indexPlugin(plugin: IdePlugin) {
+      val pluginId = plugin.pluginId ?: plugin.pluginName
+      if (pluginId != null) {
+        pluginsById.putIfAbsent(pluginId, plugin)
+      }
+      plugin.definedModules.forEach { moduleId ->
+        pluginsByModuleId.putIfAbsent(moduleId, plugin)
+      }
+    }
   }
 
   private fun createModule(
@@ -120,36 +300,87 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
     resourceResolver: ResourceResolver,
     ideVersion: IdeVersion,
     layoutComponentName: String
-  ) = IdePluginManager
-    .createManager(resourceResolver)
-    .createBundledPlugin(pluginArtifactPath, ideVersion, descriptorPath, layoutComponentName)
-    .withPath(pluginArtifactPath)
-
-  private fun IdePluginManager.createBundledPlugin(
-    pluginArtifact: Path,
-    ideVersion: IdeVersion,
-    descriptorPath: String,
-    layoutComponentName: String
-  ): PluginCreationResult<IdePlugin> {
-    return createBundledPlugin(
-      resolvePluginArtifact(pluginArtifact),
-      ideVersion,
-      descriptorPath,
-      bundledPluginCreationResultResolver,
-      fallbackPluginId = layoutComponentName
+  ): PluginWithArtifactPathResult {
+    val resolvedPluginArtifactPath = resolveBundledPluginArtifactPath(pluginArtifactPath)
+    return createPlugin(
+      pluginLoadPath = pluginArtifactPath,
+      pluginArtifactPath = resolvedPluginArtifactPath,
+      descriptorPath = descriptorPath,
+      resourceResolver = resourceResolver,
+      ideVersion = ideVersion,
+      layoutComponentName = layoutComponentName,
+      classpath = resolvePluginClasspath(resolvedPluginArtifactPath, listOf(pluginArtifactPath)),
     )
   }
 
-  private fun resolvePluginArtifact(path: Path): Path {
-    return if (path.isJar() && path.parent.fileName.toString() == LIB_DIRECTORY) {
-      path.parent.parent
+  private fun createPlugin(
+    pluginLoadPath: Path,
+    pluginArtifactPath: Path,
+    descriptorPath: String = PLUGIN_XML,
+    resourceResolver: ResourceResolver,
+    ideVersion: IdeVersion,
+    layoutComponentName: String,
+    classpath: Classpath?,
+  ): PluginWithArtifactPathResult {
+    return try {
+      IdePluginManager
+        .createManager(resourceResolver)
+        .createBundledPlugin(
+          pluginFile = pluginLoadPath,
+          ideVersion = ideVersion,
+          descriptorPath = descriptorPath,
+          problemResolver = bundledPluginCreationResultResolver,
+          fallbackPluginId = layoutComponentName,
+          pluginArtifactPath = pluginArtifactPath,
+          classpath = classpath,
+        )
+        .withPath(pluginArtifactPath)
+    } catch (_: PluginFileNotFoundException) {
+      PluginWithArtifactPathResult.Failure(pluginArtifactPath, layoutComponentName, MissedFile(pluginArtifactPath.toString()))
+    }
+  }
+
+  private fun resolvePluginArtifact(classpath: List<Path>): Path {
+    val commonParent = getCommonParentDirectory(classpath) ?: return classpath.first()
+    val commonParentName = commonParent.fileName?.toString()
+
+    return when {
+      commonParentName == LIB_DIRECTORY -> commonParent.parent ?: commonParent
+      commonParent.looksLikeJar() && commonParent.parent?.fileName?.toString() == LIB_DIRECTORY -> commonParent.parent.parent ?: commonParent
+      else -> commonParent
+    }
+  }
+
+  private fun resolveBundledPluginArtifactPath(path: Path): Path {
+    return if (path.looksLikeJar() && path.parent?.fileName?.toString() == LIB_DIRECTORY) {
+      path.parent.parent ?: path
     } else {
       path
     }
   }
 
+  private fun Path.looksLikeJar(): Boolean {
+    return fileName?.toString()?.endsWith(".jar", ignoreCase = true) == true
+  }
+
+  private fun resolvePluginClasspath(pluginArtifactPath: Path, productInfoClasspath: List<Path>): Classpath? {
+    val artifactClasspath = contentModuleScanner.getContentModules(pluginArtifactPath).asClasspath()
+      .mergeWith(libDirJarsClasspathProvider.getClasspath(pluginArtifactPath))
+
+    if (artifactClasspath.size > 0) {
+      return artifactClasspath.getUnique()
+    }
+
+    val existingProductInfoClasspath = productInfoClasspath.filter { it.exists() && it.isJar() }
+    return if (existingProductInfoClasspath.isEmpty()) {
+      null
+    } else {
+      Classpath.of(existingProductInfoClasspath, ClasspathOrigin.PRODUCT_INFO).getUnique()
+    }
+  }
+
   private fun PluginCreationResult<IdePlugin>.withPath(pluginArtifactPath: Path): PluginWithArtifactPathResult = when (this) {
-    is PluginCreationSuccess -> Success(pluginArtifactPath, plugin)
-    is PluginCreationFail -> Failure(pluginArtifactPath, errorsAndWarnings)
+    is PluginCreationSuccess -> PluginWithArtifactPathResult.Success(pluginArtifactPath, plugin)
+    is PluginCreationFail -> PluginWithArtifactPathResult.Failure(pluginArtifactPath, errorsAndWarnings)
   }
 }

@@ -35,8 +35,16 @@ class ProductInfoBasedIde private constructor(
 
   override fun getBundledPlugins(): List<IdePlugin> = plugins
 
-  override fun hasBundledPlugin(pluginId: String): Boolean {
-    return productInfo.layout.any { it.name == pluginId }
+  override fun findLoadedPluginById(pluginId: String): PluginLookupResult {
+    return queryTargetedProviders { provider, source ->
+      provider.findPluginById(source, pluginId)
+    }
+  }
+
+  override fun findLoadedPluginByModule(moduleId: String): PluginLookupResult {
+    return queryTargetedProviders { provider, source ->
+      provider.findPluginByModule(source, moduleId)
+    }
   }
 
   override fun getIdePath() = idePath
@@ -49,6 +57,29 @@ class ProductInfoBasedIde private constructor(
   fun <T> getPluginCollectionSource(resourceType: Class<T>): PluginCollectionSource<Path, T>? {
     @Suppress("UNCHECKED_CAST")
     return pluginCollectionProviders.keys.find { resourceType.isInstance(it.resource) } as PluginCollectionSource<Path, T>?
+  }
+
+  private fun queryTargetedProviders(
+    lookup: (TargetedPluginCollectionProvider<Path>, PluginCollectionSource<Path, *>) -> PluginLookupResult
+  ): PluginLookupResult {
+    var allProvidersSupportedLookup = true
+
+    pluginCollectionProviders.forEach { (source, provider) ->
+      if (provider is TargetedPluginCollectionProvider<*>) {
+        @Suppress("UNCHECKED_CAST")
+        val result = lookup(provider as TargetedPluginCollectionProvider<Path>, source)
+        if (result.isFound) {
+          return result
+        }
+        if (result.isUnsupported) {
+          allProvidersSupportedLookup = false
+        }
+      } else {
+        allProvidersSupportedLookup = false
+      }
+    }
+
+    return if (allProvidersSupportedLookup) PluginLookupResult.notFound() else PluginLookupResult.unsupported()
   }
 
   companion object {

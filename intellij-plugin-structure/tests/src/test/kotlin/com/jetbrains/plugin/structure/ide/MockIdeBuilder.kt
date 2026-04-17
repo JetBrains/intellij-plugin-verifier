@@ -95,6 +95,9 @@ class MockIdeBuilder(private val temporaryFolder: TemporaryFolder, private val f
     dir("plugins") {
       dir("java") {
         dir("lib") {
+          zip("javac2.jar") {
+            file("javac2.txt", "descriptor is in java-impl.jar")
+          }
           dir("modules") {
             zip("intellij.java.featuresTrainer.jar") {
               file("intellij.java.featuresTrainer.xml") {
