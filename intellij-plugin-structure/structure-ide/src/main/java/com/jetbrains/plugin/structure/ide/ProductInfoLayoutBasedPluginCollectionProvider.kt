@@ -7,7 +7,6 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.MissedFile
-import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.ide.layout.CorePluginManager
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
@@ -112,6 +111,16 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
     private val loadedLayoutComponents = linkedMapOf<ResolvedLayoutComponent, PluginWithArtifactPathResult?>()
     private val pluginsById = linkedMapOf<String, IdePlugin>()
     private val pluginsByModuleId = linkedMapOf<String, IdePlugin>()
+    private val layoutComponentsByName = source.layoutComponents.layoutComponents.associateBy { it.name }
+    private val directModuleComponentsById = source.layoutComponents.layoutComponents.mapNotNull { resolvedLayoutComponent ->
+      when (resolvedLayoutComponent.layoutComponent) {
+        is LayoutComponent.ModuleV2,
+        is LayoutComponent.ProductModuleV2 -> resolvedLayoutComponent.name to resolvedLayoutComponent
+        else -> null
+      }
+    }.toMap()
+    private val notFoundPluginIds = hashSetOf<String>()
+    private val notFoundModuleIds = hashSetOf<String>()
 
     private var corePlugins: List<IdePlugin>? = null
     private var additionalPlugins: List<IdePlugin>? = null
@@ -128,6 +137,9 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
     @Synchronized
     fun findPluginById(pluginId: String): PluginLookupResult {
       pluginsById[pluginId]?.let { return PluginLookupResult.found(it) }
+      if (pluginId in notFoundPluginIds) {
+        return PluginLookupResult.notFound()
+      }
 
       if (pluginId == CORE_IDE_PLUGIN_ID) {
         loadCorePlugins()
@@ -139,12 +151,16 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
         pluginsById[pluginId]?.let { return PluginLookupResult.found(it) }
       }
 
+      notFoundPluginIds += pluginId
       return PluginLookupResult.notFound()
     }
 
     @Synchronized
     fun findPluginByModule(moduleId: String): PluginLookupResult {
       pluginsByModuleId[moduleId]?.let { return PluginLookupResult.found(it) }
+      if (moduleId in notFoundModuleIds) {
+        return PluginLookupResult.notFound()
+      }
 
       loadCorePlugins()
       pluginsByModuleId[moduleId]?.let { return PluginLookupResult.found(it) }
@@ -159,21 +175,16 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
         pluginsByModuleId[moduleId]?.let { return PluginLookupResult.found(it) }
       }
 
+      notFoundModuleIds += moduleId
       return PluginLookupResult.notFound()
     }
 
     private fun findLayoutComponentByName(name: String): ResolvedLayoutComponent? {
-      return source.layoutComponents.layoutComponents.firstOrNull { it.name == name }
+      return layoutComponentsByName[name]
     }
 
     private fun findDirectModuleComponent(moduleId: String): ResolvedLayoutComponent? {
-      return source.layoutComponents.layoutComponents.firstOrNull { resolvedLayoutComponent ->
-        when (resolvedLayoutComponent.layoutComponent) {
-          is LayoutComponent.ModuleV2,
-          is LayoutComponent.ProductModuleV2 -> resolvedLayoutComponent.name == moduleId
-          else -> false
-        }
-      }
+      return directModuleComponentsById[moduleId]
     }
 
     private fun loadCorePlugins(): List<IdePlugin> {
@@ -231,7 +242,7 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
       }
       val classpath = relativeClasspath.map(source.idePath::resolve)
       val pluginArtifactPath = source.idePath.resolve(resolvePluginArtifact(relativeClasspath)).normalize()
-      val existingJars = classpath.filter { it.exists() && it.isJar() }
+      val existingJars = classpath.filter(Path::isJar)
       val pluginResourceResolver = pluginResourceResolver(existingJars)
 
       val pluginLoadPath = findDescriptorHolder(existingJars) ?: pluginArtifactPath
@@ -274,9 +285,11 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
       val pluginId = plugin.pluginId ?: plugin.pluginName
       if (pluginId != null) {
         pluginsById.putIfAbsent(pluginId, plugin)
+        notFoundPluginIds.remove(pluginId)
       }
       plugin.definedModules.forEach { moduleId ->
         pluginsByModuleId.putIfAbsent(moduleId, plugin)
+        notFoundModuleIds.remove(moduleId)
       }
     }
   }
@@ -309,7 +322,7 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
       resourceResolver = resourceResolver,
       ideVersion = ideVersion,
       layoutComponentName = layoutComponentName,
-      classpath = resolvePluginClasspath(resolvedPluginArtifactPath, listOf(pluginArtifactPath)),
+      classpath = resolvePluginClasspath(resolvedPluginArtifactPath, listOf(pluginArtifactPath).filter(Path::isJar)),
     )
   }
 
@@ -363,7 +376,7 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
     return fileName?.toString()?.endsWith(".jar", ignoreCase = true) == true
   }
 
-  private fun resolvePluginClasspath(pluginArtifactPath: Path, productInfoClasspath: List<Path>): Classpath? {
+  private fun resolvePluginClasspath(pluginArtifactPath: Path, productInfoClasspathJars: List<Path>): Classpath? {
     val artifactClasspath = contentModuleScanner.getContentModules(pluginArtifactPath).asClasspath()
       .mergeWith(libDirJarsClasspathProvider.getClasspath(pluginArtifactPath))
 
@@ -371,11 +384,10 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
       return artifactClasspath.getUnique()
     }
 
-    val existingProductInfoClasspath = productInfoClasspath.filter { it.exists() && it.isJar() }
-    return if (existingProductInfoClasspath.isEmpty()) {
+    return if (productInfoClasspathJars.isEmpty()) {
       null
     } else {
-      Classpath.of(existingProductInfoClasspath, ClasspathOrigin.PRODUCT_INFO).getUnique()
+      Classpath.of(productInfoClasspathJars, ClasspathOrigin.PRODUCT_INFO).getUnique()
     }
   }
 
