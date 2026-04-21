@@ -234,13 +234,29 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
 
     for (content in element.content) {
       if (content is Element) {
-        addResolvedContent(result, content, bases)
+        if (containsXInclude(content)) {
+          addResolvedContent(result, content, bases)
+        } else {
+          result.addContent(content.clone())
+        }
       } else {
         result.addContent(content.clone())
       }
     }
 
     return result
+  }
+
+  private fun containsXInclude(element: Element): Boolean {
+    if (isIncludeElement(element)) {
+      return true
+    }
+    for (content in element.content) {
+      if (content is Element && containsXInclude(content)) {
+        return true
+      }
+    }
+    return false
   }
 
   private fun selectContents(

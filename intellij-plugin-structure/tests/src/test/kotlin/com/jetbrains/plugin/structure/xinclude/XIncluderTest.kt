@@ -96,6 +96,31 @@ class XIncluderTest {
   }
 
   @Test
+  fun `nested document without xinclude is preserved`() {
+    val xml = """
+      <idea-plugin>
+        <extensions defaultExtensionNs="com.intellij">
+          <localInspection language="kotlin" shortName="NoInclude"/>
+          <group>
+            <nested implementationClass="com.example.NoIncludeInspection"/>
+          </group>
+        </extensions>
+      </idea-plugin>
+    """.trimIndent()
+    val document = JDOMUtil.loadDocument(xml.byteInputStream())
+
+    val resolvedDocument = XIncluder.resolveXIncludes(
+      document,
+      "plugin.xml",
+      resourceResolver,
+      Path.of("/tmp/plugin.xml")
+    )
+
+    val xmlOutputter = XMLOutputter(Format.getPrettyFormat())
+    Assert.assertEquals(xmlOutputter.outputString(document), xmlOutputter.outputString(resolvedDocument))
+  }
+
+  @Test
   fun `cycle error`() {
     testError("cycle")
   }
