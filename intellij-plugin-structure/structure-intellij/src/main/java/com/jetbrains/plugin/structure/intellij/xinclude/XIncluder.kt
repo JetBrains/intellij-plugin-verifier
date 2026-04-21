@@ -65,16 +65,6 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
     }
   }
 
-  private fun addResolvedContent(target: Element, element: Element, bases: MutableList<XIncludeEntry>) {
-    if (isIncludeElement(element)) {
-      if (shouldXInclude(element, bases)) {
-        target.addContent(resolveXIncludeElements(element, bases))
-      }
-      return
-    }
-    target.addContent(resolveNonXIncludeElement(element, bases))
-  }
-
   /**
    * Handle conditional resolution of XInclude.
    *
@@ -215,7 +205,18 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
   }
 
   private fun resolveNonXIncludeElement(element: Element, bases: MutableList<XIncludeEntry>): Element {
-    if (element.content.none { it is Element }) {
+    val content = element.content
+    val contentSize = content.size
+
+    // Fast path: no child Element — deep-clone is equivalent and avoids per-child dispatch.
+    var firstElementIdx = -1
+    for (i in 0 until contentSize) {
+      if (content[i] is Element) {
+        firstElementIdx = i
+        break
+      }
+    }
+    if (firstElementIdx < 0) {
       return element.clone()
     }
 
@@ -232,11 +233,18 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
       }
     }
 
-    for (content in element.content) {
-      if (content is Element) {
-        addResolvedContent(result, content, bases)
+    for (i in 0 until contentSize) {
+      val c = content[i]
+      if (c is Element) {
+        if (isIncludeElement(c)) {
+          if (shouldXInclude(c, bases)) {
+            result.addContent(resolveXIncludeElements(c, bases))
+          }
+        } else {
+          result.addContent(resolveNonXIncludeElement(c, bases))
+        }
       } else {
-        result.addContent(content.clone())
+        result.addContent(c.clone())
       }
     }
 
