@@ -239,10 +239,9 @@ class JarTest {
       assertEquals(5, size)
       // initially, create a filesystem
       assertEquals(1, filterIsInstance<CachingJarFileSystemProvider.EventLog.Event.Created>().size)
-      // after closing, recreate filesystem once
-      assertEquals(1, filterIsInstance<CachingJarFileSystemProvider.EventLog.Event.Recreated>().size)
-      // reuse filesystem for 3 classes
-      assertEquals(3, filterIsInstance<CachingJarFileSystemProvider.EventLog.Event.Reused>().size)
+      // after closing the delegate, keep the cached handle and reuse it
+      assertEquals(0, filterIsInstance<CachingJarFileSystemProvider.EventLog.Event.Recreated>().size)
+      assertEquals(4, filterIsInstance<CachingJarFileSystemProvider.EventLog.Event.Reused>().size)
     }
   }
 
