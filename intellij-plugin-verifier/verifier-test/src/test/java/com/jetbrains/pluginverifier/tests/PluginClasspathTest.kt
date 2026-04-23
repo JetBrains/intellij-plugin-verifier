@@ -18,6 +18,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.resolution.BundledPluginClassResolverProvider
+import com.jetbrains.pluginverifier.tests.ContentModuleFixture.content
 import com.jetbrains.pluginverifier.tests.mocks.classBytes
 import com.jetbrains.pluginverifier.tests.mocks.descriptor
 import net.bytebuddy.ByteBuddy
@@ -159,7 +160,12 @@ class PluginClasspathTest : BasePluginTest() {
   }
 
   @Test
-  fun `lib-module and a main JAR are discovered`() {
+  fun `lib-module and a main JAR classpath is composed with content modules in the main plugin descriptor`() {
+    val pluginXml = ideaPlugin(pluginId = "com.intellij.modules.json", pluginName = "JSON")+
+      content {
+        module("intellij.json.split")
+      }
+
     val result = buildPluginInDirectory {
       dir("lib") {
         dir("modules") {
@@ -168,7 +174,7 @@ class PluginClasspathTest : BasePluginTest() {
           }
         }
         zip("json.jar") {
-          descriptor(ideaPlugin(pluginId = "com.intellij.modules.json", pluginName = "JSON"))
+          descriptor(pluginXml)
           file("intellij.json.xml", "<idea-plugin />")
         }
       }
@@ -178,6 +184,73 @@ class PluginClasspathTest : BasePluginTest() {
         assertEquals(2, size)
         assertTrue(containsFileName("json.jar"))
         assertTrue(containsFileName("intellij.json.split.jar"))
+      }
+    }
+  }
+
+  @Test
+  fun `classpath is deduced from the content modules in the main plugin descriptor and actual JARs in lib slash modules directory`() {
+    val pluginXml = ideaPlugin(pluginId = "com.intellij.modules.json", pluginName = "JSON")+
+      content {
+        module("intellij.json.frontend.split")
+        embeddedModule("intellij.json")
+        module("intellij.json.backend")
+        module("intellij.json.backend.regexp")
+        embeddedModule("intellij.json.syntax")
+      }
+
+    val result = buildPluginInDirectory {
+      dir("lib") {
+        dir("modules") {
+          zip("intellij.json.backend.jar") {
+            file("intellij.json.backend.xml", "<idea-plugin />")
+          }
+          zip("intellij.json.backend.regexp.jar") {
+            file("intellij.json.backend.regexp.xml", "<idea-plugin />")
+          }
+          zip("intellij.json.frontend.split.jar") {
+            file("intellij.json.frontend.split.xml", "<idea-plugin />")
+          }
+        }
+        zip("json.jar") {
+          descriptor(pluginXml)
+          file("intellij.json.xml", "<idea-plugin />")
+          file("intellij.json.syntax.xml", "<idea-plugin />")
+        }
+      }
+    }
+    assertSuccess(result) {
+      with(plugin.classpath) {
+        assertEquals(4, size)
+        assertTrue(containsFileName("json.jar"))
+        assertTrue(containsFileName("intellij.json.backend.jar"))
+        assertTrue(containsFileName("intellij.json.frontend.split.jar"))
+        assertTrue(containsFileName("intellij.json.backend.regexp.jar"))
+      }
+    }
+  }
+
+  @Test
+  fun `lib-module does not belong to the classpath if not declared in the main plugin descriptor`() {
+    val pluginXml = ideaPlugin(pluginId = "com.intellij.modules.json", pluginName = "JSON")
+
+    val result = buildPluginInDirectory {
+      dir("lib") {
+        dir("modules") {
+          zip("intellij.json.split.jar") {
+            file("intellij.json.split.xml", "<idea-plugin />")
+          }
+        }
+        zip("json.jar") {
+          descriptor(pluginXml)
+          file("intellij.json.xml", "<idea-plugin />")
+        }
+      }
+    }
+    assertSuccess(result) {
+      with(plugin.classpath) {
+        assertEquals(1, size)
+        assertTrue(containsFileName("json.jar"))
       }
     }
   }
