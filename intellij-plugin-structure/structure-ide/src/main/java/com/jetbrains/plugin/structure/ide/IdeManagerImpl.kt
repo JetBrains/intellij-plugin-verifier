@@ -17,7 +17,6 @@ import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.slf4j.LoggerFactory
 import java.io.IOException
-import java.nio.file.FileSystems
 import java.nio.file.Path
 
 class IdeManagerImpl : AbstractIdeManager() {
@@ -133,8 +132,11 @@ class IdeManagerImpl : AbstractIdeManager() {
     val descriptorPaths = listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml")
 
     for (jarFile in jarFiles) {
-      val descriptorPath = FileSystems.newFileSystem(jarFile, IdeManagerImpl::class.java.classLoader).use { jarFs ->
+      val jarFs = jarFileSystemProvider.getFileSystem(jarFile)
+      val descriptorPath = try {
         descriptorPaths.find { jarFs.getPath(IdePluginManager.META_INF).resolve(it).exists() }
+      } finally {
+        jarFs.close()
       }
       if (descriptorPath != null) {
         platformPlugins += createBundledPluginExceptionally(idePath, jarFile, platformResourceResolver, descriptorPath, ideVersion)
