@@ -132,11 +132,8 @@ class IdeManagerImpl : AbstractIdeManager() {
     val descriptorPaths = listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml")
 
     for (jarFile in jarFiles) {
-      val jarFs = jarFileSystemProvider.getFileSystem(jarFile)
-      val descriptorPath = try {
+      val descriptorPath = jarFileSystemProvider.getFileSystem(jarFile).use { jarFs ->
         descriptorPaths.find { jarFs.getPath(IdePluginManager.META_INF).resolve(it).exists() }
-      } finally {
-        jarFs.close()
       }
       if (descriptorPath != null) {
         platformPlugins += createBundledPluginExceptionally(idePath, jarFile, platformResourceResolver, descriptorPath, ideVersion)

@@ -117,17 +117,7 @@ class FsHandleFileSystem(
   }
 
   private fun closeIfRemovedFromCache() {
-    while (true) {
-      if (!removedFromCache) {
-        return
-      }
-      val current = referenceCount.get()
-      if (current < 0) {
-        return
-      }
-      if (current > 0) {
-        return
-      }
+    while (removedFromCache && referenceCount.get() == 0) {
       if (referenceCount.compareAndSet(0, -1)) {
         closeDelegate()
         return

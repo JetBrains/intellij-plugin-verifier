@@ -43,6 +43,11 @@ class JarResourceResolverTest {
             <idea-plugin />
           """.trimIndent()
         }
+        file("nested.xml") {
+          """
+            <idea-plugin />
+          """.trimIndent()
+        }
       }
       file("module.xml") {
         """
@@ -79,6 +84,22 @@ class JarResourceResolverTest {
     }
 
     assertEquals(3, countingProvider.requestCount)
+  }
+
+  @Test
+  fun `resolved jar paths can resolve siblings`() {
+    val resolver = JarsResourceResolver(listOf(simpleJarPath), fileSystemProvider)
+
+    val baseResult = resolver.resolveResource("META-INF/plugin.xml", Path.of("/"))
+    assertTrue(baseResult is ResourceResolver.Result.Found)
+
+    (baseResult as ResourceResolver.Result.Found).use {
+      val siblingResult = resolver.resolveResource("nested.xml", it.path)
+      assertTrue(siblingResult is ResourceResolver.Result.Found)
+      (siblingResult as ResourceResolver.Result.Found).use { sibling ->
+        assertEquals("META-INF/nested.xml", sibling.path.toString().withZipFsSeparator())
+      }
+    }
   }
 
   @Test

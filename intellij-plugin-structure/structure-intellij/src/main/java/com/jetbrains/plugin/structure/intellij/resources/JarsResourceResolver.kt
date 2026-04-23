@@ -3,8 +3,9 @@ package com.jetbrains.plugin.structure.intellij.resources
 import com.jetbrains.plugin.structure.base.utils.description
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.inputStream
+import com.jetbrains.plugin.structure.base.utils.withZipFsSeparator
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
-import java.nio.file.FileSystem
+import java.io.ByteArrayInputStream
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
@@ -34,22 +35,11 @@ class JarsResourceResolver(private val jarFiles: List<Path>, private val jarFile
   }
 
   @Throws(Exception::class)
-  private fun resolveResource(jarPath: Path, pathWithinJar: String): ResourceResolver.Result? {
-    var jarFs: FileSystem? = null
-    try {
-      jarFs = jarFileSystemProvider.getFileSystem(jarPath)
-      val path = jarFs.getPath(pathWithinJar)
-      return if (path.exists()) {
-        val foundJarFs = requireNotNull(jarFs)
-        jarFs = null
-        ResourceResolver.Result.Found(path, path.inputStream(), foundJarFs, jarPath.description)
-      } else {
-        jarFs.close()
-        jarFs = null
-        null
-      }
-    } finally {
-      jarFs?.close()
+  private fun resolveResource(jarPath: Path, pathWithinJar: String) =
+    jarFileSystemProvider.getFileSystem(jarPath).use { jarFs ->
+      val path = jarFs.getPath(pathWithinJar.withZipFsSeparator()).takeIf { it.exists() } ?: return@use null
+      val detachedPath = Path.of(pathWithinJar)
+      val bytes = path.inputStream().use { it.readBytes() }
+      ResourceResolver.Result.Found(detachedPath, ByteArrayInputStream(bytes), description = jarPath.description)
     }
-  }
 }
