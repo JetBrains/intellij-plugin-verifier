@@ -59,7 +59,7 @@ abstract class BasePluginTest {
     <id>$pluginId</id>
     <name>$pluginName</name>
     <version>$pluginVersion</version>
-    ""<vendor email="vendor.com" url="url">$vendor</vendor>""
+    <vendor email="vendor.com" url="url">$vendor</vendor>
     <description>$description</description>
     <change-notes>these change-notes are looooooooooong enough</change-notes>
     <idea-version since-build="$sinceBuild" until-build="$untilBuild"/>
