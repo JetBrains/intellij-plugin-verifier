@@ -173,22 +173,19 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
         hasDotNetPart = old.hasDotNetPart
         underlyingDocument = old.underlyingDocument
         declaredThemes.addAll(old.declaredThemes)
+        _pluginAliases.addAll(old.pluginAliases)
+        _definedModules.addAll(old.definedModules)
         _dependsList.addAll(old.dependsList)
         _contentModuleDependencies.addAll(old.contentModuleDependencies)
         _pluginMainModuleDependencies.addAll(old.pluginMainModuleDependencies)
         dependencies.addAll(old.dependencies)
         incompatibleWith.addAll(old.incompatibleWith)
         if (old is IdePluginImpl) {
-          _pluginAliases.addAll(old._pluginAliases)
-          _definedModules.addAll(old._definedModules)
           extensions.putAll(old.extensions)
           actions.addAll(old.actions)
           old.appContainerDescriptor.copyInto(appContainerDescriptor)
           old.projectContainerDescriptor.copyInto(projectContainerDescriptor)
           old.moduleContainerDescriptor.copyInto(moduleContainerDescriptor)
-        } else {
-          _pluginAliases.addAll(old.pluginAliases)
-          _definedModules.addAll(old.definedModules)
         }
         icons = old.icons.toMutableList()
         optionalDescriptors.addAll(old.optionalDescriptors)

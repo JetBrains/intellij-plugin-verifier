@@ -203,22 +203,6 @@ class CachingJarFileSystemProviderTest {
     assertTrue(anotherFs2.hasSameDelegate(yetAnotherFs2))
   }
 
-  @Test
-  fun `custom max cache size is applied`() {
-    val fileSystemProvider = CachingJarFileSystemProvider(
-      retentionTimeInSeconds = Long.MAX_VALUE,
-      maxOpenJarFileSystems = 1,
-      enableEventLogging = true
-    )
-
-    val cacheField = CachingJarFileSystemProvider::class.java.getDeclaredField("fsCache").apply {
-      isAccessible = true
-    }
-    val cache = cacheField.get(fileSystemProvider) as com.github.benmanes.caffeine.cache.Cache<*, *>
-
-    assertEquals(1L, cache.policy().eviction().get().maximum)
-  }
-
   private fun FileSystem.hasSameDelegate(fs: FileSystem): Boolean {
     return (this as? FsHandleFileSystem)?.hasSameDelegate(fs) == true
   }

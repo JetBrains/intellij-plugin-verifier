@@ -21,23 +21,20 @@ import java.util.concurrent.TimeUnit
 
 private val LOG: Logger = LoggerFactory.getLogger(CachingJarFileSystemProvider::class.java)
 
-private const val DEFAULT_MAX_OPEN_JAR_FILE_SYSTEMS: Long = 256
+private const val MAX_OPEN_JAR_FILE_SYSTEMS: Long = 256
 
 const val RETENTION_TIME_PROPERTY_NAME = "com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider.retentionTime"
-const val MAX_OPEN_JAR_FILE_SYSTEMS_PROPERTY_NAME = "com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider.maxOpenJarFileSystems"
 
 class CachingJarFileSystemProvider(
   val retentionTimeInSeconds: Long = System.getProperty(RETENTION_TIME_PROPERTY_NAME)
     ?.toLongOrNull() ?: 10L,
-  private val maxOpenJarFileSystems: Long = System.getProperty(MAX_OPEN_JAR_FILE_SYSTEMS_PROPERTY_NAME)
-    ?.toLongOrNull() ?: DEFAULT_MAX_OPEN_JAR_FILE_SYSTEMS,
   private val enableEventLogging: Boolean = false
 ) : JarFileSystemProvider, AutoCloseable {
 
   private val delegateJarFileSystemProvider = UriJarFileSystemProvider { it.toUri().withSuperScheme(JAR_SCHEME) }
 
   private val fsCache = Caffeine.newBuilder()
-    .maximumSize(maxOpenJarFileSystems)
+    .maximumSize(MAX_OPEN_JAR_FILE_SYSTEMS)
     .expireAfterAccess(retentionTimeInSeconds, TimeUnit.SECONDS)
     .removalListener(object : RemovalListener<String, FsHandleFileSystem> {
       override fun onRemoval(key: String?, value: FsHandleFileSystem?, cause: RemovalCause?) {

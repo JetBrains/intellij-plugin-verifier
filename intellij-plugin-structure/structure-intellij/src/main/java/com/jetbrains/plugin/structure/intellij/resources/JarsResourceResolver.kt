@@ -9,31 +9,27 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 class JarsResourceResolver(private val jarFiles: List<Path>, private val jarFileSystemProvider: JarFileSystemProvider) : ResourceResolver {
-  private val cachedJarEntries = ConcurrentHashMap<String, CachedJarEntry>()
+  private val cachedJarPaths = ConcurrentHashMap<String, Path>()
 
   override fun resolveResource(relativePath: String, basePath: Path): ResourceResolver.Result {
     val resourceResult = DefaultResourceResolver.resolveResource(relativePath, basePath)
     if (resourceResult !is ResourceResolver.Result.NotFound) {
       return resourceResult
     }
-    val finalPath = basePath.resolveSibling(relativePath).toString()
-    return when (val cachedJarEntry = cachedJarEntries[finalPath]) {
-      is CachedJarEntry.Found -> cachedJarEntry.open(jarFileSystemProvider)
-      CachedJarEntry.NotFound -> ResourceResolver.Result.NotFound
-      null -> resolveAndCacheResource(finalPath)
+    val pathWithinJar = basePath.resolveSibling(relativePath).toString()
+    cachedJarPaths[pathWithinJar]?.let { jarPath ->
+      resolveResource(jarPath, pathWithinJar)?.let {
+        return it
+      }
+      cachedJarPaths.remove(pathWithinJar, jarPath)
     }
-  }
-
-  @Throws(Exception::class)
-  private fun resolveAndCacheResource(pathWithinJar: String): ResourceResolver.Result {
     for (jarFile in jarFiles) {
       val result = resolveResource(jarFile, pathWithinJar)
       if (result != null) {
-        cachedJarEntries.putIfAbsent(pathWithinJar, CachedJarEntry.Found(jarFile, pathWithinJar, jarFile.description))
+        cachedJarPaths.putIfAbsent(pathWithinJar, jarFile)
         return result
       }
     }
-    cachedJarEntries.putIfAbsent(pathWithinJar, CachedJarEntry.NotFound)
     return ResourceResolver.Result.NotFound
   }
 
@@ -55,27 +51,5 @@ class JarsResourceResolver(private val jarFiles: List<Path>, private val jarFile
     } finally {
       jarFs?.close()
     }
-  }
-
-  private sealed class CachedJarEntry {
-    data class Found(
-      val jarPath: Path,
-      val pathWithinJar: String,
-      val description: String
-    ) : CachedJarEntry() {
-      fun open(jarFileSystemProvider: JarFileSystemProvider): ResourceResolver.Result {
-        var jarFs: FileSystem? = null
-        try {
-          jarFs = jarFileSystemProvider.getFileSystem(jarPath)
-          val path = jarFs.getPath(pathWithinJar)
-          return ResourceResolver.Result.Found(path, path.inputStream(), jarFs, description)
-        } catch (e: Throwable) {
-          jarFs?.close()
-          throw e
-        }
-      }
-    }
-
-    object NotFound : CachedJarEntry()
   }
 }
