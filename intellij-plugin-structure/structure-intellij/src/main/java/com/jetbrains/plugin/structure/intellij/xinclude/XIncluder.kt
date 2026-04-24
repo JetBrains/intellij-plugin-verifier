@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory
 import java.lang.Boolean.parseBoolean
 import java.nio.file.Path
 import java.util.ArrayList
+import java.util.IdentityHashMap
 import java.util.Properties
 import java.util.regex.Pattern
 
@@ -32,6 +33,7 @@ private val LOG: Logger = LoggerFactory.getLogger(XIncluder::class.java)
  * This implementation provides better messages.
  */
 class XIncluder private constructor(private val resourceResolver: ResourceResolver, private val properties: Properties) {
+  private val containsXIncludeCache = IdentityHashMap<Element, Boolean>()
 
   companion object {
     @Throws(XIncluderException::class)
@@ -44,12 +46,13 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
   }
 
   private fun resolveXIncludes(document: Document, presentablePath: String, documentPath: Path): Document {
+    val rootElement = document.rootElement.clone()
     val startEntry = XIncludeEntry(presentablePath, documentPath, documentPath.description)
-    if (isIncludeElement(document.rootElement)) {
-      throw XIncluderException(listOf(startEntry), "Invalid root element ${document.rootElement.getElementNameAndAttributes()}")
+    if (isIncludeElement(rootElement)) {
+      throw XIncluderException(listOf(startEntry), "Invalid root element ${rootElement.getElementNameAndAttributes()}")
     }
     val bases = ArrayList<XIncludeEntry>(4).apply { add(startEntry) }
-    val rootElement = resolveNonXIncludeElement(document.rootElement, bases)
+    resolveNonXIncludeElement(rootElement, bases)
     return Document(rootElement)
   }
 
@@ -61,18 +64,9 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
         emptyList()
       }
     } else {
-      listOf(resolveNonXIncludeElement(element, bases))
+      resolveNonXIncludeElement(element, bases)
+      listOf(element)
     }
-  }
-
-  private fun addResolvedContent(target: Element, element: Element, bases: MutableList<XIncludeEntry>) {
-    if (isIncludeElement(element)) {
-      if (shouldXInclude(element, bases)) {
-        target.addContent(resolveXIncludeElements(element, bases))
-      }
-      return
-    }
-    target.addContent(resolveNonXIncludeElement(element, bases))
   }
 
   /**
@@ -215,32 +209,51 @@ class XIncluder private constructor(private val resourceResolver: ResourceResolv
   }
 
   private fun resolveNonXIncludeElement(element: Element, bases: MutableList<XIncludeEntry>): Element {
-    if (element.content.none { it is Element }) {
-      return element.clone()
+    if (!containsXInclude(element)) {
+      return element
     }
 
-    val result = Element(element.name, element.namespace)
-    if (element.hasAttributes()) {
-      for (attribute in element.attributes) {
-        result.setAttribute(attribute.clone())
+    var index = 0
+    while (index < element.contentSize) {
+      val content = element.getContent(index)
+      if (content !is Element || !containsXInclude(content)) {
+        index++
+        continue
       }
-    }
 
-    if (element.hasAdditionalNamespaces()) {
-      for (additionalNamespace in element.additionalNamespaces) {
-        result.addNamespaceDeclaration(additionalNamespace)
+      if (isIncludeElement(content)) {
+        val replacement = if (shouldXInclude(content, bases)) {
+          resolveXIncludeElements(content, bases)
+        } else {
+          emptyList()
+        }
+        element.removeContent(index)
+        if (replacement.isNotEmpty()) {
+          element.addContent(index, replacement)
+          index += replacement.size
+        }
+        continue
       }
+
+      resolveNonXIncludeElement(content, bases)
+      index++
     }
 
-    for (content in element.content) {
-      if (content is Element) {
-        addResolvedContent(result, content, bases)
-      } else {
-        result.addContent(content.clone())
+    return element
+  }
+
+  private fun containsXInclude(element: Element): Boolean {
+    return containsXIncludeCache.getOrPut(element) {
+      if (isIncludeElement(element)) {
+        return@getOrPut true
       }
+      for (content in element.content) {
+        if (content is Element && containsXInclude(content)) {
+          return@getOrPut true
+        }
+      }
+      false
     }
-
-    return result
   }
 
   private fun selectContents(

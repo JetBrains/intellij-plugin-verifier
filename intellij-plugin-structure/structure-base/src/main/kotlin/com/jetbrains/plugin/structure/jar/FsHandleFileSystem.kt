@@ -39,8 +39,10 @@ class FsHandleFileSystem(
   private val path: Path
 ) : FileSystem() {
 
-  // '-1' for closed
+  // 0 for cached but idle, '-1' for removed from cache and permanently closed
   private val referenceCount = AtomicInteger(1)
+  @Volatile
+  private var removedFromCache = false
 
   private var _delegateFileSystem = initialDelegateFileSystem
   val delegateFileSystem: FileSystem get() = getOrReopenDelegateFileSystem()
@@ -82,6 +84,9 @@ class FsHandleFileSystem(
       if (fs.isOpen) {
         return fs
       }
+      if (referenceCount.get() < 0) {
+        return fs
+      }
       LOG.debug("Reopening filesystem delegate for <{}>", path)
       fs = provider.getFileSystem(path)
       _delegateFileSystem = fs
@@ -99,11 +104,24 @@ class FsHandleFileSystem(
         continue
       }
       if (current == 1) {
-        // was the last one, means referenceCount == 0, let's close and mark as closed
-        closeDelegate()
-        referenceCount.set(-1)
+        // Keep the delegate open while this handle remains cached; close it on cache removal instead.
+        closeIfRemovedFromCache()
       }
       return
+    }
+  }
+
+  fun onCacheRemoval() {
+    removedFromCache = true
+    closeIfRemovedFromCache()
+  }
+
+  private fun closeIfRemovedFromCache() {
+    while (removedFromCache && referenceCount.get() == 0) {
+      if (referenceCount.compareAndSet(0, -1)) {
+        closeDelegate()
+        return
+      }
     }
   }
 
@@ -123,7 +141,7 @@ class FsHandleFileSystem(
     }
   }
 
-  override fun isOpen(): Boolean = referenceCount.get() >= 0 && delegateFileSystem.isOpen
+  override fun isOpen(): Boolean = referenceCount.get() > 0 && delegateFileSystem.isOpen
 
   override fun isReadOnly(): Boolean = delegateFileSystem.isReadOnly
 
