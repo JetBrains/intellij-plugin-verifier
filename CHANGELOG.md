@@ -8,6 +8,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 
+- Arbitrary JARs in `lib/modules` do not automatically become part of the `classpath` in `IdePlugin`. Any such JAR must belong to a plugin content module that is explicitly declared in the `plugin.xml` ([#1479](https://github.com/JetBrains/intellij-plugin-verifier/pull/1479))  
+
 ### Fixed
 
 ## 1.402 - 2026-04-01
