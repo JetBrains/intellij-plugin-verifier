@@ -161,7 +161,7 @@ class PluginClasspathTest : BasePluginTest() {
 
   @Test
   fun `lib-module and a main JAR classpath is composed with content modules in the main plugin descriptor`() {
-    val pluginXml = ideaPlugin(pluginId = "com.intellij.modules.json", pluginName = "JSON")+
+    val pluginXml = ideaPlugin(pluginId = "com.intellij.modules.json", pluginName = "JSON") +
       content {
         module("intellij.json.split")
       }
@@ -190,7 +190,7 @@ class PluginClasspathTest : BasePluginTest() {
 
   @Test
   fun `classpath is deduced from the content modules in the main plugin descriptor and actual JARs in lib slash modules directory`() {
-    val pluginXml = ideaPlugin(pluginId = "com.intellij.modules.json", pluginName = "JSON")+
+    val pluginXml = ideaPlugin(pluginId = "com.intellij.modules.json", pluginName = "JSON") +
       content {
         module("intellij.json.frontend.split")
         embeddedModule("intellij.json")
