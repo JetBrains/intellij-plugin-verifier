@@ -12,6 +12,8 @@ class Classpath private constructor(val entries: List<ClasspathEntry> = emptyLis
       val entries = paths.map { ClasspathEntry(it, origin) }
       return Classpath(entries)
     }
+
+    fun ofEntries(entries: Collection<ClasspathEntry>): Classpath = Classpath(entries.toList())
   }
 
   val size: Int = entries.size

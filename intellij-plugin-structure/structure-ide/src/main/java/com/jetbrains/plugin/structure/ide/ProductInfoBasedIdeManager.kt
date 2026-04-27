@@ -6,6 +6,9 @@ package com.jetbrains.plugin.structure.ide
 
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
+import com.jetbrains.plugin.structure.ide.cache.CachedIde
+import com.jetbrains.plugin.structure.ide.cache.IdeStructureCache
+import com.jetbrains.plugin.structure.ide.cache.WriteThroughCachingIde
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponentNameSource
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
@@ -27,7 +30,8 @@ internal val VERSION_FROM_PRODUCT_INFO: IdeVersion? = null
 class ProductInfoBasedIdeManager(
   missingLayoutFileMode: MissingLayoutFileMode = SKIP_AND_WARN,
   private val additionalProductInfoPluginReader: PluginReader<ProductInfo> = NoOpProductInfoPluginReader,
-  private val additionalLayoutComponentsPluginReader: PluginReader<LayoutComponents> = NoOpLayoutComponentsPluginReader
+  private val additionalLayoutComponentsPluginReader: PluginReader<LayoutComponents> = NoOpLayoutComponentsPluginReader,
+  private val ideStructureCache: IdeStructureCache? = null
 ) : IdeManager() {
 
   private val productInfoParser = ProductInfoParser()
@@ -53,8 +57,19 @@ class ProductInfoBasedIdeManager(
       throw IOException("Specified path does not exist or is not a directory: $idePath")
     }
 
-    val pluginCollectionProviders = createPluginCollectionProviders(idePath, ideVersion, productInfo)
-    return ProductInfoBasedIde.of(idePath, ideVersion, productInfo, pluginCollectionProviders)
+    val validatedComponents = layoutComponentsProvider.resolveLayoutComponents(productInfo, idePath)
+
+    ideStructureCache?.get(idePath, ideVersion)?.let { cachedPlugins ->
+      return CachedIde(idePath, ideVersion, productInfo, cachedPlugins, validatedComponents)
+    }
+
+    val pluginCollectionProviders = createPluginCollectionProviders(idePath, ideVersion, productInfo, validatedComponents)
+    val ide = ProductInfoBasedIde.of(idePath, ideVersion, productInfo, pluginCollectionProviders)
+    return if (ideStructureCache != null) {
+      WriteThroughCachingIde(ide, ideStructureCache, idePath, productInfo, ideVersion)
+    } else {
+      ide
+    }
   }
 
   private fun createIdeVersion(productInfo: ProductInfo): IdeVersion {
@@ -67,9 +82,14 @@ class ProductInfoBasedIdeManager(
     return IdeVersion.createIdeVersion(versionString)
   }
 
-  private fun createPluginCollectionProviders(idePath: Path, ideVersion: IdeVersion, productInfo: ProductInfo): Map<PluginCollectionSource<Path, *>, PluginCollectionProvider<Path>> {
+  private fun createPluginCollectionProviders(
+    idePath: Path,
+    ideVersion: IdeVersion,
+    productInfo: ProductInfo,
+    validatedComponents: LayoutComponents
+  ): Map<PluginCollectionSource<Path, *>, PluginCollectionProvider<Path>> {
     return mutableMapOf<PluginCollectionSource<Path, *>, PluginCollectionProvider<Path>>().apply {
-      val layoutComponentsSource = createLayoutComponentsSource(idePath, ideVersion, productInfo)
+      val layoutComponentsSource = validatedComponents.asSource(idePath, ideVersion)
       this[layoutComponentsSource] = ProductInfoLayoutBasedPluginCollectionProvider(
         additionalLayoutComponentsPluginReader,
         SingletonCachingJarFileSystemProvider,
@@ -81,10 +101,6 @@ class ProductInfoBasedIdeManager(
       }
     }
   }
-
-  private fun createLayoutComponentsSource(idePath: Path, ideVersion: IdeVersion, productInfo: ProductInfo) =
-    layoutComponentsProvider.resolveLayoutComponents(productInfo, idePath)
-      .asSource(idePath, ideVersion)
 
   private fun ProductInfo.asSource(idePath: Path, ideVersion: IdeVersion) =
     ProductInfoPluginCollectionSource(idePath, ideVersion, this)

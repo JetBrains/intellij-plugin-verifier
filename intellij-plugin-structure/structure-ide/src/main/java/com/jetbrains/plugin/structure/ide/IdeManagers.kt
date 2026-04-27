@@ -4,6 +4,8 @@
 
 package com.jetbrains.plugin.structure.ide
 
+import com.jetbrains.plugin.structure.ide.cache.DiskIdeStructureCache
+import com.jetbrains.plugin.structure.ide.cache.IdeStructureCache
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import java.nio.file.Path
 
@@ -22,7 +24,14 @@ fun createIde(init: IdeConfiguration.() -> Unit): Ide {
   return DispatchingIdeManager(ideManagerConfig).createIde(idePath)
 }
 
-class IdeManagerConfiguration(var missingLayoutFileMode: MissingLayoutFileMode = MissingLayoutFileMode.SKIP_AND_WARN)
+class IdeManagerConfiguration(
+  var missingLayoutFileMode: MissingLayoutFileMode = MissingLayoutFileMode.SKIP_AND_WARN,
+  /**
+   * Cache for the structural IDE representation (bundled plugins with metadata). Defaults to a
+   * disk-backed cache under `~/.pluginVerifier/ideCache`. Set to `null` to disable caching.
+   */
+  var ideStructureCache: IdeStructureCache? = DiskIdeStructureCache.default()
+)
 
 class IdeConfiguration {
   var missingLayoutFileMode: MissingLayoutFileMode = MissingLayoutFileMode.SKIP_AND_WARN
