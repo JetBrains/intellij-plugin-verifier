@@ -2,7 +2,7 @@
 bcpkix-jdk18on = "1.84"
 byteBuddy = "1.18.8"
 commons-compress = "1.28.0"
-jgrapht-core = "1.5.2"
+jgrapht-core = "1.5.3"
 jetbrains-pluginRepositoryRestClient = "2.0.49"
 kotlinx-metadata = "0.9.0"
 okhttp-mockwebserver = "4.12.0"
