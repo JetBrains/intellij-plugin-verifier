@@ -5,7 +5,6 @@
 package com.jetbrains.plugin.structure.ide
 
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -27,18 +26,14 @@ class ProductInfoBasedIde private constructor(
 
   override fun getVersion() = version
 
-  override fun getBundledPlugins(): List<IdePlugin> = plugins
+  override fun getBundledPlugins() = plugins
 
-  override fun hasBundledPlugin(pluginId: String): Boolean {
-    return productInfo.layout.any { it.name == pluginId }
-  }
+  override fun hasBundledPlugin(pluginId: String) = productInfo.layout.any { it.name == pluginId }
 
   override fun getIdePath() = idePath
 
   @ApiStatus.Internal
-  fun isPluginCollectionLoaded(): Boolean {
-    return _plugins.isInitialized()
-  }
+  fun isPluginCollectionLoaded() = _plugins.isInitialized()
 
   fun <T> getPluginCollectionSource(resourceType: Class<T>): PluginCollectionSource<Path, T>? {
     @Suppress("UNCHECKED_CAST")
