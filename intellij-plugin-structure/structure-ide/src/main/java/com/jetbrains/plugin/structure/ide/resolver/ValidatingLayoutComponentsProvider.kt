@@ -32,7 +32,7 @@ class ValidatingLayoutComponentsProvider(private val missingLayoutFileMode: Miss
         if (missingLayoutFileMode == FAIL) {
           throw MissingClasspathFileInLayoutComponentException.of(idePath, validatedComponents.failedComponents)
         }
-        if (missingLayoutFileMode == SKIP_MISSING_ELEMENTS) {
+        if (missingLayoutFileMode == SKIP_MISSING_CLASSPATH_ELEMENTS) {
           acceptedComponents += validatedComponents.skipMissingClasspathElements()
         }
         logUnavailableClasspath(validatedComponents.failures)

@@ -67,7 +67,7 @@ class LayoutComponentsProviderTest {
   @Test
   fun `product info with a single layout component that has one valid and two missing classpath elements will skip missing classpath elements`() {
     val (idePath, productInfo) = parseProductInfo(productInfoJsonWithMissingJarInClasspath)
-    val provider = ValidatingLayoutComponentsProvider(MissingLayoutFileMode.SKIP_MISSING_ELEMENTS)
+    val provider = ValidatingLayoutComponentsProvider(MissingLayoutFileMode.SKIP_MISSING_CLASSPATH_ELEMENTS)
     val layoutComponents = provider.resolveLayoutComponents(productInfo, idePath)
 
     assertEquals(1, layoutComponents.toList().size)

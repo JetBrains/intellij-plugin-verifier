@@ -15,7 +15,7 @@ class ProductInfoIdeManagerLazyLoadingTest {
     ideUrl!!
     val ideRoot = Paths.get(ideUrl.toURI())
 
-    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_MISSING_ELEMENTS)
+    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_MISSING_CLASSPATH_ELEMENTS)
       .createIde(ideRoot)
     assertTrue(ide is ProductInfoAware)
     ide as ProductInfoBasedIde

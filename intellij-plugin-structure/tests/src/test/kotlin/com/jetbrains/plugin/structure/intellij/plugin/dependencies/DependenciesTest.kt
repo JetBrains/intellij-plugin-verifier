@@ -671,7 +671,7 @@ class DependenciesTest {
     assertNotNull(ideUrl, "Dumped IDE not found in the resources [$ideResourceLocation]")
     val ideRoot = Paths.get(ideUrl.toURI())
 
-    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_MISSING_ELEMENTS)
+    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_MISSING_CLASSPATH_ELEMENTS)
       .createIde(ideRoot)
     then(ide.bundledPlugins).hasSize(279)
 
@@ -725,7 +725,7 @@ class DependenciesTest {
     assertNotNull(ideUrl, "Dumped IDE not found in the resources [$ideResourceLocation]")
     val ideRoot = Paths.get(ideUrl.toURI())
 
-    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_MISSING_ELEMENTS)
+    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_MISSING_CLASSPATH_ELEMENTS)
       .createIde(ideRoot)
 
     then(ide.bundledPlugins).hasSize(503)
@@ -782,7 +782,7 @@ class DependenciesTest {
     assertNotNull(ideUrl, "Dumped IDE not found in the resources [$ideResourceLocation]")
     val ideRoot = Paths.get(ideUrl.toURI())
 
-    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_MISSING_ELEMENTS)
+    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_MISSING_CLASSPATH_ELEMENTS)
       .createIde(ideRoot)
 
     val coveragePlugin = ide.findPluginById("Coverage")
@@ -838,7 +838,7 @@ class DependenciesTest {
     assertNotNull(ideUrl, "Dumped IDE not found in the resources [$ideResourceLocation]")
     val ideRoot = Paths.get(ideUrl.toURI())
 
-    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_MISSING_ELEMENTS)
+    val ide = ProductInfoBasedIdeManager(MissingLayoutFileMode.SKIP_MISSING_CLASSPATH_ELEMENTS)
       .createIde(ideRoot)
 
     val coveragePlugin = ide.findPluginById("Coverage")
