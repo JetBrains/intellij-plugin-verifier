@@ -4,13 +4,8 @@
 
 package com.jetbrains.plugin.structure.ide.resolver
 
-import com.jetbrains.plugin.structure.ide.layout.IdeRelativePath
-import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
-import com.jetbrains.plugin.structure.ide.layout.LayoutComponentsProvider
-import com.jetbrains.plugin.structure.ide.layout.MissingClasspathFileInLayoutComponentException
-import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
+import com.jetbrains.plugin.structure.ide.layout.*
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode.*
-import com.jetbrains.plugin.structure.ide.layout.ResolvedLayoutComponent
 import com.jetbrains.plugin.structure.ide.problem.IdeProblem
 import com.jetbrains.plugin.structure.ide.problem.LayoutComponentHasNonExistentClasspath
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
@@ -37,7 +32,7 @@ class ValidatingLayoutComponentsProvider(private val missingLayoutFileMode: Miss
         if (missingLayoutFileMode == FAIL) {
           throw MissingClasspathFileInLayoutComponentException.of(idePath, validatedComponents.failedComponents)
         }
-        if (missingLayoutFileMode == SKIP_CLASSPATH) {
+        if (missingLayoutFileMode == SKIP_MISSING_ELEMENTS) {
           acceptedComponents += validatedComponents.skipMissingClasspathElements()
         }
         logUnavailableClasspath(validatedComponents.failures)

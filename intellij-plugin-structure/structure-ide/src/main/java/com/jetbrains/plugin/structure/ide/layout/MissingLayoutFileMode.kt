@@ -13,9 +13,10 @@ enum class MissingLayoutFileMode {
   IGNORE,
 
   /**
-   * When any classpath element is missing, skip it but retain the available classpath elements.
+   * When any classpath element is missing, it will be skipped while all other valid classpath elements remain in use.
+   * Additionally, warn about missing classpath elements in the log.
    */
-  SKIP_CLASSPATH,
+  SKIP_MISSING_ELEMENTS,
   /**
    * When any classpath element is missing, skip all classpath elements in the layout component.
    * Don't log anything.
