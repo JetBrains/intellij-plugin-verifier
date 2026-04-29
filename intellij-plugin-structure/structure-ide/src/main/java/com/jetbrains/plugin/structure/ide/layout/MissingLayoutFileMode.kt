@@ -6,7 +6,7 @@ package com.jetbrains.plugin.structure.ide.layout
 
 enum class MissingLayoutFileMode {
   /**
-   * Do not perform any validation of layout component classpath.
+   * Do not perform any validation of the layout component classpath.
    *
    * The IDE will be created anyway, but its structure might be incomplete or semantically incorrect.
     */
