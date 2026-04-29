@@ -84,7 +84,7 @@ class LayoutComponentsProviderTest {
       val ideProblem = first()
       assertTrue(ideProblem is LayoutComponentHasNonExistentClasspath)
       ideProblem as LayoutComponentHasNonExistentClasspath
-      ideProblem.layoutComponentName == "com.jetbrains.somePlugin"
+      assertEquals("com.jetbrains.somePlugin", ideProblem.layoutComponentName)
       val expectedMissingClasspathElements = listOf("missingComponentOne.jar", "missingComponentTwo.jar").map {
         IdeRelativePath(idePath, Path.of(it))
       }
