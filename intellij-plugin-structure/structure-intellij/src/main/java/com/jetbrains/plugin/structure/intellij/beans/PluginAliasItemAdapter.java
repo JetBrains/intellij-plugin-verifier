@@ -4,7 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.beans;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 public class PluginAliasItemAdapter extends XmlAdapter<PluginAliasBean, String> {
   @Override
