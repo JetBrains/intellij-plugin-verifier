@@ -7,8 +7,8 @@ package com.jetbrains.plugin.structure.intellij.extractor
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import org.jdom2.Document
 import org.jdom2.transform.JDOMSource
-import javax.xml.bind.JAXBContext
-import javax.xml.bind.JAXBException
+import jakarta.xml.bind.JAXBContext
+import jakarta.xml.bind.JAXBException
 
 object PluginBeanExtractor {
 
