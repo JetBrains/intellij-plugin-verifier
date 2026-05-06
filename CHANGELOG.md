@@ -9,8 +9,15 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Changed
 
 - Arbitrary JARs in `lib/modules` do not automatically become part of the `classpath` in `IdePlugin`. Any such JAR must belong to a plugin content module that is explicitly declared in the `plugin.xml` ([#1479](https://github.com/JetBrains/intellij-plugin-verifier/pull/1479))  
+- Reduce plugin-structure allocation and FS overhead in plugin loading paths ([#1476](https://github.com/JetBrains/intellij-plugin-verifier/pull/1476))
+- Reduce Plugin Verifier hot paths in bundled module lookup, plugin cloning, and XInclude resolution ([#1478](https://github.com/JetBrains/intellij-plugin-verifier/pull/1478)))
+- Update ByteBuddy to 1.18.8
+- Update Gradle to 9.4.1
+- Update BouncyCastle to 1.84
 
 ### Fixed
+
+- Fix NPE during ProductModuleV2 construction when missing classPath field ([#1470](https://github.com/JetBrains/intellij-plugin-verifier/pull/1470), [MP-8060](https://youtrack.jetbrains.com/issue/MP-8060))
 
 ## 1.402 - 2026-04-01
 
