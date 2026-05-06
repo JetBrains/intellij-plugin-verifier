@@ -6,19 +6,12 @@ package com.jetbrains.plugin.structure.intellij.plugin.loaders
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
-import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.isInvalidDescriptorProblem
-import com.jetbrains.plugin.structure.base.utils.exists
-import com.jetbrains.plugin.structure.base.utils.isDirectory
-import com.jetbrains.plugin.structure.base.utils.isJar
-import com.jetbrains.plugin.structure.base.utils.isZip
-import com.jetbrains.plugin.structure.base.utils.listFiles
+import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.base.utils.*
+import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.LibDirJarsClasspathProvider
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
-import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.module.ContentModuleScanner
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.problems.PluginLibDirectoryIsEmpty
@@ -90,6 +83,14 @@ internal class LibDirectoryPluginLoader(
       }
       results.add(innerCreator)
     }
+
+    val hardErrorResult = results.firstOrNull { creator ->
+      when (val result = creator.pluginCreationResult) {
+        is PluginCreationSuccess<*> -> false
+        is PluginCreationFail<*> -> result.errorsAndWarnings.any { it is PluginFileError }
+      }
+    }
+    if (hardErrorResult != null) return hardErrorResult
 
     val possibleResults = results
       .filter { it.isSuccess || hasOnlyInvalidDescriptorErrors(it) }

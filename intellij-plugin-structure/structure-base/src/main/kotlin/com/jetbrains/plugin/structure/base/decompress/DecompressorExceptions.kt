@@ -32,3 +32,9 @@ class EmptyEntryNameException(message: String) : DecompressorException(message) 
 }
 
 class DecompressorSizeLimitExceededException(val sizeLimit: Long) : DecompressorException("Decompressor size limit of $sizeLimit bytes exceeded")
+
+class DuplicateZipEntryException(message: String) : DecompressorException(message) {
+  companion object {
+    fun ofEntry(name: String) = DuplicateZipEntryException("Duplicate entry in archive: '$name' would overwrite an already-extracted file")
+  }
+}

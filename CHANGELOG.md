@@ -9,6 +9,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Changed
 
 - Arbitrary JARs in `lib/modules` do not automatically become part of the `classpath` in `IdePlugin`. Any such JAR must belong to a plugin content module that is explicitly declared in the `plugin.xml` ([#1479](https://github.com/JetBrains/intellij-plugin-verifier/pull/1479))  
+- Detect duplicate entries in ZIPs and JARs
 - Reduce plugin-structure allocation and FS overhead in plugin loading paths ([#1476](https://github.com/JetBrains/intellij-plugin-verifier/pull/1476))
 - Reduce Plugin Verifier hot paths in bundled module lookup, plugin cloning, and XInclude resolution ([#1478](https://github.com/JetBrains/intellij-plugin-verifier/pull/1478)))
 - Update ByteBuddy to 1.18.8

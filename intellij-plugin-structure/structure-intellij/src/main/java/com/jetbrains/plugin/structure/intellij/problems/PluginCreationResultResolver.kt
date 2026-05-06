@@ -81,6 +81,7 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     OptionalDependencyConfigFileIsEmpty::class,
     DependencyConstraintsDuplicates::class,
 
+    DuplicateEntryInJar::class,
     PluginLibDirectoryIsEmpty::class,
     PluginZipContainsMultipleFiles::class,
     PluginZipContainsSingleJarInRoot::class,

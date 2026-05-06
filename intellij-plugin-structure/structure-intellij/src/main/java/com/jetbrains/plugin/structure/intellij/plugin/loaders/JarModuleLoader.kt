@@ -9,9 +9,12 @@ import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.utils.getShortExceptionMessage
 import com.jetbrains.plugin.structure.base.utils.simpleName
+import com.jetbrains.plugin.structure.base.zip.ZipArchiveException
+import com.jetbrains.plugin.structure.base.zip.ZipFileHandler
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
+import com.jetbrains.plugin.structure.intellij.problems.DuplicateEntryInJar
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.jar.JarArchiveCannotBeOpenException
@@ -26,6 +29,16 @@ private val LOG: Logger = LoggerFactory.getLogger(JarModuleLoader::class.java)
 
 internal class JarModuleLoader(private val fileSystemProvider: JarFileSystemProvider) : PluginLoader<JarModuleLoader.Context> {
   override fun loadPlugin(pluginLoadingContext: Context): PluginCreator = with(pluginLoadingContext) {
+    try {
+      val duplicates = ZipFileHandler(jarPath).findDuplicateEntries()
+      if (duplicates.isNotEmpty()) {
+        val firstDuplicate = duplicates.first()
+        LOG.warn("Duplicate ZIP entry '{}' found in [{}]", firstDuplicate, jarPath)
+        return createInvalidPlugin(jarPath, descriptorPath, DuplicateEntryInJar(firstDuplicate, jarPath.simpleName))
+      }
+    } catch (e: ZipArchiveException) {
+      LOG.warn("Unable to scan [{}] for duplicate entries: {}", jarPath, e.getShortExceptionMessage())
+    }
     return try {
       PluginJar(jarPath, fileSystemProvider).use { jar ->
         when (val descriptor = jar.getPluginDescriptor(descriptorPath)) {

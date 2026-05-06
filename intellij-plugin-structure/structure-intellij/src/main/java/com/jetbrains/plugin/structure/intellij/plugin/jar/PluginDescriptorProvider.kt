@@ -5,13 +5,11 @@
 package com.jetbrains.plugin.structure.intellij.plugin.jar
 
 import com.jetbrains.plugin.structure.base.utils.getShortExceptionMessage
+import com.jetbrains.plugin.structure.base.zip.ZipArchiveException
+import com.jetbrains.plugin.structure.base.zip.ZipFileHandler
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager.Companion.META_INF
-import com.jetbrains.plugin.structure.jar.JarArchiveCannotBeOpenException
-import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
-import com.jetbrains.plugin.structure.jar.PLUGIN_XML
+import com.jetbrains.plugin.structure.jar.*
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
-import com.jetbrains.plugin.structure.jar.PluginJar
-import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
@@ -21,6 +19,15 @@ private const val DEFAULT_DESCRIPTOR_PATH = "$META_INF/$PLUGIN_XML"
 
 class PluginDescriptorProvider(private val fileSystemProvider: JarFileSystemProvider = SingletonCachingJarFileSystemProvider) {
   fun <T> resolveFromJar(jarFile: Path, onSuccess: (Found) -> T): T? {
+    try {
+      val duplicates = ZipFileHandler(jarFile).findDuplicateEntries()
+      if (duplicates.isNotEmpty()) {
+        LOG.warn("Duplicate ZIP entry '{}' found in [{}], skipping", duplicates.first(), jarFile)
+        return null
+      }
+    } catch (e: ZipArchiveException) {
+      LOG.warn("Unable to scan [{}] for duplicate entries: {}", jarFile, e.getShortExceptionMessage())
+    }
     return try {
       PluginJar(jarFile, fileSystemProvider).use { jar ->
         when (val descriptor = jar.getPluginDescriptor(DEFAULT_DESCRIPTOR_PATH)) {

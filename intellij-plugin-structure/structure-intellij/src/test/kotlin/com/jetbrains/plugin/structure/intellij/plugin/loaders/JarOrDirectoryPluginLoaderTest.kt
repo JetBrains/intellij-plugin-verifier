@@ -5,7 +5,9 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.IncorrectJarOrDirectory
 import com.jetbrains.plugin.structure.intellij.plugin.ClasspathOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.createZip
+import com.jetbrains.plugin.structure.intellij.plugin.createZipWithDuplicateEntry
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
+import com.jetbrains.plugin.structure.intellij.problems.DuplicateEntryInJar
 import com.jetbrains.plugin.structure.intellij.problems.IntelliJPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
@@ -107,6 +109,67 @@ class JarOrDirectoryPluginLoaderTest {
 
     assertTrue(pluginCreator.isSuccess)
     assertEquals(2, countingProvider.getFileSystemCalls)
+  }
+
+  @Test
+  fun `JAR in lib directory with duplicate plugin xml entry reports DuplicateEntryInJar not DescriptorNotFound`() {
+    val pluginLoaderRegistry = PluginLoaderProvider().apply {
+      register(LibDirectoryPluginLoader.Context::class.java, LibDirectoryPluginLoader(pluginLoaderRegistry = this, SingletonCachingJarFileSystemProvider))
+      register(JarPluginLoader.Context::class.java, JarPluginLoader(SingletonCachingJarFileSystemProvider))
+    }
+    val loader = pluginLoaderRegistry.get(LibDirectoryPluginLoader.Context::class.java)
+
+    val pluginLibDirPath: Path = temporaryFolder.newFolder("attack-plugin", "lib").toPath()
+    createZipWithDuplicateEntry(
+      zipPath = pluginLibDirPath.resolve("main.jar"),
+      duplicateEntryName = "$META_INF/$PLUGIN_XML",
+      firstContent = "<idea-plugin><name>Safe Plugin</name></idea-plugin>",
+      secondContent = "<idea-plugin><name>Malicious Plugin</name></idea-plugin>",
+    )
+
+    val context = LibDirectoryPluginLoader.Context(
+      pluginLibDirPath.parent, PLUGIN_XML, validateDescriptor = false, DefaultResourceResolver, parentPlugin = null,
+      IntelliJPluginCreationResultResolver(), hasDotNetDirectory = false
+    )
+    val pluginCreator = loader.loadPlugin(context)
+    assertFalse("Plugin with duplicate JAR entries should not be loaded successfully", pluginCreator.isSuccess)
+    val creationResult = pluginCreator.pluginCreationResult
+    assertTrue(creationResult is PluginCreationFail)
+    creationResult as PluginCreationFail
+    val problems = creationResult.errorsAndWarnings
+    assertEquals(1, problems.size)
+    val problem = problems.first()
+    assertTrue("Expected DuplicateEntryInJar but got ${problem::class.simpleName}", problem is DuplicateEntryInJar)
+  }
+
+  @Test
+  fun `JAR with duplicate plugin xml entry is rejected`() {
+    val pluginLoaderRegistry = PluginLoaderProvider().apply {
+      register(JarPluginLoader.Context::class.java, JarPluginLoader(SingletonCachingJarFileSystemProvider))
+    }
+    val loader = pluginLoaderRegistry.get(JarPluginLoader.Context::class.java)
+
+    val jarPath: Path = temporaryFolder.newFile("main.jar").toPath()
+    createZipWithDuplicateEntry(
+      zipPath = jarPath,
+      duplicateEntryName = "$META_INF/$PLUGIN_XML",
+      firstContent = "<idea-plugin><name>Safe Plugin</name></idea-plugin>",
+      secondContent = "<idea-plugin><name>Malicious Plugin</name></idea-plugin>",
+    )
+
+    val context = JarPluginLoader.Context(
+      jarPath, PLUGIN_XML, validateDescriptor = false, DefaultResourceResolver, parentPlugin = null,
+      IntelliJPluginCreationResultResolver(),
+    )
+    val pluginCreator = loader.loadPlugin(context)
+    assertFalse("Plugin with duplicate JAR entries should not be loaded successfully", pluginCreator.isSuccess)
+    val creationResult = pluginCreator.pluginCreationResult
+    assertTrue(creationResult is PluginCreationFail)
+    creationResult as PluginCreationFail
+    val problems = creationResult.errorsAndWarnings
+    assertEquals(1, problems.size)
+    val problem = problems.first()
+    assertTrue("Expected DuplicateEntryInJar but got ${problem::class.simpleName}", problem is DuplicateEntryInJar)
   }
 
   private class CountingJarFileSystemProvider(

@@ -38,6 +38,27 @@ interface ZipHandler<Z: ZipResource> {
    */
   @Throws(ZipArchiveException::class)
   fun containsEntry(entryName: CharSequence): Boolean
+
+  /**
+   * Returns the set of file entry names that appear more than once in this archive.
+   * Duplicate entries are a sign of a malformed or potentially malicious archive: different
+   * ZIP parsers may resolve the same name to different content depending on whether they use
+   * local file headers (sequential scanners) or the central directory (JVM ZipFile/JarFile).
+   *
+   * @throws ZipArchiveException when a ZIP archive is malformed or an I/O error occurred while reading it
+   */
+  @Throws(ZipArchiveException::class)
+  fun findDuplicateEntries(): Set<String> {
+    val seen = mutableSetOf<String>()
+    val duplicates = mutableSetOf<String>()
+    iterate { entry, _ ->
+      if (!entry.isDirectory && !seen.add(entry.name)) {
+        duplicates += entry.name
+      }
+      null
+    }
+    return duplicates
+  }
 }
 
 fun Path.newZipHandler(): ZipHandler<out ZipResource> {

@@ -4,11 +4,7 @@
 
 package com.jetbrains.plugin.structure.base.decompress
 
-import com.jetbrains.plugin.structure.base.utils.bufferedInputStream
-import com.jetbrains.plugin.structure.base.utils.createDir
-import com.jetbrains.plugin.structure.base.utils.createParentDirs
-import com.jetbrains.plugin.structure.base.utils.inputStream
-import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
+import com.jetbrains.plugin.structure.base.utils.*
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.CompressorException
 import org.apache.commons.compress.compressors.CompressorStreamFactory
@@ -48,7 +44,11 @@ internal sealed class Decompressor(private val outputSizeLimit: Long?) {
                 .get()
 
               outputFile.createParentDirs()
-              Files.copy(countingStream, outputFile)
+              try {
+                Files.copy(countingStream, outputFile)
+              } catch (_: java.nio.file.FileAlreadyExistsException) {
+                throw DuplicateZipEntryException.ofEntry(entry.name)
+              }
               remainingSize -= countingStream.count
               if (remainingSize < 0) {
                 throw DecompressorSizeLimitExceededException(actualSizeLimit)

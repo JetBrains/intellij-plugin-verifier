@@ -50,3 +50,10 @@ class PluginLibDirectoryIsEmpty : PluginFileError() {
   override val message
     get() = "The 'lib' directory must not be empty. Ensure that the libraries are defined correctly."
 }
+
+class DuplicateEntryInJar(private val entryName: String, private val jarName: String) : PluginFileError() {
+  override val message
+    get() = "The JAR '$jarName' contains a duplicate entry '$entryName'. " +
+      "This archive is malformed: different ZIP parsers may resolve the same entry to different content, " +
+      "which can be used to bypass security scanning."
+}

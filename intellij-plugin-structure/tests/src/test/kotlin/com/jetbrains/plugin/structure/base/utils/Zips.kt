@@ -2,6 +2,8 @@ package com.jetbrains.plugin.structure.base.utils
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream
 import java.io.ByteArrayOutputStream
 import java.nio.file.Path
@@ -10,6 +12,23 @@ import java.util.zip.ZipOutputStream
 
 private const val TAR_GZ_CONTENT_FILE_NAME = "a"
 private const val TAR_GZ_CONTENT_FILE_SIZE = 0
+
+internal fun createZipWithDuplicateEntry(
+  zipPath: Path,
+  duplicateEntryName: String,
+  firstContent: String,
+  secondContent: String,
+): Path {
+  ZipArchiveOutputStream(zipPath.outputStream()).use { zos ->
+    zos.putArchiveEntry(ZipArchiveEntry(duplicateEntryName))
+    zos.write(firstContent.toByteArray(Charsets.UTF_8))
+    zos.closeArchiveEntry()
+    zos.putArchiveEntry(ZipArchiveEntry(duplicateEntryName))
+    zos.write(secondContent.toByteArray(Charsets.UTF_8))
+    zos.closeArchiveEntry()
+  }
+  return zipPath
+}
 
 internal fun createZipBufferWithSingleEmptyFile(): ByteArray {
   val byteOut = ByteArrayOutputStream()

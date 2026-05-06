@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.base.utils
 
+import com.jetbrains.plugin.structure.base.decompress.DuplicateZipEntryException
 import com.jetbrains.plugin.structure.base.decompress.EntryNameTooLongException
 import com.jetbrains.plugin.structure.base.decompress.InvalidRelativeEntryNameException
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
@@ -58,6 +59,20 @@ class DecompressorTest {
         it.closeEntry()
       }
 
+      zipFile.extractTo(tempFolder.newFolder().toPath())
+    }
+  }
+
+  @Test
+  fun `duplicate file entry fails with DuplicateZipEntryException`() {
+    val zipFile = createZipWithDuplicateEntry(
+      tempFolder.newFile("duplicate.zip").toPath(),
+      duplicateEntryName = "file.txt",
+      firstContent = "first",
+      secondContent = "second",
+    )
+
+    Assert.assertThrows(DuplicateZipEntryException::class.java) {
       zipFile.extractTo(tempFolder.newFolder().toPath())
     }
   }

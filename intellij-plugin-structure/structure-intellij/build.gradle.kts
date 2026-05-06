@@ -8,4 +8,5 @@ dependencies {
 
   testImplementation(sharedLibs.junit)
   testImplementation(sharedLibs.mockk)
+  testImplementation(libs.commons.compress)
 }
