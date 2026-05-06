@@ -19,6 +19,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Fixed
 
 - Fix NPE during ProductModuleV2 construction when missing classPath field ([#1470](https://github.com/JetBrains/intellij-plugin-verifier/pull/1470), [MP-8060](https://youtrack.jetbrains.com/issue/MP-8060))
+- Fix path traversal in ZIP decompression on Windows filesystems 
 
 ## 1.402 - 2026-04-01
 

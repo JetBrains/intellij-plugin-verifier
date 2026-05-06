@@ -89,7 +89,11 @@ private fun getEntryFile(outputDir: Path, entry: Decompressor.Entry): Path {
   if (pathElements.any { it.length > Decompressor.FILE_NAME_LENGTH_LIMIT }) {
     throw EntryNameTooLongException.ofEntry(entry.name)
   }
-  return outputDir.resolve(normalizedEntryName)
+  val resolvedFile = outputDir.resolve(normalizedEntryName)
+  if (!resolvedFile.normalize().startsWith(outputDir.normalize())) {
+    throw InvalidRelativeEntryNameException.ofEntry(entry.name)
+  }
+  return resolvedFile
 }
 
 @Throws(DecompressorException::class)

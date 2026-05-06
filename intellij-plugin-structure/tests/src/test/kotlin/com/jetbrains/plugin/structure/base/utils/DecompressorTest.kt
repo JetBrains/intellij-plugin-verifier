@@ -1,5 +1,7 @@
 package com.jetbrains.plugin.structure.base.utils
 
+import com.google.common.jimfs.Configuration
+import com.google.common.jimfs.Jimfs
 import com.jetbrains.plugin.structure.base.decompress.DuplicateZipEntryException
 import com.jetbrains.plugin.structure.base.decompress.EntryNameTooLongException
 import com.jetbrains.plugin.structure.base.decompress.InvalidRelativeEntryNameException
@@ -77,6 +79,39 @@ class DecompressorTest {
     }
   }
 
+  @Test
+  fun `entry with Windows absolute path is rejected on Windows filesystem`() {
+    val zipFile = tempFolder.newFile("path-traversal.zip").toPath()
+    ZipOutputStream(Files.newOutputStream(zipFile)).use {
+      it.putNextEntry(ZipEntry("C:/Users/Public/pwned.txt"))
+      it.write("pwn".toByteArray())
+      it.closeEntry()
+    }
+
+    Jimfs.newFileSystem(Configuration.windows()).use { windowsFs ->
+      val outputDir = Files.createDirectories(windowsFs.getPath("C:\\output"))
+      Assert.assertThrows(InvalidRelativeEntryNameException::class.java) {
+        extractZip(zipFile, outputDir)
+      }
+    }
+  }
+
+  @Test
+  fun `entry with Windows absolute path with backslashes is rejected on Windows filesystem`() {
+    val zipFile = tempFolder.newFile("path-traversal.zip").toPath()
+    ZipOutputStream(Files.newOutputStream(zipFile)).use {
+      it.putNextEntry(ZipEntry("C:\\Users\\Public\\pwned.txt"))
+      it.write("pwn".toByteArray())
+      it.closeEntry()
+    }
+
+    Jimfs.newFileSystem(Configuration.windows()).use { windowsFs ->
+      val outputDir = Files.createDirectories(windowsFs.getPath("C:\\output"))
+      Assert.assertThrows(InvalidRelativeEntryNameException::class.java) {
+        extractZip(zipFile, outputDir)
+      }
+    }
+  }
   @Test
   fun `empty directory is properly decompressed`() {
     val zipFile = tempFolder.newFile("empty-dir.zip").toPath()
