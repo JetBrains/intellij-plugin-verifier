@@ -49,8 +49,20 @@ class FsHandlerFileSystemProvider(
     vararg attrs: FileAttribute<*>
   ): SeekableByteChannel = delegateProvider.newByteChannel(path.unwrapped, options, *attrs)
 
-  override fun newDirectoryStream(dir: Path, filter: DirectoryStream.Filter<in Path>): DirectoryStream<Path> =
-    delegateProvider.newDirectoryStream(dir.unwrapped, filter)
+  override fun newDirectoryStream(dir: Path, filter: DirectoryStream.Filter<in Path>): DirectoryStream<Path> {
+    val inner = delegateProvider.newDirectoryStream(dir.unwrapped, filter)
+    val fs = dir.fileSystem
+    return object : DirectoryStream<Path> {
+      override fun iterator(): MutableIterator<Path> = object : MutableIterator<Path> {
+        private val delegate = inner.iterator()
+        override fun hasNext(): Boolean = delegate.hasNext()
+        override fun next(): Path = FsHandlerPath(fs, delegate.next())
+        override fun remove() = delegate.remove()
+      }
+
+      override fun close() = inner.close()
+    }
+  }
 
   override fun createDirectory(dir: Path, vararg attrs: FileAttribute<*>?) {
     delegateProvider.createDirectory(dir.unwrapped, *attrs)
