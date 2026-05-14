@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import java.net.URI
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.AccessMode
+import java.nio.file.ClosedFileSystemException
 import java.nio.file.CopyOption
 import java.nio.file.DirectoryStream
 import java.nio.file.FileStore
@@ -47,10 +48,27 @@ class FsHandlerFileSystemProvider(
     path: Path,
     options: Set<OpenOption>,
     vararg attrs: FileAttribute<*>
-  ): SeekableByteChannel = delegateProvider.newByteChannel(path.unwrapped, options, *attrs)
+  ): SeekableByteChannel = retryOnClosedFs(path) { p ->
+    delegateProvider.newByteChannel(p, options, *attrs)
+  }
 
-  override fun newDirectoryStream(dir: Path, filter: DirectoryStream.Filter<in Path>): DirectoryStream<Path> =
-    delegateProvider.newDirectoryStream(dir.unwrapped, filter)
+  override fun newDirectoryStream(dir: Path, filter: DirectoryStream.Filter<in Path>): DirectoryStream<Path> {
+    val inner = delegateProvider.newDirectoryStream(dir.unwrapped, filter)
+    // Only wrap entries when the caller actually came through the FsHandlerPath layer.
+    // For a raw delegate path, dir.fileSystem is the underlying ZipFileSystem, which would
+    // produce FsHandlerPath instances that bypass the reopen mechanism anyway.
+    val fs = (dir as? FsHandlerPath)?.fileSystem ?: return inner
+    return object : DirectoryStream<Path> {
+      override fun iterator(): MutableIterator<Path> = object : MutableIterator<Path> {
+        private val delegate = inner.iterator()
+        override fun hasNext(): Boolean = delegate.hasNext()
+        override fun next(): Path = FsHandlerPath(fs, delegate.next())
+        override fun remove() = delegate.remove()
+      }
+
+      override fun close() = inner.close()
+    }
+  }
 
   override fun createDirectory(dir: Path, vararg attrs: FileAttribute<*>?) {
     delegateProvider.createDirectory(dir.unwrapped, *attrs)
@@ -92,13 +110,17 @@ class FsHandlerFileSystemProvider(
     path: Path,
     type: Class<A>,
     vararg options: LinkOption
-  ): A = delegateProvider.readAttributes(path.unwrapped, type, *options)
+  ): A = retryOnClosedFs(path) { p ->
+    delegateProvider.readAttributes(p, type, *options)
+  }
 
   override fun readAttributes(
     path: Path,
     attributes: String,
     vararg options: LinkOption
-  ): Map<String, Any> = delegateProvider.readAttributes(path.unwrapped, attributes, *options)
+  ): Map<String, Any> = retryOnClosedFs(path) { p ->
+    delegateProvider.readAttributes(p, attributes, *options)
+  }
 
   override fun setAttribute(path: Path, attribute: String, value: Any, vararg options: LinkOption): Unit =
     delegateProvider.setAttribute(path.unwrapped, attribute, value, *options)
@@ -119,4 +141,11 @@ class FsHandlerFileSystemProvider(
     } else {
       this
     }
+
+  // Handles the race where the delegate FS is closed between `unwrapped`'s isClosed check and the NIO call.
+  private inline fun <T> retryOnClosedFs(path: Path, op: (Path) -> T): T = try {
+    op(path.unwrapped)
+  } catch (_: ClosedFileSystemException) {
+    op(path.unwrapped)
+  }
 }
