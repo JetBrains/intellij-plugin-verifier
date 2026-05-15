@@ -45,9 +45,7 @@ data class ToolboxPluginDescriptor(
       problems.add(PropertyNotSpecified("version"))
     }
 
-    if (meta?.description.isNullOrBlank()) {
-      problems.add(PropertyNotSpecified("meta.description"))
-    }
+    validateDescriptionIsCorrect("meta.description", ToolboxPluginManager.DESCRIPTOR_NAME, meta?.description)
 
     if (meta?.vendor.isNullOrBlank()) {
       problems.add(PropertyNotSpecified("meta.vendor"))

@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.teamcity
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.validateDescriptionIsCorrect
 import com.jetbrains.plugin.structure.base.problems.validatePluginNameIsCorrect
 import com.jetbrains.plugin.structure.base.problems.validatePropertyLength
 import com.jetbrains.plugin.structure.teamcity.TeamcityPluginManager.Companion.DESCRIPTOR_NAME
@@ -47,9 +48,8 @@ internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginPr
   if (bean.info?.version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))
   }
-  if (bean.info?.description.isNullOrBlank()) {
-    problems.add(PropertyNotSpecified("description"))
-  }
+  validateDescriptionIsCorrect("description", DESCRIPTOR_NAME, bean.info?.description)
+
   if (bean.info?.vendor?.name.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("vendor name"))
   }

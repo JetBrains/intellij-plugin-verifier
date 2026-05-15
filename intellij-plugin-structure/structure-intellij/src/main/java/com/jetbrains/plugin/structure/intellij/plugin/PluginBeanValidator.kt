@@ -4,25 +4,11 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.jetbrains.plugin.structure.base.problems.MAX_NAME_LENGTH
-import com.jetbrains.plugin.structure.base.problems.NotBoolean
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
-import com.jetbrains.plugin.structure.base.problems.VendorCannotBeEmpty
-import com.jetbrains.plugin.structure.base.problems.validatePluginNameIsCorrect
-import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean
-import com.jetbrains.plugin.structure.intellij.beans.PluginBean
-import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
-import com.jetbrains.plugin.structure.intellij.beans.PluginVendorBean
-import com.jetbrains.plugin.structure.intellij.beans.ProductDescriptorBean
+import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.intellij.beans.*
 import com.jetbrains.plugin.structure.intellij.problems.*
-import com.jetbrains.plugin.structure.intellij.verifiers.MAX_PROPERTY_LENGTH
-import com.jetbrains.plugin.structure.intellij.verifiers.PluginIdVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.PluginUntilBuildVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.ProductReleaseVersionVerifier
-import com.jetbrains.plugin.structure.intellij.verifiers.ReusedDescriptorVerifier
+import com.jetbrains.plugin.structure.intellij.verifiers.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import org.jsoup.Jsoup
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -32,12 +18,6 @@ private const val MAX_VERSION_LENGTH = 64
 private const val MAX_PRODUCT_CODE_LENGTH = 15
 
 private val DEFAULT_TEMPLATE_NAMES = setOf("Plugin display name here", "My Framework Support", "Template", "Demo")
-private val DEFAULT_TEMPLATE_DESCRIPTIONS = setOf(
-  "Enter short description for your plugin here", "most HTML tags may be used", "example.com/my-framework"
-)
-// \u2013 - `–` (short dash) ans \u2014 - `—` (long dash)
-@Suppress("RegExpSimplifiable")
-private val STARTS_WITH_LATIN_SYMBOLS_REGEX = Regex("^[\\w\\s\\p{Punct}\\u2013\\u2014]{$MIN_DESCRIPTION_LENGTH,}")
 
 private val RELEASE_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
 
@@ -116,34 +96,8 @@ class PluginBeanValidator {
   }
 
   private fun ValidationContext.validateDescription(htmlDescription: String?) {
-    if (htmlDescription.isNullOrEmpty()) {
-      registerProblem(PropertyNotSpecified("description", descriptorPath))
-      return
-    }
-    validatePropertyLength("description", htmlDescription, MAX_LONG_PROPERTY_LENGTH)
-
-    val html = Jsoup.parseBodyFragment(htmlDescription)
-    val textDescription = html.text()
-
-    if (DEFAULT_TEMPLATE_DESCRIPTIONS.any { textDescription.contains(it) }) {
-      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.DESCRIPTION, textDescription))
-      return
-    }
-
-    val latinDescriptionPart = STARTS_WITH_LATIN_SYMBOLS_REGEX.find(textDescription)?.value
-    if (latinDescriptionPart == null) {
-      registerProblem(DescriptionNotStartingWithLatinCharacters())
-    }
-    val links = html.select("[href],img[src]")
-    links.forEach { link ->
-      val href = link.attr("abs:href")
-      val src = link.attr("abs:src")
-      if (href.startsWith("http://")) {
-        registerProblem(HttpLinkInDescription(href))
-      }
-      if (src.startsWith("http://")) {
-        registerProblem(HttpLinkInDescription(src))
-      }
+    validateDescriptionIsCorrect("description", htmlDescription, descriptorPath).forEach {
+      registerProblem(it)
     }
   }
 

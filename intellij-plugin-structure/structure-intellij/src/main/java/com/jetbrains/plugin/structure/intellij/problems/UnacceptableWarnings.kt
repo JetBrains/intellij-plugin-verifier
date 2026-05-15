@@ -16,14 +16,6 @@ class DescriptionNotStartingWithLatinCharacters : InvalidDescriptorProblem(
     get() = Level.UNACCEPTABLE_WARNING
 }
 
-class HttpLinkInDescription(link: String) : InvalidDescriptorProblem(
-  descriptorPath = "description",
-  detailedMessage = "All the links in the plugin description must be HTTPS: $link."
-) {
-  override val level
-    get() = Level.UNACCEPTABLE_WARNING
-}
-
 class ServiceExtensionPointPreloadNotSupported(
   private val serviceType: IdePluginContentDescriptor.ServiceType
 ) : PluginProblem() {

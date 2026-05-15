@@ -42,7 +42,7 @@ class UnexpectedDescriptorElements(
 }
 
 class TooLongPropertyValue(
-  descriptorPath: String,
+  descriptorPath: String?,
   propertyName: String,
   propertyValueLength: Int,
   maxLength: Int
@@ -188,6 +188,28 @@ class InvalidUrl(url: String, descriptorPath: String? = null) : InvalidDescripto
   descriptorPath = descriptorPath,
   detailedMessage = "The url <$url> is invalid."
 ) {
+  override val level
+    get() = Level.ERROR
+}
+
+class PropertyWithDefaultValue(
+  descriptorPath: String?,
+  property: DefaultProperty,
+  value: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "One of the parameters matches the default value. Please ensure that ${property.propertyName} " +
+          "is not equal to the default value '$value'."
+) {
+  enum class DefaultProperty(val propertyName: String) {
+    ID("<id>"),
+    NAME("<name>"),
+    VENDOR("<vendor>"),
+    VENDOR_URL("<vendor url>"),
+    VENDOR_EMAIL("<vendor email>"),
+    DESCRIPTION("<description>")
+  }
+
   override val level
     get() = Level.ERROR
 }
