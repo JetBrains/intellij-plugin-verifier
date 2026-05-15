@@ -123,7 +123,7 @@ class FleetPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTes
     assertEquals("fleet.language.css", plugin.pluginId)
     assertEquals("CSS", plugin.pluginName)
     assertEquals("JetBrains", plugin.vendor)
-    assertEquals("CSS language support", plugin.description)
+    assertEquals("CSS language support long enough description", plugin.description)
     assertEquals("1.0.0-SNAPSHOT", plugin.pluginVersion)
     assertEquals(setOf("AIR", "AINEXT"), plugin.supportedProducts)
     assertEquals(FleetShipVersionRange("1.1000.1", "1.1001.10"), plugin.compatibleShipVersionRange)

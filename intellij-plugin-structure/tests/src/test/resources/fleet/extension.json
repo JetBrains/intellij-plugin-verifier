@@ -5,7 +5,7 @@
   "meta": {
     "frontend-only": "true",
     "readableName": "CSS",
-    "description": "CSS language support",
+    "description": "CSS language support long enough description",
     "vendor": "JetBrains",
     "visible": "false",
     "supportedProducts": "AIR,AINEXT"

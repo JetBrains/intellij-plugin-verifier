@@ -2,6 +2,8 @@ package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
+import com.jetbrains.plugin.structure.base.problems.DescriptionNotStartingWithLatinCharacters
+import com.jetbrains.plugin.structure.base.problems.HttpLinkInDescription
 import com.jetbrains.plugin.structure.base.problems.IncorrectZipOrJarFile
 import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
@@ -10,6 +12,7 @@ import com.jetbrains.plugin.structure.base.problems.NotNumber
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.PropertyWithDefaultValue
 import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
@@ -516,7 +519,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
 
   @Test
   fun `short latin description`() {
-    `test plugin xml unacceptable warnings`(
+    `test plugin xml warnings`(
       perfectXmlBuilder.modify {
         description = "<description>Too short latin description bla-bla-bla</description>"
       },
@@ -528,7 +531,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
   fun `non latin description`() {
     val desc = getRandomNonLatinSentence(5, minWordLength = 8)
     assertTrue(desc.length > 40)
-    `test plugin xml unacceptable warnings`(
+    `test plugin xml warnings`(
       perfectXmlBuilder.modify {
         description = "<description>$desc</description>"
       },
@@ -541,7 +544,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
     val nonLatinDesc = getRandomNonLatinSentence(5, minWordLength = 8)
     val desc = "$nonLatinDesc, Latin description"
     assertTrue(desc.length > 40)
-    `test plugin xml unacceptable warnings`(
+    `test plugin xml warnings`(
       perfectXmlBuilder.modify {
         description = "<description>$desc</description>"
       },
@@ -554,7 +557,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
     val nonLatinDesc = getRandomNonLatinSentence(5)
     val desc = "$nonLatinDesc $LONG_LATIN_DESCRIPTION"
     assertTrue(desc.length > 40)
-    `test plugin xml unacceptable warnings`(
+    `test plugin xml warnings`(
       perfectXmlBuilder.modify {
         description = "<description>$desc</description>"
       },
@@ -642,7 +645,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
 
   @Test
   fun `html description`() {
-    `test plugin xml unacceptable warnings`(
+    `test plugin xml warnings`(
       perfectXmlBuilder.modify {
         description = """<description><![CDATA[
           <a href=\"https://github.com/myamazinguserprofile/myamazingproject\">short text</a>

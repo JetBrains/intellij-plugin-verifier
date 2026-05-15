@@ -1,12 +1,13 @@
 package com.jetbrains.plugin.structure.hub.mock
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.jetbrains.plugin.structure.teamcity.recipe.randomAlphanumeric
 
 data class HubPluginJsonBuilder(
     var key: String? = "key",
     var name: String? = "name",
     var version: String? = "version",
-    var description: String? = "description",
+    var description: String? = randomAlphanumeric(40),
     var author: String? = "A B a@gmail.com",
     var homeUrl: String? = "www.google.com",
     var iconUrl: String? = null,

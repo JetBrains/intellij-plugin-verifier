@@ -42,7 +42,7 @@ class UnexpectedDescriptorElements(
 }
 
 class TooLongPropertyValue(
-  descriptorPath: String,
+  descriptorPath: String?,
   propertyName: String,
   propertyValueLength: Int,
   maxLength: Int
@@ -190,4 +190,42 @@ class InvalidUrl(url: String, descriptorPath: String? = null) : InvalidDescripto
 ) {
   override val level
     get() = Level.ERROR
+}
+
+class PropertyWithDefaultValue(
+  descriptorPath: String?,
+  property: DefaultProperty,
+  value: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "One of the parameters matches the default value. Please ensure that ${property.propertyName} " +
+          "is not equal to the default value '$value'."
+) {
+  enum class DefaultProperty(val propertyName: String) {
+    ID("<id>"),
+    NAME("<name>"),
+    VENDOR("<vendor>"),
+    VENDOR_URL("<vendor url>"),
+    VENDOR_EMAIL("<vendor email>"),
+    DESCRIPTION("<description>")
+  }
+
+  override val level
+    get() = Level.ERROR
+}
+
+class DescriptionNotStartingWithLatinCharacters : InvalidDescriptorProblem(
+  descriptorPath = "description",
+  detailedMessage = "The plugin description must start with Latin characters and have at least $MIN_DESCRIPTION_LENGTH characters."
+) {
+  override val level
+    get() = Level.WARNING
+}
+
+class HttpLinkInDescription(link: String) : InvalidDescriptorProblem(
+  descriptorPath = "description",
+  detailedMessage = "All the links in the plugin description must be HTTPS: $link."
+) {
+  override val level
+    get() = Level.UNACCEPTABLE_WARNING
 }

@@ -125,7 +125,7 @@ class ToolboxPluginMockTest(fileSystemType: FileSystemType) :
         assertEquals("chunga.changa", plugin.pluginId)
         assertEquals("Chunga Changa", plugin.pluginName)
         assertEquals("JetBrains", plugin.vendor)
-        assertEquals("Chunga Changa language support", plugin.description)
+        assertEquals("Chunga Changa language support plugin description", plugin.description)
         assertEquals("0.1", plugin.pluginVersion)
         assertEquals(ToolboxVersionRange("1.1.1", "1.1.1"), plugin.compatibleVersionRange)
     }

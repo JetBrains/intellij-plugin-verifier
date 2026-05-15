@@ -95,9 +95,9 @@ class FleetInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManage
 
   @Test
   fun `description is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.description")) { it.copy(meta = it.meta?.copy(description = null)) }
-    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.description")) { it.copy(meta = it.meta?.copy(description = "")) }
-    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.description")) { it.copy(meta = it.meta?.copy(description = "\n")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.description", "extension.json")) { it.copy(meta = it.meta?.copy(description = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.description", "extension.json")) { it.copy(meta = it.meta?.copy(description = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("compatibleShipVersionRange.description", "extension.json")) { it.copy(meta = it.meta?.copy(description = "\n")) }
   }
 
   @Test

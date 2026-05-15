@@ -11,6 +11,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class ToolboxInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginManagerTest<ToolboxPlugin, ToolboxPluginManager>(fileSystemType) {
+  private val LONG_LATIN_DESCRIPTION = "Latin description, 1234 &amp; ;,.!-–— () long enough"
+
   override fun createManager(extractDirectory: Path) = ToolboxPluginManager.createManager(extractDirectory)
 
   @Test(expected = IllegalArgumentException::class)
@@ -93,10 +95,11 @@ class ToolboxInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMana
 
   @Test
   fun `description is not specified`() {
-    checkInvalidPlugin(PropertyNotSpecified("meta.description")) { it.copy(meta = it.meta?.copy(description = null)) }
-    checkInvalidPlugin(PropertyNotSpecified("meta.description")) { it.copy(meta = it.meta?.copy(description = "")) }
-    checkInvalidPlugin(PropertyNotSpecified("meta.description")) { it.copy(meta = it.meta?.copy(description = "\n")) }
-    checkValidPlugin { it.copy(meta = it.meta?.copy(description = "herring herring herring")) }
+    checkInvalidPlugin(PropertyNotSpecified("meta.description", "extension.json")) { it.copy(meta = it.meta?.copy(description = null)) }
+    checkInvalidPlugin(PropertyNotSpecified("meta.description", "extension.json")) { it.copy(meta = it.meta?.copy(description = "")) }
+    checkInvalidPlugin(PropertyNotSpecified("meta.description", "extension.json")) { it.copy(meta = it.meta?.copy(description = "\n")) }
+    checkValidWithWarningsPlugin(listOf(DescriptionNotStartingWithLatinCharacters())) { it.copy(meta = it.meta?.copy(description = "herring herring herring")) }
+    checkValidPlugin { it.copy(meta = it.meta?.copy(description = LONG_LATIN_DESCRIPTION)) }
   }
 
   @Test
@@ -173,5 +176,12 @@ class ToolboxInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMana
   private fun checkValidPlugin(descriptorUpdater: (ToolboxPluginDescriptor) -> ToolboxPluginDescriptor) {
     val descriptor = descriptorUpdater(ToolboxPluginDescriptor.parse(getMockPluginJsonContent("extension")))
     Assert.assertEquals(emptyList<PluginProblem>(), descriptor.validate())
+  }
+
+  private fun checkValidWithWarningsPlugin(expectedWarnings: List<PluginProblem>, descriptorUpdater: (ToolboxPluginDescriptor) -> ToolboxPluginDescriptor) {
+    val descriptor = descriptorUpdater(ToolboxPluginDescriptor.parse(getMockPluginJsonContent("extension")))
+    val problems = descriptor.validate()
+    Assert.assertTrue(problems.all { it.level == PluginProblem.Level.WARNING })
+    Assert.assertEquals(expectedWarnings, descriptor.validate())
   }
 }

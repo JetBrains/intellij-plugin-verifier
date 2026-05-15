@@ -1,9 +1,9 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.PropertyWithDefaultValue
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
 import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
-import com.jetbrains.plugin.structure.intellij.problems.PropertyWithDefaultValue
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
 
 val DEFAULT_ILLEGAL_PREFIXES = listOf("com.example", "net.example", "org.example", "edu.example", "com.intellij", "org.jetbrains")
