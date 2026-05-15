@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
+import com.jetbrains.plugin.structure.base.problems.HttpLinkInDescription
 import com.jetbrains.plugin.structure.base.problems.IncorrectZipOrJarFile
 import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
 import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
@@ -10,6 +11,7 @@ import com.jetbrains.plugin.structure.base.problems.NotNumber
 import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.problems.PropertyWithDefaultValue
 import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
 import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
 import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
