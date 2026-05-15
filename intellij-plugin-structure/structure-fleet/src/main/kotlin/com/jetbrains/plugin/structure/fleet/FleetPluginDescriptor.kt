@@ -46,7 +46,12 @@ data class FleetPluginDescriptor(
     }
 
     val metaSpec = FleetDescriptorSpec.Meta
-    validateDescriptionIsCorrect(metaSpec.DESCRIPTION_FIELD_NAME, FleetDescriptorSpec.DESCRIPTOR_FILE_NAME, meta?.description)
+    validateDescriptionIsCorrect(
+      propertyName = metaSpec.relativeFieldPath(metaSpec.DESCRIPTION_FIELD_NAME),
+      descriptorPath = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
+      htmlDescription = meta?.description,
+      problems = problems
+    )
 
     if (meta?.vendor.isNullOrBlank()) {
       problems.add(PropertyNotSpecified(metaSpec.relativeFieldPath(metaSpec.VENDOR_FIELD_NAME)))

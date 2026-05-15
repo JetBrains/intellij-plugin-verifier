@@ -60,10 +60,15 @@ internal fun validateHubPluginBean(manifest: HubPluginManifest): List<PluginProb
     problems.add(PropertyNotSpecified("author"))
   }
 
-  validateDescriptionIsCorrect("description", DESCRIPTOR_NAME, manifest.description)
+  validateDescriptionIsCorrect(
+    propertyName = "description",
+    descriptorPath = DESCRIPTOR_NAME,
+    htmlDescription = manifest.description,
+    problems = problems
+  )
 
   val version = manifest.pluginVersion
-  if (version == null || version.isBlank()) {
+  if (version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))
   }
 

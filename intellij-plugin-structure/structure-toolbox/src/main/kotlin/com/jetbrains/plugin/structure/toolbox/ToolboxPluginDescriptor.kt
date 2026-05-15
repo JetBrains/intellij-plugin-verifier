@@ -45,7 +45,12 @@ data class ToolboxPluginDescriptor(
       problems.add(PropertyNotSpecified("version"))
     }
 
-    validateDescriptionIsCorrect("meta.description", ToolboxPluginManager.DESCRIPTOR_NAME, meta?.description)
+    validateDescriptionIsCorrect(
+      propertyName = "meta.description",
+      descriptorPath = ToolboxPluginManager.DESCRIPTOR_NAME,
+      htmlDescription = meta?.description,
+      problems = problems
+    )
 
     if (meta?.vendor.isNullOrBlank()) {
       problems.add(PropertyNotSpecified("meta.vendor"))

@@ -3,6 +3,8 @@ package com.jetbrains.pluginverifier.tests
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.problems.DescriptionNotStartingWithLatinCharacters
+import com.jetbrains.plugin.structure.base.problems.HttpLinkInDescription
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
@@ -585,7 +587,65 @@ class ExistingPluginValidationTest : BasePluginTest() {
         assertNoProblems((result as PluginCreationSuccess).warnings)
     }
 
-  private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
+    @Test
+    fun `new plugin has short description`() {
+        val ideaPlugin = ideaPlugin(description = "Too short latin description")
+        val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = false)
+        val result = buildPluginWithResult(problemResolver) {
+            dir("META-INF") {
+                file("plugin.xml") {
+                    """
+            <idea-plugin>
+              $ideaPlugin
+            </idea-plugin>
+          """
+                }
+            }
+        }
+        result.assertContains<DescriptionNotStartingWithLatinCharacters>("Invalid plugin descriptor 'description'. The plugin description must start with Latin characters and have at least 40 characters.")
+    }
+
+    @Test
+    fun `existing plugin has short description`() {
+        val ideaPlugin = ideaPlugin(description = "Too short latin description")
+        val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
+        val result = buildPluginWithResult(problemResolver) {
+            dir("META-INF") {
+                file("plugin.xml") {
+                    """
+            <idea-plugin>
+              $ideaPlugin
+            </idea-plugin>
+          """
+                }
+            }
+        }
+        result as PluginCreationSuccess
+        assertEquals(1, result.unacceptableWarnings.size)
+        result.assertContains<DescriptionNotStartingWithLatinCharacters>("Invalid plugin descriptor 'description'. The plugin description must start with Latin characters and have at least 40 characters.")
+    }
+
+    @Test
+    fun `jetbrains plugin has short description`() {
+        val ideaPlugin = ideaPlugin(description = "Too short latin description")
+        val problemResolver = getIntelliJPluginCreationResolver(isExistingPlugin = true)
+        val result = buildPluginWithResult(problemResolver) {
+            dir("META-INF") {
+                file("plugin.xml") {
+                    """
+            <idea-plugin>
+              $ideaPlugin
+            </idea-plugin>
+          """
+                }
+            }
+        }
+        result as PluginCreationSuccess
+        assertEquals(1, result.unacceptableWarnings.size)
+        result.assertContains<DescriptionNotStartingWithLatinCharacters>("Invalid plugin descriptor 'description'. The plugin description must start with Latin characters and have at least 40 characters.")
+    }
+
+    private fun pluginOf(header: String): ContentBuilder.() -> Unit = {
     dir("META-INF") {
       file("plugin.xml") {
         """

@@ -21,7 +21,7 @@ import org.junit.rules.TemporaryFolder
 import java.nio.file.FileSystem
 import java.nio.file.Path
 
-class JarOrDirectoryPluginLoaderTest {
+class 123wqerdfgb ./**/JarOrDirectoryPluginLoaderTest {
   @Rule
   @JvmField
   val temporaryFolder = TemporaryFolder()

@@ -18,7 +18,12 @@ fun validateYouTrackManifest(manifest: YouTrackAppManifest): List<PluginProblem>
 
   validateTitle(manifest.title, problems)
 
-  problems.addAll(validateDescriptionIsCorrect(YouTrackAppFields.Manifest.DESCRIPTION, manifest.description, DESCRIPTOR_NAME))
+  validateDescriptionIsCorrect(
+    propertyName = YouTrackAppFields.Manifest.DESCRIPTION,
+    descriptorPath = DESCRIPTOR_NAME,
+    htmlDescription = manifest.description,
+    problems = problems
+  )
 
   if (manifest.version.isNullOrBlank()) {
     problems.add(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.VERSION))

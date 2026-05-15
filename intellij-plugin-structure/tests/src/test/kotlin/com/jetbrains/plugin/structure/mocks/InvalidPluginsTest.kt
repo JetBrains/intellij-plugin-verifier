@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
+import com.jetbrains.plugin.structure.base.problems.DescriptionNotStartingWithLatinCharacters
 import com.jetbrains.plugin.structure.base.problems.HttpLinkInDescription
 import com.jetbrains.plugin.structure.base.problems.IncorrectZipOrJarFile
 import com.jetbrains.plugin.structure.base.problems.InvalidPluginName

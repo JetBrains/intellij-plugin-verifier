@@ -38,9 +38,13 @@ fun validatePluginNameIsCorrect(descriptor: String, name: String): PluginProblem
     null
   }
 
-fun validateDescriptionIsCorrect(propertyName: String, htmlDescription: String?, descriptorPath: String?): List<PluginProblem> {
+fun validateDescriptionIsCorrect(propertyName: String, descriptorPath: String?, htmlDescription: String?, problems: MutableList<PluginProblem>) {
+  problems.addAll(validateDescriptionIsCorrect(propertyName, descriptorPath, htmlDescription))
+}
+
+fun validateDescriptionIsCorrect(propertyName: String, descriptorPath: String?, htmlDescription: String?): List<PluginProblem> {
   val problems = mutableListOf<PluginProblem>()
-  if (htmlDescription.isNullOrEmpty()) {
+  if (htmlDescription.isNullOrBlank()) {
     problems.add(PropertyNotSpecified(propertyName, descriptorPath))
     return problems
   }

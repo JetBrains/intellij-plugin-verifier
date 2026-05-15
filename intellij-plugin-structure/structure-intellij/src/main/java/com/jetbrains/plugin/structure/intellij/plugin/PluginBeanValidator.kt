@@ -96,7 +96,11 @@ class PluginBeanValidator {
   }
 
   private fun ValidationContext.validateDescription(htmlDescription: String?) {
-    validateDescriptionIsCorrect("description", htmlDescription, descriptorPath).forEach {
+    validateDescriptionIsCorrect(
+        propertyName = "description",
+        descriptorPath = descriptorPath,
+        htmlDescription = htmlDescription
+    ).forEach {
       registerProblem(it)
     }
   }

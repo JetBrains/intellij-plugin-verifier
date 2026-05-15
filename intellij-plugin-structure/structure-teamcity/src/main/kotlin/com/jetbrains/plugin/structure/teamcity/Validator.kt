@@ -48,7 +48,12 @@ internal fun validateTeamcityPluginBean(bean: TeamcityPluginBean): List<PluginPr
   if (bean.info?.version.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("version"))
   }
-  validateDescriptionIsCorrect("description", DESCRIPTOR_NAME, bean.info?.description)
+  validateDescriptionIsCorrect(
+      propertyName = "description",
+      descriptorPath = DESCRIPTOR_NAME,
+      htmlDescription = bean.info?.description,
+      problems = problems
+  )
 
   if (bean.info?.vendor?.name.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("vendor name"))
