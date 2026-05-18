@@ -120,6 +120,10 @@ class BytecodeVerifier(
     }
 
     for (method in classFile.methods) {
+      // Skip synthetic bridge methods entirely — they are compiler-generated and both
+      // their signatures and body may reference types that the developer never explicitly used.
+      if (method.isBridgeMethod) continue
+
       for (verifier in methodVerifiers) {
         verifier.verify(method, context)
       }
