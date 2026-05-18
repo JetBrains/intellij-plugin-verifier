@@ -9,28 +9,6 @@ import com.jetbrains.plugin.structure.base.problems.ProblemSolutionHint
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 
-class PropertyWithDefaultValue(
-  descriptorPath: String,
-  property: DefaultProperty,
-  value: String
-) : InvalidDescriptorProblem(
-  descriptorPath = descriptorPath,
-  detailedMessage = "One of the parameters matches the default value. Please ensure that ${property.propertyName} " +
-                    "is not equal to the default value '$value'."
-) {
-  enum class DefaultProperty(val propertyName: String) {
-    ID("<id>"),
-    NAME("<name>"),
-    VENDOR("<vendor>"),
-    VENDOR_URL("<vendor url>"),
-    VENDOR_EMAIL("<vendor email>"),
-    DESCRIPTION("<description>")
-  }
-
-  override val level
-    get() = Level.ERROR
-}
-
 class InvalidDependencyId(descriptorPath: String, invalidPluginId: String) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The dependency ID is invalid. '${invalidPluginId.trim()}' cannot be empty and must not contain " +

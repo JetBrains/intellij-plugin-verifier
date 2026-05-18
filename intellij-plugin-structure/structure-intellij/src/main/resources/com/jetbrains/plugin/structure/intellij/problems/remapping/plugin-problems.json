@@ -6,12 +6,14 @@
     "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithJustBranch": "unacceptable-warning",
     "com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithMagicNumber": "unacceptable-warning",
     "com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat": "warning",
-    "com.jetbrains.plugin.structure.base.problems.InvalidPluginName": "ignore"
+    "com.jetbrains.plugin.structure.base.problems.InvalidPluginName": "ignore",
+    "com.jetbrains.plugin.structure.base.problems.DescriptionNotStartingWithLatinCharacters": "unacceptable-warning"
   },
   "new-plugin": {
     "com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix": "error",
     "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId": "error",
-    "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName": "error"
+    "com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName": "error",
+    "com.jetbrains.plugin.structure.base.problems.DescriptionNotStartingWithLatinCharacters": "error"
   },
   "jetbrains-plugin": {
     "com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix": "ignore",

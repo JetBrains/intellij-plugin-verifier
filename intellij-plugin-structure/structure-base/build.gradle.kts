@@ -10,6 +10,8 @@ dependencies {
   implementation(sharedLibs.xz)
   implementation(libs.trove4j)
 
+  implementation(sharedLibs.jsoup)
+
   //Provides English class capable of pluralizing english words.
   implementation(libs.evo.inflector)
 }

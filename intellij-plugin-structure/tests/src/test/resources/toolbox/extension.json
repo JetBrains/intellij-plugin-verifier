@@ -3,7 +3,7 @@
   "version": "0.1",
   "meta": {
     "readableName": "Chunga Changa",
-    "description": "Chunga Changa language support",
+    "description": "Chunga Changa language support plugin description",
     "vendor": "JetBrains"
   },
   "apiVersion": "1.1.1"
