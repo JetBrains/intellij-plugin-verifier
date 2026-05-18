@@ -6,7 +6,7 @@ package com.jetbrains.plugin.structure.intellij.beans;
 
 import org.jetbrains.annotations.Nullable;
 
-import javax.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlAttribute;
 
 public class ContentModuleDependencyBean {
   @XmlAttribute(name = "name") public String moduleName;

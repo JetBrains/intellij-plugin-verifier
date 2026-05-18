@@ -7,8 +7,8 @@ package com.jetbrains.plugin.structure.dotnet.beans
 import com.jetbrains.plugin.structure.xml.DefaultXMLDocumentBuilderProvider
 import org.xml.sax.SAXParseException
 import java.io.InputStream
-import javax.xml.bind.JAXBContext
-import javax.xml.bind.UnmarshalException
+import jakarta.xml.bind.JAXBContext
+import jakarta.xml.bind.UnmarshalException
 
 
 object ReSharperPluginBeanExtractor {

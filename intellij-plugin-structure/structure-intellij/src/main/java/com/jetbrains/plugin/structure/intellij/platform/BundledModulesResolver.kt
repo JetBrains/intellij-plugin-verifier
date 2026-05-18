@@ -9,7 +9,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Files
 import java.nio.file.Path
-import javax.xml.bind.JAXBException
+import jakarta.xml.bind.JAXBException
 import kotlin.streams.asSequence
 
 private val LOG: Logger = LoggerFactory.getLogger(BundledModulesResolver::class.java)

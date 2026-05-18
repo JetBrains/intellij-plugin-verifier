@@ -4,7 +4,7 @@
 
 package com.jetbrains.plugin.structure.teamcity.beans
 
-import javax.xml.bind.annotation.*
+import jakarta.xml.bind.annotation.*
 
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlRootElement(name = "teamcity-plugin")

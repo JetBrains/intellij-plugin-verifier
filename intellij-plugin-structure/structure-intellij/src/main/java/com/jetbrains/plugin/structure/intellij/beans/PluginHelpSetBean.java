@@ -4,7 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.beans;
 
-import javax.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlAttribute;
 
 public class PluginHelpSetBean {
   @XmlAttribute(name = "file") public String file;
