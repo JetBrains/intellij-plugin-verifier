@@ -28,6 +28,7 @@ private val LOG: Logger = LoggerFactory.getLogger(OverrideOnlyMethodUsageProcess
 private const val overrideOnlyAnnotationName = "org/jetbrains/annotations/ApiStatus\$OverrideOnly"
 
 private val overrideOnlyUsageFilter = CompositeApiUsageFilter(
+  NonOverridableMethodUsageFilter(),
   SameModuleUsageFilter(overrideOnlyAnnotationName),
   CallOfSuperConstructorOverrideOnlyAllowedUsageFilter(),
   DelegateCallOnOverrideOnlyUsageFilter().withBridgeMethodSupport(),

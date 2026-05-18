@@ -20,6 +20,9 @@ class KtClassNode(private val classNode: ClassNode, private val metadata: Kotlin
   val isEnumClass: Boolean
     get() = cls.kind == ClassKind.ENUM_CLASS
 
+  val isObject: Boolean
+    get() = cls.kind == ClassKind.OBJECT || cls.kind == ClassKind.COMPANION_OBJECT
+
   fun isInternalField(fieldName: String): Boolean {
     return cls.properties.any { it.name == fieldName && it.visibility == Visibility.INTERNAL }
   }
