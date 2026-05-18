@@ -10,6 +10,10 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
+## 1.404 - 2026-05-18
+
+### Fixed
+
 - Fix race conditions causing `ClosedFileSystemException` when verifying multiple plugins ([#1488](https://github.com/JetBrains/intellij-plugin-verifier/pull/1488), [#1487](https://github.com/JetBrains/intellij-plugin-verifier/pull/1487), [MP-7267](https://youtrack.jetbrains.com/issue/MP-7267), [MP-7468](https://youtrack.jetbrains.com/issue/MP-7468))
 
 ## 1.403 - 2026-05-06
