@@ -62,6 +62,14 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
   }
 
   @Test
+  fun `dependency just on com_intellij_java`() {
+    val plugin = MockIdePlugin(dependencies = listOf(PluginV1Dependency.Mandatory("com.intellij.java")))
+    verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
+
+    assertEquals(0, problems.size)
+  }
+
+  @Test
   fun `plugin with a single v2 dependency as a ModuleV2Dependency`() {
     val plugin = MockIdePlugin(
       pluginId = "com.intellij.classic.ui",

@@ -10,6 +10,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
+- Plugins with dependency only on the Java plugin aren't considered legacy ([MP-8104](https://youtrack.jetbrains.com/issue/MP-8104))
+
 ## 1.404 - 2026-05-18
 
 ### Fixed
