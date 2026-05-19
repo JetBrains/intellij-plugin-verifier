@@ -11,23 +11,23 @@ import com.jetbrains.plugin.structure.intellij.beans.PluginBean
  */
 internal class PluginModuleResolver {
   fun resolvePluginModules(pluginBean: PluginBean): List<Module> {
-    val modules = pluginBean.pluginContent.flatMap { it.modules }
-    //for now, it's supposed that all modules in a plugin have the same namespace
-    val namespace = pluginBean.pluginContent.asSequence().mapNotNull { it.namespace }.firstOrNull()
-    //if the namespace isn't specified explicitly, a synthetic namespace is used in dependencies between private modules of the plugin
-    val actualNamespace = namespace ?: "${pluginBean.id}_\$implicit"
-    return modules.filter { it.moduleName != null }
-      .map {
-        val name = it.moduleName!!
-        val loadingRule = ModuleLoadingRule.create(it.loadingRule)
-        if (it.value.isNullOrBlank()) {
-          val configFile = "../${name.replace("/", ".")}.xml"
-          Module.FileBasedModule(name, namespace, actualNamespace, loadingRule, configFile)
-        } else {
-          val cDataContent = it.value!!
-          Module.InlineModule(name, namespace, actualNamespace, loadingRule, cDataContent)
+    return pluginBean.pluginContent.flatMap { contentBean ->
+      val namespace = contentBean.namespace
+      //if the namespace isn't specified explicitly, a synthetic namespace is used in dependencies between private modules of the plugin
+      val actualNamespace = namespace ?: "${pluginBean.id}_\$implicit"
+      contentBean.modules
+        .mapNotNull {
+          val name = it.moduleName ?: return@mapNotNull null
+          val loadingRule = ModuleLoadingRule.create(it.loadingRule)
+          if (it.value.isNullOrBlank()) {
+            val configFile = "../${name.replace("/", ".")}.xml"
+            Module.FileBasedModule(name, namespace, actualNamespace, loadingRule, configFile)
+          } else {
+            val cDataContent = it.value!!
+            Module.InlineModule(name, namespace, actualNamespace, loadingRule, cDataContent)
+          }
         }
-      }
+    }
   }
 
   fun supports(pluginBean: PluginBean): Boolean = pluginBean.pluginContent != null
