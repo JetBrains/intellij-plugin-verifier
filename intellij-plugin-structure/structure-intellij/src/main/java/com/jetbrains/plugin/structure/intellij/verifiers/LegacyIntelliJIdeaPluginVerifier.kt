@@ -5,23 +5,11 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
 import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier.VerificationResult.NotLegacyPlugin
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
-
-private val LOG: Logger = LoggerFactory.getLogger(LegacyIntelliJIdeaPluginVerifier::class.java)
-
-private const val PLATFORM_MODULE_ID = "com.intellij.modules.platform"
-private val ADDITIONAL_MODULES_AVAILABLE_IN_ALL_PRODUCTS = listOf(
-  "com.intellij.modules.platform",
-  "com.intellij.modules.lang",
-  "com.intellij.modules.xml",
-  "com.intellij.modules.vcs",
-  "com.intellij.modules.xdebugger"
-)
 
 /**
  * Verifies if a plugin is a legacy plugin compatible with IntelliJ IDEA only.
@@ -56,31 +44,10 @@ class LegacyIntelliJIdeaPluginVerifier {
       // Due to confusing semantics we might need to check old-style module declarations
       val oldSemanticsModuleDependencies = dependencies.filterIsInstance<PluginDependencyImpl>()
       val moduleCandidates = v1Dependencies + oldSemanticsModuleDependencies
-      if (dependsOnAnyModuleAvailableInAllProducts(moduleCandidates)) return NotLegacyPlugin
-      if (dependsOnAnyModuleWithComIntellijModulesPrefix(moduleCandidates)) return NotLegacyPlugin
+      if (moduleCandidates.any { it.id.startsWith(INTELLIJ_MODULE_PREFIX) }) return NotLegacyPlugin
 
       return VerificationResult.NoModuleDependencies
     }
-  }
-
-  private fun dependsOnAnyModuleWithComIntellijModulesPrefix(dependencies: List<PluginDependency>): Boolean {
-    return dependencies.any { it.id.startsWith(INTELLIJ_MODULE_PREFIX) }
-  }
-
-  private fun dependsOnAnyModuleAvailableInAllProducts(dependencies: List<PluginDependency>): Boolean {
-    if (dependencies.any { it.id == PLATFORM_MODULE_ID }) {
-      return true
-    } else {
-      LOG.debug("Undeclared dependency on module '{}'. " +
-                  "Plugin should declare this dependency to indicate dependence on shared functionality", PLATFORM_MODULE_ID)
-    }
-    if (dependencies.any { it.id in ADDITIONAL_MODULES_AVAILABLE_IN_ALL_PRODUCTS }) {
-      return true
-    } else {
-      LOG.debug("Undeclared dependency on any of the modules that are available in all Products. " +
-                  "This is not an issue if a dependency on the '{}' is declared explicitly.", PLATFORM_MODULE_ID)
-    }
-    return false
   }
 
   private fun IdePlugin.hasAnyV2Dependencies() = dependencies.any { it is PluginV2Dependency || it is ModuleV2Dependency }
