@@ -44,7 +44,11 @@ class LegacyIntelliJIdeaPluginVerifier {
       // Due to confusing semantics we might need to check old-style module declarations
       val oldSemanticsModuleDependencies = dependencies.filterIsInstance<PluginDependencyImpl>()
       val moduleCandidates = v1Dependencies + oldSemanticsModuleDependencies
-      if (moduleCandidates.any { it.id.startsWith(INTELLIJ_MODULE_PREFIX) }) return NotLegacyPlugin
+
+      // the plugin system considers plugins with a dependency on any module or the Java plugin as not legacy
+      if (moduleCandidates.any { it.id.startsWith(INTELLIJ_MODULE_PREFIX) || it.id == "com.intellij.java" }) {
+        return NotLegacyPlugin
+      }
 
       return VerificationResult.NoModuleDependencies
     }
