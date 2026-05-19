@@ -8,6 +8,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 
+- Use proper namespace to allow declaring content modules in different namespaces in the same plugin ([IJPL-245093](https://youtrack.jetbrains.com/issue/IJPL-245093))
+
 ### Fixed
 
 ## 1.404 - 2026-05-18

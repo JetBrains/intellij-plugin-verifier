@@ -213,6 +213,46 @@ class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(f
   }
 
   @Test
+  fun `multiple namespaces are supported`() {
+    val plugin = createPlugin {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml") { """
+                <idea-plugin>
+                  <id>someId</id>
+                  <content namespace="my_namespace1">
+                    <module name="module.1"/>
+                  </content>
+                  <content namespace="my_namespace2">
+                    <module name="module.2"/>
+                  </content>
+                </idea-plugin>  
+              """.trimIndent()
+              }
+            }
+            file("module.1.xml") {
+              """<idea-plugin/>"""
+            }
+            file("module.2.xml") {
+              """<idea-plugin/>"""
+            }
+          }
+        }
+      }
+    }
+    assertEquals(2, plugin.contentModules.size)
+    assertEquals("my_namespace1", plugin.contentModules[0].namespace)
+    assertEquals("my_namespace1", plugin.contentModules[0].actualNamespace)
+    assertEquals("my_namespace2", plugin.contentModules[1].namespace)
+    assertEquals("my_namespace2", plugin.contentModules[1].actualNamespace)
+    assertEquals(2, plugin.modulesDescriptors.size)
+    assertEquals("module.1", plugin.modulesDescriptors[0].name)
+    assertEquals("module.2", plugin.modulesDescriptors[1].name)
+  }
+
+  @Test
   fun `implicit namespace for private modules`() {
     val plugin = createPlugin {
       dir("plugin") {
