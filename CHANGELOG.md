@@ -8,6 +8,12 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 
+### Fixed
+
+## 1.405 - 2026-05-21
+
+### Changed
+
 - Migrate JAXB from `javax` to `jakarta` namespace ([#1486](https://github.com/JetBrains/intellij-plugin-verifier/pull/1486))
 - `PropertyWithDefaultValue` class is now `com.jetbrains.plugin.structure.base.problems.PropertyWithDefaultValue`
 - `DescriptionNotStartingWithLatinCharacters` class is now `DescriptionNotStartingWithLatinCharacters`
