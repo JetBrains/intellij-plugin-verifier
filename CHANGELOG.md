@@ -9,6 +9,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Changed
 
 - Use proper namespace to allow declaring content modules in different namespaces in the same plugin ([IJPL-245093](https://youtrack.jetbrains.com/issue/IJPL-245093))
+- `PropertyWithDefaultValue` class is now `com.jetbrains.plugin.structure.base.problems.PropertyWithDefaultValue`
+- `DescriptionNotStartingWithLatinCharacters` class is now `DescriptionNotStartingWithLatinCharacters`
 
 ### Fixed
 
