@@ -7,12 +7,15 @@ package com.jetbrains.pluginverifier.tests.mocks
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.plugin.PluginDetailsProvider
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.cache.CacheStatistics
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 
 class MockSinglePluginDetailsCache(
   private val supportedPluginId: String,
   private val pluginDetailsProvider: PluginDetailsProvider
 ) : PluginDetailsCache {
+  override val statistics: CacheStatistics = CacheStatistics()
+
   override fun getPluginDetailsCacheEntry(pluginInfo: PluginInfo): PluginDetailsCache.Result {
     return if (supportedPluginId != pluginInfo.pluginId) {
       fail(pluginInfo)

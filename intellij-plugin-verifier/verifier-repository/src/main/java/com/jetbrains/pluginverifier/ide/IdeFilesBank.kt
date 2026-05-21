@@ -97,7 +97,7 @@ private class IdeDownloadProvider(
   val ideRepository: IdeRepository
 ) : ResourceProvider<IdeVersion, Path> {
 
-  private val downloadProvider = DownloadProvider(bankDirectory, IdeDownloader()) { it.version.asString() }
+  private val downloadProvider = DownloadProvider(bankDirectory, IdeDownloader(), "IDE") { it.version.asString() }
 
   override fun provide(key: IdeVersion): ProvideResult<Path> {
     val availableIde = try {

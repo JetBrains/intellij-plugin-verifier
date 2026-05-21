@@ -99,6 +99,12 @@ class ResourceCache<R : Any, in K : Any, W : ResourceWeight<W>>(
   )
 
   /**
+   * Aggregate cache hit/miss statistics. Updated by the underlying [resourceRepository].
+   */
+  val statistics: CacheStatistics
+    get() = resourceRepository.statistics
+
+  /**
    * A flag indicating whether _this_ cache is already closed.
    */
   private val isClosed = AtomicBoolean(false)

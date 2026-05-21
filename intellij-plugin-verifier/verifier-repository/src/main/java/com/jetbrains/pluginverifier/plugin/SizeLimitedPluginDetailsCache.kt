@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.WithIdePlugin
+import com.jetbrains.pluginverifier.repository.cache.CacheStatistics
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntryResult
 import com.jetbrains.pluginverifier.repository.cache.createSizeLimitedResourceCache
@@ -35,6 +36,9 @@ class SizeLimitedPluginDetailsCache(
     { it.close() },
     "PluginDetailsCache"
   )
+
+  override val statistics: CacheStatistics
+    get() = internalCache.statistics
 
   /**
    * Provides the [PluginDetails] of the given [pluginInfo] wrapped in a [Result].

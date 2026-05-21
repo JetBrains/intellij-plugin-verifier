@@ -9,6 +9,8 @@ import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.repositories.dependency.DependencyPluginRepository
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 /**
  * [DependencyFinder] that searches for the dependency in the [PluginRepository].
@@ -21,6 +23,10 @@ class RepositoryDependencyFinder(
   private val pluginDetailsCache: PluginDetailsCache
 ) : DependencyFinder {
 
+  private companion object {
+    private val LOG: Logger = LoggerFactory.getLogger(RepositoryDependencyFinder::class.java)
+  }
+
   private val pluginRepository = DependencyPluginRepository(pluginRepository)
 
   override val presentableName
@@ -31,22 +37,45 @@ class RepositoryDependencyFinder(
       if (dependencyId.isBlank()) {
         return@retry DependencyFinder.Result.NotFound("Invalid empty dependency ID")
       }
-      if (isModule) {
-        convertResult(pluginVersionSelector.selectPluginByModuleId(dependencyId, pluginRepository))
+      val kind = if (isModule) "module" else "plugin"
+      LOG.debug("Resolving dependency {} '{}' against {}", kind, dependencyId, pluginRepository)
+      val selectResult = if (isModule) {
+        pluginVersionSelector.selectPluginByModuleId(dependencyId, pluginRepository)
       } else {
-        convertResult(pluginVersionSelector.selectPluginVersion(dependencyId, pluginRepository))
+        pluginVersionSelector.selectPluginVersion(dependencyId, pluginRepository)
       }
+      convertResult(dependencyId, kind, selectResult)
     }
 
   override fun findPluginDependency(dependency: PluginDependency): DependencyFinder.Result =
     findPluginDependency(dependency.id, dependency.isModule)
 
-  private fun convertResult(selectResult: PluginVersionSelector.Result): DependencyFinder.Result =
+  private fun convertResult(
+    dependencyId: String,
+    kind: String,
+    selectResult: PluginVersionSelector.Result
+  ): DependencyFinder.Result =
     when (selectResult) {
       is PluginVersionSelector.Result.Selected -> {
+        LOG.info(
+          "Resolved dependency {} '{}' to {} against {}",
+          kind,
+          dependencyId,
+          selectResult.pluginInfo,
+          pluginRepository
+        )
         val cacheEntryResult = pluginDetailsCache.getPluginDetailsCacheEntry(selectResult.pluginInfo)
         DependencyFinder.Result.DetailsProvided(cacheEntryResult)
       }
-      is PluginVersionSelector.Result.NotFound -> DependencyFinder.Result.NotFound(selectResult.reason)
+      is PluginVersionSelector.Result.NotFound -> {
+        LOG.debug(
+          "Dependency {} '{}' not found in {}: {}",
+          kind,
+          dependencyId,
+          pluginRepository,
+          selectResult.reason
+        )
+        DependencyFinder.Result.NotFound(selectResult.reason)
+      }
     }
 }

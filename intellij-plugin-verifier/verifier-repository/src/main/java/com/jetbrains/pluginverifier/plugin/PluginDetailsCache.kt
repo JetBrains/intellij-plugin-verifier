@@ -2,6 +2,7 @@ package com.jetbrains.pluginverifier.plugin
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.pluginverifier.repository.PluginInfo
+import com.jetbrains.pluginverifier.repository.cache.CacheStatistics
 import com.jetbrains.pluginverifier.repository.cache.ResourceCacheEntry
 import com.jetbrains.pluginverifier.repository.cleanup.SizeWeight
 import java.io.Closeable
@@ -18,6 +19,11 @@ interface PluginDetailsCache : Closeable {
    * Provides the [PluginDetails] of the given [pluginInfo] wrapped in a [Result].
    */
   fun getPluginDetailsCacheEntry(pluginInfo: PluginInfo): Result
+
+  /**
+   * Aggregate hit/miss/eviction statistics for this cache.
+   */
+  val statistics: CacheStatistics
 
   /**
    * Represents possible results of the [getPluginDetailsCacheEntry].
