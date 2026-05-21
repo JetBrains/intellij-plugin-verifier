@@ -4,9 +4,9 @@ import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.intellij.beans.ModuleBean
 import java.io.StringReader
 import java.nio.file.Path
-import javax.xml.bind.JAXBContext
-import javax.xml.bind.JAXBException
-import javax.xml.bind.Unmarshaller
+import jakarta.xml.bind.JAXBContext
+import jakarta.xml.bind.JAXBException
+import jakarta.xml.bind.Unmarshaller
 
 object ModuleUnmarshaller {
   private val jaxbContext by lazy {

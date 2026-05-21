@@ -7,7 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
 import java.nio.file.Path
-import javax.xml.bind.UnmarshalException
+import jakarta.xml.bind.UnmarshalException
 
 class ModuleBeanParsingTest {
   @Test
