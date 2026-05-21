@@ -1,12 +1,14 @@
 package com.jetbrains.plugin.structure.teamcity.mock
 
+import com.jetbrains.plugin.structure.teamcity.recipe.randomAlphanumeric
+
 data class TeamcityPluginXmlBuilder(
   var teamcityPluginTagOpen: String = "<teamcity-plugin>",
   var teamcityPluginTagClose: String = "</teamcity-plugin>",
   var name: String = "<name>name</name>",
   var displayName: String = "<display-name>Display name</display-name>",
   var version: String = "<version>0.1.1</version>",
-  var description: String = "<description>Some short description</description>",
+  var description: String = "<description>${randomAlphanumeric(40)}</description>",
   var downloadUrl: String = "",
   var email: String = "",
   var deployment: String = "",

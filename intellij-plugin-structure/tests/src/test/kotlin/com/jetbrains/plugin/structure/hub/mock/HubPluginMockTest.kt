@@ -18,7 +18,7 @@ class HubPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     version = "1.1.1"
     author = "Michael Jackson <mj@gmail.com>"
     homeUrl = "https://github.com/mariyadavydova/youtrack-cats-widget"
-    description = "Funny cats and dogs for your Dashboard!"
+    description = "Funny cats and dogs for your Hub Dashboard!"
     iconUrl = "images/cat_purr.png"
     dependencies = mapOf("Hub" to ">=2018.2")
     products = mapOf("Hub" to "^2018.2", "YouTrack" to "^2018.2")
@@ -60,7 +60,7 @@ class HubPluginMockTest(fileSystemType: FileSystemType) : BasePluginManagerTest<
     assertEquals("https://github.com/mariyadavydova/youtrack-cats-widget", plugin.url)
     assertEquals("Michael Jackson", plugin.vendor)
     assertEquals("mj@gmail.com", plugin.vendorEmail)
-    assertEquals("Funny cats and dogs for your Dashboard!", plugin.description)
+    assertEquals("Funny cats and dogs for your Hub Dashboard!", plugin.description)
     assertEquals(iconTestContent, String(plugin.icons.single().content))
     assertEquals(mapOf("Hub" to ">=2018.2"), plugin.dependencies)
     assertEquals(mapOf("Hub" to "^2018.2", "YouTrack" to "^2018.2"), plugin.products)

@@ -30,7 +30,7 @@ class YouTrackMockPluginTest(fileSystemType: FileSystemType) : BasePluginManager
 
     assertEquals("template-app", plugin.pluginId)
     assertEquals("Template App", plugin.pluginName)
-    assertEquals("App description", plugin.description)
+    assertEquals("Template app toolbox plugin long description", plugin.description)
     assertEquals("1.0.0", plugin.pluginVersion)
     assertEquals("https://example.com", plugin.url)
     assertEquals("2022.2.0", plugin.sinceVersion)

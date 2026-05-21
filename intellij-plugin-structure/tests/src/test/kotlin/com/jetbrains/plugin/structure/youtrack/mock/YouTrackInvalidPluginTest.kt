@@ -102,8 +102,8 @@ class YouTrackInvalidPluginTest(fileSystemType: FileSystemType) : BasePluginMana
 
   @Test
   fun `invalid app description`() {
-    checkInvalidPlugin(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.DESCRIPTION)) { it.copy(description = null) }
-    checkInvalidPlugin(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.DESCRIPTION)) { it.copy(description = "") }
+    checkInvalidPlugin(PropertyNotSpecified(YouTrackAppFields.Manifest.DESCRIPTION, "manifest.json")) { it.copy(description = null) }
+    checkInvalidPlugin(PropertyNotSpecified(YouTrackAppFields.Manifest.DESCRIPTION, "manifest.json")) { it.copy(description = "") }
   }
 
   @Test

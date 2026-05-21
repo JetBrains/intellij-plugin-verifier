@@ -30,7 +30,7 @@ class JsonUrlProblemLevelRemappingManagerTest {
     Assert.assertNotNull(newPluginProblemSet)
     newPluginProblemSet?.let {
       val errors = it.findProblemsByLevel(StandardLevel(PluginProblem.Level.ERROR))
-      assertThat(errors.size, `is`(3))
+      assertThat(errors.size, `is`(4))
     }
   }
 
