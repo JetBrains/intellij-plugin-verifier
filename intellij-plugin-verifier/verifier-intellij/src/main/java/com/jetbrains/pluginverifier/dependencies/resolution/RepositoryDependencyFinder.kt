@@ -12,6 +12,8 @@ import com.jetbrains.pluginverifier.repository.repositories.dependency.Dependenc
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+private val LOG: Logger = LoggerFactory.getLogger(RepositoryDependencyFinder::class.java)
+
 /**
  * [DependencyFinder] that searches for the dependency in the [PluginRepository].
  * The [pluginVersionSelector] is used to select a specific version of the plugin
@@ -22,10 +24,6 @@ class RepositoryDependencyFinder(
   private val pluginVersionSelector: PluginVersionSelector,
   private val pluginDetailsCache: PluginDetailsCache
 ) : DependencyFinder {
-
-  private companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(RepositoryDependencyFinder::class.java)
-  }
 
   private val pluginRepository = DependencyPluginRepository(pluginRepository)
 

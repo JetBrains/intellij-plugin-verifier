@@ -243,7 +243,7 @@ class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
         }
         value.statistic.access(now)
         statistics.recordHit()
-        logger.debugMaybe { "$presentableName hit: $key (cached, lockId=$lockId)" }
+        logger.debugMaybe { "$presentableName hit: the resource $key is available and a lock is registered $lock (cached, lockId=$lockId)" }
         return ResourceRepositoryResult.Found(lock)
       }
       val fetchTask: Fetching<R>

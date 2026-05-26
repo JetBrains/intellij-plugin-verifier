@@ -199,7 +199,7 @@ object PluginVerifierMain {
     cacheName: String,
     statistics: CacheStatistics
   ) {
-    logVerificationStage("$cacheName statistics: ${statistics.presentableSummary()}")
+    logVerificationStage("$cacheName statistics: ${statistics.presentableSummary}")
   }
 
   private fun PluginVerificationReportage.reportVerificationDuration(measuredResult: MeasuredResult) {

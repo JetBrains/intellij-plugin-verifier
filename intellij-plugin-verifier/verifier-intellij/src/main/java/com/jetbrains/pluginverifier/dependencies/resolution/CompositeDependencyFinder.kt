@@ -8,6 +8,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+private val LOG: Logger = LoggerFactory.getLogger(CompositeDependencyFinder::class.java)
+
 /**
  * [DependencyFinder] that subsequently delegates the search
  * to the [dependencyFinders] until the dependency is resolved.
@@ -16,10 +18,6 @@ import org.slf4j.LoggerFactory
  * the [DependencyFinder.Result.NotFound] is returned.
  */
 class CompositeDependencyFinder(private val dependencyFinders: List<DependencyFinder>) : DependencyFinder {
-  private companion object {
-    private val LOG: Logger = LoggerFactory.getLogger(CompositeDependencyFinder::class.java)
-  }
-
   override val presentableName
     get() = dependencyFinders.joinToString { it.presentableName }
 

@@ -45,27 +45,29 @@ class CacheStatistics {
     }
   }
 
-  fun hits(): Long = hitCount.get()
-  fun misses(): Long = missCount.get()
-  fun failures(): Long = failureCount.get()
-  fun evictions(): Long = evictionCount.get()
+  val hits: Long get() = hitCount.get()
+  val misses: Long get() = missCount.get()
+  val failures: Long get() = failureCount.get()
+  val evictions: Long get() = evictionCount.get()
 
-  fun total(): Long = hits() + misses() + failures()
+  val total: Long get() = hits + misses + failures
 
   /**
    * Hit rate as a fraction in `[0.0, 1.0]`. Returns `0.0` if the cache has not been accessed yet.
    */
-  fun hitRate(): Double {
-    val totalLookups = hits() + misses() + failures()
-    return if (totalLookups == 0L) 0.0 else hits().toDouble() / totalLookups
-  }
+  val hitRate: Double
+    get() {
+      val totalLookups = hits + misses + failures
+      return if (totalLookups == 0L) 0.0 else hits.toDouble() / totalLookups
+    }
 
   /**
    * One-line, human-readable summary suitable for `info`-level logging.
    */
-  fun presentableSummary(): String {
-    val total = total()
-    val hitRatePercent = if (total == 0L) "n/a" else "%.1f%%".format(hitRate() * 100.0)
-    return "hits=${hits()}, misses=${misses()}, failures=${failures()}, evictions=${evictions()}, total=$total, hit-rate=$hitRatePercent"
-  }
+  val presentableSummary: String
+    get() {
+      val total = total
+      val hitRatePercent = if (total == 0L) "n/a" else "%.1f%%".format(hitRate * 100.0)
+      return "hits=$hits, misses=$misses, failures=$failures, evictions=$evictions, total=$total, hit-rate=$hitRatePercent"
+    }
 }
