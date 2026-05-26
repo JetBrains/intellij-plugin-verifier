@@ -3,6 +3,7 @@ package com.jetbrains.plugin.structure.ide
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import ch.qos.logback.core.spi.AppenderAttachable
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.ide.layout.LayoutComponents
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
@@ -115,6 +116,65 @@ class ProductInfoBasedIdeManagerTest {
     riderModule!!
     assertTrue(ideCore.pluginId == riderModule.pluginId)
   }
+
+  @Test
+  fun `reports actionable error when product code is unknown`() {
+    val ideRoot = temporaryFolder.newFolder("unknown-product").toPath()
+    buildDirectory(ideRoot) {
+      file("build.txt", "ZZ-261.0.0")
+      file("product-info.json", unknownProductInfoJson)
+      dir("lib") {
+        zip("app-client.jar") {
+          dir("META-INF") {
+            // Descriptor named for the unknown 'ZZ' product. CorePluginManager falls back
+            // to the IDEA prefix and searches for META-INF/ideaPlugin.xml + META-INF/plugin.xml,
+            // neither of which matches, so loading must fail.
+            file("ZzPlugin.xml", corePluginXml)
+          }
+        }
+      }
+      dir("modules") {
+        zip("module-descriptors.jar") {}
+      }
+    }
+
+    val ideManager = ProductInfoBasedIdeManager()
+    val ide = ideManager.createIde(ideRoot)
+    val exception = assertThrows(InvalidIdeException::class.java) { ide.bundledPlugins }
+
+    val message = exception.message ?: ""
+    assertTrue("message should mention the lib dir: $message", message.contains("lib"))
+    assertTrue("message should list searched descriptors: $message", message.contains("ideaPlugin.xml"))
+    assertTrue("message should list searched descriptors: $message", message.contains("plugin.xml"))
+    assertTrue("message should name the unknown product code: $message", message.contains("'ZZ'"))
+    assertTrue("message should point at IntelliJPlatformProduct: $message", message.contains("IntelliJPlatformProduct"))
+  }
+
+  private val unknownProductInfoJson = """
+    {
+      "name": "Unknown",
+      "version": "2026.1",
+      "versionSuffix": "EAP",
+      "buildNumber": "261.0.0",
+      "productCode": "ZZ",
+      "dataDirectoryName": "Unknown2026.1",
+      "svgIconPath": "bin/unknown.svg",
+      "productVendor": "JetBrains",
+      "launch": [],
+      "customProperties": [],
+      "bundledPlugins": [],
+      "modules": [],
+      "fileExtensions": [],
+      "layout": []
+    }
+  """.trimIndent()
+
+  private val corePluginXml = """
+    <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+      <id>com.intellij</id>
+      <name>IDEA CORE</name>
+    </idea-plugin>
+  """.trimIndent()
 
   @Test
   fun `create IDE manager with missing version suffix`() {

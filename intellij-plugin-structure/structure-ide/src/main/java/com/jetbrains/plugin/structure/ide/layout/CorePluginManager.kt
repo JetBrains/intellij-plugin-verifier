@@ -47,18 +47,31 @@ internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader
     val loadedPlugins = corePluginJarPaths.mapNotNull(loadPlugin)
     val loadingResults = LoadingResults(loadedPlugins)
     logFailures(LOG, loadingResults.failures, idePath)
-    assertCorePluginsPresent(idePath, loadingResults)
+    assertCorePluginsPresent(idePath, ideVersion, loadingResults)
 
     return loadingResults.successfulPlugins
   }
 
   private fun assertCorePluginsPresent(
     idePath: Path,
+    ideVersion: IdeVersion,
     loadingResults: LoadingResults
   ) {
     if (loadingResults.successfulPlugins.isEmpty()) {
+      val libDir = "$idePath${File.separator}$LIB_DIRECTORY"
+      val searchedFor = ideVersion.descriptorPaths.joinToString(", ")
+      val knownProduct = IntelliJPlatformProduct.fromIdeVersion(ideVersion)
+      val productHint = if (knownProduct == null) {
+        " The product code '${ideVersion.productCode}' is not known to ${IntelliJPlatformProduct::class.java.simpleName};" +
+          " add an entry there if this IDE should be supported."
+      } else {
+        ""
+      }
       throw InvalidIdeException(
-        idePath, "The 'Core' plugin (ID: 'com.intellij') is expected in the $idePath${File.separator}$LIB_DIRECTORY")
+        idePath,
+        "The 'Core' plugin (ID: 'com.intellij') was not found in $libDir." +
+          " Searched JARs for descriptors: $searchedFor.$productHint"
+      )
     }
   }
 
