@@ -220,6 +220,26 @@ class CachingJarFileSystemProviderTest {
     assertTrue(anotherFs2.hasSameDelegate(yetAnotherFs2))
   }
 
+  @Test
+  fun `path used after cache eviction surfaces as ClosedFileSystemException, not StackOverflowError`() {
+    val fileSystemProvider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE)
+    val fs = fileSystemProvider.getFileSystem(jarPath) as FsHandleFileSystem
+    val helloTxtPath: Path = fs.getPath("hello.txt")
+
+    // Simulate Caffeine evicting the handle while a Path to it is still held: this drops
+    // referenceCount to -1, after which getOrReopenDelegateFileSystem refuses to reopen.
+    fs.close()
+    fs.onCacheRemoval()
+    assertTrue(fs.isClosed)
+
+    try {
+      Files.readAttributes(helloTxtPath, BasicFileAttributes::class.java)
+      fail("Expected ClosedFileSystemException")
+    } catch (_: ClosedFileSystemException) {
+      // expected — before the depth bound this looped in `unwrapped` until StackOverflowError.
+    }
+  }
+
   private fun FileSystem.hasSameDelegate(fs: FileSystem): Boolean {
     return (this as? FsHandleFileSystem)?.hasSameDelegate(fs) == true
   }
