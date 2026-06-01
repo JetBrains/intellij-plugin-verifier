@@ -18,6 +18,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Field
 import com.jetbrains.pluginverifier.verifiers.resolution.FullyQualifiedClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
+import org.objectweb.asm.Type
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -45,10 +46,88 @@ class AnnotationResolver(val annotation: FullyQualifiedClassName) {
   private fun resolveDirectAnnotation(classFileMember: ClassFileMember, classResolver: Resolver): MemberAnnotation? =
     AnnotatedDirectly(classFileMember, annotation).takeIf { classFileMember.isDirectlyAnnotatedWith(annotation) }
 
-  private fun resolveInNonClassFile(classFileMember: ClassFileMember, classResolver: Resolver, resolutionStack: ResolutionStack): MemberAnnotation? =
-    resolve(classFileMember.containingClassFile, classResolver, resolutionStack)?.let {
+  private fun resolveInNonClassFile(classFileMember: ClassFileMember, classResolver: Resolver, resolutionStack: ResolutionStack): MemberAnnotation? {
+    val annotationFromCompanion = resolveInCompanion(classFileMember, classResolver)
+    if (annotationFromCompanion != null) {
+      return annotationFromCompanion
+    }
+    return resolve(classFileMember.containingClassFile, classResolver, resolutionStack)?.let {
       AnnotatedViaContainingClass(classFileMember.containingClassFile, classFileMember, annotation)
     }
+  }
+
+  /**
+   * consider the following class:
+   * ```kotlin
+   * class Foo {
+   *   @Internal
+   *   companion object {
+   *     @JvmStatic
+   *     fun bar()
+   *   }
+   * }
+   * ```
+   * We want to propagate `@Internal` annotation to `bar`,
+   * even if `bar` is represented by a separate static method outside `Foo$Companion` nested class in the bytecode
+   */
+  private fun resolveInCompanion(classFileMember: ClassFileMember, classResolver: Resolver): MemberAnnotation? {
+    if (classFileMember !is Field && classFileMember !is Method) {
+      return null
+    }
+    val isStaticMember = when (classFileMember) {
+      is Field -> classFileMember.isStatic
+      is Method -> classFileMember.isStatic
+      else -> false
+    }
+    if (!isStaticMember) return null
+
+    val containingClass = classFileMember.containingClassFile
+    val companionClass = classResolver.resolveClassOrNull("${containingClass.name}\$Companion")
+      ?.takeIf { it.enclosingClassName == containingClass.name }
+      ?: return null
+
+    if (classFileMember is Field && classFileMember.referencesCompanionInstanceAsField(companionClass)) {
+      return companionClass.directAnnotationViaCompanion(classFileMember)
+    }
+
+    if (classFileMember is Method) {
+      val companionMethod = companionClass.methods.firstOrNull {
+        it.matchesJvmStaticCompanionMember(classFileMember, companionClass.name)
+      } ?: return null
+      return companionClass.directAnnotationViaCompanion(classFileMember)
+        ?: companionMethod.directAnnotationViaCompanion(classFileMember)
+    }
+
+    return null
+  }
+
+  private fun ClassFileMember.directAnnotationViaCompanion(classFileMember: ClassFileMember): MemberAnnotation? =
+    AnnotatedViaContainingClass(this, classFileMember, annotation)
+      .takeIf { isDirectlyAnnotatedWith(annotation) }
+
+  private fun Field.referencesCompanionInstanceAsField(companionClass: ClassFile): Boolean {
+    if (!isFinal) {
+      return false
+    }
+    val type = Type.getType(descriptor)
+    return type.sort == Type.OBJECT && type.internalName == companionClass.name
+  }
+
+  private fun Method.matchesJvmStaticCompanionMember(
+    containingClassMethod: Method,
+    companionClassName: String
+  ): Boolean =
+    name == containingClassMethod.name
+      && (descriptor == containingClassMethod.descriptor
+      || descriptor == containingClassMethod.companionDefaultMethodDescriptor(companionClassName))
+
+  private fun Method.companionDefaultMethodDescriptor(companionClassName: String): String? {
+    if (!name.endsWith("\$default")) {
+      return null
+    }
+    val type = Type.getMethodType(descriptor)
+    return Type.getMethodDescriptor(type.returnType, Type.getObjectType(companionClassName), *type.argumentTypes)
+  }
 
   private fun resolveInEnclosingClassName(classFileMember: ClassFile, classResolver: Resolver, resolutionStack: ResolutionStack): MemberAnnotation? {
     val enclosingClassName = classFileMember.enclosingClassName
