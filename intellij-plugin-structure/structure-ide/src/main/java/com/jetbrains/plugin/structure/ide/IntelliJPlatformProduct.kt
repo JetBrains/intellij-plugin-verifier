@@ -36,7 +36,8 @@ enum class IntelliJPlatformProduct(
   JETBRAINS_CLIENT("JBC", "JetBrains Client", "JetBrainsClient"),
   GATEWAY("GW", "Gateway", "Gateway"),
   FLEET("FL", "Fleet", "Fleet"),
-  AQUA("QA", "Aqua", "Aqua");
+  AQUA("QA", "Aqua", "Aqua"),
+  RUST_ROVER("RR", "RustRover", "RustRover");
 
   companion object {
     fun fromProductCode(productCode: String): IntelliJPlatformProduct? =

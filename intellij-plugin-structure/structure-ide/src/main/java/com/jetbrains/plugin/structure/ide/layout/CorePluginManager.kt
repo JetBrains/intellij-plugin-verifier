@@ -16,12 +16,11 @@ import com.jetbrains.plugin.structure.jar.PluginDescriptorResult
 import com.jetbrains.plugin.structure.jar.PluginJar
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(CorePluginManager::class.java)
 
-private val LIB_DIRECTORY = "lib"
+private const val LIB_DIRECTORY = "lib"
 
 private const val CORE_IDE_PLUGIN_ID = "com.intellij"
 
@@ -47,18 +46,31 @@ internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader
     val loadedPlugins = corePluginJarPaths.mapNotNull(loadPlugin)
     val loadingResults = LoadingResults(loadedPlugins)
     logFailures(LOG, loadingResults.failures, idePath)
-    assertCorePluginsPresent(idePath, loadingResults)
+    assertCorePluginsPresent(idePath, ideVersion, loadingResults)
 
     return loadingResults.successfulPlugins
   }
 
   private fun assertCorePluginsPresent(
     idePath: Path,
+    ideVersion: IdeVersion,
     loadingResults: LoadingResults
   ) {
     if (loadingResults.successfulPlugins.isEmpty()) {
+      val libDir = idePath.resolve(LIB_DIRECTORY)
+      val searchedFor = ideVersion.descriptorPaths.joinToString(", ")
+      val knownProduct = IntelliJPlatformProduct.fromIdeVersion(ideVersion)
+      val productHint = if (knownProduct == null) {
+        " The product code '${ideVersion.productCode}' is not known to ${IntelliJPlatformProduct::class.java.simpleName};" +
+          " add an entry there if this IDE should be supported."
+      } else {
+        ""
+      }
       throw InvalidIdeException(
-        idePath, "The 'Core' plugin (ID: 'com.intellij') is expected in the $idePath${File.separator}$LIB_DIRECTORY")
+        idePath,
+        "The 'Core' plugin (ID: 'com.intellij') was not found in $libDir." +
+          " Searched JARs for descriptors: $searchedFor.$productHint"
+      )
     }
   }
 
@@ -81,7 +93,7 @@ internal class CorePluginManager(private val pluginLoader: LayoutComponentLoader
    */
   private val IdeVersion.descriptorPaths: Array<String>
     get() {
-      operator fun String.div(fileName: String) = "$this${File.separator}$fileName"
+      operator fun String.div(fileName: String) = "$this/$fileName"
       return arrayOf(
         META_INF / "${platformPrefix}Plugin.xml",
         META_INF / PLUGIN_XML,
