@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.checkIfInterrupted
 import com.jetbrains.plugin.structure.base.utils.closeOnException
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.pluginverifier.repository.cache.CacheStatistics
 import com.jetbrains.pluginverifier.repository.cleanup.UsageStatistic
 import com.jetbrains.pluginverifier.repository.provider.ProvideResult
 import com.jetbrains.pluginverifier.repository.provider.ResourceProvider
@@ -44,6 +45,8 @@ class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
   private val presentableName: String = "ResourceRepository"
 ) : ResourceRepository<R, K, W> {
   private val logger: Logger = LoggerFactory.getLogger(presentableName)
+
+  val statistics: CacheStatistics = CacheStatistics()
 
   private val nextLockId = AtomicLong()
 
@@ -239,19 +242,22 @@ class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
           continue
         }
         value.statistic.access(now)
-        logger.debugMaybe { "get($key): the resource is available and a lock is registered $lock" }
+        statistics.recordHit()
+        logger.debugMaybe { "$presentableName hit: the resource $key is available and a lock is registered $lock (cached, lockId=$lockId)" }
         return ResourceRepositoryResult.Found(lock)
       }
       val fetchTask: Fetching<R>
       val runInCurrentThread: Boolean
       if (value is Fetching<*>) {
-        logger.debugMaybe { "get($key): waiting for another thread to finish fetching the resource" }
+        statistics.recordMiss()
+        logger.debugMaybe { "$presentableName miss: $key (waiting for another thread to finish fetching)" }
         @Suppress("UNCHECKED_CAST")
         fetchTask = value as Fetching<R>
         runInCurrentThread = false
       } else {
         assert(value === null)
-        logger.debugMaybe { "get($key): fetching the resource in the current thread" }
+        statistics.recordMiss()
+        logger.debugMaybe { "$presentableName miss: $key (fetching in the current thread)" }
         val newTask = Fetching {
           fetchResource(key)
         }
@@ -300,6 +306,7 @@ class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
       } else {
         // remove unsuccessful task from the storage
         storage.remove(key, fetchTask)
+        statistics.recordFailure()
         return when (provideResult) {
           is ProvideResult.NotFound<R> -> ResourceRepositoryResult.NotFound(provideResult.reason)
           is ProvideResult.Failed<R> -> ResourceRepositoryResult.Failed(provideResult.reason, provideResult.error)
@@ -405,9 +412,10 @@ class ResourceRepositoryImpl<R : Any, K : Any, W : ResourceWeight<W>>(
 
       if (resourcesForEviction.isNotEmpty()) {
         val disposedTotalWeight = resourcesForEviction.map { it.resourceInfo.weight }.reduce { acc, weight -> acc + weight }
+        statistics.recordEvictions(resourcesForEviction.size)
         logger.debugMaybe {
-          "It's time to evict unused resources. " +
-            "Total weight: $totalWeight. " +
+          "$presentableName eviction: " +
+            "Total weight before eviction: $totalWeight. " +
             "${resourcesForEviction.size} " + "resource".pluralize(resourcesForEviction.size) +
             " will be evicted with total weight $disposedTotalWeight"
         }

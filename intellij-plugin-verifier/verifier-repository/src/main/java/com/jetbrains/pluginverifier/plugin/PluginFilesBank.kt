@@ -49,7 +49,7 @@ class PluginFilesBank(
       val urlProvider: (PluginInfo) -> URL? = { (it as? Downloadable)?.downloadUrl }
       val urlDownloader = UrlDownloader(urlProvider)
 
-      val downloadProvider = DownloadProvider(pluginsDir, urlDownloader) { key ->
+      val downloadProvider = DownloadProvider(pluginsDir, urlDownloader, "Plugin") { key ->
         when (key) {
           is UpdateInfo -> getFileNameForMarketplacePlugin(key)
           else -> (key.pluginId + "-" + key.version).replaceInvalidFileNameCharacters()

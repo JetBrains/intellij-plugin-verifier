@@ -22,6 +22,7 @@ import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.DirectoryBasedPluginVerificationReportage
 import com.jetbrains.pluginverifier.reporting.LoggingPluginVerificationReportageAggregator
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
+import com.jetbrains.pluginverifier.repository.cache.CacheStatistics
 import com.jetbrains.pluginverifier.repository.cleanup.DiskSpaceSetting
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceAmount
 import com.jetbrains.pluginverifier.repository.cleanup.SpaceUnit
@@ -126,13 +127,17 @@ object PluginVerifierMain {
       DefaultPluginDetailsProvider(pluginArchiveManager).use { pluginDetailsProvider ->
         val reportageAggregator = LoggingPluginVerificationReportageAggregator()
         DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
+          var pluginDetailsCacheStatistics: CacheStatistics? = null
           measurePluginVerification {
             val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
-            val taskResult = SizeLimitedPluginDetailsCache(
+            val pluginDetailsCache = SizeLimitedPluginDetailsCache(
               detailsCacheSize,
               pluginFilesBank,
               pluginDetailsProvider
-            ).use { pluginDetailsCache ->
+            )
+            // Capture stats reference before close() so the post-run summary can read it.
+            pluginDetailsCacheStatistics = pluginDetailsCache.statistics
+            pluginDetailsCache.use {
               runner.getParametersBuilder(
                 pluginRepository,
                 pluginDetailsCache,
@@ -146,11 +151,11 @@ object PluginVerifierMain {
                   .execute(reportage, pluginDetailsCache)
               }
             }
-            taskResult
           }.run {
             val taskResultsPrinter = taskResult.createTaskResultsPrinter(pluginRepository)
             taskResultsPrinter.printResults(taskResult, outputOptions)
             reportage.reportDownloadStatistics(outputOptions, pluginFilesBank)
+            pluginDetailsCacheStatistics?.let { reportage.reportCacheStatistics("PluginDetailsCache", it) }
             reportageAggregator.handleAggregatedReportage()
             reportage.reportVerificationDuration(this)
           }
@@ -188,6 +193,13 @@ object PluginVerifierMain {
         totalSpaceUsed.to(SpaceUnit.BYTE).toLong()
       )
     }
+  }
+
+  private fun PluginVerificationReportage.reportCacheStatistics(
+    cacheName: String,
+    statistics: CacheStatistics
+  ) {
+    logVerificationStage("$cacheName statistics: ${statistics.presentableSummary}")
   }
 
   private fun PluginVerificationReportage.reportVerificationDuration(measuredResult: MeasuredResult) {
