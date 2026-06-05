@@ -36,7 +36,8 @@ private val LOG: Logger = LoggerFactory.getLogger(FsHandleFileSystem::class.java
 class FsHandleFileSystem(
   val initialDelegateFileSystem: FileSystem,
   private val provider: JarFileSystemProvider,
-  private val path: Path
+  private val path: Path,
+  private val onDelegateRelease: ((FileSystem) -> Unit)? = null
 ) : FileSystem() {
 
   // 0 for cached but idle, '-1' for removed from cache and permanently closed
@@ -127,6 +128,10 @@ class FsHandleFileSystem(
 
   fun closeDelegate() {
     val fs = synchronized(this) { _delegateFileSystem }
+    if (onDelegateRelease != null) {
+      onDelegateRelease.invoke(fs)
+      return
+    }
     try {
       if (fs.isOpen) fs.close()
     } catch (_: InterruptedException) {

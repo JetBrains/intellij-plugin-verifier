@@ -264,6 +264,32 @@ class CachingJarFileSystemProviderTest {
     assertTrue(Files.isRegularFile(hello))
   }
 
+  // Regression: MP-8146. The JVM caches ZipFileSystems globally, so two FsHandleFileSystem
+  // wrappers created for the same JAR at different times share the same underlying Z ZipFileSystem.
+  // A Z-level ref-count must gate Z.close() so that Z stays open until every wrapper
+  // that holds it has been evicted.
+  @Test
+  fun `shared delegate Z stays open until the last wrapper is evicted`() {
+    val provider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE)
+
+    // h1 and h2 are distinct wrapper instances that share the same underlying ZipFileSystem Z.
+    val h1 = provider.getFileSystem(jarPath) as FsHandleFileSystem
+    val z = h1.initialDelegateFileSystem
+
+    // Close h1's client reference so referenceCount drops to 0 (idle in cache).
+    h1.close()
+    assertFalse(h1.isOpen)
+    // Z must still be open — it is still tracked by the Z-level ref-count.
+    assertTrue("Z must not close while h1 is still registered in the cache", z.isOpen)
+
+    // Simulate Caffeine evicting h1. This fires onCacheRemoval → closeDelegate → releaseDelegate.
+    // Z has no other holders, so it should now close.
+    h1.onCacheRemoval()
+    assertFalse("Z must close after the last wrapper is evicted", z.isOpen)
+
+    provider.close()
+  }
+
   // Regression: MP-7468. Targets the TOCTOU window in `unwrapped` — the FS is open at the
   // isClosed() check but closes (from another thread / Caffeine eviction) before the NIO
   // call lands. The stub simulates exactly that race by throwing ClosedFileSystemException
