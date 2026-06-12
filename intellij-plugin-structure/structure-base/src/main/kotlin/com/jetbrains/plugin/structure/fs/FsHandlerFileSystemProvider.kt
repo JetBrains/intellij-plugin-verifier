@@ -23,6 +23,8 @@ import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
 
+private const val MAX_REOPEN_ATTEMPTS = 3
+
 class FsHandlerFileSystemProvider(
   val delegateProvider: FileSystemProvider,
   private val delegateJarFileSystemProvider: JarFileSystemProvider
@@ -131,15 +133,21 @@ class FsHandlerFileSystemProvider(
 
   private fun FsHandlerPath.reopen() = fileSystem.getPath(delegatePath.toString())
 
+  // Bounds reopen retries so an evicted FsHandleFileSystem (referenceCount < 0,
+  // can no longer reopen) surfaces as ClosedFileSystemException instead of StackOverflowError.
   private val Path.unwrapped: Path
-    get() = if (this is FsHandlerPath) {
-      if (delegatePath.fileSystem.isClosed) {
-        reopen().unwrapped
-      } else {
-        delegatePath
+    get() {
+      if (this !is FsHandlerPath) return this
+      var current: FsHandlerPath = this
+      repeat(MAX_REOPEN_ATTEMPTS) {
+        if (!current.delegatePath.fileSystem.isClosed) {
+          return current.delegatePath
+        }
+        val reopened = current.reopen()
+        if (reopened !is FsHandlerPath) return reopened
+        current = reopened
       }
-    } else {
-      this
+      throw ClosedFileSystemException()
     }
 
   // Handles the race where the delegate FS is closed between `unwrapped`'s isClosed check and the NIO call.

@@ -16,7 +16,9 @@ import org.slf4j.LoggerFactory
 import java.net.URI
 import java.nio.file.FileSystem
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 
 private val LOG: Logger = LoggerFactory.getLogger(CachingJarFileSystemProvider::class.java)
@@ -33,6 +35,8 @@ class CachingJarFileSystemProvider(
 
   private val delegateJarFileSystemProvider = UriJarFileSystemProvider { it.toUri().withSuperScheme(JAR_SCHEME) }
 
+  private val delegateRefCounts = ConcurrentHashMap<String, AtomicInteger>()
+
   private val fsCache = Caffeine.newBuilder()
     .maximumSize(MAX_OPEN_JAR_FILE_SYSTEMS)
     .expireAfterAccess(retentionTimeInSeconds, TimeUnit.SECONDS)
@@ -46,10 +50,31 @@ class CachingJarFileSystemProvider(
   val eventLog = EventLog()
 
   private fun createFileSystem(jarPath: Path, jarUri: URI): FsHandleFileSystem {
+    val key = jarUri.toString()
     val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
       LOG.debug("Creating a filesystem handler via delegate for <{}> (Cache size: {})", jarUri, fsCache.estimatedSize())
     }
-    return FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath)
+    delegateRefCounts.computeIfAbsent(key) { AtomicInteger(0) }.incrementAndGet()
+    return FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath) { delegate ->
+      releaseDelegate(key, delegate)
+    }
+  }
+
+  private fun releaseDelegate(key: String, delegate: FileSystem) {
+    synchronized(key.intern()) {
+      val count = delegateRefCounts[key]
+      if (count != null && count.decrementAndGet() == 0) {
+        delegateRefCounts.remove(key)
+        try {
+          if (delegate.isOpen) delegate.close()
+        } catch (_: InterruptedException) {
+          Thread.currentThread().interrupt()
+          LOG.info("Cannot close delegate due to an interruption for [{}]", delegate)
+        } catch (e: Exception) {
+          LOG.error("Unable to close delegate [{}]", delegate, e)
+        }
+      }
+    }
   }
 
   override fun getFileSystem(jarPath: Path): FileSystem {
@@ -73,7 +98,10 @@ class CachingJarFileSystemProvider(
           val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
             LOG.debug("Recreating an already closed a filesystem handler for <{}> (Cache size: {})", key, fsCache.estimatedSize())
           }
-          fs = FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath)
+          delegateRefCounts.computeIfAbsent(key) { AtomicInteger(0) }.incrementAndGet()
+          fs = FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath) { delegate ->
+            releaseDelegate(key, delegate)
+          }
           fsCache.put(key, fs)
           logRecreatedFs(key)
         }

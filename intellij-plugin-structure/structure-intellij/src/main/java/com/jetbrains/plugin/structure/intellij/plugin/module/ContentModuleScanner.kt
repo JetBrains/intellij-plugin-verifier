@@ -51,7 +51,7 @@ class ContentModuleScanner(private val fileSystemProvider: JarFileSystemProvider
     } else {
       descriptorPath.getModuleName()
     }
-    return ContentModule(moduleName, jarPath, descriptorPath)
+    return ContentModule(moduleName, jarPath)
   }
 
   private inline fun <T> withPluginJar(jarPath: Path, action: (PluginJar) -> T): T? {
