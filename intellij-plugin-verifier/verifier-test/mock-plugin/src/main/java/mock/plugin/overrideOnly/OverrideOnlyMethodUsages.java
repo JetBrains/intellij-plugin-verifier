@@ -1,6 +1,7 @@
 package mock.plugin.overrideOnly;
 
 import overrideOnly.AllOverrideOnlyMethodsOwner;
+import overrideOnly.OverrideOnlyJavaSingleton;
 import overrideOnly.OverrideOnlyKotlinCompanionHolder;
 import overrideOnly.OverrideOnlyKotlinInterfaceWithCompanion;
 import overrideOnly.OverrideOnlyKotlinObject;
@@ -33,6 +34,11 @@ public class OverrideOnlyMethodUsages {
     // callers, so @OverrideOnly is unenforceable and these calls must not be flagged.
     OverrideOnlyKotlinObject.INSTANCE.overrideOnlyMethod();
     OverrideOnlyKotlinCompanionHolder.Companion.overrideOnlyMethod();
+
+    // A hand-written Java singleton has the same shape as a Kotlin `object`: a final
+    // class reached through a static INSTANCE field, so the method cannot be overridden
+    // by callers and @OverrideOnly is unenforceable. This call must not be flagged.
+    OverrideOnlyJavaSingleton.INSTANCE.overrideOnlyMethod();
 
     // Real-world case: an @OverrideOnly interface with a companion-object factory.
     // The factory call must not be flagged even though the interface carries the
