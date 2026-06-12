@@ -141,6 +141,7 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
             // TODO log if a dependency might be provided by another plugin with different plugin
             debugLog(nestedIndent, i + 1, "Resolved cached dependency '{}'", dep.id)
           } else if (dep in missingDependencies) {
+            context.notifyMissingDependency(plugin, dep)
             debugLog(nestedIndent, i + 1, "Skipping dependency '{}' as it is already marked missing", dep.id)
           } else {
             when (val dependencyPlugin = resolve(dep)) {
