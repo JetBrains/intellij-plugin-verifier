@@ -35,7 +35,7 @@ class CachingJarFileSystemProvider(
 
   private val delegateJarFileSystemProvider = UriJarFileSystemProvider { it.toUri().withSuperScheme(JAR_SCHEME) }
 
-  private val delegateRefCounts = ConcurrentHashMap<String, AtomicInteger>()
+  private val delegateRefCounts = ConcurrentHashMap<DelegateFileSystemKey, AtomicInteger>()
 
   private val fsCache = Caffeine.newBuilder()
     .maximumSize(MAX_OPEN_JAR_FILE_SYSTEMS)
@@ -54,27 +54,54 @@ class CachingJarFileSystemProvider(
     val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
       LOG.debug("Creating a filesystem handler via delegate for <{}> (Cache size: {})", jarUri, fsCache.estimatedSize())
     }
-    delegateRefCounts.computeIfAbsent(key) { AtomicInteger(0) }.incrementAndGet()
-    return FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath) { delegate ->
-      releaseDelegate(key, delegate)
-    }
+    retainDelegate(jarFs)
+    return fsHandleFileSystem(key, jarFs, jarPath)
   }
 
   private fun releaseDelegate(key: String, delegate: FileSystem) {
     synchronized(key.intern()) {
-      val count = delegateRefCounts[key]
-      if (count != null && count.decrementAndGet() == 0) {
-        delegateRefCounts.remove(key)
-        try {
-          if (delegate.isOpen) delegate.close()
-        } catch (_: InterruptedException) {
-          Thread.currentThread().interrupt()
-          LOG.info("Cannot close delegate due to an interruption for [{}]", delegate)
-        } catch (e: Exception) {
-          LOG.error("Unable to close delegate [{}]", delegate, e)
-        }
+      releaseDelegate(delegate)
+    }
+  }
+
+  private fun replaceDelegate(key: String, oldDelegate: FileSystem, newDelegate: FileSystem) {
+    if (oldDelegate === newDelegate) {
+      return
+    }
+    synchronized(key.intern()) {
+      retainDelegate(newDelegate)
+      releaseDelegate(oldDelegate)
+    }
+  }
+
+  private fun retainDelegate(delegate: FileSystem) {
+    delegateRefCounts.computeIfAbsent(DelegateFileSystemKey(delegate)) { AtomicInteger(0) }.incrementAndGet()
+  }
+
+  private fun releaseDelegate(delegate: FileSystem) {
+    val delegateKey = DelegateFileSystemKey(delegate)
+    val count = delegateRefCounts[delegateKey]
+    if (count != null && count.decrementAndGet() == 0) {
+      delegateRefCounts.remove(delegateKey)
+      try {
+        if (delegate.isOpen) delegate.close()
+      } catch (_: InterruptedException) {
+        Thread.currentThread().interrupt()
+        LOG.info("Cannot close delegate due to an interruption for [{}]", delegate)
+      } catch (e: Exception) {
+        LOG.error("Unable to close delegate [{}]", delegate, e)
       }
     }
+  }
+
+  private fun fsHandleFileSystem(key: String, delegate: FileSystem, jarPath: Path): FsHandleFileSystem {
+    return FsHandleFileSystem(
+      delegate,
+      delegateJarFileSystemProvider,
+      jarPath,
+      onDelegateRelease = { releasedDelegate -> releaseDelegate(key, releasedDelegate) },
+      onDelegateReplace = { oldDelegate, newDelegate -> replaceDelegate(key, oldDelegate, newDelegate) }
+    )
   }
 
   override fun getFileSystem(jarPath: Path): FileSystem {
@@ -98,10 +125,8 @@ class CachingJarFileSystemProvider(
           val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
             LOG.debug("Recreating an already closed a filesystem handler for <{}> (Cache size: {})", key, fsCache.estimatedSize())
           }
-          delegateRefCounts.computeIfAbsent(key) { AtomicInteger(0) }.incrementAndGet()
-          fs = FsHandleFileSystem(jarFs, delegateJarFileSystemProvider, jarPath) { delegate ->
-            releaseDelegate(key, delegate)
-          }
+          retainDelegate(jarFs)
+          fs = fsHandleFileSystem(key, jarFs, jarPath)
           fsCache.put(key, fs)
           logRecreatedFs(key)
         }
@@ -158,5 +183,13 @@ class CachingJarFileSystemProvider(
       data class Reused(val key: String) : Event()
       data class Recreated(val key: String) : Event()
     }
+  }
+
+  private class DelegateFileSystemKey(private val delegate: FileSystem) {
+    override fun equals(other: Any?): Boolean {
+      return other is DelegateFileSystemKey && delegate === other.delegate
+    }
+
+    override fun hashCode(): Int = System.identityHashCode(delegate)
   }
 }

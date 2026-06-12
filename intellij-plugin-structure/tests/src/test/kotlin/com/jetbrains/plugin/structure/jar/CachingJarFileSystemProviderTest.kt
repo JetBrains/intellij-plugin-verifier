@@ -318,6 +318,46 @@ class CachingJarFileSystemProviderTest {
     fileSystemProvider.close()
   }
 
+  /**
+   * Regression coverage for a wrapper that reopens its raw ZipFileSystem while another
+   * wrapper for the same JAR still points to the old, externally closed raw filesystem.
+   *
+   * The cache must release the reopened raw filesystem instance, not only decrement a
+   * URI-level counter attached to whichever stale delegate happens to be closed last.
+   */
+  @Test
+  fun `reopened delegate is closed when its wrapper is evicted before stale wrapper`() {
+    val fileSystemProvider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE)
+
+    val fs1 = fileSystemProvider.getFileSystem(jarPath) as FsHandleFileSystem
+    val rawFs1 = fs1.initialDelegateFileSystem
+
+    // Keep fs1 active but remove it from the cache, then create fs2. Both wrappers now
+    // share rawFs1, while fs1 will be closed independently from the cached fs2.
+    fileSystemProvider.evictCachedHandle(jarPath)
+    fs1.onCacheRemoval()
+    val fs2 = fileSystemProvider.getFileSystem(jarPath) as FsHandleFileSystem
+    assertNotSame(fs1, fs2)
+    assertSame(rawFs1, fs2.initialDelegateFileSystem)
+
+    // Simulate rawFs1 being closed externally. Using fs1 forces it to reopen and swap
+    // its delegate to rawFs2, while fs2 still points to the stale rawFs1 instance.
+    rawFs1.close()
+    val rawFs2 = fs1.delegateFileSystem
+    assertNotSame(rawFs1, rawFs2)
+    assertTrue(rawFs2.isOpen)
+
+    // Close the reopened wrapper first. This used to decrement only the URI-level count,
+    // leaving rawFs2 open until a stale wrapper released rawFs1.
+    fs1.close()
+    assertFalse("Reopened raw filesystem rawFs2 must close with fs1 eviction", rawFs2.isOpen)
+
+    fs2.close()
+    fs2.onCacheRemoval()
+
+    fileSystemProvider.close()
+  }
+
   @Suppress("UNCHECKED_CAST")
   private fun CachingJarFileSystemProvider.evictCachedHandle(jarPath: Path) {
     val fsCacheField = CachingJarFileSystemProvider::class.java.getDeclaredField("fsCache")

@@ -37,7 +37,8 @@ class FsHandleFileSystem(
   val initialDelegateFileSystem: FileSystem,
   private val provider: JarFileSystemProvider,
   private val path: Path,
-  private val onDelegateRelease: ((FileSystem) -> Unit)? = null
+  private val onDelegateRelease: ((FileSystem) -> Unit)? = null,
+  private val onDelegateReplace: ((FileSystem, FileSystem) -> Unit)? = null
 ) : FileSystem() {
 
   // 0 for cached but idle, '-1' for removed from cache and permanently closed
@@ -89,9 +90,11 @@ class FsHandleFileSystem(
         return fs
       }
       LOG.debug("Reopening filesystem delegate for <{}>", path)
-      fs = provider.getFileSystem(path)
-      _delegateFileSystem = fs
-      return fs
+      val oldFs = fs
+      val reopenedFs = provider.getFileSystem(path)
+      onDelegateReplace?.invoke(oldFs, reopenedFs)
+      _delegateFileSystem = reopenedFs
+      return reopenedFs
     }
   }
 
