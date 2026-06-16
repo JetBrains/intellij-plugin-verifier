@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.jar
 
+import com.github.benmanes.caffeine.cache.Cache
 import com.jetbrains.plugin.structure.base.fs.isClosed
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isFile
@@ -18,17 +19,7 @@ import org.junit.rules.TemporaryFolder
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.channels.SeekableByteChannel
-import java.nio.file.AccessMode
-import java.nio.file.ClosedFileSystemException
-import java.nio.file.CopyOption
-import java.nio.file.DirectoryStream
-import java.nio.file.FileStore
-import java.nio.file.FileSystem
-import java.nio.file.FileSystems
-import java.nio.file.Files
-import java.nio.file.LinkOption
-import java.nio.file.OpenOption
-import java.nio.file.Path
+import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
@@ -265,29 +256,112 @@ class CachingJarFileSystemProviderTest {
   }
 
   // Regression: MP-8146. The JVM caches ZipFileSystems globally, so two FsHandleFileSystem
-  // wrappers created for the same JAR at different times share the same underlying Z ZipFileSystem.
-  // A Z-level ref-count must gate Z.close() so that Z stays open until every wrapper
+  // wrappers created for the same JAR at different times share the same underlying javaNioFs ZipFileSystem.
+  // A javaNioFs-level ref-count must gate javaNioFs.close() so that javaNioFs stays open until every wrapper
   // that holds it has been evicted.
   @Test
-  fun `shared delegate Z stays open until the last wrapper is evicted`() {
-    val provider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE)
+  fun `raw delegate javaNioFs stays open until its wrapper is evicted`() {
+    val fileSystemProvider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE)
 
-    // h1 and h2 are distinct wrapper instances that share the same underlying ZipFileSystem Z.
-    val h1 = provider.getFileSystem(jarPath) as FsHandleFileSystem
-    val z = h1.initialDelegateFileSystem
+    val fs = fileSystemProvider.getFileSystem(jarPath) as FsHandleFileSystem
+    val javaNioFs = fs.initialDelegateFileSystem
 
-    // Close h1's client reference so referenceCount drops to 0 (idle in cache).
-    h1.close()
-    assertFalse(h1.isOpen)
-    // Z must still be open — it is still tracked by the Z-level ref-count.
-    assertTrue("Z must not close while h1 is still registered in the cache", z.isOpen)
+    // Close fs's client reference so referenceCount drops to 0 (idle in cache).
+    fs.close()
+    assertFalse(fs.isOpen)
+    // Raw javaNioFs must still be open — it is still tracked by the javaNioFs-level ref-count.
+    assertTrue("raw java.nio.file.FileSystem must not close while its wrapper is still registered in the cache", javaNioFs.isOpen)
 
-    // Simulate Caffeine evicting h1. This fires onCacheRemoval → closeDelegate → releaseDelegate.
-    // Z has no other holders, so it should now close.
-    h1.onCacheRemoval()
-    assertFalse("Z must close after the last wrapper is evicted", z.isOpen)
+    // Simulate Caffeine evicting 'fs' instance. This fires onCacheRemoval → closeDelegate → releaseDelegate.
+    // raw javaNioFs has no other holders, so it should now close.
+    fs.onCacheRemoval()
+    assertFalse("raw java.nio.file.FileSystem must close after the last wrapper is evicted", javaNioFs.isOpen)
+    fileSystemProvider.close()
+  }
 
-    provider.close()
+  /**
+   * Regression coverage for the actual MP-8146 shape:
+   * one cached wrapper is evicted while it is still in use, and the next lookup creates
+   * a second wrapper around the same JVM-cached ZipFileSystem delegate.
+   */
+  @Test
+  fun `shared delegate Z stays open while one of multiple wrappers still holds it`() {
+    val fileSystemProvider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE)
+
+    val fs1 = fileSystemProvider.getFileSystem(jarPath) as FsHandleFileSystem
+    val rawFs = fs1.initialDelegateFileSystem
+
+    // Evict the cache entry without closing fs1. This mirrors Caffeine removing an entry
+    // while a client still owns a reference, so fs1 is removed but remains usable.
+    fileSystemProvider.evictCachedHandle(jarPath)
+
+    // The JVM-level ZipFileSystem cache returns the same delegate 'rawFs' for the replacement
+    // wrapper. This is the case that needs delegate-level reference counting.
+    val fs2 = fileSystemProvider.getFileSystem(jarPath) as FsHandleFileSystem
+    assertNotSame("fs1 and fs2 must be distinct wrapper instances", fs1, fs2)
+    assertSame("fs1 and fs2 must share the same underlying raw filesystem rawFs", rawFs, fs2.initialDelegateFileSystem)
+
+    fs1.close()
+    assertTrue("Raw filesystem rawFs must stay open while fs2 still holds it", rawFs.isOpen)
+    assertTrue(fs2.isOpen)
+
+    // Closing fs2 drops its client reference to zero, but the wrapper is still cached,
+    // so rawFs must remain open until fs2 is removed from the cache as well.
+    fs2.close()
+    assertTrue("Raw filesystem rawFs must stay open while fs2 is idle but still cached", rawFs.isOpen)
+
+    fs2.onCacheRemoval()
+    assertFalse("Raw filesystem rawFs must close after the last wrapper is evicted", rawFs.isOpen)
+
+    fileSystemProvider.close()
+  }
+
+  /**
+   * Regression coverage for a wrapper that reopens its raw ZipFileSystem while another
+   * wrapper for the same JAR still points to the old, externally closed raw filesystem.
+   *
+   * The cache must release the reopened raw filesystem instance, not only decrement a
+   * URI-level counter attached to whichever stale delegate happens to be closed last.
+   */
+  @Test
+  fun `reopened delegate is closed when its wrapper is evicted before stale wrapper`() {
+    val fileSystemProvider = CachingJarFileSystemProvider(retentionTimeInSeconds = Long.MAX_VALUE)
+
+    val fs1 = fileSystemProvider.getFileSystem(jarPath) as FsHandleFileSystem
+    val rawFs1 = fs1.initialDelegateFileSystem
+
+    // Keep fs1 active but remove it from the cache, then create fs2. Both wrappers now
+    // share rawFs1, while fs1 will be closed independently from the cached fs2.
+    fileSystemProvider.evictCachedHandle(jarPath)
+    val fs2 = fileSystemProvider.getFileSystem(jarPath) as FsHandleFileSystem
+    assertNotSame(fs1, fs2)
+    assertSame(rawFs1, fs2.initialDelegateFileSystem)
+
+    // Simulate rawFs1 being closed externally. Using fs1 forces it to reopen and swap
+    // its delegate to rawFs2, while fs2 still points to the stale rawFs1 instance.
+    rawFs1.close()
+    val rawFs2 = fs1.delegateFileSystem
+    assertNotSame(rawFs1, rawFs2)
+    assertTrue(rawFs2.isOpen)
+
+    // Close the reopened wrapper first. This used to decrement only the URI-level count,
+    // leaving rawFs2 open until a stale wrapper released rawFs1.
+    fs1.close()
+    assertFalse("Reopened raw filesystem rawFs2 must close with fs1 eviction", rawFs2.isOpen)
+
+    fs2.close()
+    fs2.onCacheRemoval()
+
+    fileSystemProvider.close()
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun CachingJarFileSystemProvider.evictCachedHandle(jarPath: Path) {
+    val fsCacheField = CachingJarFileSystemProvider::class.java.getDeclaredField("fsCache")
+    fsCacheField.isAccessible = true
+    val fsCache = fsCacheField.get(this) as Cache<String, FsHandleFileSystem>
+    fsCache.invalidate(jarPath.toJarFileUri().toString())
+    fsCache.cleanUp()
   }
 
   // Regression: MP-7468. Targets the TOCTOU window in `unwrapped` — the FS is open at the
