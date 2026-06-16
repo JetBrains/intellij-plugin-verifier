@@ -116,26 +116,54 @@ class CachingJarFileSystemProvider(
     val jarUri = jarPath.toJarFileUri()
     val key = jarUri.toString()
 
-    synchronized(key.intern()) {
-      var fs = fsCache.getIfPresent(key)
-      if (fs != null) {
-        if (fs.increment(expectedClients)) {
-          logReusedFs(key)
-        } else {
+    // Retry because increment() must run outside the per-key lock: while it is running,
+    // Caffeine may evict the cached handle or another thread may replace it. In that case
+    // undo the acquired references, re-read the cache, and try again against the current entry.
+    while (true) {
+      val cachedFs = synchronized(key.intern()) {
+        fsCache.getIfPresent(key)
+      }
+
+      if (cachedFs != null) {
+        // increment() may reopen the delegate and call back into replaceDelegate(), which also
+        // takes the per-key lock. Keep it outside that lock to avoid key -> fs / fs -> key inversion.
+        if (cachedFs.increment(expectedClients)) {
+          synchronized(key.intern()) {
+            if (fsCache.getIfPresent(key) === cachedFs) {
+              logReusedFs(key)
+              return cachedFs
+            }
+          }
+          repeat(expectedClients) {
+            cachedFs.close()
+          }
+          continue
+        }
+      }
+
+      val resolvedFs = synchronized(key.intern()) {
+        val currentFs = fsCache.getIfPresent(key)
+        if (currentFs !== cachedFs) {
+          null
+        } else if (currentFs != null) {
           val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
             LOG.debug("Recreating an already closed a filesystem handler for <{}> (Cache size: {})", key, fsCache.estimatedSize())
           }
           retainDelegate(jarFs)
-          fs = fsHandleFileSystem(key, jarFs, jarPath)
+          val fs = fsHandleFileSystem(key, jarFs, jarPath)
           fsCache.put(key, fs)
           logRecreatedFs(key)
+          fs
+        } else {
+          val fs = createFileSystem(jarPath, jarUri)
+          fsCache.put(key, fs)
+          logCreatedFs(key)
+          fs
         }
-      } else {
-        fs = createFileSystem(jarPath, jarUri)
-        fsCache.put(key, fs)
-        logCreatedFs(key)
       }
-      return fs
+      if (resolvedFs != null) {
+        return resolvedFs
+      }
     }
   }
 
