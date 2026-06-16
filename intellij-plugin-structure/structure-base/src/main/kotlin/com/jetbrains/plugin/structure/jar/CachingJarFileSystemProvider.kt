@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger
 private val LOG: Logger = LoggerFactory.getLogger(CachingJarFileSystemProvider::class.java)
 
 private const val MAX_OPEN_JAR_FILE_SYSTEMS: Long = 256
+private const val MAX_GET_FILE_SYSTEM_RETRIES = 1_024
 
 const val RETENTION_TIME_PROPERTY_NAME = "com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider.retentionTime"
 
@@ -119,7 +120,10 @@ class CachingJarFileSystemProvider(
     // Retry because increment() must run outside the per-key lock: while it is running,
     // Caffeine may evict the cached handle or another thread may replace it. In that case
     // undo the acquired references, re-read the cache, and try again against the current entry.
-    while (true) {
+    var retryAttempts = 0
+    while (retryAttempts < MAX_GET_FILE_SYSTEM_RETRIES) {
+      retryAttempts++
+
       val cachedFs = synchronized(key.intern()) {
         fsCache.getIfPresent(key)
       }
@@ -164,6 +168,21 @@ class CachingJarFileSystemProvider(
       if (resolvedFs != null) {
         return resolvedFs
       }
+    }
+
+    throw newRetryAttemptsExhausted(key.intern(), jarPath)
+  }
+
+  private fun newRetryAttemptsExhausted(jarUriKey: String, jarPath: Path): JarArchiveException {
+    val cacheSize = fsCache.estimatedSize()
+    val message = "Unable to resolve cached JAR filesystem for [$jarPath] (resolved URI: <$jarUriKey>) " +
+      "after $MAX_GET_FILE_SYSTEM_RETRIES attempts (Cache size: $cacheSize). " +
+      "Aborting to avoid a possible live lock."
+    return JarArchiveException(message).also { ex ->
+      LOG.error(
+        message,
+        ex
+      )
     }
   }
 
