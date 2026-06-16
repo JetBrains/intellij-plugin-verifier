@@ -295,7 +295,6 @@ class CachingJarFileSystemProviderTest {
     // Evict the cache entry without closing fs1. This mirrors Caffeine removing an entry
     // while a client still owns a reference, so fs1 is removed but remains usable.
     fileSystemProvider.evictCachedHandle(jarPath)
-    fs1.onCacheRemoval()
 
     // The JVM-level ZipFileSystem cache returns the same delegate 'rawFs' for the replacement
     // wrapper. This is the case that needs delegate-level reference counting.
@@ -335,7 +334,6 @@ class CachingJarFileSystemProviderTest {
     // Keep fs1 active but remove it from the cache, then create fs2. Both wrappers now
     // share rawFs1, while fs1 will be closed independently from the cached fs2.
     fileSystemProvider.evictCachedHandle(jarPath)
-    fs1.onCacheRemoval()
     val fs2 = fileSystemProvider.getFileSystem(jarPath) as FsHandleFileSystem
     assertNotSame(fs1, fs2)
     assertSame(rawFs1, fs2.initialDelegateFileSystem)
