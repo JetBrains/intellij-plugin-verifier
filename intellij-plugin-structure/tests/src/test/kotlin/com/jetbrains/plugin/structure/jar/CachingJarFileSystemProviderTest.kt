@@ -270,13 +270,12 @@ class CachingJarFileSystemProviderTest {
     fs.close()
     assertFalse(fs.isOpen)
     // Raw javaNioFs must still be open — it is still tracked by the javaNioFs-level ref-count.
-    assertTrue("raw java.nio.file.Filesystem must not close while its wrapper is still registered in the cache", javaNioFs.isOpen)
+    assertTrue("raw java.nio.file.FileSystem must not close while its wrapper is still registered in the cache", javaNioFs.isOpen)
 
     // Simulate Caffeine evicting 'fs' instance. This fires onCacheRemoval → closeDelegate → releaseDelegate.
     // raw javaNioFs has no other holders, so it should now close.
     fs.onCacheRemoval()
-    assertFalse("raw java.nio.file.Filesystem must close after the last wrapper is evicted", javaNioFs.isOpen)
-
+    assertFalse("raw java.nio.file.FileSystem must close after the last wrapper is evicted", javaNioFs.isOpen)
     fileSystemProvider.close()
   }
 
