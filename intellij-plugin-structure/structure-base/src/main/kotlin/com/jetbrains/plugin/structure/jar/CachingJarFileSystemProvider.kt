@@ -150,9 +150,7 @@ class CachingJarFileSystemProvider(
         if (currentFs !== cachedFs) {
           null
         } else if (currentFs != null) {
-          val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath).also {
-            LOG.debug("Recreating an already closed filesystem handler for <{}> (Cache size: {})", key, fsCache.estimatedSize())
-          }
+          val jarFs = delegateJarFileSystemProvider.getFileSystem(jarPath)
           retainDelegate(jarFs)
           val fs = fsHandleFileSystem(key, jarFs, jarPath)
           fsCache.put(key, fs)
@@ -202,6 +200,7 @@ class CachingJarFileSystemProvider(
   }
 
   private fun logRecreatedFs(uriString: String) {
+    LOG.debug("Recreating an already closed filesystem handler for <{}> (Cache size: {})", uriString, fsCache.estimatedSize())
     if (enableEventLogging) eventLog.logRecreated(uriString)
   }
 
