@@ -6,9 +6,20 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Add logging for dependency downloads and plugin cache usage ([#1498](https://github.com/JetBrains/intellij-plugin-verifier/pull/1498), [MP-8047](https://youtrack.jetbrains.com/issue/MP-8047))
+- Propagate companion object annotations to `@JvmStatic` methods and fields ([#1502](https://github.com/JetBrains/intellij-plugin-verifier/pull/1502), [IJPL-245371](https://youtrack.jetbrains.com/issue/IJPL-245371))
+
 ### Changed
 
+- Update ASM to 9.10.1 ([#1500](https://github.com/JetBrains/intellij-plugin-verifier/pull/1500))
+- Update JGraphT to 1.5.3 ([#1472](https://github.com/JetBrains/intellij-plugin-verifier/pull/1472))
+- Update ByteBuddy to 1.18.10 ([#1507](https://github.com/JetBrains/intellij-plugin-verifier/pull/1507))
+
 ### Fixed
+
+- Do not report `OverrideOnly` violations for static, companion-object, Kotlin object, and Java final singleton calls ([#1489](https://github.com/JetBrains/intellij-plugin-verifier/pull/1489), [#1506](https://github.com/JetBrains/intellij-plugin-verifier/pull/1506), [MP-7233](https://youtrack.jetbrains.com/issue/MP-7233))
+- Add RustRover to the product enum used for core plugin discovery and improve related error messages ([#1501](https://github.com/JetBrains/intellij-plugin-verifier/pull/1501), [MP-8079](https://youtrack.jetbrains.com/issue/MP-8079))
+- Fix cached JAR filesystem lifecycle races, introduce safe-guard on filesystem handler unwrapping, and close `ZipFile` handles eagerly to prevent locking on Windows ([#1508](https://github.com/JetBrains/intellij-plugin-verifier/pull/1508), [#1515](https://github.com/JetBrains/intellij-plugin-verifier/pull/1515), [#1514](https://github.com/JetBrains/intellij-plugin-verifier/pull/1514), [MP-8146](https://youtrack.jetbrains.com/issue/MP-8146))
 
 ## 1.405 - 2026-05-21
 
@@ -688,7 +699,7 @@ This fixes false positives connected with indexes and `DataIndexer`s.
 - Support Java 17 Records ([MP-4865](https://youtrack.jetbrains.com/issue/MP-4865/Plugin-Verifier-Problems-handling-java.lang.Record))
 - Support all variants of `ClientKind` for services  ([MP-4881](https://youtrack.jetbrains.com/issue/MP-4881/Plugin-Verifier-support-all-variants-of-com.intellij.openapi.client.ClientKind-for-services))
 
-[Unreleased]: https://github.com/JetBrains/intellij-plugin-verifier/compare/1.398...HEAD
+[Unreleased]: https://github.com/JetBrains/intellij-plugin-verifier/compare/1.405...HEAD
 [1.398]: https://github.com/JetBrains/intellij-plugin-verifier/compare/1.397...1.398
 [1.397]: https://github.com/JetBrains/intellij-plugin-verifier/compare/1.396...1.397
 [1.307]: https://github.com/JetBrains/intellij-plugin-verifier/compare/v1.306...v1.307
