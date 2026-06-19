@@ -6,14 +6,6 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
-### Changed
-
-### Fixed
-
-## 1.406 - 2026-06-19
-
-### Added
-
 - Add logging for dependency downloads and plugin cache usage ([#1498](https://github.com/JetBrains/intellij-plugin-verifier/pull/1498), [MP-8047](https://youtrack.jetbrains.com/issue/MP-8047))
 - Propagate companion object annotations to `@JvmStatic` methods and fields ([#1502](https://github.com/JetBrains/intellij-plugin-verifier/pull/1502), [IJPL-245371](https://youtrack.jetbrains.com/issue/IJPL-245371))
 
