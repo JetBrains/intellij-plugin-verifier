@@ -53,7 +53,7 @@ class CompositeDependencyFinder(private val dependencyFinders: List<DependencyFi
   }
 
   private fun notFound(reason: String, kind: String, label: String): DependencyFinder.Result.NotFound {
-    LOG.info("Dependency {} {} could not be resolved by any finder ({})", kind, label, presentableName)
+    LOG.debug("Dependency {} {} could not be resolved by any finder ({})", kind, label, presentableName)
     return DependencyFinder.Result.NotFound(reason)
   }
 }
