@@ -17,11 +17,7 @@ class LastCompatibleVersionSelector(val ideVersion: IdeVersion) : PluginVersionS
     if (pluginInfo != null) {
       return PluginVersionSelector.Result.Selected(pluginInfo)
     }
-    val allVersions = pluginRepository.getAllVersionsOfPlugin(pluginId)
-    if (allVersions.isEmpty()) {
-      return PluginVersionSelector.Result.NotFound("Plugin $pluginId is not available in ${pluginRepository.presentableName}")
-    }
-    return PluginVersionSelector.Result.NotFound("Plugin $pluginId doesn't have a build compatible with $ideVersion in ${pluginRepository.presentableName}")
+    return PluginVersionSelector.Result.NotFound("Plugin $pluginId is not available or doesn't have a build compatible with $ideVersion in ${pluginRepository.presentableName}")
   }
 
   override fun selectPluginByModuleId(moduleId: String, pluginRepository: PluginRepository): PluginVersionSelector.Result {
