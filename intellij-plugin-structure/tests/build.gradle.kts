@@ -12,6 +12,7 @@ dependencies {
   testImplementation(project(":structure-toolbox"))
   testImplementation(project(":structure-youtrack"))
   testImplementation(project(":structure-teamcity-recipes"))
+  testImplementation(sharedLibs.caffeine)
   testImplementation(sharedLibs.junit)
   testImplementation(sharedLibs.assertj)
   testImplementation(sharedLibs.kotlin.test)
