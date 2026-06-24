@@ -8,20 +8,16 @@ import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import org.jgrapht.Graph
 import org.jgrapht.alg.connectivity.GabowStrongConnectivityInspector
-import org.jgrapht.alg.cycle.JohnsonSimpleCycles
 import org.jgrapht.graph.AsSubgraph
 import org.jgrapht.graph.DefaultDirectedGraph
 import org.jgrapht.graph.DefaultEdge
 import java.nio.file.Files
 import java.time.LocalDateTime
-import java.util.Collections
 import kotlin.io.path.Path
 
 private const val DUMP_GRAPH_PROPERTY = "pluginverifier.dumpDependencyGraph"
 
 data class DependenciesGraphCycleFinder(val dependenciesGraph: DependenciesGraph) {
-
-  private class CycleFound(val cycle: List<DependencyNode>) : Throwable(null, null, true, false)
 
   /**
    * Checks for cycles in the [dependenciesGraph] that involve the verified plugin.
@@ -38,27 +34,59 @@ data class DependenciesGraphCycleFinder(val dependenciesGraph: DependenciesGraph
 
     GabowStrongConnectivityInspector(graph)
       .stronglyConnectedSets()
-      .filter { scc -> scc.size > 1 && dependenciesGraph.verifiedPlugin in scc }
-      .forEach { scc ->
-        try {
-          JohnsonSimpleCycles(AsSubgraph(graph, scc))
-            .findSimpleCycles { cycle ->
-              if (dependenciesGraph.verifiedPlugin in cycle) throw CycleFound(cycle)
-            }
-        } catch (e: CycleFound) {
-          fn(e.cycle.rotateToFront(dependenciesGraph.verifiedPlugin))
-          return
-        }
+      .firstOrNull { scc -> scc.size > 1 && dependenciesGraph.verifiedPlugin in scc }
+      ?.let { scc ->
+        findCycleThrough(AsSubgraph(graph, scc), dependenciesGraph.verifiedPlugin)?.let(fn)
       }
   }
 
-  private fun <T> List<T>.rotateToFront(target: T): List<T> {
-    val result = this.toMutableList()
-    val index = indexOf(target)
-    require(index != -1) { "Target element not found: $target" }
+  /**
+   * BFS from [start] within [graph] to find the shortest cycle passing through [start].
+   * Returns the cycle as an ordered list beginning with [start], or null if none exists.
+   */
+  private fun findCycleThrough(
+    graph: Graph<DependencyNode, DefaultEdge>,
+    start: DependencyNode
+  ): List<DependencyNode>? {
+    val parent = HashMap<DependencyNode, DependencyNode>()
+    val queue = ArrayDeque<DependencyNode>()
 
-    Collections.rotate(result, -index)
-    return result
+    for (edge in graph.outgoingEdgesOf(start)) {
+      val neighbor = graph.getEdgeTarget(edge)
+      if (neighbor == start) return listOf(start)
+      if (neighbor !in parent) {
+        parent[neighbor] = start
+        queue.add(neighbor)
+      }
+    }
+
+    while (queue.isNotEmpty()) {
+      val node = queue.removeFirst()
+      for (edge in graph.outgoingEdgesOf(node)) {
+        val next = graph.getEdgeTarget(edge)
+        if (next == start) return reconstructCycle(parent, start, node)
+        if (next !in parent) {
+          parent[next] = node
+          queue.add(next)
+        }
+      }
+    }
+    return null
+  }
+
+  private fun reconstructCycle(
+    parent: Map<DependencyNode, DependencyNode>,
+    start: DependencyNode,
+    end: DependencyNode
+  ): List<DependencyNode> {
+    val segment = mutableListOf<DependencyNode>()
+    var current = end
+    while (current != start) {
+      segment.add(current)
+      current = parent[current]!!
+    }
+    segment.reverse()
+    return listOf(start) + segment
   }
 
   /**
