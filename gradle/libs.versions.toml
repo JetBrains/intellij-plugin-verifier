@@ -9,6 +9,7 @@ commons-io = "2.20.0"
 gson = "2.14.0"
 changelog = "2.4.0"
 jackson-module-kotlin = "2.21.4"
+jdom = "2.0.6.1"
 jetbrains-annotations = "26.1.0"
 jsoup = "1.22.2"
 junit = "4.13.2"
@@ -40,6 +41,7 @@ caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
+jdom = { group = "org.jdom", name = "jdom2", version.ref = "jdom" }
 jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrains-annotations" }
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
