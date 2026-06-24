@@ -1,8 +1,8 @@
 val intellijStructureVersion : String by rootProject.extra
 
 dependencies {
-  implementation("org.jetbrains.intellij.plugins:structure-intellij-classes:$intellijStructureVersion")
-  implementation("org.jetbrains.intellij.plugins:structure-ide:$intellijStructureVersion")
+  api("org.jetbrains.intellij.plugins:structure-intellij-classes:$intellijStructureVersion")
+  api("org.jetbrains.intellij.plugins:structure-ide:$intellijStructureVersion")
 
   implementation(project(":verifier-core"))
   implementation(sharedLibs.caffeine)
