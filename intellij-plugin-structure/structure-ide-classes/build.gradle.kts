@@ -1,7 +1,7 @@
 dependencies {
-  implementation(sharedLibs.slf4j.api)
-  implementation(project(":structure-ide"))
-  implementation(project(":structure-classes"))
+  api(project(":structure-ide"))
+  api(project(":structure-classes"))
 
+  implementation(sharedLibs.slf4j.api)
   implementation(sharedLibs.caffeine)
 }

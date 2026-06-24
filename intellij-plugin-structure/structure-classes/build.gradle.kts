@@ -1,6 +1,8 @@
 val asmVersion = "9.5"
 
 dependencies {
+  api(project(":structure-base"))
+
   implementation(sharedLibs.slf4j.api)
   implementation(libs.asm.root)
   implementation(libs.asm.commons)
@@ -9,8 +11,6 @@ dependencies {
   implementation(libs.asm.analysis)
 
   implementation(libs.kotlinx.metadata)
-
-  implementation(project(":structure-base"))
 
   implementation(sharedLibs.caffeine)
 }
