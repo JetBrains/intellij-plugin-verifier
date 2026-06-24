@@ -3,5 +3,5 @@ dependencies {
   api(project(":structure-classes"))
   api(project(":structure-ide-classes"))
 
-  implementation(libs.jdom)
+  implementation(sharedLibs.jdom)
 }

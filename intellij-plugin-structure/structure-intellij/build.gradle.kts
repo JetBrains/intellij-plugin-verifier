@@ -5,7 +5,7 @@ dependencies {
   implementation(sharedLibs.slf4j.api)
   implementation(sharedLibs.caffeine)
   implementation(sharedLibs.commons.io)
-  implementation(libs.jdom)
+  implementation(sharedLibs.jdom)
 
   implementation(libs.jaxb.api)
   runtimeOnly(libs.jaxb.runtime)
