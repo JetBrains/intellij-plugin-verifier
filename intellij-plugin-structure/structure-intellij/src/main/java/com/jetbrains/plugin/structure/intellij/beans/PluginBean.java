@@ -4,10 +4,10 @@
 
 package com.jetbrains.plugin.structure.intellij.beans;
 
-import org.jdom2.Element;
-
 import jakarta.xml.bind.annotation.*;
 import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import org.jdom2.Element;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,7 +27,7 @@ public class PluginBean {
   @XmlElement(name = "product-descriptor") public ProductDescriptorBean productDescriptor;
   @XmlElement(name = "is-internal") public boolean isInternal = true;
   @XmlElement(name = "depends") public List<PluginDependencyBean> dependencies = new ArrayList<>();
-  @XmlElement(name = "dependencies") public PluginDependenciesBean dependenciesV2;
+  @XmlElement(name = "dependencies") public List<PluginDependenciesBean> dependenciesV2;
   @XmlElement(name = "content") public List<PluginContentBean> pluginContent = new ArrayList<>();
   @XmlElement(name = "incompatible-with") public List<String> incompatibleWith = new ArrayList<>();
   @XmlElement(name = "helpset") public List<PluginHelpSetBean> helpSets = new ArrayList<>();
