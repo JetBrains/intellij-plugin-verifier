@@ -18,6 +18,7 @@ dependencies {
   testImplementation(sharedLibs.assertj)
   testImplementation(sharedLibs.kotlin.test)
   testImplementation(sharedLibs.jackson.module.kotlin)
+  testImplementation(libs.jdom)
   testImplementation(libs.commons.compress)
   testImplementation(libs.jimfs)
   testImplementation(libs.jackson.yaml)
