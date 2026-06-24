@@ -1,6 +1,7 @@
 val asmVersion = "9.5"
 
 dependencies {
+  implementation(sharedLibs.slf4j.api)
   implementation(libs.asm.root)
   implementation(libs.asm.commons)
   implementation(libs.asm.util)
