@@ -6,11 +6,8 @@ dependencies {
   implementation(sharedLibs.jetbrains.annotations)
 
   implementation(sharedLibs.slf4j.api)
-  implementation(libs.asm.root)
-  implementation(libs.asm.commons)
-  implementation(libs.asm.util)
-  implementation(libs.asm.tree)
-  implementation(libs.asm.analysis)
+  api(libs.asm.root)
+  api(libs.asm.tree)
 
   implementation(libs.kotlinx.metadata)
 
