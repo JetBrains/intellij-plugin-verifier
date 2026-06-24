@@ -5,11 +5,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.ReclassifiedPluginProblem
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
-import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
-import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
-import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
-import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
-import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginName
+import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import junit.framework.TestCase.assertEquals
@@ -69,6 +65,28 @@ class PluginCreatorTest {
       }
     }
   }
+
+
+  @Test
+  fun `plugin with multiple dependencies blocks`() {
+    val pluginCreator = createPlugin(PLUGIN_WITH_MULTIPLE_DEPENDENCIES_BLOCKS)
+    with(pluginCreator) {
+      assertTrue(isSuccess)
+      with(plugin.pluginMainModuleDependencies) {
+        assertEquals(
+          listOf(
+            "com.intellij.modules.os.mac",
+            "com.intellij.modules.arch.arm64",
+            "com.intellij.platform.images",
+            "org.intellij.groovy.live.templates",
+            "com.intellij.modules.json",
+            "org.jetbrains.kotlin",
+          ).sorted(), map { it.pluginId }.sorted()
+        )
+      }
+    }
+  }
+
 
   private fun createPlugin(pluginXml: String): PluginCreator {
     val uri = URI("file:///plugins/somePlugin/META-INF/plugin.xml")
@@ -139,4 +157,42 @@ private const val PLUGIN_XML_WITH_CONTENT_MODULES = """
        <module name="my.unknown.module" loading="unknown"/>
      </content>
   </idea-plugin> 
+"""
+
+private const val PLUGIN_WITH_MULTIPLE_DEPENDENCIES_BLOCKS = """
+  <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <name>Android</name>
+    <id>android</id>
+    <version>263.20260623.0-mac-arm64</version>
+    <idea-version since-build="263.SNAPSHOT" until-build="263.SNAPSHOT" />
+    <vendor>JetBrains</vendor>
+    <description><![CDATA[Supports the development of <a href="https://developer.android.com">Android</a> applications with IntelliJ IDEA and Android Studio.]]></description>
+    <dependencies>
+      <plugin id="com.intellij.modules.os.mac" />
+      <plugin id="com.intellij.modules.arch.arm64" />
+      <plugin id="com.intellij.platform.images" />
+      <module name="intellij.java.backend" />
+      <plugin id="org.intellij.groovy.live.templates" />
+      <plugin id="com.intellij.modules.json" />
+      <module name="intellij.platform.lvcs.impl" />
+      <module name="intellij.platform.vcs.impl" />
+      <module name="intellij.platform.vcs.dvcs.impl" />
+      <module name="intellij.properties.backend.psi" />
+      <module name="intellij.spellchecker" />
+      <module name="intellij.spellchecker.xml" />
+      <module name="intellij.platform.jewel.foundation" />
+      <module name="intellij.platform.jewel.ideLafBridge" />
+      <module name="intellij.platform.jewel.markdown.core" />
+      <module name="intellij.platform.jewel.markdown.ideLafBridgeStyling" />
+      <module name="intellij.platform.jewel.ui" />
+    </dependencies>
+    <dependencies>
+      <module name="intellij.xml.emmet" />
+      <module name="intellij.platform.bookmarks" />
+    </dependencies>
+    <dependencies>
+      <module name="intellij.gradle" />
+      <plugin id="org.jetbrains.kotlin" />
+    </dependencies>
+  </idea-plugin>
 """
