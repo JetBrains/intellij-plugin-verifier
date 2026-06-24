@@ -4,5 +4,5 @@ dependencies {
   testImplementation(project(":structure-ide-jps"))
   testImplementation(project(path = ":tests", configuration = "testOutput"))
 
-  testImplementation(sharedLibs.asm)
+  testImplementation(sharedLibs.asm.root)
 }

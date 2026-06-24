@@ -2,7 +2,7 @@
 kotlin = "2.0.21"
 
 assertj = "3.27.7"
-asm = "9.9.1"
+asm = "9.10.1"
 byteBuddy = "1.18.5"
 caffeine = "3.2.4"
 commons-io = "2.20.0"
@@ -30,7 +30,11 @@ xz = "1.9"
 
 [libraries]
 assertj = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
-asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
+asm-analysis = { group = "org.ow2.asm", name = "asm-analysis", version.ref = "asm" }
+asm-commons = { group = "org.ow2.asm", name = "asm-commons", version.ref = "asm" }
+asm-root = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
+asm-tree = { group = "org.ow2.asm", name = "asm-tree", version.ref = "asm" }
+asm-util = { group = "org.ow2.asm", name = "asm-util", version.ref = "asm" }
 byteBuddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "byteBuddy" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
