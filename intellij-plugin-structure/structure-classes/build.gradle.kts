@@ -3,6 +3,8 @@ val asmVersion = "9.5"
 dependencies {
   api(project(":structure-base"))
 
+  implementation(sharedLibs.jetbrains.annotations)
+
   implementation(sharedLibs.slf4j.api)
   implementation(libs.asm.root)
   implementation(libs.asm.commons)

@@ -1,6 +1,7 @@
 dependencies {
   api(project(":structure-base"))
 
+  implementation(sharedLibs.jetbrains.annotations)
   implementation(sharedLibs.slf4j.api)
   implementation(sharedLibs.caffeine)
   implementation(sharedLibs.commons.io)
