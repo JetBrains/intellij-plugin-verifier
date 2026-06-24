@@ -1,6 +1,6 @@
 
 dependencies {
-  api(project(":structure-intellij"))
-  api(sharedLibs.woodstox)
+  implementation(project(":structure-intellij"))
+  implementation(sharedLibs.woodstox)
   testImplementation(sharedLibs.junit)
 }

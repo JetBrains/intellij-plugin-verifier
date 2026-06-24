@@ -1,6 +1,6 @@
 dependencies {
-  api(project(":structure-ide"))
-  api(project(":structure-classes"))
+  implementation(project(":structure-ide"))
+  implementation(project(":structure-classes"))
 
-  api(sharedLibs.caffeine)
+  implementation(sharedLibs.caffeine)
 }

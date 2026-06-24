@@ -1,5 +1,5 @@
 dependencies {
-  api(project(":structure-intellij"))
-  api(project(":structure-classes"))
-  api(project(":structure-ide-classes"))
+  implementation(project(":structure-intellij"))
+  implementation(project(":structure-classes"))
+  implementation(project(":structure-ide-classes"))
 }

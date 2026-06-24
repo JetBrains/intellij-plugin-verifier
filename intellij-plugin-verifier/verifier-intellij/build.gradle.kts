@@ -1,12 +1,12 @@
 val intellijStructureVersion : String by rootProject.extra
 
 dependencies {
-  api(project(":verifier-core"))
-  api(project(":verifier-repository"))
+  implementation(project(":verifier-core"))
+  implementation(project(":verifier-repository"))
 
-  api(libs.jgrapht.core)
+  implementation(libs.jgrapht.core)
 
   implementation(sharedLibs.jsoup)
 
-  api("org.jetbrains.intellij.plugins:structure-ide-classes:$intellijStructureVersion")
+  implementation("org.jetbrains.intellij.plugins:structure-ide-classes:$intellijStructureVersion")
 }

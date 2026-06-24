@@ -3,7 +3,7 @@ plugins {
 }
 
 dependencies {
-  api(project(":verifier-intellij"))
+  implementation(project(":verifier-intellij"))
 
   runtimeOnly(sharedLibs.logback.classic)
   implementation(sharedLibs.jackson.module.kotlin)

@@ -1,10 +1,10 @@
 dependencies {
-  api(sharedLibs.jetbrains.annotations)
-  api(sharedLibs.slf4j.api)
+  implementation(sharedLibs.jetbrains.annotations)
+  implementation(sharedLibs.slf4j.api)
 
-  api(sharedLibs.commons.io)
+  implementation(sharedLibs.commons.io)
 
-  api(sharedLibs.caffeine)
+  implementation(sharedLibs.caffeine)
 
   implementation(libs.commons.compress)
   implementation(sharedLibs.xz)
