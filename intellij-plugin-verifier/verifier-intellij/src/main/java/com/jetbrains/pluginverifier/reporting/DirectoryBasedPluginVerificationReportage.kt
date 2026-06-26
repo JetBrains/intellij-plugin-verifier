@@ -12,7 +12,6 @@ import com.jetbrains.plugin.structure.base.utils.closeLogged
 import com.jetbrains.plugin.structure.base.utils.replaceInvalidFileNameCharacters
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
 import com.jetbrains.pluginverifier.reporting.ignoring.AllIgnoredProblemsReporter
@@ -131,7 +130,7 @@ class DirectoryBasedPluginVerificationReportage(
         is PluginVerificationResult.Verified -> {
           reportVerificationDetails(directory, "compatibility-warnings.txt", compatibilityWarnings)
           reportVerificationDetails(directory, "compatibility-problems.txt", compatibilityProblems)
-          reportVerificationDetails(directory, "dependencies.txt", listOf(dependenciesGraph)) { DependenciesGraphPrettyPrinter(it).prettyPresentation() }
+          reportVerificationDetails(directory, "dependencies.txt", listOf(dependenciesGraph)) { it.toString() }
           reportVerificationDetails(directory, "deprecated-usages.txt", deprecatedUsages)
           reportVerificationDetails(directory, "experimental-api-usages.txt", experimentalApiUsages)
           reportVerificationDetails(directory, "internal-api-usages.txt", internalApiUsages)

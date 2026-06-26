@@ -6,10 +6,10 @@ package com.jetbrains.pluginverifier.tasks.twoTargets
 
 import com.jetbrains.plugin.structure.base.utils.pluralize
 import com.jetbrains.plugin.structure.base.utils.pluralizeWithNumber
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.ResolvedPluginDependency
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.markdown.MarkdownResultPrinter
@@ -335,10 +335,10 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
     return "$pluginId:$version$updateId$browserUrl"
   }
 
-  private fun DependenciesGraph.getResolvedDependency(dependency: PluginDependency) =
+  private fun ResolvedDependenciesGraph.getResolvedDependency(dependency: ResolvedPluginDependency) =
     edges.find { it.dependency == dependency }?.to
 
-  private fun PluginVerificationResult.getResolvedDependency(dependency: PluginDependency) =
+  private fun PluginVerificationResult.getResolvedDependency(dependency: ResolvedPluginDependency) =
     (this as? PluginVerificationResult.Verified)?.dependenciesGraph?.getResolvedDependency(dependency)
 
   private fun getMissingDependenciesNote(

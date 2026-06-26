@@ -4,13 +4,13 @@
 
 package com.jetbrains.pluginverifier.response
 
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.DependencyEdge
-import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependencyEdge
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependencyNode
+import com.jetbrains.pluginverifier.dependencies.ResolvedMissingDependency
+import com.jetbrains.pluginverifier.dependencies.ResolvedPluginDependency
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.results.location.*
@@ -107,7 +107,7 @@ fun PluginVerificationResult.Verified.convertResultType(): VerificationResultTyp
 private fun AvailableIde.convert() =
   AvailableIdeDto(version.asString(), releaseVersion, product.productName)
 
-fun DependenciesGraph.convert() =
+fun ResolvedDependenciesGraph.convert() =
   DependenciesGraphDto(
     verifiedPlugin.convert(),
     vertices.map { it.convert() },
@@ -120,22 +120,22 @@ fun DependenciesGraph.convert() =
     }
   )
 
-private fun DependencyEdge.convert() =
+private fun ResolvedDependencyEdge.convert() =
   DependenciesGraphDto.DependencyEdgeDto(
     from.convert(),
     to.convert(),
     dependency.convert()
   )
 
-private fun DependencyNode.convert() = DependenciesGraphDto.DependencyNodeDto(id, version)
+private fun ResolvedDependencyNode.convert() = DependenciesGraphDto.DependencyNodeDto(id, version)
 
-private fun MissingDependency.convert() =
+private fun ResolvedMissingDependency.convert() =
   DependenciesGraphDto.MissingDependencyDto(
     dependency.convert(),
     missingReason
   )
 
-private fun PluginDependency.convert() =
+private fun ResolvedPluginDependency.convert() =
   DependenciesGraphDto.DependencyDto(
     id,
     isOptional,

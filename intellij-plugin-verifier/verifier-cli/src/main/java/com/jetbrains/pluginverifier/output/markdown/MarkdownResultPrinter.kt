@@ -4,7 +4,7 @@ import com.jetbrains.plugin.structure.base.problems.isError
 import com.jetbrains.plugin.structure.base.utils.create
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dependencies.ResolvedMissingDependency
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.dymamic.DynamicPlugins.simplifiedReasonsNotToLoadUnloadWithoutRestart
 import com.jetbrains.pluginverifier.output.DYNAMIC_PLUGIN_FAIL
@@ -153,7 +153,7 @@ private operator fun Markdown.plus(result: PluginVerificationResult.Verified) {
 
 private fun Markdown.printVerificationResult(result: PluginVerificationResult.Verified) = with(result) {
   printVerificationResult("Plugin structure warnings", pluginStructureWarnings, PluginStructureWarning::describe)
-  printVerificationResult("Missing dependencies", dependenciesGraph.getDirectMissingDependencies(), MissingDependency::describe)
+  printVerificationResult("Missing dependencies", dependenciesGraph.getDirectMissingDependencies(), ResolvedMissingDependency::describe)
   printVerificationResult("Compatibility warnings", compatibilityWarnings, CompatibilityWarning::describe)
   printVerificationResult("Compatibility problems", compatibilityProblems, CompatibilityProblem::describe)
   printVerificationResult("Deprecated API usages", deprecatedUsages, DeprecatedApiUsage::describe)
@@ -202,7 +202,7 @@ private fun Markdown.appendShortAndFullDescriptions(shortToFullDescriptions: Map
 }
 
 fun PluginStructureWarning.describe() = "" to message
-fun MissingDependency.describe() = "" to "$dependency: $missingReason"
+fun ResolvedMissingDependency.describe() = "" to "$dependency: $missingReason"
 fun CompatibilityWarning.describe() = shortDescription to fullDescription
 fun CompatibilityProblem.describe() = shortDescription to fullDescription
 fun DeprecatedApiUsage.describe() = shortDescription to fullDescription
