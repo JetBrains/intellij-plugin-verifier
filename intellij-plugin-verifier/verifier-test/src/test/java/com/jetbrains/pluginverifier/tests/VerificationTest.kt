@@ -3,10 +3,9 @@ package com.jetbrains.pluginverifier.tests
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.pluginverifier.PluginVerificationResult
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dependencies.ResolvedMissingDependency
+import com.jetbrains.pluginverifier.dependencies.ResolvedPluginDependency
 import org.junit.Assert
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -39,14 +38,14 @@ class VerificationTest {
   fun `check that missing dependency is detected`() {
     val missingDependencies = verificationResult.dependenciesGraph.getDirectMissingDependencies()
     assertFalse(missingDependencies.isEmpty())
-    val expectedDep = MissingDependency(PluginV1Dependency.Optional("MissingPlugin"), "Dependency MissingPlugin is not found among the bundled plugins of IU-211.500")
+    val expectedDep = ResolvedMissingDependency(ResolvedPluginDependency("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-211.500")
     assertTrue("$expectedDep not in $missingDependencies", expectedDep in missingDependencies)
   }
 
   @Test
   fun `check that module incompatibility is detected`() {
     val missingDependencies = verificationResult.dependenciesGraph.getDirectMissingDependencies()
-    val expectedDep = MissingDependency(PluginDependencyImpl("com.intellij.modules.arbitrary.module", false, true), "The plugin is incompatible with module 'com.intellij.modules.arbitrary.module'")
+    val expectedDep = ResolvedMissingDependency(ResolvedPluginDependency("com.intellij.modules.arbitrary.module", false, true), "The plugin is incompatible with module 'com.intellij.modules.arbitrary.module'")
     assertTrue("$expectedDep not in $missingDependencies", expectedDep in missingDependencies)
   }
 

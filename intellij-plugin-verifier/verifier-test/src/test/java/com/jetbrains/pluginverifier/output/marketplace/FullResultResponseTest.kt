@@ -7,8 +7,8 @@ package com.jetbrains.pluginverifier.output.marketplace
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependencyNode
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.jdk.JdkVersion
 import com.jetbrains.pluginverifier.output.BaseOutputTest
@@ -26,8 +26,8 @@ class FullResultResponseTest: BaseOutputTest() {
     private val ideVersion = IdeVersion.createIdeVersion("232")
     private val pluginInfo = mockPluginInfo()
     private val verificationTarget = PluginVerificationTarget.IDE(ideVersion, JdkVersion("11", null))
-    private val dependenciesGraph: DependenciesGraph = DependenciesGraph(
-        verifiedPlugin = dependencyNode(PLUGIN_ID, PLUGIN_VERSION),
+    private val dependenciesGraph: ResolvedDependenciesGraph = ResolvedDependenciesGraph(
+        verifiedPlugin = ResolvedDependencyNode(PLUGIN_ID, PLUGIN_VERSION),
         vertices = emptySet(),
         edges = emptySet(),
         missingDependencies = emptyMap())

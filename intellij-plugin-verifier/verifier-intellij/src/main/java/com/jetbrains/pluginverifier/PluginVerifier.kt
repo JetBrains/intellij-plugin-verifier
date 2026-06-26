@@ -18,6 +18,7 @@ import com.jetbrains.pluginverifier.analysis.ExtractedJsonPluginAnalyzer
 import com.jetbrains.pluginverifier.analysis.ReachabilityGraph
 import com.jetbrains.pluginverifier.analysis.buildClassReachabilityGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.toResolved
 import com.jetbrains.pluginverifier.dependencies.ModuleVisibilityChecker
 import com.jetbrains.pluginverifier.dymamic.DynamicPlugins
 import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
@@ -148,7 +149,7 @@ class PluginVerifier(
         PluginVerificationResult.Verified(
           verificationDescriptor.checkedPlugin,
           verificationDescriptor.toTarget(),
-          dependenciesGraph,
+          dependenciesGraph.toResolved(),
           reportProblems,
           ignoredProblems,
           compatibilityWarnings,

@@ -10,7 +10,7 @@ import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dependencies.ResolvedMissingDependency
 import com.jetbrains.pluginverifier.repository.Browseable
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -115,8 +115,8 @@ class TeamCityResultPrinter(
       emptySet()
     }
 
-  private fun collectMissingDependenciesForRequiringPlugins(results: List<PluginVerificationResult>): Map<MissingDependency, Set<PluginInfo>> {
-    val missingToRequiring = mutableMapOf<MissingDependency, MutableSet<PluginInfo>>()
+  private fun collectMissingDependenciesForRequiringPlugins(results: List<PluginVerificationResult>): Map<ResolvedMissingDependency, Set<PluginInfo>> {
+    val missingToRequiring = mutableMapOf<ResolvedMissingDependency, MutableSet<PluginInfo>>()
     results.filterIsInstance<PluginVerificationResult.Verified>().forEach {
       it.directMissingMandatoryDependencies.forEach { missingDependency ->
         missingToRequiring.getOrPut(missingDependency) { hashSetOf() } += it.plugin
@@ -204,7 +204,7 @@ class TeamCityResultPrinter(
   private fun getMessageCompatibilityProblemsAndMissingDependencies(
     plugin: PluginInfo,
     problems: Set<CompatibilityProblem>,
-    missingDependencies: List<MissingDependency>
+    missingDependencies: List<ResolvedMissingDependency>
   ): String? {
     val mandatoryMissingDependencies = missingDependencies.filterNot { it.dependency.isOptional }
     if (problems.isNotEmpty() || mandatoryMissingDependencies.isNotEmpty()) {

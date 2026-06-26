@@ -8,7 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.create
 import com.jetbrains.plugin.structure.ide.VersionComparatorUtil
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
+import com.jetbrains.pluginverifier.dependencies.presentation.ResolvedDependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.ResultPrinter
@@ -145,7 +145,7 @@ class HtmlResultPrinter(
             }
           }
           printShortAndFullDescription("Dependencies used on verification") {
-            val graphPresentation = DependenciesGraphPrettyPrinter(dependenciesGraph).prettyPresentation()
+            val graphPresentation = ResolvedDependenciesGraphPrettyPrinter(dependenciesGraph).prettyPresentation()
             graphPresentation.lines().forEach { line ->
               +line
               br()

@@ -6,8 +6,8 @@ package com.jetbrains.pluginverifier
 
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.pluralize
-import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.ResolvedMissingDependency
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -32,7 +32,7 @@ sealed class PluginVerificationResult(
   class Verified(
     plugin: PluginInfo,
     verificationTarget: PluginVerificationTarget,
-    val dependenciesGraph: DependenciesGraph,
+    val dependenciesGraph: ResolvedDependenciesGraph,
     val compatibilityProblems: Set<CompatibilityProblem> = emptySet(),
     val ignoredProblems: Map<CompatibilityProblem, String> = emptyMap(),
     val compatibilityWarnings: Set<CompatibilityWarning> = emptySet(),
@@ -60,7 +60,7 @@ sealed class PluginVerificationResult(
     val isOk: Boolean
       get() = !hasDirectMissingMandatoryDependencies && !hasCompatibilityProblems && !hasCompatibilityWarnings
 
-    val directMissingMandatoryDependencies: List<MissingDependency>
+    val directMissingMandatoryDependencies: List<ResolvedMissingDependency>
       get() = dependenciesGraph.getDirectMissingDependencies().filterNot { it.dependency.isOptional }
 
     override val verificationVerdict

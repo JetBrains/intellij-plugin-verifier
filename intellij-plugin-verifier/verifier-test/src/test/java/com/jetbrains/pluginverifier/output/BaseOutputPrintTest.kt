@@ -4,15 +4,15 @@
 
 package com.jetbrains.pluginverifier.output
 
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependencyNode
+import com.jetbrains.pluginverifier.dependencies.ResolvedMissingDependency
+import com.jetbrains.pluginverifier.dependencies.ResolvedPluginDependency
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.jdk.JdkVersion
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
@@ -38,8 +38,8 @@ open class BaseOutputPrintTest<T : ResultPrinter>: BaseOutputTest() {
     out = StringWriter()
   }
 
-  private val dependenciesGraph: DependenciesGraph = DependenciesGraph(
-        verifiedPlugin = DependencyNode.IdAndVersionDependency(PLUGIN_ID, PLUGIN_VERSION),
+  private val dependenciesGraph: ResolvedDependenciesGraph = ResolvedDependenciesGraph(
+        verifiedPlugin = ResolvedDependencyNode(PLUGIN_ID, PLUGIN_VERSION),
         vertices = emptySet(),
         edges = emptySet(),
         missingDependencies = emptyMap())
@@ -69,10 +69,10 @@ open class BaseOutputPrintTest<T : ResultPrinter>: BaseOutputTest() {
   }
 
   open fun `when plugin has missing dependencies`(testRunner: VerifiedPluginHandler) {
-    val pluginDependency = DependencyNode.IdAndVersionDependency(PLUGIN_ID, PLUGIN_VERSION)
-    val expectedDependency = MissingDependency(PluginDependencyImpl("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-211.500")
+    val pluginDependency = ResolvedDependencyNode(PLUGIN_ID, PLUGIN_VERSION)
+    val expectedDependency = ResolvedMissingDependency(ResolvedPluginDependency("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-211.500")
 
-    val dependenciesGraph = DependenciesGraph(
+    val dependenciesGraph = ResolvedDependenciesGraph(
       verifiedPlugin = pluginDependency,
       vertices = emptySet(),
       edges = emptySet(),
