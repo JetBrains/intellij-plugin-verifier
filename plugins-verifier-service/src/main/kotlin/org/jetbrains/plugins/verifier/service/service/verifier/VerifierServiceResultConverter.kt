@@ -106,7 +106,7 @@ fun PluginVerificationResult.Verified.convertResultType(): VerificationResultTyp
 private fun AvailableIde.convert() =
   AvailableIdeDto(version.asString(), releaseVersion, product.productName)
 
-fun ResolvedDependenciesGraph.convert() =
+fun ResolvedDependenciesGraph.convert(): DependenciesGraphDto =
   DependenciesGraphDto(
     verifiedPlugin.convert(),
     vertices.map { it.convert() },
@@ -119,22 +119,22 @@ fun ResolvedDependenciesGraph.convert() =
     }
   )
 
-private fun ResolvedDependencyEdge.convert() =
+private fun ResolvedDependencyEdge.convert(): DependenciesGraphDto.DependencyEdgeDto =
   DependenciesGraphDto.DependencyEdgeDto(
     from.convert(),
     to.convert(),
     dependency.convert()
   )
 
-private fun ResolvedDependencyNode.convert() = DependenciesGraphDto.DependencyNodeDto(id, version)
+private fun ResolvedDependencyNode.convert(): DependenciesGraphDto.DependencyNodeDto = DependenciesGraphDto.DependencyNodeDto(id, version)
 
-private fun ResolvedMissingDependency.convert() =
+private fun ResolvedMissingDependency.convert(): DependenciesGraphDto.MissingDependencyDto =
   DependenciesGraphDto.MissingDependencyDto(
     dependency.convert(),
     missingReason
   )
 
-private fun ResolvedPluginDependency.convert() =
+private fun ResolvedPluginDependency.convert(): DependenciesGraphDto.DependencyDto =
   DependenciesGraphDto.DependencyDto(
     id,
     isOptional,
