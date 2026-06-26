@@ -23,6 +23,7 @@ import com.jetbrains.pluginverifier.reporting.telemetry.TelemetryAggregator
 import com.jetbrains.pluginverifier.reporting.telemetry.toPlainString
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
+import com.jetbrains.pluginverifier.dependencies.presentation.ResolvedDependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalModifierUsage
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
@@ -130,7 +131,7 @@ class DirectoryBasedPluginVerificationReportage(
         is PluginVerificationResult.Verified -> {
           reportVerificationDetails(directory, "compatibility-warnings.txt", compatibilityWarnings)
           reportVerificationDetails(directory, "compatibility-problems.txt", compatibilityProblems)
-          reportVerificationDetails(directory, "dependencies.txt", listOf(dependenciesGraph)) { it.toString() }
+          reportVerificationDetails(directory, "dependencies.txt", listOf(dependenciesGraph)) { ResolvedDependenciesGraphPrettyPrinter(it).prettyPresentation() }
           reportVerificationDetails(directory, "deprecated-usages.txt", deprecatedUsages)
           reportVerificationDetails(directory, "experimental-api-usages.txt", experimentalApiUsages)
           reportVerificationDetails(directory, "internal-api-usages.txt", internalApiUsages)

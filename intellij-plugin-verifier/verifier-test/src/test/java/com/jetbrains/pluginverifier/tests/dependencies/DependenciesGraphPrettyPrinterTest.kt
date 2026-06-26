@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dependencies.presentation.ResolvedDependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.dependencies.toResolved
 import org.junit.Assert
 import org.junit.Test
@@ -95,7 +96,7 @@ class DependenciesGraphPrettyPrinterTest {
       dependencyNode(id, version) to deps.toSet()
     }.toMap()
     val dependenciesGraph = DependenciesGraph(startVertex, vertices, edges, missingDeps)
-    val prettyPresentation = dependenciesGraph.toResolved().toString().trim()
+    val prettyPresentation = ResolvedDependenciesGraphPrettyPrinter(dependenciesGraph.toResolved()).prettyPresentation().trim()
 
     Assert.assertEquals(
       """
