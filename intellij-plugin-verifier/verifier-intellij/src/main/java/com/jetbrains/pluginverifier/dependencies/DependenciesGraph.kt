@@ -72,8 +72,10 @@ sealed class DependencyNode {
    * Only the IdePlugin takes part in equality/hashCode checks!
    */
   class PluginDependency(override val plugin: IdePlugin): DependencyNode(), PluginAware {
-    override val id = plugin.id
-    override val version = plugin.pluginVersion ?: UNKNOWN_VERSION
+    override val id: String
+      get() = plugin.id
+    override val version: String
+      get() = plugin.pluginVersion ?: UNKNOWN_VERSION
 
     private val _aliases: MutableSet<String> = mutableSetOf()
     val aliases: Set<String> get() = _aliases
