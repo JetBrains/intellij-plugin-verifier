@@ -5,13 +5,11 @@
 package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.pluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.*
 import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Function
 
 internal const val UNKNOWN_VERSION = "unknown version"
 
@@ -45,6 +43,7 @@ class DependenciesGraphProvider {
 
   private fun DependencyTreeResolution.getEdges(): Set<DependencyEdge> {
     val edges = LinkedHashSet<DependencyEdge>()
+    val dependenciesCache = HashMap<PluginDependency, PluginDependency>()
     forEach { from, dependency ->
       dependency.pluginDependency?.let { pluginDependency ->
         require(from is PluginAware && dependency is PluginAware) // Invariant by the pluginDependency getter returning non-null
@@ -52,7 +51,7 @@ class DependenciesGraphProvider {
         edges += DependencyEdge(
           newDependencyNode(from.plugin),
           newDependencyNode(dependency.plugin),
-          pluginDependency
+          dependenciesCache.computeIfAbsent(pluginDependency, Function.identity())
         )
       }
     }
