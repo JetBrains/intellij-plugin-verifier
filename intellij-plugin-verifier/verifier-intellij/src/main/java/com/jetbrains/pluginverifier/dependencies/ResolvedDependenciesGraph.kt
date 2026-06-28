@@ -5,6 +5,7 @@
 package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
+import java.util.function.Function
 
 /**
  * String-only representation of a plugin dependency identifier, used after dependency resolution.
@@ -74,32 +75,41 @@ data class ResolvedDependenciesGraph(
  * the plugin objects can be garbage-collected.
  */
 fun DependenciesGraph.toResolved(): ResolvedDependenciesGraph {
+  val deduplicationMap = HashMap<Any, Any>()
+
+  @Suppress("UNCHECKED_CAST")
+  fun <T : Any> T.dedup(): T = deduplicationMap.computeIfAbsent(this, Function.identity()) as T
+
   val allNodes: Set<DependencyNode> = mutableSetOf<DependencyNode>().apply {
     add(verifiedPlugin)
     addAll(vertices)
     edges.forEach { add(it.from); add(it.to) }
     addAll(missingDependencies.keys)
   }
-  val nodeMap = allNodes.associate { node ->
+
+  val nodeMap = allNodes.associateWith { node ->
     val isProductModule = node is DependencyNode.PluginDependency && node.plugin is IdeModule
-    val aliases = if (node is DependencyNode.PluginDependency) node.aliases.toSet() else emptySet()
-    node to ResolvedDependencyNode(node.id, node.version, aliases, isProductModule)
+    val aliases = (node as? DependencyNode.PluginDependency)?.aliases
+      ?.takeIf { it.isNotEmpty() }
+      ?.mapTo(HashSet()) { it.dedup() }
+      ?: emptySet()
+    ResolvedDependencyNode(node.id.dedup(), node.version.dedup(), aliases, isProductModule).dedup()
   }
 
   val resolvedEdges = edges.mapTo(hashSetOf()) { edge ->
     ResolvedDependencyEdge(
       nodeMap.getValue(edge.from),
       nodeMap.getValue(edge.to),
-      ResolvedPluginDependency(edge.dependency.id, edge.dependency.isOptional, edge.dependency.isModule)
+      ResolvedPluginDependency(edge.dependency.id.dedup(), edge.dependency.isOptional, edge.dependency.isModule).dedup()
     )
   }
 
   val resolvedMissingDeps = missingDependencies.entries.associate { (node, missing) ->
     nodeMap.getValue(node) to missing.mapTo(hashSetOf()) { md ->
       ResolvedMissingDependency(
-        ResolvedPluginDependency(md.dependency.id, md.dependency.isOptional, md.dependency.isModule),
+        ResolvedPluginDependency(md.dependency.id.dedup(), md.dependency.isOptional, md.dependency.isModule).dedup(),
         md.missingReason
-      )
+      ).dedup()
     }
   }
 
