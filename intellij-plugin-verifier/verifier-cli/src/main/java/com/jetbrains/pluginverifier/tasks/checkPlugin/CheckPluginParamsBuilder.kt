@@ -67,8 +67,10 @@ class CheckPluginParamsBuilder(
     val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(opts)
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
+    val overrideRepository = OptionsParser.parseOverrideDependencyRepository(opts, archiveManager)
+
     val verificationDescriptors = ideDescriptors.flatMap { ideDescriptor ->
-      val dependencyFinder = createDependencyFinder(pluginsSet.localRepository, ideDescriptor, pluginDetailsCache)
+      val dependencyFinder = createDependencyFinder(pluginsSet.localRepository, overrideRepository, ideDescriptor, pluginDetailsCache)
       val classResolverProvider = DefaultClassResolverProvider(
         dependencyFinder,
         ideDescriptor,
@@ -108,10 +110,16 @@ class CheckPluginParamsBuilder(
    * suppose plugins A and B are verified simultaneously and A depends on B.
    * Then B must be resolved to the local plugin when the A is verified.
    */
-  private fun createDependencyFinder(localRepository: LocalPluginRepository, ideDescriptor: IdeDescriptor, pluginDetailsCache: PluginDetailsCache): DependencyFinder {
+  private fun createDependencyFinder(
+    localRepository: LocalPluginRepository,
+    overrideRepository: LocalPluginRepository?,
+    ideDescriptor: IdeDescriptor,
+    pluginDetailsCache: PluginDetailsCache
+  ): DependencyFinder {
+    val overrideFinder = overrideRepository?.let { RepositoryDependencyFinder(it, LastVersionSelector(), pluginDetailsCache) }
     val localFinder = RepositoryDependencyFinder(localRepository, LastVersionSelector(), pluginDetailsCache)
     val ideDependencyFinder = createIdeBundledOrPluginRepositoryDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
-    return CompositeDependencyFinder(listOf(localFinder, ideDependencyFinder))
+    return CompositeDependencyFinder(listOfNotNull(overrideFinder, localFinder, ideDependencyFinder))
   }
 }
 
