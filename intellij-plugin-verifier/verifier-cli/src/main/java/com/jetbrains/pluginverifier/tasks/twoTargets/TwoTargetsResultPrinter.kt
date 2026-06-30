@@ -31,6 +31,10 @@ import com.jetbrains.pluginverifier.usages.ApiUsage
 import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
 import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+
+private val LOG: Logger = LoggerFactory.getLogger(TwoTargetsResultPrinter::class.java)
 
 class TwoTargetsResultPrinter : TaskResultPrinter {
 
@@ -74,22 +78,31 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
     val baseTarget = twoTargetsVerificationResults.baseTarget
     val newTarget = twoTargetsVerificationResults.newTarget
 
-    val allPlugin2Problems = hashMapOf<PluginInfo, MutableSet<CompatibilityProblem>>()
+    LOG.info(
+      "printResultsOnTeamCity: base={} results  new={} results",
+      twoTargetsVerificationResults.baseResults.size,
+      twoTargetsVerificationResults.newResults.size
+    )
 
+    // Phase 1: compute per-plugin new problems
+    val t1 = System.currentTimeMillis()
+    val allPlugin2Problems = hashMapOf<PluginInfo, MutableSet<CompatibilityProblem>>()
     val pluginToTwoResults = twoTargetsVerificationResults.getPluginToTwoResults()
     for ((plugin, twoResults) in pluginToTwoResults) {
       allPlugin2Problems.getOrPut(plugin) { hashSetOf() } += twoResults.newProblems
     }
+    LOG.info("Phase 1 (plugin→problems): {}ms  {} plugins with new problems", System.currentTimeMillis() - t1, allPlugin2Problems.size)
 
+    // Phase 2: invert to problem→plugins
+    val t2 = System.currentTimeMillis()
     val allProblem2Plugins: MutableMap<CompatibilityProblem, MutableSet<PluginInfo>> = hashMapOf()
-
     for ((plugin, problems) in allPlugin2Problems) {
       for (problem in problems) {
         allProblem2Plugins.getOrPut(problem) { hashSetOf() } += plugin
       }
     }
-
     val allProblems = allProblem2Plugins.keys
+    LOG.info("Phase 2 (problem→plugins inversion): {}ms  {} distinct problems", System.currentTimeMillis() - t2, allProblems.size)
 
     val newPluginIdToVerifications = hashMapOf<String, MutableList<PluginVerificationResult>>()
     if (newTarget is PluginVerificationTarget.IDE) {
@@ -98,6 +111,8 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
       }
     }
 
+    // Phase 3: index base API usages for annotation lookup
+    val t3 = System.currentTimeMillis()
     val oldApiUsages = hashMapOf<SymbolicReference, MutableList<ApiUsage>>()
     for (baseResult in twoTargetsVerificationResults.baseResults) {
       if (baseResult is PluginVerificationResult.Verified) {
@@ -111,10 +126,16 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
         }
       }
     }
+    LOG.info("Phase 3 (oldApiUsages index): {}ms  {} distinct API references", System.currentTimeMillis() - t3, oldApiUsages.size)
 
-    for ((problemClass, allProblemsOfClass) in allProblems.groupBy { it.javaClass }) {
+    // Phase 4: emit TC test suites / tests
+    val suites = allProblems.groupBy { it.javaClass }
+    LOG.info("Phase 4 (TC output): {} problem types / {} distinct problems", suites.size, allProblems.size)
+
+    for ((problemClass, allProblemsOfClass) in suites) {
       val problemTypeSuite = TeamCityResultPrinter.convertProblemClassNameToSentence(problemClass)
       val testSuiteName = "($problemTypeSuite)"
+      LOG.info("  Suite '{}': {} problems", testSuiteName, allProblemsOfClass.size)
       tcLog.testSuiteStarted(testSuiteName).use {
         for ((shortDescription, problemsWithShortDescription) in allProblemsOfClass.groupBy { it.shortDescription }) {
           val testName = "($shortDescription)"
@@ -136,6 +157,9 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
               }
             }
 
+            LOG.info("    Test '{}': {} affected plugins", testName, plugin2Problems.size)
+
+            val tDetails = System.currentTimeMillis()
             val testDetails = buildString {
               for ((plugin, problems) in plugin2Problems) {
                 val (oldResult, newResult) = pluginToTwoResults[plugin] ?: continue
@@ -183,6 +207,7 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
                 appendLine(compatibilityProblems)
               }
             }
+            LOG.info("      buildString(testDetails): {}ms  {} chars", System.currentTimeMillis() - tDetails, testDetails.length)
 
             val testMessage = buildString {
               appendLine(shortDescription)
@@ -196,7 +221,9 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
             }
 
             failedTests += TeamCityTest(testSuiteName, testName)
+            val tFailed = System.currentTimeMillis()
             tcLog.testFailed(testName, testMessage, testDetails)
+            LOG.info("      tcLog.testFailed: {}ms", System.currentTimeMillis() - tFailed)
           }
         }
       }
@@ -374,15 +401,32 @@ private fun TwoTargetsVerificationResults.getPluginToTwoResults(): Map<PluginInf
   val basePlugin2Result = baseResults.associateBy { it.plugin }
   val newPlugin2Result = newResults.associateBy { it.plugin }
 
+  LOG.info("getPluginToTwoResults: comparing {} base / {} new plugin results", basePlugin2Result.size, newPlugin2Result.size)
+  val t0 = System.currentTimeMillis()
+
   val resultsComparisons = hashMapOf<PluginInfo, TwoResults>()
 
   for ((plugin, baseResult) in basePlugin2Result) {
     val newResult = newPlugin2Result[plugin]
     if (baseResult is PluginVerificationResult.Verified && newResult is PluginVerificationResult.Verified) {
+      val tFilter = System.currentTimeMillis()
       val newProblems = newResult.compatibilityProblems.filterNotTo(hashSetOf()) { baseResult.isKnownProblem(it) }
+      val filterMs = System.currentTimeMillis() - tFilter
+      if (filterMs > 100) {
+        LOG.info(
+          "  isKnownProblem filter for {}: {}ms  (new={} base={} newProblems={})",
+          plugin.pluginId, filterMs,
+          newResult.compatibilityProblems.size,
+          baseResult.compatibilityProblems.size,
+          newProblems.size
+        )
+      }
       resultsComparisons[plugin] = TwoResults(baseResult, newResult, newProblems)
     }
   }
+
+  val totalNewProblems = resultsComparisons.values.sumOf { it.newProblems.size }
+  LOG.info("getPluginToTwoResults: done in {}ms — {} pairs, {} total new problems", System.currentTimeMillis() - t0, resultsComparisons.size, totalNewProblems)
   return resultsComparisons
 }
 
