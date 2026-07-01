@@ -362,6 +362,17 @@ private val escapeLookup: Map<CharSequence, CharSequence> = mapOf(
   ">" to "&gt;"
 )
 
+/**
+ * A single shared escaper instance.
+ *
+ * [HtmlEscaper] is stateless after construction (its lookup table, prefix set and
+ * key-length bounds are immutable and only read during escaping), but the constructor
+ * rebuilds the ~250-entry translation table every time. Since [escapeHtml4] is invoked
+ * for every text node written to an HTML report, constructing a fresh escaper per call
+ * dominates report generation. Build it once and reuse it.
+ */
+private val htmlEscaper = HtmlEscaper()
+
 fun String.escapeHtml4(): String {
-    return HtmlEscaper().escape(this)
+    return htmlEscaper.escape(this)
 }
