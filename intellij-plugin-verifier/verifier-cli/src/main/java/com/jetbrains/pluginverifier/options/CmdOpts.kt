@@ -100,5 +100,14 @@ open class CmdOpts(
       "fail (fails the verification with an error indicating an incorrect IDE); " +
       "ignore (process the layout component as is)"
     )
-  var missingLayoutClasspathFile: String? = "skip-warn"
+  var missingLayoutClasspathFile: String? = "skip-warn",
+
+  @set:Argument(
+    "override-dependency",
+    alias = "od",
+    description = "Override a plugin dependency with a local file instead of downloading it from JetBrains Marketplace. " +
+      "Format: <pluginXmlId>=<path/to/plugin.jar|zip>, where the plugin XML ID is the <id> element in the plugin's plugin.xml. " +
+      "Repeat the flag for multiple overrides."
+  )
+  var overrideDependencies: Array<String> = arrayOf()
 )

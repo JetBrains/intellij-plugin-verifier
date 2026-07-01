@@ -4,6 +4,8 @@
 
 package com.jetbrains.pluginverifier.options
 
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.plugin.structure.base.utils.exists
@@ -12,6 +14,10 @@ import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.base.utils.replaceInvalidFileNameCharacters
 import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
+import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
+import com.jetbrains.plugin.structure.intellij.plugin.createIdePluginManager
+import com.jetbrains.pluginverifier.repository.repositories.CompatibilityPredicate
+import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepository
 import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.pluginverifier.filtering.AndroidProblemsFilter
 import com.jetbrains.pluginverifier.filtering.IdeaOnlyProblemsFilter
@@ -309,6 +315,33 @@ object OptionsParser {
     }
 
     return KeepOnlyProblemsFilter(keepOnlyConditions)
+  }
+
+  fun parseOverrideDependencyRepository(opts: CmdOpts, archiveManager: PluginArchiveManager): LocalPluginRepository? {
+    if (opts.overrideDependencies.isEmpty()) return null
+    val overrideRepository = LocalPluginRepository(compatibilityPredicate = CompatibilityPredicate.ALWAYS_COMPATIBLE)
+    for (override in opts.overrideDependencies) {
+      val eqIdx = override.indexOf('=')
+      require(eqIdx > 0) {
+        "Invalid --override-dependency value '$override': expected format <pluginXmlId>=<path>"
+      }
+      val pluginId = override.substring(0, eqIdx)
+      val path = Paths.get(override.substring(eqIdx + 1))
+      require(path.exists()) { "Override path for plugin '$pluginId' does not exist: $path" }
+      when (val result = createIdePluginManager(archiveManager).createPlugin(path, validateDescriptor = true)) {
+        is PluginCreationSuccess -> {
+          val loadedId = result.plugin.pluginId
+          require(loadedId == pluginId) {
+            "Override key '$pluginId' does not match the plugin XML ID '$loadedId' found in $path"
+          }
+          overrideRepository.addLocalPlugin(result.plugin)
+        }
+        is PluginCreationFail -> throw IllegalArgumentException(
+          "Failed to load override plugin '$pluginId' from $path: ${result.errorsAndWarnings.joinToString()}"
+        )
+      }
+    }
+    return overrideRepository
   }
 
   @Throws(IllegalArgumentException::class)
