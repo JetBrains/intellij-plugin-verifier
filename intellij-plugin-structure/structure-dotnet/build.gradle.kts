@@ -1,6 +1,8 @@
 dependencies {
   api(project(":structure-base"))
-  implementation(libs.jdom)
+
+  implementation(sharedLibs.slf4j.api)
+  implementation(sharedLibs.jdom)
   implementation(libs.jaxb.api)
-  implementation(libs.jaxb.runtime)
+  runtimeOnly(libs.jaxb.runtime)
 }

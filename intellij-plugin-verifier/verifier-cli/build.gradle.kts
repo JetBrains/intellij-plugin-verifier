@@ -3,9 +3,10 @@ plugins {
 }
 
 dependencies {
-  api(project(":verifier-intellij"))
+  implementation(project(":verifier-intellij"))
 
   runtimeOnly(sharedLibs.logback.classic)
+  implementation(sharedLibs.commons.io)
   implementation(sharedLibs.jackson.module.kotlin)
   implementation(sharedLibs.spullara.cliParser)
 }

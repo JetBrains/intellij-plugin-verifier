@@ -54,6 +54,7 @@ dependencies {
 
   implementation(sharedLibs.slf4j.api)
   implementation(sharedLibs.jackson.module.kotlin)
+  implementation(sharedLibs.jdom)
 
   testImplementation(sharedLibs.junit)
   testImplementation(project(":test-classes"))

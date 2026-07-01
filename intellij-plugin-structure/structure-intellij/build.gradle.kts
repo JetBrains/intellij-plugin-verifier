@@ -1,9 +1,14 @@
 dependencies {
   api(project(":structure-base"))
-  api(libs.jdom)
+
+  implementation(sharedLibs.jetbrains.annotations)
+  implementation(sharedLibs.slf4j.api)
+  implementation(sharedLibs.caffeine)
+  implementation(sharedLibs.commons.io)
+  implementation(sharedLibs.jdom)
 
   implementation(libs.jaxb.api)
-  implementation(libs.jaxb.runtime)
+  runtimeOnly(libs.jaxb.runtime)
 
   testImplementation(sharedLibs.junit)
   testImplementation(sharedLibs.mockk)
