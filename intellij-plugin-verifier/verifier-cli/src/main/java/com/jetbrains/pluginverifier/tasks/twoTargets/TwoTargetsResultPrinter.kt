@@ -41,19 +41,41 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
   override fun printResults(taskResult: TaskResult, outputOptions: OutputOptions) {
     with(taskResult as TwoTargetsVerificationResults) {
       if (outputOptions.teamCityLog != null) {
+        LOG.info("TeamCity output: started")
+        val tTc = System.currentTimeMillis()
         val newTcHistory = printResultsOnTeamCity(this, outputOptions.teamCityLog)
+        LOG.info("TeamCity output: done in {}ms", System.currentTimeMillis() - tTc)
         outputOptions.postProcessTeamCityTests(newTcHistory)
       } else {
         println("Enable TeamCity results printing option (-team-city or -tc) to see the results in TeamCity builds format.")
       }
 
       if (outputOptions.useHtml()) {
+        LOG.info("HTML output: started (base={})", baseTarget)
+        val tHtmlBase = System.currentTimeMillis()
         HtmlResultPrinter(baseTarget, outputOptions).printResults(baseResults)
+        LOG.info("HTML output: base done in {}ms", System.currentTimeMillis() - tHtmlBase)
+
+        LOG.info("HTML output: started (new={})", newTarget)
+        val tHtmlNew = System.currentTimeMillis()
         HtmlResultPrinter(newTarget, outputOptions).printResults(newResults)
+        LOG.info("HTML output: new done in {}ms", System.currentTimeMillis() - tHtmlNew)
+      } else {
+        LOG.info("HTML output: skipped")
       }
+
       if (outputOptions.useMarkdown()) {
+        LOG.info("Markdown output: started (base={})", baseTarget)
+        val tMdBase = System.currentTimeMillis()
         MarkdownResultPrinter.create(baseTarget, outputOptions).printResults(baseResults)
+        LOG.info("Markdown output: base done in {}ms", System.currentTimeMillis() - tMdBase)
+
+        LOG.info("Markdown output: started (new={})", newTarget)
+        val tMdNew = System.currentTimeMillis()
         MarkdownResultPrinter.create(newTarget, outputOptions).printResults(newResults)
+        LOG.info("Markdown output: new done in {}ms", System.currentTimeMillis() - tMdNew)
+      } else {
+        LOG.info("Markdown output: skipped")
       }
     }
   }
