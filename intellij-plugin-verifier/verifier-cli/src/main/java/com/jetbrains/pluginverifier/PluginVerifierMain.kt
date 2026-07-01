@@ -37,6 +37,7 @@ import com.jetbrains.pluginverifier.tasks.profiling.MeasuredResult
 import com.jetbrains.pluginverifier.tasks.profiling.measurePluginVerification
 import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
+import org.slf4j.LoggerFactory
 import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -47,6 +48,8 @@ import kotlin.system.exitProcess
  * The available commands are [commandRunners].
  */
 object PluginVerifierMain {
+
+  private val LOG = LoggerFactory.getLogger(PluginVerifierMain::class.java)
 
   private val commandRunners: List<CommandRunner> = listOf(
     CheckPluginRunner(),
@@ -153,7 +156,10 @@ object PluginVerifierMain {
             }
           }.run {
             val taskResultsPrinter = taskResult.createTaskResultsPrinter(pluginRepository)
+            LOG.info("Started printing results ({})", taskResultsPrinter::class.simpleName)
+            val tPrint = System.currentTimeMillis()
             taskResultsPrinter.printResults(taskResult, outputOptions)
+            LOG.info("Finished printing results in {}ms", System.currentTimeMillis() - tPrint)
             reportage.reportDownloadStatistics(outputOptions, pluginFilesBank)
             pluginDetailsCacheStatistics?.let { reportage.reportCacheStatistics("PluginDetailsCache", it) }
             reportageAggregator.handleAggregatedReportage()

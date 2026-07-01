@@ -207,7 +207,7 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
                 appendLine(compatibilityProblems)
               }
             }
-            LOG.info("      buildString(testDetails): {}ms  {} chars", System.currentTimeMillis() - tDetails, testDetails.length)
+            LOG.info("      testDetails: built in {}ms ({} chars)", System.currentTimeMillis() - tDetails, testDetails.length)
 
             val testMessage = buildString {
               appendLine(shortDescription)
