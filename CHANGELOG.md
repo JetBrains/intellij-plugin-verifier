@@ -6,9 +6,22 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Support multiple `<dependencies>` blocks in `plugin.xml` ([MP-8208](https://youtrack.jetbrains.com/issue/MP-8208), [#1525](https://github.com/JetBrains/intellij-plugin-verifier/pull/1525))
+- Add detailed report-printing logging to help diagnose slow API compatibility checks ([#1537](https://github.com/JetBrains/intellij-plugin-verifier/pull/1537), [#1539](https://github.com/JetBrains/intellij-plugin-verifier/pull/1539))
+
 ### Changed
 
+- Reduce dependency graph report size and traversal cost by omitting aliases from repeated nodes and indexing outgoing edges ([#1541](https://github.com/JetBrains/intellij-plugin-verifier/pull/1541))
+- Reduce dependency graph memory usage by using shallow resolved dependency graphs and deduplicating dependency structures ([#1528](https://github.com/JetBrains/intellij-plugin-verifier/pull/1528))
+- Reduce dependency search and download log verbosity from `INFO` to `DEBUG` ([#1522](https://github.com/JetBrains/intellij-plugin-verifier/pull/1522), [#1542](https://github.com/JetBrains/intellij-plugin-verifier/pull/1542))
+- Simplify missing dependency messages in `LastCompatibleVersionSelector`. This speeds up the dependency resolution.
+- Update Gradle to 9.6.1 ([#1538](https://github.com/JetBrains/intellij-plugin-verifier/pull/1538))
+
 ### Fixed
+
+- Replace dependency cycle detection with a manual BFS-based search to avoid timeouts in API compatibility checks ([#1526](https://github.com/JetBrains/intellij-plugin-verifier/pull/1526))
+- Reuse a shared HTML escaper instance to speed up HTML report rendering ([#1540](https://github.com/JetBrains/intellij-plugin-verifier/pull/1540))
+- Revert eager `ZipFile` closing to fix API compatibility check failures ([#1521](https://github.com/JetBrains/intellij-plugin-verifier/pull/1521))
 
 ## 1.407 - 2026-06-19
 
