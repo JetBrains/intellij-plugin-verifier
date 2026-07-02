@@ -58,7 +58,7 @@ class DownloadProvider<in K : Any>(
           is DownloadResult.Downloaded -> {
             val size = downloadedFileOrDirectory.fileSize
             downloadEvent.downloadEnded(size)
-            logger.info(
+            logger.debug(
               "Download finished: {} ({}, {})",
               key,
               size.presentableAmount(),
@@ -67,7 +67,7 @@ class DownloadProvider<in K : Any>(
             saveDownloadedFileToFinalDestination(key, downloadedFileOrDirectory, extension, isDirectory)
           }
           is DownloadResult.NotFound -> {
-            logger.info(
+            logger.debug(
               "Download not found: {} ({}). Reason: {}",
               key,
               formatElapsed(startNanos),

@@ -55,7 +55,7 @@ class RepositoryDependencyFinder(
   ): DependencyFinder.Result =
     when (selectResult) {
       is PluginVersionSelector.Result.Selected -> {
-        LOG.info(
+        LOG.debug(
           "Resolved dependency {} '{}' to {} against {}",
           kind,
           dependencyId,
