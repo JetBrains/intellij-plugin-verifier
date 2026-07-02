@@ -71,7 +71,8 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
     }
 
     val result = arrayListOf<String>()
-    result += currentNode.toString()
+    // First occurrence carries the aliases; repeated occurrences are printed as plain "id:version (*)".
+    result += currentNode.toStringWithAliases()
 
     if (childrenLines.isNotEmpty()) {
       val headingChildren = childrenLines.dropLast(1)

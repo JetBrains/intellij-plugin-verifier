@@ -30,11 +30,17 @@ data class DependenciesGraph(
   fun getDirectMissingDependencies(): Set<MissingDependency> =
     missingDependencies.getOrDefault(verifiedPlugin, emptySet())
 
+  // Adjacency index: getEdgesFrom is invoked once per node when pretty-printing the graph,
+  // and a linear scan over all edges each time makes that traversal O(V*E).
+  private val edgesFromNode: Map<DependencyNode, List<DependencyEdge>> by lazy {
+    edges.groupBy { it.from }
+  }
+
   /**
    * Returns all edges starting at the specified node.
    */
   fun getEdgesFrom(dependencyNode: DependencyNode): List<DependencyEdge> =
-    edges.filter { it.from == dependencyNode }
+    edgesFromNode[dependencyNode].orEmpty()
 
   /**
    * Checks for cycles in this graph that involve the verified plugin. If one is found, [fn] is invoked with it.
@@ -67,6 +73,9 @@ sealed class DependencyNode {
   abstract val id: String
   abstract val version: String
 
+  /** Like [toString], but includes plugin aliases if the node has any. */
+  open fun toStringWithAliases(): String = toString()
+
   /**
    * Represents a dependency of the underlying [IdePlugin], optionally storing aliases as metadata.
    * Only the IdePlugin takes part in equality/hashCode checks!
@@ -84,7 +93,12 @@ sealed class DependencyNode {
       _aliases += alias
     }
 
-    override fun toString() = "$id:$version" + if (aliases.isNotEmpty()) " (aliased ${aliases.joinToString(" ")})" else ""
+    // Deliberately omits [aliases]: platform nodes carry hundreds of module aliases and this string
+    // is emitted once per referencing edge in dependency reports, multiplying report size by orders of magnitude.
+    // Use [toStringWithAliases] where the full presentation is wanted (e.g. a node's first occurrence in a report).
+    override fun toString() = "$id:$version"
+
+    override fun toStringWithAliases() = "$id:$version" + if (aliases.isNotEmpty()) " (aliased ${aliases.joinToString(" ")})" else ""
 
     override fun equals(other: Any?): Boolean {
       if (this === other) return true

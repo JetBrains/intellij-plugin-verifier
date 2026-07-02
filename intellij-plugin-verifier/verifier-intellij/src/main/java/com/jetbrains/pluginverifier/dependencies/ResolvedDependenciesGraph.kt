@@ -26,7 +26,12 @@ data class ResolvedDependencyNode(
   val aliases: Set<String> = emptySet(),
   val isProductModule: Boolean = false
 ) {
-  override fun toString() = "$id:$version" + if (aliases.isNotEmpty()) " (aliased ${aliases.joinToString(" ")})" else ""
+  // Deliberately omits [aliases]: platform nodes carry hundreds of module aliases and this string
+  // is emitted once per referencing edge in dependency reports, multiplying report size by orders of magnitude.
+  // Use [toStringWithAliases] where the full presentation is wanted (e.g. a node's first occurrence in a report).
+  override fun toString() = "$id:$version"
+
+  fun toStringWithAliases() = "$id:$version" + if (aliases.isNotEmpty()) " (aliased ${aliases.joinToString(" ")})" else ""
 }
 
 /**
@@ -60,11 +65,17 @@ data class ResolvedDependenciesGraph(
   val edges: Set<ResolvedDependencyEdge>,
   val missingDependencies: Map<ResolvedDependencyNode, Set<ResolvedMissingDependency>>
 ) {
+  // Adjacency index: getEdgesFrom is invoked once per node when pretty-printing the graph,
+  // and a linear scan over all edges each time makes that traversal O(V*E).
+  private val edgesFromNode: Map<ResolvedDependencyNode, List<ResolvedDependencyEdge>> by lazy {
+    edges.groupBy { it.from }
+  }
+
   fun getDirectMissingDependencies(): Set<ResolvedMissingDependency> =
     missingDependencies.getOrDefault(verifiedPlugin, emptySet())
 
   fun getEdgesFrom(node: ResolvedDependencyNode): List<ResolvedDependencyEdge> =
-    edges.filter { it.from == node }
+    edgesFromNode[node].orEmpty()
 }
 
 /**
