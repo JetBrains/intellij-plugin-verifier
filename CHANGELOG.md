@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.408 - 2026-07-02
+
+### Added
+
 - Support multiple `<dependencies>` blocks in `plugin.xml` ([MP-8208](https://youtrack.jetbrains.com/issue/MP-8208), [#1525](https://github.com/JetBrains/intellij-plugin-verifier/pull/1525))
 - Add detailed report-printing logging to help diagnose slow API compatibility checks ([#1537](https://github.com/JetBrains/intellij-plugin-verifier/pull/1537), [#1539](https://github.com/JetBrains/intellij-plugin-verifier/pull/1539))
 
