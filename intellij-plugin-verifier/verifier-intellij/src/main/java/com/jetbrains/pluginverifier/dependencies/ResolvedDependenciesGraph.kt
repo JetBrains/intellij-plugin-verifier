@@ -5,6 +5,7 @@
 package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
+import com.jetbrains.pluginverifier.PluginVerifierBatchContext
 import java.util.function.Function
 
 /**
@@ -85,11 +86,11 @@ data class ResolvedDependenciesGraph(
  * Call this before storing the graph in a [com.jetbrains.pluginverifier.PluginVerificationResult] so that
  * the plugin objects can be garbage-collected.
  */
-fun DependenciesGraph.toResolved(): ResolvedDependenciesGraph {
-  val deduplicationMap = HashMap<Any, Any>()
+fun DependenciesGraph.toResolved(batchContext: PluginVerifierBatchContext? = null): ResolvedDependenciesGraph {
+  val cache = batchContext?.deduplicationMap ?: HashMap()
 
   @Suppress("UNCHECKED_CAST")
-  fun <T : Any> T.dedup(): T = deduplicationMap.computeIfAbsent(this, Function.identity()) as T
+  fun <T : Any> T.dedup(): T = cache.computeIfAbsent(this, Function.identity()) as T
 
   val allNodes: Set<DependencyNode> = mutableSetOf<DependencyNode>().apply {
     add(verifiedPlugin)
@@ -112,7 +113,7 @@ fun DependenciesGraph.toResolved(): ResolvedDependenciesGraph {
       nodeMap.getValue(edge.from),
       nodeMap.getValue(edge.to),
       ResolvedPluginDependency(edge.dependency.id.dedup(), edge.dependency.isOptional, edge.dependency.isModule).dedup()
-    )
+    ).dedup()
   }
 
   val resolvedMissingDeps = missingDependencies.entries.associate { (node, missing) ->
