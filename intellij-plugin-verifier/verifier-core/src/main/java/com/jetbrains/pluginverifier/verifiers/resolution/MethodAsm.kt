@@ -16,8 +16,8 @@ import org.objectweb.asm.tree.LocalVariableNode
 import org.objectweb.asm.tree.MethodNode
 
 class MethodAsm(override val containingClassFile: ClassFile, val asmNode: MethodNode) : Method {
-  override val location
-    get() = MethodLocation(
+  override val location: MethodLocation by lazy(LazyThreadSafetyMode.NONE) {
+    MethodLocation(
       containingClassFile.location,
       name,
       descriptor,
@@ -25,6 +25,7 @@ class MethodAsm(override val containingClassFile: ClassFile, val asmNode: Method
       signature?.takeIf { it.isNotEmpty() },
       Modifiers(asmNode.access)
     )
+  }
 
   override val name: String
     get() = asmNode.name
@@ -44,45 +45,36 @@ class MethodAsm(override val containingClassFile: ClassFile, val asmNode: Method
   override val localVariables: List<LocalVariableNode>
     get() = asmNode.localVariables.orEmpty()
 
-  private var _methodParameters: List<MethodParameter>? = null
-  override val methodParameters: List<MethodParameter>
-    get() {
-      if (_methodParameters != null) {
-        return _methodParameters!!
+  override val methodParameters: List<MethodParameter> by lazy(LazyThreadSafetyMode.NONE) {
+    val parameterNames = asmNode.getParameterNames()
+    val parameterAnnotations: Array<out MutableList<AnnotationNode>?> = asmNode.invisibleParameterAnnotations.orEmpty()
+
+    // Enums have two synthetic parameters
+    if (name == "<init>" && containingClassFile.isEnum) {
+      parameterNames.mapIndexed { index, parameterName ->
+        MethodParameter(parameterName, parameterAnnotations.getOrElse(index - 2) { emptyList() }.orEmpty())
       }
-
-      val parameterNames = asmNode.getParameterNames()
-      val parameterAnnotations: Array<out MutableList<AnnotationNode>?> = asmNode.invisibleParameterAnnotations.orEmpty()
-
-      // Enums have two synthetic parameters
-      val result = if (name == "<init>" && containingClassFile.isEnum) {
-        return parameterNames.mapIndexed { index, parameterName ->
-          MethodParameter(parameterName, parameterAnnotations.getOrElse(index - 2) { emptyList() }.orEmpty())
-        }
-      }
-
-      // Non-static inner classes have a synthetic parameters
-      else if (name == "<init>" && containingClassFile.isNonStaticInnerClass()) {
-        return parameterNames.mapIndexed { index, parameterName ->
-          MethodParameter(parameterName, parameterAnnotations.getOrElse(index - 1) { emptyList() }.orEmpty())
-        }
-      }
-
-      //The simplest case: just zip parameter names and annotations.
-      else if (parameterNames.size == parameterAnnotations.size) {
-        return parameterNames.zip(parameterAnnotations) { name, annotation ->
-          MethodParameter(name, annotation.orEmpty())
-        }
-      }
-
-      //Fallback: we don't know how to zip parameter names and annotations.
-      else {
-        parameterNames.map { parameterName -> MethodParameter(parameterName, emptyList()) }
-      }
-
-      _methodParameters = result
-      return result
     }
+
+    // Non-static inner classes have a synthetic parameter
+    else if (name == "<init>" && containingClassFile.isNonStaticInnerClass()) {
+      parameterNames.mapIndexed { index, parameterName ->
+        MethodParameter(parameterName, parameterAnnotations.getOrElse(index - 1) { emptyList() }.orEmpty())
+      }
+    }
+
+    //The simplest case: just zip parameter names and annotations.
+    else if (parameterNames.size == parameterAnnotations.size) {
+      parameterNames.zip(parameterAnnotations) { name, annotation ->
+        MethodParameter(name, annotation.orEmpty())
+      }
+    }
+
+    //Fallback: we don't know how to zip parameter names and annotations.
+    else {
+      parameterNames.map { parameterName -> MethodParameter(parameterName, emptyList()) }
+    }
+  }
 
   override val exceptions
     get() = asmNode.exceptions.orEmpty()

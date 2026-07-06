@@ -13,13 +13,14 @@ import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.InnerClassNode
 
 class ClassFileAsm(val asmNode: ClassNode, override val classFileOrigin: FileOrigin) : ClassFile {
-  override val location
-    get() = ClassLocation(
+  override val location: ClassLocation by lazy(LazyThreadSafetyMode.NONE) {
+    ClassLocation(
       name,
       signature?.takeIf { it.isNotEmpty() },
       Modifiers(asmNode.access),
       classFileOrigin
     )
+  }
 
   override val containingClassFile
     get() = this
@@ -33,8 +34,11 @@ class ClassFileAsm(val asmNode: ClassNode, override val classFileOrigin: FileOri
   override val javaPackageName
     get() = packageName.replace('/', '.')
 
-  override val methods
-    get() = asmNode.methods.asSequence().map { MethodAsm(this, it) }
+  private val _methods: List<MethodAsm> by lazy(LazyThreadSafetyMode.NONE) {
+    asmNode.methods.map { MethodAsm(this, it) }
+  }
+  override val methods: Sequence<Method>
+    get() = _methods.asSequence()
 
   override val fields
     get() = asmNode.fields.asSequence().map { FieldAsm(this, it) }
