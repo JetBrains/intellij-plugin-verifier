@@ -24,11 +24,13 @@ fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<
     )
   }
 
+  val batchContext = PluginVerifierBatchContext()
+
   val tasks = verifiers.map { verifier ->
     ExecutorWithProgress.Task(verifier.verificationDescriptor.toString()) {
       val verificationResult: PluginVerificationResult
       measureTimeMillis {
-        verificationResult = verifier.loadPluginAndVerify()
+        verificationResult = verifier.loadPluginAndVerify(batchContext)
       }.let { verificationTime ->
         reportage.reportTelemetry(verificationResult.plugin, PluginTelemetry(PLUGIN_VERIFICATION_TIME to Duration.ofMillis(verificationTime)))
         if (verificationResult is PluginVerificationResult.Verified) {

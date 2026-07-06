@@ -18,8 +18,8 @@ import com.jetbrains.pluginverifier.analysis.ExtractedJsonPluginAnalyzer
 import com.jetbrains.pluginverifier.analysis.ReachabilityGraph
 import com.jetbrains.pluginverifier.analysis.buildClassReachabilityGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.toResolved
 import com.jetbrains.pluginverifier.dependencies.ModuleVisibilityChecker
+import com.jetbrains.pluginverifier.dependencies.toResolved
 import com.jetbrains.pluginverifier.dymamic.DynamicPlugins
 import com.jetbrains.pluginverifier.filtering.ApiUsageFilter
 import com.jetbrains.pluginverifier.filtering.ExternalBuildClassesSelector
@@ -63,7 +63,7 @@ class PluginVerifier(
 
   private val extractedJsonPluginAnalyzer = ExtractedJsonPluginAnalyzer
 
-  fun loadPluginAndVerify(): PluginVerificationResult {
+  fun loadPluginAndVerify(batchContext: PluginVerifierBatchContext? = null): PluginVerificationResult {
     pluginDetailsCache.getPluginDetailsCacheEntry(verificationDescriptor.checkedPlugin).use { cacheEntry ->
       return when (cacheEntry) {
         is PluginDetailsCache.Result.InvalidPlugin -> {
@@ -85,14 +85,13 @@ class PluginVerifier(
         }
 
         is PluginDetailsCache.Result.Provided -> {
-          verify(cacheEntry.pluginDetails)
+          verify(cacheEntry.pluginDetails, batchContext)
         }
       }
     }
   }
 
-
-  fun verify(pluginDetails: PluginDetails): PluginVerificationResult {
+  fun verify(pluginDetails: PluginDetails, batchContext: PluginVerifierBatchContext?): PluginVerificationResult {
     verificationDescriptor.classResolverProvider.provide(pluginDetails).use { (pluginResolver, allResolver, dependenciesGraph) ->
       val externalClassesPackageFilter = verificationDescriptor.classResolverProvider.provideExternalClassesPackageFilter()
 
@@ -149,7 +148,7 @@ class PluginVerifier(
         PluginVerificationResult.Verified(
           verificationDescriptor.checkedPlugin,
           verificationDescriptor.toTarget(),
-          dependenciesGraph.toResolved(),
+          dependenciesGraph.toResolved(batchContext),
           reportProblems,
           ignoredProblems,
           compatibilityWarnings,
