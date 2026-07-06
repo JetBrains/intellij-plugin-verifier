@@ -2,19 +2,19 @@
 kotlin = "2.0.21"
 
 assertj = "3.27.7"
-asm = "9.9.1"
+asm = "9.10.1"
 byteBuddy = "1.18.5"
-caffeine = "3.1.8"
+caffeine = "3.2.4"
 commons-io = "2.20.0"
-gson = "2.12.1"
+gson = "2.14.0"
 changelog = "2.4.0"
-jackson-module-kotlin = "2.20.2"
+jackson = "2.21.4"
 jetbrains-annotations = "26.1.0"
-jsoup = "1.16.1"
+jsoup = "1.22.2"
 junit = "4.13.2"
 kotson = "2.5.0"
-logback-core = "1.4.14"
-logback-classic = "1.4.14"
+logback-core = "1.5.34"
+logback-classic = "1.5.34"
 mockk = "1.14.2"
 nexus-publish = "1.3.0"
 okhttp = "4.12.0"
@@ -22,7 +22,7 @@ okhttp-loggingInterceptor = "4.12.0"
 retrofit = "3.0.0"
 retrofit-gson = "3.0.0"
 shadow = "8.3.0"
-slf4j-api = "2.0.7"
+slf4j-api = "2.0.18"
 spullara-cliParser = "1.1.6"
 versions = "0.51.0"
 woodstox = "7.1.0"
@@ -30,12 +30,17 @@ xz = "1.9"
 
 [libraries]
 assertj = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
-asm = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
+asm-analysis = { group = "org.ow2.asm", name = "asm-analysis", version.ref = "asm" }
+asm-commons = { group = "org.ow2.asm", name = "asm-commons", version.ref = "asm" }
+asm-root = { group = "org.ow2.asm", name = "asm", version.ref = "asm" }
+asm-tree = { group = "org.ow2.asm", name = "asm-tree", version.ref = "asm" }
+asm-util = { group = "org.ow2.asm", name = "asm-util", version.ref = "asm" }
 byteBuddy = { group = "net.bytebuddy", name = "byte-buddy", version.ref = "byteBuddy" }
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
 commons-io = { group = "commons-io", name = "commons-io", version.ref = "commons-io" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
-jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson-module-kotlin" }
+jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
+jackson-yaml = { group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-yaml", version.ref = "jackson" }
 jetbrains-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "jetbrains-annotations" }
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

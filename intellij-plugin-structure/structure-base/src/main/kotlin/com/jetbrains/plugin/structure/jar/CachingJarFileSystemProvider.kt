@@ -5,7 +5,6 @@
 package com.jetbrains.plugin.structure.jar
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import com.github.benmanes.caffeine.cache.RemovalCause
 import com.github.benmanes.caffeine.cache.RemovalListener
 import com.jetbrains.plugin.structure.base.utils.withSuperScheme
 import com.jetbrains.plugin.structure.jar.CachingJarFileSystemProvider.EventLog.Event.*
@@ -41,11 +40,7 @@ class CachingJarFileSystemProvider(
   private val fsCache = Caffeine.newBuilder()
     .maximumSize(MAX_OPEN_JAR_FILE_SYSTEMS)
     .expireAfterAccess(retentionTimeInSeconds, TimeUnit.SECONDS)
-    .removalListener(object : RemovalListener<String, FsHandleFileSystem> {
-      override fun onRemoval(key: String?, value: FsHandleFileSystem?, cause: RemovalCause?) {
-        value?.onCacheRemoval()
-      }
-    })
+    .removalListener(RemovalListener<String, FsHandleFileSystem> { _, value, _ -> value?.onCacheRemoval() })
     .build<String, FsHandleFileSystem>()
 
   val eventLog = EventLog()
