@@ -18,6 +18,9 @@ import com.jetbrains.pluginverifier.verifiers.resolution.Field
 import com.jetbrains.pluginverifier.verifiers.resolution.FullyQualifiedClassName
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassOrNull
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
+import java.util.concurrent.ConcurrentHashMap
 import org.objectweb.asm.Type
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -25,6 +28,11 @@ import org.slf4j.LoggerFactory
 private val LOG: Logger = LoggerFactory.getLogger(AnnotationResolver::class.java)
 
 class AnnotationResolver(val annotation: FullyQualifiedClassName) {
+
+  // Keyed by Resolver identity (weakKeys → identity equality). AnnotationResolver instances are
+  // long-lived singletons while resolvers are per-verification snapshots; weak keys prevent leaks.
+  private val packageInfoAnnotationCache: Cache<Resolver, ConcurrentHashMap<String, Boolean>> =
+    Caffeine.newBuilder().weakKeys().build()
 
   fun resolve(classFileMember: ClassFileMember, classResolver: Resolver, usageLocation: Location?): MemberAnnotation? {
     return resolve(classFileMember, classResolver, ResolutionStack(annotation, usageLocation))
@@ -142,11 +150,14 @@ class AnnotationResolver(val annotation: FullyQualifiedClassName) {
 
   private fun resolveInPackageInfo(classFileMember: ClassFile, classResolver: Resolver): MemberAnnotation? {
     val packageName = classFileMember.containingClassFile.packageName
-    return packageName
-      .takeIf { it.isNotEmpty() }
-      ?.let { classResolver.resolveClassOrNull("$packageName/package-info") }
-      ?.takeIf { it.isDirectlyAnnotatedWith(annotation) }
-      ?.let { AnnotatedViaPackage(packageName, classFileMember, annotation) }
+    if (packageName.isEmpty()) {
+      return null
+    }
+    val perResolverCache = packageInfoAnnotationCache.get(classResolver) { ConcurrentHashMap() }
+    val isPackageAnnotated = perResolverCache.computeIfAbsent(packageName) { pkg ->
+      classResolver.resolveClassOrNull("$pkg/package-info")?.isDirectlyAnnotatedWith(annotation) ?: false
+    }
+    return if (isPackageAnnotated) AnnotatedViaPackage(packageName, classFileMember, annotation) else null
   }
 
   private inline fun ResolutionStack.execute(classFileMember: ClassFileMember, block: (ResolutionStack) -> MemberAnnotation?): MemberAnnotation? {
