@@ -5,7 +5,7 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.inputStream
 import com.jetbrains.plugin.structure.base.utils.withZipFsSeparator
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
-import java.io.ByteArrayInputStream
+import org.apache.commons.io.input.UnsynchronizedByteArrayInputStream
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
@@ -40,6 +40,7 @@ class JarsResourceResolver(private val jarFiles: List<Path>, private val jarFile
       val path = jarFs.getPath(pathWithinJar.withZipFsSeparator()).takeIf { it.exists() } ?: return@use null
       val detachedPath = Path.of(pathWithinJar)
       val bytes = path.inputStream().use { it.readBytes() }
-      ResourceResolver.Result.Found(detachedPath, ByteArrayInputStream(bytes), description = jarPath.description)
+      val inputStream = UnsynchronizedByteArrayInputStream.Builder().setByteArray(bytes).get()
+      ResourceResolver.Result.Found(detachedPath, inputStream, description = jarPath.description)
     }
 }
