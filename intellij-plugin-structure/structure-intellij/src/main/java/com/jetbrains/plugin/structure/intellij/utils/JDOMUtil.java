@@ -28,6 +28,8 @@ public class JDOMUtil {
   private JDOMUtil() {
   }
 
+  public static final String IGNORE_WHITESPACES_PROPERTY = "com.jetbrains.plugin.structure.intellij.jdom.isIgnoreWhitespaces";
+
   private static SAXBuilder createDefaultSaxBuilder() {
     SAXBuilder saxBuilder = new SAXBuilder();
     saxBuilder.setEntityResolver((publicId, systemId) -> new InputSource(new CharArrayReader(EMPTY_CHAR_ARRAY)));
@@ -36,6 +38,9 @@ public class JDOMUtil {
     saxBuilder.setFeature(XMLParserConfiguration.FEATURE_EXTERNAL_GENERAL_ENTITIES, false);
     saxBuilder.setFeature(XMLParserConfiguration.FEATURE_EXTERNAL_PARAMETER_ENTITIES, false);
     saxBuilder.setFeature(XMLParserConfiguration.FEATURE_LOAD_EXTERNAL_DTD, false);
+    boolean ignoreWhitespaces = Boolean.parseBoolean(System.getProperty(IGNORE_WHITESPACES_PROPERTY, "false"));
+    saxBuilder.setIgnoringBoundaryWhitespace(ignoreWhitespaces);
+    saxBuilder.setIgnoringElementContentWhitespace(ignoreWhitespaces);
 
     return saxBuilder;
   }
