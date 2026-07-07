@@ -38,7 +38,7 @@ public class JDOMUtil {
     saxBuilder.setFeature(XMLParserConfiguration.FEATURE_EXTERNAL_GENERAL_ENTITIES, false);
     saxBuilder.setFeature(XMLParserConfiguration.FEATURE_EXTERNAL_PARAMETER_ENTITIES, false);
     saxBuilder.setFeature(XMLParserConfiguration.FEATURE_LOAD_EXTERNAL_DTD, false);
-    boolean ignoreWhitespaces = Boolean.parseBoolean(System.getProperty(IGNORE_WHITESPACES_PROPERTY, "false"));
+    boolean ignoreWhitespaces = Boolean.parseBoolean(System.getProperty(IGNORE_WHITESPACES_PROPERTY, "true"));
     saxBuilder.setIgnoringBoundaryWhitespace(ignoreWhitespaces);
     saxBuilder.setIgnoringElementContentWhitespace(ignoreWhitespaces);
 
