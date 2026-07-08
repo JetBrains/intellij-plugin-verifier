@@ -27,22 +27,19 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
 
   private val visitedNodes = hashSetOf<ResolvedDependencyNode>()
 
-  fun prettyPresentation(): String =
-    recursivelyCalculateLines(graph.verifiedPlugin).joinToString(separator = "\n")
+  fun prettyPresentation(): String {
+    val result = StringBuilder()
+    visitedNodes.add(graph.verifiedPlugin)
+    // First occurrence carries the aliases; repeated occurrences are printed as plain "id:version (*)".
+    result.append(graph.verifiedPlugin.toStringWithAliases())
+    appendChildren(graph.verifiedPlugin, result, "")
+    return result.toString()
+  }
 
-  private fun recursivelyCalculateLines(currentNode: ResolvedDependencyNode): List<String> {
-    if (currentNode in visitedNodes) {
-      return listOf("$currentNode (*)")
-    }
-    visitedNodes.add(currentNode)
-
-    val childrenLines = arrayListOf<List<String>>()
-
-    graph.missingDependencies
+  private fun appendChildren(currentNode: ResolvedDependencyNode, result: StringBuilder, childrenPrefix: String) {
+    val missingDependencies = graph.missingDependencies
       .getOrDefault(currentNode, emptySet())
-      .sortedBy { it.dependency.id }.mapTo(childrenLines) { missingDependency ->
-        listOf("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}")
-      }
+      .sortedBy { it.dependency.id }
 
     val directEdges = graph.getEdgesFrom(currentNode)
       .sortedWith(
@@ -53,44 +50,37 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
           .thenBy { it.to.version }
       )
 
+    val childrenCount = missingDependencies.size + directEdges.size
+    var childIndex = 0
+
+    for (missingDependency in missingDependencies) {
+      val isLastChild = ++childIndex == childrenCount
+      result.append('\n').append(childrenPrefix).append(if (isLastChild) "\\--- " else "+--- ")
+      result.append("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}")
+    }
+
     for (edge in directEdges) {
-      val childLines = recursivelyCalculateLines(edge.to)
-      val headerLine = buildString {
-        if (edge.dependency.isOptional) {
-          append("(optional) ")
-        }
-        append(childLines.first())
-        if (edge.to.isProductModule) {
-          append(" [product module]")
-        } else if (edge.dependency.isModule) {
-          append(" [declaring module ${edge.dependency.id}]")
-        }
+      val isLastChild = ++childIndex == childrenCount
+      result.append('\n').append(childrenPrefix).append(if (isLastChild) "\\--- " else "+--- ")
+      if (edge.dependency.isOptional) {
+        result.append("(optional) ")
       }
-      val tailLines = childLines.drop(1)
-      childrenLines.add(listOf(headerLine) + tailLines)
-    }
-
-    val result = arrayListOf<String>()
-    // First occurrence carries the aliases; repeated occurrences are printed as plain "id:version (*)".
-    result += currentNode.toStringWithAliases()
-
-    if (childrenLines.isNotEmpty()) {
-      val headingChildren = childrenLines.dropLast(1)
-      val lastChild = childrenLines.last()
-
-      if (headingChildren.isNotEmpty()) {
-        for (headingChild in headingChildren) {
-          val firstLine = headingChild.first().let { "+--- $it" }
-          val tailLines = headingChild.drop(1).map { "|    $it" }
-          result += firstLine
-          result += tailLines
-        }
+      val to = edge.to
+      val alreadyVisited = to in visitedNodes
+      if (alreadyVisited) {
+        result.append("$to (*)")
+      } else {
+        visitedNodes.add(to)
+        result.append(to.toStringWithAliases())
       }
-
-      result += lastChild.first().let { "\\--- $it" }
-      result += lastChild.drop(1).map { "     $it" }
+      if (to.isProductModule) {
+        result.append(" [product module]")
+      } else if (edge.dependency.isModule) {
+        result.append(" [declaring module ${edge.dependency.id}]")
+      }
+      if (!alreadyVisited) {
+        appendChildren(to, result, childrenPrefix + if (isLastChild) "     " else "|    ")
+      }
     }
-
-    return result
   }
 }

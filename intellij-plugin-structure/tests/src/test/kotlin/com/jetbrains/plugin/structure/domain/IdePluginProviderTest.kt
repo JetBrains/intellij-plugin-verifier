@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.IdeManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision
 import com.jetbrains.plugin.structure.intellij.plugin.PluginProvision.Source.*
+import com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResult
 import com.jetbrains.plugin.structure.intellij.plugin.PluginQuery
 import com.jetbrains.plugin.structure.mocks.modify
 import com.jetbrains.plugin.structure.mocks.perfectXmlBuilder
@@ -147,5 +148,37 @@ class IdePluginProviderTest {
     pluginProvision as PluginProvision.Found
     assertEquals(JAVA_PLUGIN_ID, pluginProvision.plugin.pluginId)
     assertEquals(CONTENT_MODULE_ID, pluginProvision.source)
+  }
+
+  @Test
+  fun `findPluginByModule returns bundled plugin defining module id`() {
+    val plugin = ide.findPluginByModule(MODULE_ALIAS)
+    assertEquals(JAVA_PLUGIN_ID, plugin?.pluginId)
+  }
+
+  @Test
+  fun `findPluginByModule returns null for unknown module id`() {
+    val plugin = ide.findPluginByModule("unknown.module.id")
+    assertEquals(null, plugin)
+  }
+
+  @Test
+  fun `findPluginByIdOrModuleId returns PLUGIN type for plugin id`() {
+    val result = ide.findPluginByIdOrModuleId(JAVA_PLUGIN_ID)
+    assertEquals(JAVA_PLUGIN_ID, result?.plugin?.pluginId)
+    assertEquals(PluginProviderResult.Type.PLUGIN, result?.type)
+  }
+
+  @Test
+  fun `findPluginByIdOrModuleId returns MODULE type for module id`() {
+    val result = ide.findPluginByIdOrModuleId(MODULE_ALIAS)
+    assertEquals(JAVA_PLUGIN_ID, result?.plugin?.pluginId)
+    assertEquals(PluginProviderResult.Type.MODULE, result?.type)
+  }
+
+  @Test
+  fun `findPluginByIdOrModuleId returns null for unknown id`() {
+    val result = ide.findPluginByIdOrModuleId("unknown.id")
+    assertEquals(null, result)
   }
 }

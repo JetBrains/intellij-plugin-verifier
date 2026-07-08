@@ -88,12 +88,12 @@ class DelegateCallOnOverrideOnlyUsageFilterTest {
 
   private fun ClassNode.loadMethod(methodName: String, methodDescriptor: String): MethodAsm? {
     val classFile = ClassFileAsm(this, TestClasspathFileOrigin)
-    return classFile.methods.find { it.name == methodName && it.descriptor == methodDescriptor }
+    return classFile.methods.find { it.name == methodName && it.descriptor == methodDescriptor } as? MethodAsm
   }
 
   private fun loadMethod(className: FullyQualifiedClassName, methodName: String, methodDescriptor: String): MethodAsm? {
     val classFile = getClassFile(className)
-    return classFile.methods.find { it.name == methodName && it.descriptor == methodDescriptor }
+    return classFile.methods.find { it.name == methodName && it.descriptor == methodDescriptor } as? MethodAsm
   }
 
   private fun getClassFile(className: FullyQualifiedClassName): ClassFileAsm {

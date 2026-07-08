@@ -24,6 +24,7 @@ import static com.jetbrains.plugin.structure.intellij.plugin.PluginProviderResul
 public abstract class Ide implements PluginProvider {
   private final PluginQueryMatcher queryMatcher = new PluginQueryMatcher();
   private volatile Map<String, IdePlugin> bundledPluginsById;
+  private volatile Map<String, IdePlugin> bundledPluginsByModuleId;
 
   /**
    * Returns the IDE version either from 'build.txt' or specified with {@link IdeManager#createIde(java.nio.file.Path, IdeVersion)}
@@ -71,12 +72,7 @@ public abstract class Ide implements PluginProvider {
   @Nullable
   @Override
   final public IdePlugin findPluginByModule(@NotNull String moduleId) {
-    for (IdePlugin plugin : getBundledPlugins()) {
-      if (plugin.hasDefinedModuleWithId(moduleId)) {
-        return plugin;
-      }
-    }
-    return null;
+    return getBundledPluginsByModuleId().get(moduleId);
   }
 
   /**
@@ -91,10 +87,9 @@ public abstract class Ide implements PluginProvider {
     if (plugin != null) {
       return new PluginProviderResult(PLUGIN, plugin);
     }
-    for (IdePlugin bundledPlugin : getBundledPlugins()) {
-      if (bundledPlugin.hasDefinedModuleWithId(pluginIdOrModuleId)) {
-        return new PluginProviderResult(MODULE, bundledPlugin);
-      }
+    IdePlugin pluginByModule = getBundledPluginsByModuleId().get(pluginIdOrModuleId);
+    if (pluginByModule != null) {
+      return new PluginProviderResult(MODULE, pluginByModule);
     }
     return null;
   }
@@ -167,6 +162,27 @@ public abstract class Ide implements PluginProvider {
           }
         }
         bundledPluginsById = result;
+      }
+      return result;
+    }
+  }
+
+  @SuppressWarnings("deprecation")
+  private @NotNull Map<String, IdePlugin> getBundledPluginsByModuleId() {
+    Map<String, IdePlugin> result = bundledPluginsByModuleId;
+    if (result != null) {
+      return result;
+    }
+    synchronized (this) {
+      result = bundledPluginsByModuleId;
+      if (result == null) {
+        result = new HashMap<>();
+        for (IdePlugin plugin : getBundledPlugins()) {
+          for (String moduleId : plugin.getDefinedModules()) {
+            result.putIfAbsent(moduleId, plugin);
+          }
+        }
+        bundledPluginsByModuleId = result;
       }
       return result;
     }
