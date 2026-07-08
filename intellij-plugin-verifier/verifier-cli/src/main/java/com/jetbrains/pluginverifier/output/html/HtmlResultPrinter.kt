@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.output.html
@@ -12,20 +12,30 @@ import com.jetbrains.pluginverifier.dependencies.presentation.ResolvedDependenci
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.ResultPrinter
-import java.io.PrintWriter
+import java.io.Writer
 import java.nio.file.Files
 
 class HtmlResultPrinter(
   private val verificationTarget: PluginVerificationTarget,
-  private val outputOptions: OutputOptions
-): ResultPrinter {
+  private val out: Writer
+) : ResultPrinter, AutoCloseable {
+
+  companion object {
+    fun create(verificationTarget: PluginVerificationTarget, outputOptions: OutputOptions): HtmlResultPrinter {
+      val reportHtmlFile = outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.html")
+      val writer = Files.newBufferedWriter(reportHtmlFile.create())
+      return HtmlResultPrinter(verificationTarget, writer)
+    }
+  }
 
   override fun printResults(results: List<PluginVerificationResult>) {
-    val reportHtmlFile = outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.html")
-    PrintWriter(Files.newBufferedWriter(reportHtmlFile.create())).use {
-      val htmlBuilder = HtmlBuilder(it)
-      htmlBuilder.doPrintResults(results)
-    }
+    val htmlBuilder = HtmlBuilder(out)
+    htmlBuilder.doPrintResults(results)
+    out.flush()
+  }
+
+  override fun close() {
+    out.close()
   }
 
   private fun HtmlBuilder.doPrintResults(results: List<PluginVerificationResult>) {
@@ -146,9 +156,8 @@ class HtmlResultPrinter(
           }
           printShortAndFullDescription("Dependencies used on verification") {
             val graphPresentation = ResolvedDependenciesGraphPrettyPrinter(dependenciesGraph).prettyPresentation()
-            graphPresentation.lines().forEach { line ->
-              +line
-              br()
+            pre {
+              +graphPresentation
             }
           }
         }
@@ -191,6 +200,7 @@ class HtmlResultPrinter(
 
   private fun HtmlBuilder.printShortAndFullDescription(shortDescription: String, fullDescriptionBuilder: HtmlBuilder.() -> Unit) {
     div(classes = "shortDescription") {
+      indent()
       +shortDescription
       +" "
       a(href = "#", classes = "detailsLink") {
@@ -203,5 +213,3 @@ class HtmlResultPrinter(
   }
 
 }
-
-
