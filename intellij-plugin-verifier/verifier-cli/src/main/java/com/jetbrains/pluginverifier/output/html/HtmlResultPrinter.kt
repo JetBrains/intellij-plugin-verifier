@@ -12,8 +12,12 @@ import com.jetbrains.pluginverifier.dependencies.presentation.ResolvedDependenci
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.ResultPrinter
+import java.io.StringWriter
 import java.io.Writer
 import java.nio.file.Files
+import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 
 class HtmlResultPrinter(
   private val verificationTarget: PluginVerificationTarget,
@@ -52,8 +56,39 @@ class HtmlResultPrinter(
         if (results.isEmpty()) {
           +"No plugins checked"
         } else {
-          results.sortedBy { it.plugin.pluginId }.groupBy { it.plugin.pluginId }.forEach { (pluginId, pluginResults) ->
-            appendPluginResults(pluginResults, pluginId)
+          // Keep at most N (concurrencyLevel) results in memory
+          val concurrencyLevel = Runtime.getRuntime().availableProcessors()
+
+          // We're using series of latches, so results of callable M is returned only after M-1 was consumed.
+          // That ensures that data is sorted and that no more than `concurrencyLevel` rendered results are held in memory at any time.
+
+          val pool = Executors.newFixedThreadPool(concurrencyLevel)
+          try {
+            val first = CountDownLatch(1)
+            val latch = arrayOf(first)
+            val futures = results.groupBy { it.plugin.pluginId }.entries
+              .sortedBy { it.key }
+              .map { (pluginId, pluginResults) ->
+                val prev = latch[0]
+                val next = CountDownLatch(1)
+                latch[0] = next
+                pool.submit(Callable {
+                  val rendered = renderPluginResults(pluginResults, pluginId, indent)
+                  prev.await() // Waiting till main thread saves result from previous Callable
+                  // rendered data stored in array to free memory later
+                  arrayOf(rendered) to next
+                })
+              }
+
+            first.countDown() // unlatch first Callable, so first result would complete
+            futures.forEach { future ->
+              val (rendered, latch) = future.get()
+              unsafe(rendered[0])
+              rendered[0] = "" // free memory, otherwise Future will held long string
+              latch.countDown() // unlatch next Callable, so next result would complete
+            }
+          } finally {
+            pool.shutdownNow()
           }
         }
         script { unsafe(loadReportScript()) }
@@ -61,18 +96,23 @@ class HtmlResultPrinter(
     }
   }
 
-  private fun HtmlBuilder.appendPluginResults(pluginResults: List<PluginVerificationResult>, pluginId: String) {
-    div(classes = "plugin " + getPluginStyle(pluginResults)) {
-      h3 {
-        span(classes = "pMarker") { +"    " }
-        +pluginId
+  private fun renderPluginResults(pluginResults: List<PluginVerificationResult>, pluginId: String, indent: Int): String {
+    val writer = StringWriter()
+    HtmlBuilder(writer, initialIndent = indent).apply {
+      div(classes = "plugin " + getPluginStyle(pluginResults)) {
+        h3 {
+          span(classes = "pMarker") { +"    " }
+          +pluginId
+        }
+        div {
+          pluginResults
+            .sortedWith(compareByDescending(VersionComparatorUtil.COMPARATOR) { it.plugin.version })
+            .forEach { printPluginResult(it) }
+        }
       }
-      div {
-        pluginResults
-          .sortedWith(compareByDescending(VersionComparatorUtil.COMPARATOR) { it.plugin.version })
-          .forEach { printPluginResult(it) }
-      }
-    }
+    }.output.flush()
+    writer.buffer.apply { if (endsWith('\n')) deleteCharAt(length - 1) }
+    return writer.toString()
   }
 
   private fun getPluginStyle(results: List<PluginVerificationResult>): String {

@@ -7,9 +7,14 @@ package com.jetbrains.pluginverifier.misc
 import java.io.Writer
 
 @Suppress("unused")
-class HtmlBuilder(val output: Writer) {
+class HtmlBuilder(val output: Writer, initialIndent: Int = 0) {
   private var style: TagStyle = TagStyle.MULTI_LINE
-  private var indent: Int = 0
+  private var _indent: Int = initialIndent
+  var indent: Int
+    get() = _indent
+    private set(value) {
+      _indent = value
+    }
   private var noNextIndentNeeded: Boolean = false
 
   fun indent() {
