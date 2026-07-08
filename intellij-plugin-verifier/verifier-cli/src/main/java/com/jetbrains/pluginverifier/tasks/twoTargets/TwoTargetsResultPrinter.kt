@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2023 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.tasks.twoTargets
@@ -53,12 +53,12 @@ class TwoTargetsResultPrinter : TaskResultPrinter {
       if (outputOptions.useHtml()) {
         LOG.info("HTML output: started (base={})", baseTarget)
         val tHtmlBase = System.currentTimeMillis()
-        HtmlResultPrinter(baseTarget, outputOptions).printResults(baseResults)
+        HtmlResultPrinter.create(baseTarget, outputOptions).use { it.printResults(baseResults) }
         LOG.info("HTML output: base done in {}ms", System.currentTimeMillis() - tHtmlBase)
 
         LOG.info("HTML output: started (new={})", newTarget)
         val tHtmlNew = System.currentTimeMillis()
-        HtmlResultPrinter(newTarget, outputOptions).printResults(newResults)
+        HtmlResultPrinter.create(newTarget, outputOptions).use { it.printResults(newResults) }
         LOG.info("HTML output: new done in {}ms", System.currentTimeMillis() - tHtmlNew)
       } else {
         LOG.info("HTML output: skipped")

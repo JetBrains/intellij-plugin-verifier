@@ -25,7 +25,7 @@ typealias VerifiedPluginHandler = (PluginVerificationResult.Verified) -> Unit
 
 open class BaseOutputPrintTest<T : ResultPrinter>: BaseOutputTest() {
   private val pluginInfo = mockPluginInfo()
-  private val verificationTarget = PluginVerificationTarget.IDE(IdeVersion.createIdeVersion("232"), JdkVersion("11", null))
+  protected val verificationTarget = PluginVerificationTarget.IDE(IdeVersion.createIdeVersion("232"), JdkVersion("11", null))
 
   protected lateinit var out: StringWriter
   protected lateinit var resultPrinter: T
@@ -38,7 +38,7 @@ open class BaseOutputPrintTest<T : ResultPrinter>: BaseOutputTest() {
     out = StringWriter()
   }
 
-  private val dependenciesGraph: ResolvedDependenciesGraph = ResolvedDependenciesGraph(
+  protected val dependenciesGraph: ResolvedDependenciesGraph = ResolvedDependenciesGraph(
         verifiedPlugin = ResolvedDependencyNode(PLUGIN_ID, PLUGIN_VERSION),
         vertices = emptySet(),
         edges = emptySet(),

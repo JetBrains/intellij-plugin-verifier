@@ -1,3 +1,7 @@
+/*
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
+
 package com.jetbrains.pluginverifier.output
 
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
@@ -24,8 +28,8 @@ const val PLUGIN_ID = "pluginId"
 const val PLUGIN_VERSION = "1.0"
 
 open class BaseOutputTest {
-    protected fun mockPluginInfo(): PluginInfo =
-        object : PluginInfo(PLUGIN_ID, PLUGIN_ID, PLUGIN_VERSION, null, null, null) {}
+    protected fun mockPluginInfo(id: String = PLUGIN_ID): PluginInfo =
+        object : PluginInfo(id, id, PLUGIN_VERSION, null, null, null) {}
 
     private val sampleStuffFactoryLocation = ClassLocation("SampleStuffFactory", null, Modifiers.of(Modifiers.Modifier.PUBLIC), SomeFileOrigin)
 

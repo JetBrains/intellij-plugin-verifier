@@ -1,36 +1,116 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.misc
 
-import java.io.PrintWriter
+import java.io.Writer
 
-class HtmlBuilder(val output: PrintWriter) {
-  fun tag(tagName: String, block: () -> Unit = {}, attr: Map<String, String> = emptyMap()) {
-    val open = if (attr.isEmpty()) {
-      "<$tagName>"
-    } else {
-      "<$tagName ${renderAttributes(attr)}>"
+@Suppress("unused")
+class HtmlBuilder(val output: Writer) {
+  private var style: TagStyle = TagStyle.MULTI_LINE
+  private var indent: Int = 0
+  private var noNextIndentNeeded: Boolean = false
+
+  fun indent() {
+    if (!noNextIndentNeeded) {
+      repeat(indent) { output.write(' '.code) }
     }
-    output.println(open)
-    block()
-    output.println("</$tagName>")
+    noNextIndentNeeded = false
   }
 
-  private fun renderAttributes(attr: Map<String, String>) =
-    attr.asSequence()
-      .filter { it.value.isNotEmpty() }
-      .joinToString(separator = " ") { "${it.key}=\"${it.value}\"" }
+  private inline fun withStyle(style: TagStyle, function: () -> Unit) {
+    if (style == TagStyle.INHERIT || style == this.style) {
+      function()
+      return
+    }
+    val oldStyle = this.style
+    this.style = style
+    try {
+      function()
+    } finally {
+      this.style = oldStyle
+    }
+  }
+
+  enum class TagStyle {
+    SINGLE_LINE,
+    MULTI_LINE,
+    INHERIT,
+  }
+
+  fun tag(
+    tagName: String,
+    block: () -> Unit = {},
+    attr: Map<String, String> = emptyMap(),
+    style: TagStyle = TagStyle.INHERIT,
+  ) {
+    if (this.style == TagStyle.SINGLE_LINE && style == TagStyle.MULTI_LINE) {
+      error("Cannot place multi-line tag $tagName in single-line one")
+    }
+    if (this.style != TagStyle.SINGLE_LINE) {
+      indent()
+    }
+    output.write('<'.code)
+    output.write(tagName)
+    printAttributes(attr)
+    output.write('>'.code)
+    if (style.effective == TagStyle.MULTI_LINE) {
+      output.write(System.lineSeparator())
+    }
+    indent += 2
+    try {
+      withStyle(style) {
+        block()
+      }
+    } finally {
+      indent -= 2
+    }
+    if (style.effective == TagStyle.MULTI_LINE) {
+      indent()
+    }
+    output.write('<'.code)
+    output.write('/'.code)
+    output.write(tagName)
+    output.write('>'.code)
+    if (this.style == TagStyle.MULTI_LINE) {
+      output.write(System.lineSeparator())
+    }
+    noNextIndentNeeded = false
+  }
+
+  private val TagStyle.effective: TagStyle
+    get() = when (this) {
+      TagStyle.INHERIT -> style
+      else -> this
+    }
+
+  private fun printAttributes(attr: Map<String, String>) {
+    for ((key, value) in attr) {
+      if (value.isNotEmpty()) {
+        output.write(' '.code)
+        output.write(key)
+        output.write('='.code)
+        output.write('"'.code)
+        output.write(value)
+        output.write('"'.code)
+      }
+    }
+  }
 
   fun closedTag(tagName: String, attr: Map<String, String> = emptyMap()) {
-    output.println(
-      if (attr.isEmpty()) {
-        "<$tagName/>"
-      } else {
-        "<$tagName ${renderAttributes(attr)}/>"
-      }
-    )
+    if (this.style != TagStyle.SINGLE_LINE) {
+      indent()
+    }
+    output.write('<'.code)
+    output.write(tagName)
+    printAttributes(attr)
+    output.write('/'.code)
+    output.write('>'.code)
+    if (this.style == TagStyle.MULTI_LINE) {
+      output.write(System.lineSeparator())
+    }
+    noNextIndentNeeded = false
   }
 
   fun html(block: () -> Unit) = tag("html", block)
@@ -49,7 +129,7 @@ class HtmlBuilder(val output: PrintWriter) {
 
   fun td(block: () -> Unit) = tag("td", block)
 
-  fun li(block: () -> Unit) = tag("li", block)
+  fun li(block: () -> Unit) = tag("li", block, style = TagStyle.SINGLE_LINE)
 
   fun form(
     id: String,
@@ -112,34 +192,38 @@ class HtmlBuilder(val output: PrintWriter) {
 
   fun head(block: () -> Unit) = tag("head", block)
 
-  fun h1(block: () -> Unit) = tag("h1", block)
+  fun h1(block: () -> Unit) = tag("h1", block, style = TagStyle.SINGLE_LINE)
 
-  fun h2(block: () -> Unit) = tag("h2", block)
+  fun h2(block: () -> Unit) = tag("h2", block, style = TagStyle.SINGLE_LINE)
 
-  fun h3(block: () -> Unit) = tag("h3", block)
+  fun h3(block: () -> Unit) = tag("h3", block, style = TagStyle.SINGLE_LINE)
 
-  fun span(classes: String = "", block: () -> Unit) = tag("span", block, mapOf("class" to classes))
+  fun span(classes: String = "", style: TagStyle = TagStyle.INHERIT, block: () -> Unit) = tag("span", block, mapOf("class" to classes), style = style)
 
   fun label(block: () -> Unit) = tag("label", block)
 
-  fun title(text: String) = tag("title", { output.println(text) })
+  fun title(text: String) = tag("title", { output.write(text) }, style = TagStyle.SINGLE_LINE)
 
   fun script(src: String = "", type: String = "", block: () -> Unit = {}) = tag("script", block, mapOf("src" to src, "type" to type))
 
   fun link(rel: String = "", href: String = "", type: String = "") = closedTag("link", mapOf("rel" to rel, "href" to href, "type" to type))
 
-  fun unsafe(text: String) = output.println(text)
+  fun unsafe(text: String) {
+    output.write(text)
+    output.write(System.lineSeparator())
+  }
 
   fun div(classes: String = "", block: () -> Unit) = tag("div", block, mapOf("class" to classes))
 
-  fun small(block: () -> Unit) = tag("small", block)
+  fun small(style: TagStyle = TagStyle.INHERIT, block: () -> Unit) = tag("small", block, style = style)
 
-  fun a(href: String = "", classes: String = "", block: () -> Unit) = tag("a", block, mapOf("href" to href, "class" to classes))
+  fun a(href: String = "", classes: String = "", block: () -> Unit) = tag("a", block, mapOf("href" to href, "class" to classes), style = TagStyle.SINGLE_LINE)
 
   fun style(type: String = "", block: () -> Unit) = tag("style", block, mapOf("type" to type))
 
   operator fun String.unaryPlus() {
-    output.append(this.escapeHtml4())
+    this.escapeHtml4To(output)
+    noNextIndentNeeded = !this.contains('\n')
   }
 
 }

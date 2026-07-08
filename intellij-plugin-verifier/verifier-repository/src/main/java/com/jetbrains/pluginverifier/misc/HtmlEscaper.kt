@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2023 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.misc
@@ -76,7 +76,7 @@ class HtmlEscaper {
     }
 
     @Throws(IOException::class)
-    private fun escape(input: CharSequence, writer: Writer) {
+    fun escape(input: CharSequence, writer: Writer) {
         var pos = 0
         val len = input.length
         while (pos < len) {
@@ -367,12 +367,12 @@ private val escapeLookup: Map<CharSequence, CharSequence> = mapOf(
  *
  * [HtmlEscaper] is stateless after construction (its lookup table, prefix set and
  * key-length bounds are immutable and only read during escaping), but the constructor
- * rebuilds the ~250-entry translation table every time. Since [escapeHtml4] is invoked
+ * rebuilds the ~250-entry translation table every time. Since [escapeHtml4To] is invoked
  * for every text node written to an HTML report, constructing a fresh escaper per call
  * dominates report generation. Build it once and reuse it.
  */
 private val htmlEscaper = HtmlEscaper()
 
-fun String.escapeHtml4(): String {
-    return htmlEscaper.escape(this)
+fun String.escapeHtml4To(writer: Writer) {
+    htmlEscaper.escape(this, writer)
 }

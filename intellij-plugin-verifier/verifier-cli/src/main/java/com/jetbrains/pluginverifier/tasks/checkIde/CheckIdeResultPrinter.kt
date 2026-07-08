@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2026 JetBrains s.r.o. and other contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.jetbrains.pluginverifier.tasks.checkIde
@@ -9,12 +9,12 @@ import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.html.HtmlResultPrinter
 import com.jetbrains.pluginverifier.output.markdown.MarkdownResultPrinter
-import com.jetbrains.pluginverifier.output.useHtml
-import com.jetbrains.pluginverifier.output.useMarkdown
 import com.jetbrains.pluginverifier.output.stream.WriterResultPrinter
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityHistory
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityLog
 import com.jetbrains.pluginverifier.output.teamcity.TeamCityResultPrinter
+import com.jetbrains.pluginverifier.output.useHtml
+import com.jetbrains.pluginverifier.output.useMarkdown
 import com.jetbrains.pluginverifier.output.usePlainOutput
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
@@ -37,7 +37,9 @@ class CheckIdeResultPrinter(val pluginRepository: PluginRepository) : TaskResult
       }
 
       if (outputOptions.useHtml()) {
-        HtmlResultPrinter(ide, outputOptions).printResults(results)
+        HtmlResultPrinter.create(ide, outputOptions).use {
+          it.printResults(results)
+        }
       }
       if (outputOptions.useMarkdown()) {
         MarkdownResultPrinter.create(ide, outputOptions).use {
