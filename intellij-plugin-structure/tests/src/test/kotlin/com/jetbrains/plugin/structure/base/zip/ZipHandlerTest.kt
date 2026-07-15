@@ -13,6 +13,7 @@ import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.file.Path
+import java.nio.file.Files
 
 @RunWith(Parameterized::class)
 class ZipHandlerTest<T : ZipResource>(private val type: ZipHandlerType) {
@@ -48,6 +49,20 @@ class ZipHandlerTest<T : ZipResource>(private val type: ZipHandlerType) {
     assertTrue(zipHandler.containsEntry("META-INF/plugin.xml"))
     assertTrue(zipHandler.containsEntry("intellij.example.xml"))
     assertFalse(zipHandler.containsEntry("nonexistent.txt"))
+  }
+
+  @Test
+  fun `handler releases archive file after use`() {
+    val jarPath = buildZipFile(createJar()) {
+      dir("META-INF") {
+        file("plugin.xml", "<idea-plugin />")
+      }
+    }
+
+    val zipHandler = newZipHandler(jarPath)
+    assertTrue(zipHandler.containsEntry("META-INF/plugin.xml"))
+
+    Files.delete(jarPath)
   }
 
   private fun newZipHandler(zipPath: Path) = when (type) {
