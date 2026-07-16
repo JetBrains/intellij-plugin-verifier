@@ -8,7 +8,16 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 
+- Reduce batch verification memory usage by deduplicating resolved dependency graph strings, nodes, missing dependency sets, and edges. 
+- Render HTML reports with indented output, faster escaping, and parallel per-plugin rendering.
+- Improve memory consumption in `check-trunk` ([#1545](https://github.com/JetBrains/intellij-plugin-verifier/pull/1545))
+- Update ASM to 9.10.1, Caffeine to 3.2.4, Gson to 2.14.0, Jackson to 2.21.4, JAXB to 4.0.5, Jsoup to 1.22.2, Logback to 1.5.34, and SLF4J to 2.0.18 ([#1544](https://github.com/JetBrains/intellij-plugin-verifier/pull/1544))
+- Update ByteBuddy to 1.18.11 ([#1543](https://github.com/JetBrains/intellij-plugin-verifier/pull/1543))
+- Update Bouncy Castle to 1.85 ([#1548](https://github.com/JetBrains/intellij-plugin-verifier/pull/1548))
+
 ### Fixed
+
+- Close `ZipFile` handles eagerly in `ZipFileHandler` to release archive files after use to restore compatibility with Windows ([#1521](https://github.com/JetBrains/intellij-plugin-verifier/pull/1521), [#1549](https://github.com/JetBrains/intellij-plugin-verifier/pull/1549))
 
 ## 1.408 - 2026-07-02
 
@@ -273,7 +282,7 @@ by adding the core plugin as an implicit dependency, ensuring that core platform
 
 ### Changed
 
-- Prevent duplicate log messages by reusing the type-safe model of Product Info layout components between IDE model, resource resolvers and class resolvers ([#1285](https://github.com/JetBrains/intellij-plugin-verifier/commit/0fbd3b03141005ea5c701500868a34ee6b3400b4#:~:text=and%20class%20resolvers%20(-,%231285,-)))
+- Prevent duplicate log messages by reusing the type-safe model of Product Info layout components between IDE model, resource resolvers, and class resolvers ([#1285](https://github.com/JetBrains/intellij-plugin-verifier/commit/0fbd3b03141005ea5c701500868a34ee6b3400b4#:~:text=and%20class%20resolvers%20(-,%231285,-)))
 - Shorten the error message printed by _IntelliJ API Compatibility Check_ configurations
 - Extract content module resolution to separate classes ([#1286](https://github.com/JetBrains/intellij-plugin-verifier/pull/1286))
 - IntelliJ Structure: Extract icon loading and dependency loading into separate class ([#1291](https://github.com/JetBrains/intellij-plugin-verifier/pull/1291))
@@ -356,7 +365,7 @@ by adding the core plugin as an implicit dependency, ensuring that core platform
 - Allow to configure `IdeManager` when layout components are missing ([#1196](https://github.com/JetBrains/intellij-plugin-verifier/pull/1196), [#1197](https://github.com/JetBrains/intellij-plugin-verifier/pull/1197))
 - Introduce critical compatibility problems for JetBrains Marketplace verification result ([MP-7151](https://youtrack.jetbrains.com/issue/MP-7151), [#1207](https://github.com/JetBrains/intellij-plugin-verifier/pull/1207))
 - Provide internal IDE dumps to improve testing in real-life scenarios
-- Validate plugin identifiers for Hub, YouTrack and .NET plugins ([#1209](https://github.com/JetBrains/intellij-plugin-verifier/pull/1209))
+- Validate plugin identifiers for Hub, YouTrack, and .NET plugins ([#1209](https://github.com/JetBrains/intellij-plugin-verifier/pull/1209))
 - Support inline `<module>` declarations with CDATA in plugin descriptor ([MP-7092](https://youtrack.jetbrains.com/issue/MP-7092), [#1206](https://github.com/JetBrains/intellij-plugin-verifier/pull/1206))
 - Reuse filesystem accessed by different URIs to the same file (thanks [fp7](https://github.com/fp7)), ([#1201](https://github.com/JetBrains/intellij-plugin-verifier/pull/1201))
 - Support `loading` attribute for Plugin Model V2 content modules ([MP-6904](https://youtrack.jetbrains.com/issue/MP-6904), [95ab4ca](https://github.com/JetBrains/intellij-plugin-verifier/commit/95ab4cad428dc3dd0b4919e71a18379d7bb45129))
@@ -538,7 +547,7 @@ must be set to a date that is no more than 5 days in the future from today's dat
 
 - Introduce a CLI switch to `–mute` specific plugin problems ([#1078](https://github.com/JetBrains/intellij-plugin-verifier/pull/1078))
 - Distinguish errors and other plugin problems in Markdown and Console outputs ([#1075](https://github.com/JetBrains/intellij-plugin-verifier/pull/1075))
-- Show structure warnings in verification reports for HTML, Markdown and Stdout outputs ([#1080](https://github.com/JetBrains/intellij-plugin-verifier/pull/1080))
+- Show structure warnings in verification reports for HTML, Markdown, and Stdout outputs ([#1080](https://github.com/JetBrains/intellij-plugin-verifier/pull/1080))
 - Provide problem solution hint for structure warnings in Stdout output, including the ability to mute a specific problem ([#1088](https://github.com/JetBrains/intellij-plugin-verifier/pull/1088))
 - Discover JAR files in `lib/modules` for Platform 2024.2 ([#1093](https://github.com/JetBrains/intellij-plugin-verifier/pull/1093))
 - Add YouTrack App plugin structure parser ([#1090](https://github.com/JetBrains/intellij-plugin-verifier/pull/1090))
