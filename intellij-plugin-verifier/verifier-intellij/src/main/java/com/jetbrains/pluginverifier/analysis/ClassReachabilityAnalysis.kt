@@ -107,19 +107,43 @@ fun buildClassReachabilityGraph(
 
   val missingOptionalDependencies = dependenciesGraph.getDirectMissingDependencies().filter { it.dependency.isOptional }
   for (missingOptionalDependency in missingOptionalDependencies) {
-    val optionalPlugin = idePlugin.optionalDescriptors.find { it.dependency == missingOptionalDependency.dependency }?.optionalPlugin
+    val dependencyId = missingOptionalDependency.dependency.id
+    val optionalPlugins = idePlugin.findOptionalPluginsByDependencyId(dependencyId)
     val modules = idePlugin.modulesDescriptors
-      .filter { it.dependencies.map { it.id }.contains(missingOptionalDependency.dependency.id) }
+      .filter { it.dependencies.map { it.id }.contains(dependencyId) }
       .map { it.module }
-    (if (optionalPlugin != null) modules + optionalPlugin else modules).forEach {
-      val optionalClasses = PluginXmlUtil.getAllClassesReferencedFromXml(it)
-      for (className in optionalClasses) {
-        reachabilityGraph.markClass(className, ReachabilityGraph.ReachabilityMark.OPTIONAL_PLUGIN)
-      }
+    val optionalClasses = hashSetOf<ClassName>()
+    modules.forEach { optionalClasses += PluginXmlUtil.getAllClassesReferencedFromXml(it) }
+    optionalPlugins.forEach { optionalClasses += it.collectClassesReferencedFromXmlRecursively() }
+    for (className in optionalClasses) {
+      reachabilityGraph.markClass(className, ReachabilityGraph.ReachabilityMark.OPTIONAL_PLUGIN)
     }
   }
 
   return reachabilityGraph
+}
+
+private fun IdePlugin.findOptionalPluginsByDependencyId(dependencyId: String): List<IdePlugin> {
+  val result = arrayListOf<IdePlugin>()
+  for (optionalDescriptor in optionalDescriptors) {
+    if (optionalDescriptor.dependency.id == dependencyId) {
+      result += optionalDescriptor.optionalPlugin
+    }
+    result += optionalDescriptor.optionalPlugin.findOptionalPluginsByDependencyId(dependencyId)
+  }
+  return result
+}
+
+private fun IdePlugin.collectClassesReferencedFromXmlRecursively(): Set<ClassName> {
+  val classes = hashSetOf<ClassName>()
+  classes += PluginXmlUtil.getAllClassesReferencedFromXml(this)
+  for (optionalDescriptor in optionalDescriptors) {
+    classes += optionalDescriptor.optionalPlugin.collectClassesReferencedFromXmlRecursively()
+  }
+  for (moduleDescriptor in modulesDescriptors) {
+    classes += PluginXmlUtil.getAllClassesReferencedFromXml(moduleDescriptor.module)
+  }
+  return classes
 }
 
 private fun buildTypeGraph(pluginResolver: Resolver): TypeGraph {
