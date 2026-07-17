@@ -15,9 +15,10 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassUsageType
+import org.objectweb.asm.tree.AbstractInsnNode
 
 class JavaPluginApiUsageProcessor(private val javaPluginApiUsageRegistrar: JavaPluginApiUsageRegistrar) : ApiUsageProcessor {
-  override fun processClassReference(classReference: ClassReference, resolvedClass: ClassFile, context: VerificationContext, referrer: ClassFileMember, classUsageType: ClassUsageType) {
+  override fun processClassReference(classReference: ClassReference, resolvedClass: ClassFile, context: VerificationContext, referrer: ClassFileMember, classUsageType: ClassUsageType, instructionNode: AbstractInsnNode?) {
     if (resolvedClass.isJavaPluginApi() && context.isFromVerifiedPlugin(referrer)) {
       javaPluginApiUsageRegistrar.registerJavaPluginClassUsage(
         JavaPluginClassUsage(resolvedClass.containingClassFile.location, referrer.location)

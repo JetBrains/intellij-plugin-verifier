@@ -18,7 +18,8 @@ abstract class FilteringApiUsageProcessor(private val usageFilter: ApiUsageFilte
     resolvedClass: ClassFile,
     context: VerificationContext,
     referrer: ClassFileMember,
-    classUsageType: ClassUsageType
+    classUsageType: ClassUsageType,
+    instructionNode: AbstractInsnNode?
   ) {
     if (usageFilter.allow(classReference, resolvedClass, referrer, classUsageType, context)) return
     doProcessClassReference(classReference, resolvedClass, referrer, classUsageType, context)
