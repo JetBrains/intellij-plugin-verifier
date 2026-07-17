@@ -8,6 +8,12 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 
+### Fixed
+
+## 1.409 - 2026-07-17
+
+### Changed
+
 - Reduce batch verification memory usage by deduplicating resolved dependency graph strings, nodes, missing dependency sets, and edges. 
 - Render HTML reports with indented output, faster escaping, and parallel per-plugin rendering.
 - Improve memory consumption in `check-trunk` ([#1545](https://github.com/JetBrains/intellij-plugin-verifier/pull/1545))
