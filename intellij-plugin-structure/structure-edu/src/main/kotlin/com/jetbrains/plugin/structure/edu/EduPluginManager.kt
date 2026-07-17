@@ -123,6 +123,7 @@ class EduPluginManager private constructor(private val extractDirectory: Path) :
           programmingLanguageVersion = this.programmingLanguageVersion,
           environment = this.environment,
           isPrivate = this.isPrivate ?: false,
+          certification = this.certification,
           eduStat = EduStat.fromDescriptor(this),
           icons = if (icon != null) listOf(icon) else emptyList(),
           pluginId = pluginId

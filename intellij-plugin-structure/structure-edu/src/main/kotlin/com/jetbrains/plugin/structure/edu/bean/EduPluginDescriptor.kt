@@ -73,5 +73,7 @@ data class EduPluginDescriptor(
   @JsonProperty(PLUGIN_ID)
   val pluginId: String? = null,
   @JsonProperty(IS_PRIVATE)
-  val isPrivate: Boolean? = false
+  val isPrivate: Boolean? = false,
+  @JsonProperty(CERTIFICATION)
+  val certification: Boolean? = null,
 )
