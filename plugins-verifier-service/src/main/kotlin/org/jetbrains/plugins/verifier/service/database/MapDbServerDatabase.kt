@@ -22,18 +22,18 @@ class MapDbServerDatabase(databasePath: Path) : ServerDatabase {
     .closeOnJvmShutdown()
     .make()
 
-  override fun <T> openOrCreateSet(setName: String, elementType: ValueType<T>): MutableSet<T> =
+  override fun <T : Any> openOrCreateSet(setName: String, elementType: ValueType<T>): MutableSet<T> =
     serverDB
       .hashSet(setName, elementType.serializer)
       .createOrOpen()
 
-  override fun <K, V> openOrCreateMap(mapName: String, keyType: ValueType<K>, valueType: ValueType<V>): MutableMap<K, V> =
+  override fun <K : Any, V : Any> openOrCreateMap(mapName: String, keyType: ValueType<K>, valueType: ValueType<V>): MutableMap<K, V> =
     serverDB
       .hashMap(mapName, keyType.serializer, valueType.serializer)
       .createOrOpen()
 
   @Suppress("UNCHECKED_CAST")
-  override fun <K> openOrCreateList(listName: String, keyType: ValueType<K>): MutableList<K> =
+  override fun <K : Any> openOrCreateList(listName: String, keyType: ValueType<K>): MutableList<K> =
     serverDB.indexTreeList(listName, keyType.serializer)
       .createOrOpen() as MutableList<K>
 

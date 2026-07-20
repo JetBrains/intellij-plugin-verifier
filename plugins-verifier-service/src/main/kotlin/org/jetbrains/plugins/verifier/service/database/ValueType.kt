@@ -11,7 +11,7 @@ import org.mapdb.Serializer
 /**
  * Represents a type of the value stored in the [database] [ServerDatabase].
  */
-sealed class ValueType<T> {
+sealed class ValueType<T : Any> {
 
   object STRING : ValueType<String>() {
     override val serializer: Serializer<String> = Serializer.STRING
@@ -32,7 +32,7 @@ sealed class ValueType<T> {
    * [ValueType] of any value that can be converted
    * to and obtained from a string.
    */
-  class StringBased<T>(
+  class StringBased<T : Any>(
     val toString: (T) -> String,
     val fromString: (String) -> T
   ) : ValueType<T>() {
