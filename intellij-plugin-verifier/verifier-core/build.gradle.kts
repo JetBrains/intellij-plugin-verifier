@@ -3,4 +3,5 @@ dependencies {
   implementation("org.jetbrains.intellij.plugins:structure-classes:$intellijStructureVersion")
 
   implementation(sharedLibs.caffeine)
+  implementation(libs.kotlinx.metadata)
 }

@@ -94,6 +94,14 @@ class VerificationTest {
     assertSetsEqual(expectedOverrideOnlyUsages, actualOverrideOnly)
   }
 
+  // Includes mock-plugin's `NoInternalTypeUsage`, which inherits but never overrides an interface
+  // default method that references an internal type -- it must produce zero internal-API usages.
+  // That assertion depends on KotlinMethods.isKotlinDefaultMethod() correctly recognizing the
+  // compiler-synthesized bridge Kotlin emits for it; see that file's KDoc for why this used to be
+  // a bytecode-shape heuristic (broke across Kotlin compiler versions) and is now metadata-based.
+  // The fixture modules (verifier-test/{before,after}-idea, mock-plugin) pin their own
+  // apiVersion/languageVersion independently of this project's, but not the compiler binary
+  // itself -- see mock-plugin/build.gradle.kts.
   @Test
   fun `check that all internal API violating usages are found`() {
     val expectedInternalApiUsages = parseInternalApiUsages().toSet()

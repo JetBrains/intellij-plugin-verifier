@@ -61,8 +61,8 @@ artifacts {
 tasks.withType<KotlinCompile> {
   compilerOptions {
     jvmTarget = JvmTarget.JVM_11
-    apiVersion = KotlinVersion.KOTLIN_1_8
-    languageVersion = KotlinVersion.KOTLIN_1_8
+    apiVersion = KotlinVersion.KOTLIN_2_2
+    languageVersion = KotlinVersion.KOTLIN_2_2
     freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
   }
 }
@@ -80,7 +80,7 @@ dependencies {
 
     implementation(sharedLibs.spullara.cliParser)
     implementation("org.apache.commons:commons-text:1.15.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:1.0-M1-1.4.0-rc")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 }
 
 val copyMockIdes by tasks.registering(Copy::class) {
