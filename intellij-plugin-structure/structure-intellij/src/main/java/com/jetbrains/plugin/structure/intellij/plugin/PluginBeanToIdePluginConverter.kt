@@ -204,7 +204,7 @@ internal class PluginBeanToIdePluginConverter {
     val serviceInterface = extensionElement.getAttributeValue("serviceInterface")
     val serviceImplementation = extensionElement.getAttributeValue("serviceImplementation")
     val serviceType = IdePluginContentDescriptor.ServiceType.valueOf(
-      epName.replace("(Service)|(com.intellij.)".toRegex(), "").toUpperCase()
+      epName.replace("(Service)|(com.intellij.)".toRegex(), "").uppercase()
     )
     val testServiceImplementation = extensionElement.getAttributeValue("testServiceImplementation")
     val headlessImplementation = extensionElement.getAttributeValue("headlessImplementation")
@@ -273,7 +273,7 @@ internal class PluginBeanToIdePluginConverter {
         }
         if (className != null && topicName != null) {
           val listenerType =
-            IdePluginContentDescriptor.ListenerType.valueOf(listenersName.replace("Listeners", "").toUpperCase())
+            IdePluginContentDescriptor.ListenerType.valueOf(listenersName.replace("Listeners", "").uppercase())
           containerDescriptor.listeners += IdePluginContentDescriptor.ListenerDescriptor(
             topicName,
             className,

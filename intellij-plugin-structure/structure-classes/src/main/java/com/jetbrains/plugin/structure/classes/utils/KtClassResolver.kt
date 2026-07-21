@@ -21,9 +21,8 @@ class KtClassResolver {
 
   operator fun get(classNode: ClassNode): KtClassNode? {
     val signature: Signature = classNode.signature ?: return classNode.ktClassNode
-    return cache.get(signature) {
-      classNode.ktClassNode
-    }
+    return cache.getIfPresent(signature)
+      ?: classNode.ktClassNode?.also { cache.put(signature, it) }
   }
 
   private val ClassNode.ktClassNode: KtClassNode?

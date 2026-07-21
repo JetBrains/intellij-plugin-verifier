@@ -91,7 +91,7 @@ class CachingPluginDependencyResolverProvider(
   private fun Dependency.createResolverTree(): NamedResolver {
     return plugin?.createResolverTree()
       ?.let { (r, resolversToCache) ->
-        cache.put(this.pluginId, r)
+        cache.put(this.id, r)
         resolversToCache.forEach {
           cache.put(it.name, it)
         }
