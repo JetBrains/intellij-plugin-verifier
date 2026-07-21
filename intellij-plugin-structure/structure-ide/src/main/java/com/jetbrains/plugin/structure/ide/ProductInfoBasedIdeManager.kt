@@ -20,9 +20,21 @@ import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import java.io.IOException
 import java.nio.file.Path
 
-internal const val PRODUCT_INFO_JSON = "product-info.json"
-internal const val MACOS_RESOURCES_DIRECTORY = "Resources"
+private const val PRODUCT_INFO_JSON = "product-info.json"
+private const val MACOS_RESOURCES_DIRECTORY = "Resources"
 internal val VERSION_FROM_PRODUCT_INFO: IdeVersion? = null
+
+/**
+ * Resolves the `product-info.json` path for an IDE, checking both the root directory
+ * (Linux/Windows) and `Resources/` subdirectory (macOS).
+ */
+fun resolveProductInfoJsonPath(idePath: Path): Path? {
+  val locations = listOf(
+    idePath.resolve(PRODUCT_INFO_JSON),
+    idePath.resolve(MACOS_RESOURCES_DIRECTORY).resolve(PRODUCT_INFO_JSON)
+  )
+  return locations.firstOrNull { it.exists() }
+}
 
 class ProductInfoBasedIdeManager(
   missingLayoutFileMode: MissingLayoutFileMode = SKIP_AND_WARN,
@@ -38,9 +50,9 @@ class ProductInfoBasedIdeManager(
   override fun createIde(idePath: Path): Ide = createIde(idePath, VERSION_FROM_PRODUCT_INFO)
 
   override fun createIde(idePath: Path, version: IdeVersion?): Ide {
-    assertProductInfoPresent(idePath)
+    val productInfoJson = assertProductInfoPresent(idePath)
     try {
-      val productInfo = productInfoParser.parse(idePath.productInfoJson!!)
+      val productInfo = productInfoParser.parse(productInfoJson)
       val ideVersion = version ?: createIdeVersion(productInfo)
       return createIde(idePath, ideVersion, productInfo)
     } catch (e: ProductInfoParseException) {
@@ -92,21 +104,13 @@ class ProductInfoBasedIdeManager(
   private fun LayoutComponents.asSource(idePath: Path, ideVersion: IdeVersion) =
     ProductInfoLayoutComponentsPluginCollectionSource(idePath, ideVersion, this)
 
-  private val Path.productInfoJson: Path?
-    get() {
-      val locations = listOf<Path>(
-        resolve(PRODUCT_INFO_JSON),
-        resolve(MACOS_RESOURCES_DIRECTORY).resolve(PRODUCT_INFO_JSON)
-      )
-      return locations.firstOrNull { it.exists() }
-    }
-
   @Throws(InvalidIdeException::class)
   private fun assertProductInfoPresent(idePath: Path): Path {
-    return idePath.productInfoJson ?: throw InvalidIdeException(idePath, "The '$PRODUCT_INFO_JSON' file is not available.")
+    return resolveProductInfoJsonPath(idePath)
+      ?: throw InvalidIdeException(idePath, "The '$PRODUCT_INFO_JSON' file is not available.")
   }
 
-  fun supports(idePath: Path): Boolean = idePath.productInfoJson != null
+  fun supports(idePath: Path): Boolean = resolveProductInfoJsonPath(idePath) != null
     && isAtLeastVersion(idePath, "242")
 
   private fun isAtLeastVersion(idePath: Path, expectedVersion: String): Boolean {
