@@ -167,15 +167,25 @@ class InternalApiUsagePluginTest {
       }
     }
 
+    // PlatformInternalMarker and PlatformMiddle are placed in different bundled
+    // plugins (java vs. groovy, the latter depending on the former) so that they
+    // have different classFileOrigins - matching the real MP-3611 shape, where the
+    // internal API and the misattributed referrer come from different platform
+    // modules. Putting them in the same origin would trip the unrelated
+    // same-origin check in InternalApiUsageProcessor.isInternal() instead of
+    // exercising the isFromVerifiedPlugin guard this test is meant to cover.
     val ide = buildIdeWithBundledPlugins(javaPluginClassesBuilder = {
       dirs("com/intellij/openapi") {
         file("PlatformInternalMarker.class", internalMarkerUdt.bytes)
-        file("PlatformMiddle.class", platformMiddleUdt.bytes)
         dir("util") {
           file("IntellijInternalApi.class", IntellijInternalApiDump.dump())
         }
       }
-    }, groovyPluginClassesBuilder = {})
+    }, groovyPluginClassesBuilder = {
+      dirs("com/intellij/openapi") {
+        file("PlatformMiddle.class", platformMiddleUdt.bytes)
+      }
+    })
 
     return idePlugin to ide
   }
