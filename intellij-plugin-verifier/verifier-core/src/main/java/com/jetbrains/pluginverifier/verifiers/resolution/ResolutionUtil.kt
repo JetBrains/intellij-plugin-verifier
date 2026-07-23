@@ -13,6 +13,7 @@ import com.jetbrains.pluginverifier.results.problems.IllegalClassAccessProblem
 import com.jetbrains.pluginverifier.results.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import org.objectweb.asm.tree.AbstractInsnNode
 
 fun Resolver.caching(): Resolver = CacheResolver(this)
 
@@ -25,6 +26,7 @@ fun Resolver.resolveClassChecked(
   className: String,
   referrer: ClassFileMember,
   context: VerificationContext,
+  instructionNode: AbstractInsnNode? = null,
   classUsageType: ClassUsageType = ClassUsageType.DEFAULT
 ): ClassFile? =
   when (val resolutionResult = resolveClass(className)) {
@@ -56,7 +58,7 @@ fun Resolver.resolveClassChecked(
         )
       }
       val classReference = ClassReference(className)
-      context.apiUsageProcessors.forEach { it.processClassReference(classReference, classFile, context, referrer, classUsageType) }
+      context.apiUsageProcessors.forEach { it.processClassReference(classReference, classFile, context, referrer, classUsageType, instructionNode) }
       classFile
     }
   }

@@ -85,12 +85,12 @@ class MemberAccessVerifier : InstructionVerifier {
     if (memberOwner.startsWith("[")) {
       val arrayType = memberOwner.extractClassNameFromDescriptor()
       if (arrayType != null) {
-        context.classResolver.resolveClassChecked(arrayType, callerMethod, context)
+        context.classResolver.resolveClassChecked(arrayType, callerMethod, context, instructionNode)
       }
       return
     }
 
-    val ownerClassFile = context.classResolver.resolveClassChecked(memberOwner, callerMethod, context)
+    val ownerClassFile = context.classResolver.resolveClassChecked(memberOwner, callerMethod, context, instructionNode)
     if (ownerClassFile != null) {
       when (instruction) {
         Instruction.INVOKE_VIRTUAL, Instruction.INVOKE_INTERFACE, Instruction.INVOKE_STATIC, Instruction.INVOKE_SPECIAL -> {

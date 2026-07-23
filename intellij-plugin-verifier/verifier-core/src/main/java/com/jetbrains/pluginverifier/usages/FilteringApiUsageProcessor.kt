@@ -18,10 +18,11 @@ abstract class FilteringApiUsageProcessor(private val usageFilter: ApiUsageFilte
     resolvedClass: ClassFile,
     context: VerificationContext,
     referrer: ClassFileMember,
-    classUsageType: ClassUsageType
+    classUsageType: ClassUsageType,
+    instructionNode: AbstractInsnNode?
   ) {
     if (usageFilter.allow(classReference, resolvedClass, referrer, classUsageType, context)) return
-    doProcessClassReference(classReference, resolvedClass, referrer, classUsageType, context)
+    doProcessClassReference(classReference, resolvedClass, referrer, classUsageType, context, instructionNode)
   }
 
   final override fun processMethodInvocation(
@@ -51,6 +52,7 @@ abstract class FilteringApiUsageProcessor(private val usageFilter: ApiUsageFilte
     referrer: ClassFileMember,
     classUsageType: ClassUsageType,
     context: VerificationContext,
+    instructionNode: AbstractInsnNode?
   )
 
   protected abstract fun doProcessMethodInvocation(

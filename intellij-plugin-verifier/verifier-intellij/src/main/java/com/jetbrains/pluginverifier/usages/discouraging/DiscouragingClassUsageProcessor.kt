@@ -15,6 +15,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassUsageType
 import com.jetbrains.pluginverifier.verifiers.resolution.isDiscouragingJdkClass
+import org.objectweb.asm.tree.AbstractInsnNode
 
 class DiscouragingClassUsageProcessor(private val deprecatedApiRegistrar: DeprecatedApiRegistrar) : ApiUsageProcessor {
   override fun processClassReference(
@@ -22,7 +23,8 @@ class DiscouragingClassUsageProcessor(private val deprecatedApiRegistrar: Deprec
     resolvedClass: ClassFile,
     context: VerificationContext,
     referrer: ClassFileMember,
-    classUsageType: ClassUsageType
+    classUsageType: ClassUsageType,
+    instructionNode: AbstractInsnNode?
   ) {
     if (resolvedClass.isDiscouragingJdkClass()) {
       val classFileOrigin = resolvedClass.classFileOrigin

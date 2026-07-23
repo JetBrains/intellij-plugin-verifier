@@ -14,7 +14,7 @@ class MethodTryCatchVerifier : MethodVerifier {
     for (block in method.tryCatchBlocks) {
       val catchException = block.type ?: continue
       val className = catchException.extractClassNameFromDescriptor() ?: continue
-      context.classResolver.resolveClassChecked(className, method, context)
+      context.classResolver.resolveClassChecked(className, method, context, instructionNode = block.start)
     }
   }
 }

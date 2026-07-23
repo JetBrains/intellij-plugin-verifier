@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.FilteringApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.annotation.AnnotationResolver
 import com.jetbrains.pluginverifier.usages.annotation.isMemberEffectivelyAnnotatedWith
+import com.jetbrains.pluginverifier.usages.util.KotlinInlinedCodeDetector
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.filter.CompositeApiUsageFilter
 import com.jetbrains.pluginverifier.verifiers.filter.SameModuleUsageFilter
@@ -39,6 +40,8 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
   FilteringApiUsageProcessor(overrideOnlyUsageFilter) {
 
   private val overrideOnlyAnnotationResolver = AnnotationResolver(overrideOnlyAnnotationName)
+
+  private val inlinedCodeDetector = KotlinInlinedCodeDetector()
 
   /**
    * Processes the invocation of a method, if allowed.
@@ -70,6 +73,10 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
   ) {
 
     if (invokedMethod.isOverrideOnlyMethod(context)) {
+      if (inlinedCodeDetector.isInlinedFromOutsidePlugin(invocationInstruction, callerMethod, context)) {
+        return
+      }
+
       overrideOnlyRegistrar.registerOverrideOnlyMethodUsage(
         OverrideOnlyMethodUsage(invokedMethodReference, invokedMethod.location, callerMethod.location)
       )
@@ -105,7 +112,8 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
     resolvedClass: ClassFile,
     referrer: ClassFileMember,
     classUsageType: ClassUsageType,
-    context: VerificationContext
+    context: VerificationContext,
+    instructionNode: AbstractInsnNode?
   ) = Unit
 
   override fun doProcessFieldAccess(
