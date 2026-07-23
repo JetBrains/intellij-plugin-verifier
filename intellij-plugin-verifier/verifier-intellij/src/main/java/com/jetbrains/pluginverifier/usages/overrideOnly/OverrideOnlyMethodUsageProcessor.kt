@@ -112,7 +112,8 @@ class OverrideOnlyMethodUsageProcessor(private val overrideOnlyRegistrar: Overri
     resolvedClass: ClassFile,
     referrer: ClassFileMember,
     classUsageType: ClassUsageType,
-    context: VerificationContext
+    context: VerificationContext,
+    instructionNode: AbstractInsnNode?
   ) = Unit
 
   override fun doProcessFieldAccess(

@@ -18,7 +18,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Fixed
 
 - Close `ZipFile` handles eagerly in `ZipFileHandler` to release archive files after use to restore compatibility with Windows ([#1521](https://github.com/JetBrains/intellij-plugin-verifier/pull/1521), [#1549](https://github.com/JetBrains/intellij-plugin-verifier/pull/1549))
-- Do not attribute internal API and `OverrideOnly` usages inlined from Kotlin `inline fun`s declared outside the plugin to the plugin ([MP-7133](https://youtrack.jetbrains.com/issue/MP-7133))
+- Do not attribute internal, experimental, and `OverrideOnly` API usages inlined from Kotlin `inline fun`s declared outside the plugin to the plugin ([MP-7133](https://youtrack.jetbrains.com/issue/MP-7133))
 
 ## 1.408 - 2026-07-02
 

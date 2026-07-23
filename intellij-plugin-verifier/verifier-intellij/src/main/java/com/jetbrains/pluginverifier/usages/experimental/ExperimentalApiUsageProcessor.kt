@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.FilteringApiUsageProcessor
 import com.jetbrains.pluginverifier.usages.SamePluginUsageFilter
+import com.jetbrains.pluginverifier.usages.util.KotlinInlinedCodeDetector
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
@@ -22,6 +23,8 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
   SamePluginUsageFilter()
 ) {
 
+  private val inlinedCodeDetector = KotlinInlinedCodeDetector()
+
   private fun isExperimental(
     resolvedMember: ClassFileMember,
     context: VerificationContext,
@@ -33,10 +36,16 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
     resolvedClass: ClassFile,
     referrer: ClassFileMember,
     classUsageType: ClassUsageType,
-    context: VerificationContext
+    context: VerificationContext,
+    instructionNode: AbstractInsnNode?
   ) {
     val usageLocation = referrer.location
     if (isExperimental(resolvedClass, context, usageLocation)) {
+      if (instructionNode != null && referrer is Method
+        && inlinedCodeDetector.isInlinedFromOutsidePlugin(instructionNode, referrer, context)) {
+        return
+      }
+
       experimentalApiRegistrar.registerExperimentalApiUsage(
         ExperimentalClassUsage(classReference, resolvedClass.location, usageLocation)
       )
@@ -52,6 +61,10 @@ class ExperimentalApiUsageProcessor(private val experimentalApiRegistrar: Experi
   ) {
     val usageLocation = callerMethod.location
     if (isExperimental(invokedMethod, context, usageLocation)) {
+      if (inlinedCodeDetector.isInlinedFromOutsidePlugin(invocationInstruction, callerMethod, context)) {
+        return
+      }
+
       experimentalApiRegistrar.registerExperimentalApiUsage(
         ExperimentalMethodUsage(invokedMethodReference, invokedMethod.location, usageLocation)
       )
