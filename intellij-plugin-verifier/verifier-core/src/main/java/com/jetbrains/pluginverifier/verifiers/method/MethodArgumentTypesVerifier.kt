@@ -22,7 +22,7 @@ class MethodArgumentTypesVerifier : MethodVerifier {
     val argumentTypes = methodType.argumentTypes
     for (type in argumentTypes) {
       val className = type.descriptor.extractClassNameFromDescriptor() ?: continue
-      context.classResolver.resolveClassChecked(className, method, context, ClassUsageType.METHOD_PARAMETER)
+      context.classResolver.resolveClassChecked(className, method, context, classUsageType = ClassUsageType.METHOD_PARAMETER)
     }
   }
 }

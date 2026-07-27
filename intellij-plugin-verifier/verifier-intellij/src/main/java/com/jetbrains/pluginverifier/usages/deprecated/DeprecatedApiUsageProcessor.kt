@@ -40,7 +40,8 @@ class DeprecatedApiUsageProcessor(private val deprecatedApiRegistrar: Deprecated
     resolvedClass: ClassFile,
     referrer: ClassFileMember,
     classUsageType: ClassUsageType,
-    context: VerificationContext
+    context: VerificationContext,
+    instructionNode: AbstractInsnNode?
   ) {
     val deprecationInfo = resolvedClass.deprecationInfo ?: return
     deprecatedApiRegistrar.registerDeprecatedUsage(

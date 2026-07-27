@@ -97,10 +97,10 @@ class MethodInvokeInstructionVerifier(
        So I caught up a nasty bug of incorrectly determining the method to be invoked.
     */
     val classRef: ClassFile = if (method.name != "<init>" && (!methodOwnerClass.isInterface && methodReference.hostClass.className == callerMethod.containingClassFile.superName) && callerMethod.containingClassFile.isSuperFlag) {
-      context.classResolver.resolveClassChecked(callerMethod.containingClassFile.superName!!, callerMethod, context)
+      context.classResolver.resolveClassChecked(callerMethod.containingClassFile.superName!!, callerMethod, context, instructionNode)
         ?: return
     } else {
-      context.classResolver.resolveClassChecked(methodReference.hostClass.className, callerMethod, context) ?: return
+      context.classResolver.resolveClassChecked(methodReference.hostClass.className, callerMethod, context, instructionNode) ?: return
     }
 
     /*
