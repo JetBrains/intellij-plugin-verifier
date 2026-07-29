@@ -75,10 +75,9 @@ class WriterResultPrinter(private val out: PrintWriter) : ResultPrinter {
       }
     }
 
-    val directMissingDependencies = dependenciesGraph.getDirectMissingDependencies()
-    if (directMissingDependencies.isNotEmpty()) {
+    if (directMissingMandatoryDependencies.isNotEmpty()) {
       appendLine("Missing dependencies: ")
-      for (missingDependency in directMissingDependencies) {
+      for (missingDependency in directMissingMandatoryDependencies) {
         appendLine("$INDENT${missingDependency.dependency}: ${missingDependency.missingReason}")
       }
     }

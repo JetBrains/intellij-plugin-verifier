@@ -135,16 +135,30 @@ class MarkdownOutputPrintTest : BaseOutputPrintTest<MarkdownResultPrinter>() {
     }
 
     @Test
-    fun `plugin has missing dependencies`() {
-      `when plugin has missing dependencies` {
+    fun `plugin has missing mandatory dependencies`() {
+      `when plugin has missing mandatory dependencies` {
+        val expected = """
+          # Plugin pluginId 1.0 against 232.0
+          
+          1 missing mandatory dependency
+          
+          ## Missing dependencies (1)
+          
+          * MissingPlugin: Dependency MissingPlugin is not found among the bundled plugins of IU-211.500
+          
+          
+        """.trimIndent()
+        assertOutput(expected)
+      }
+    }
+
+    @Test
+    fun `plugin has missing optional dependencies`() {
+      `when plugin has missing optional dependencies` {
         val expected = """
           # Plugin pluginId 1.0 against 232.0
           
           Compatible
-          
-          ## Missing dependencies (1)
-          
-          * MissingPlugin (optional): Dependency MissingPlugin is not found among the bundled plugins of IU-211.500
           
           
         """.trimIndent()
