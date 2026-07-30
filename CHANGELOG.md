@@ -10,6 +10,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
+- Fix false-positive Internal/Deprecated/Experimental/NonExtendable usages for Kotlin 2.2 default-method compatibility stubs ([MP-7604](https://youtrack.jetbrains.com/issue/MP-7604))
+
 ## 1.409 - 2026-07-17
 
 ### Changed

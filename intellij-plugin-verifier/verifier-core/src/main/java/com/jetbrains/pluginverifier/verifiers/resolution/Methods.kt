@@ -7,7 +7,11 @@ import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FrameNode
+import org.objectweb.asm.tree.LabelNode
+import org.objectweb.asm.tree.LineNumberNode
 import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.VarInsnNode
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -153,3 +157,54 @@ fun sameParameters(method: Method, anotherMethod: Method): Boolean {
 
 fun FullyQualifiedClassName.toBinaryClassName(): BinaryClassName = replace('.', '/')
 fun BinaryClassName.toFullyQualifiedClassName(): FullyQualifiedClassName = replace('/', '.')
+
+// Indistinguishable from a hand-written `Interface.super.method(args)` override — accepted trade-off.
+fun Method.isKotlinDefaultMethodCompatibilityStub(overriddenMethod: Method): Boolean {
+  if (!overriddenMethod.containingClassFile.isInterface || overriddenMethod.isAbstract) {
+    return false
+  }
+  if (!matches(overriddenMethod)) {
+    return false
+  }
+
+  val realInstructions = instructions.filterNot {
+    it is LabelNode || it is LineNumberNode || it is FrameNode
+  }
+
+  val argumentTypes = Type.getArgumentTypes(overriddenMethod.descriptor)
+  var slot = 1
+  val expectedLoads = mutableListOf(Opcodes.ALOAD to 0)
+  for (argumentType in argumentTypes) {
+    expectedLoads += argumentType.getOpcode(Opcodes.ILOAD) to slot
+    slot += argumentType.size
+  }
+
+  //Take into account forwarding INVOKESPECIAL and final return
+  if (realInstructions.size != expectedLoads.size + 2) {
+    return false
+  }
+
+  for ((index, expectedLoad) in expectedLoads.withIndex()) {
+    val loadInsn = realInstructions[index] as? VarInsnNode ?: return false
+    val (expectedOpcode, expectedSlot) = expectedLoad
+    if (loadInsn.opcode != expectedOpcode || loadInsn.`var` != expectedSlot) {
+      return false
+    }
+  }
+
+  val invokeInsn = realInstructions[expectedLoads.size] as? MethodInsnNode ?: return false
+  if (invokeInsn.opcode != Opcodes.INVOKESPECIAL || !invokeInsn.itf || !invokeInsn.matches(overriddenMethod)) {
+    return false
+  }
+  // The check for containingClassFile.interfaces is needed when the default method is inherited indirectly,
+  // since invokespecial then targets the direct superinterface, not the originally declaring one
+  if (invokeInsn.owner != overriddenMethod.containingClassFile.name
+    && invokeInsn.owner !in containingClassFile.interfaces
+  ) {
+    return false
+  }
+
+  val returnInsn = realInstructions.last()
+  val expectedReturnOpcode = Type.getReturnType(overriddenMethod.descriptor).getOpcode(Opcodes.IRETURN)
+  return returnInsn.opcode == expectedReturnOpcode
+}
