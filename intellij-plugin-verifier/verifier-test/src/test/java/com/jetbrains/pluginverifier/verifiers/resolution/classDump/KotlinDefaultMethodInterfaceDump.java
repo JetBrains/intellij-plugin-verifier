@@ -14,11 +14,6 @@ import org.objectweb.asm.*;
  *     &#64;ApiStatus.Internal fun internalMethod() {}
  * }
  * </pre>
- * Paired with {@code KotlinDefaultMethodStubDump}, the implementor that doesn't override either method.
- * <p>
- * The compiler also emits synthetic {@code access$entryPoint$jd}/{@code access$internalMethod$jd} accessors,
- * which are elided here: they are only ever called from the {@code TestInterface$DefaultImpls} class (also
- * elided) and play no part in the stub detection this fixture exercises.
  */
 public class KotlinDefaultMethodInterfaceDump implements Opcodes {
 

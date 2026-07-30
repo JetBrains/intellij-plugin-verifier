@@ -14,12 +14,6 @@ import org.objectweb.asm.*;
  *     &#64;Deprecated("Use something else") fun deprecatedMethod() {}
  * }
  * </pre>
- * The &#64;Internal counterpart is {@code KotlinDefaultMethodInterfaceDump}; this one covers the
- * experimental and deprecated usage detectors instead.
- * <p>
- * Paired with {@code KotlinAnnotatedDefaultMethodStubDump}, the implementor that doesn't override either method.
- * Synthetic {@code access$experimentalMethod$jd}/{@code access$deprecatedMethod$jd} accessors and the
- * {@code kotlin.Metadata} {@code d1}/{@code d2} payloads are elided as irrelevant to what this fixture tests.
  */
 public class KotlinAnnotatedDefaultMethodInterfaceDump implements Opcodes {
 

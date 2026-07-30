@@ -7,13 +7,8 @@ package com.jetbrains.pluginverifier.verifiers.resolution.classDump;
 import org.objectweb.asm.*;
 
 /**
- * ASM dump of {@code class AnnotatedDefaultMethodImpl : AnnotatedDefaultMethodInterface} (no override)
- * compiled the same way as {@code KotlinAnnotatedDefaultMethodInterfaceDump}. Both compatibility stubs
- * forward to the interface's default impl, so besides the "method overridden" false positive they also
- * trip the experimental and deprecated <em>invocation</em> detectors on the forwarding INVOKESPECIAL.
- * <p>
- * The {@code kotlin.Metadata} {@code d1}/{@code d2} payloads are elided as irrelevant to what this
- * fixture tests.
+ * ASM dump of the Kotlin 2.2.0 (default JvmDefaultMode ENABLE) compiled output of:
+ * {@code class AnnotatedDefaultMethodImpl : AnnotatedDefaultMethodInterface} (no override)
  */
 public class KotlinAnnotatedDefaultMethodStubDump implements Opcodes {
 

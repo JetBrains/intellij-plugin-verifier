@@ -7,10 +7,8 @@ package com.jetbrains.pluginverifier.verifiers.resolution.classDump;
 import org.objectweb.asm.*;
 
 /**
- * ASM dump of {@code class TestImpl : TestInterface} (no override) compiled the same way as
- * {@code KotlinDefaultMethodInterfaceDump}. The compiler still emits real {@code entryPoint()}/
- * {@code internalMethod()} methods here that only forward to the interface's default impl — the
- * ENABLE-mode compatibility stub MP-7604 is about.
+ * ASM dump of the Kotlin 2.2.0 (default JvmDefaultMode ENABLE) compiled output of:
+ * {@code class TestImpl : TestInterface} (no override)
  */
 public class KotlinDefaultMethodStubDump implements Opcodes {
 
