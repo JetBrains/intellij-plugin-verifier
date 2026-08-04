@@ -128,20 +128,35 @@ class IdeManagerImpl : AbstractIdeManager() {
     platformResourceResolver: ResourceResolver,
     ideVersion: IdeVersion
   ): List<IdePlugin> {
-    val platformPlugins = arrayListOf<IdePlugin>()
-    val descriptorPaths = listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml")
+    val primaryDescriptorPaths = listOf(IdePluginManager.PLUGIN_XML, product.platformPrefix + "Plugin.xml")
+    val fallbackDescriptorPaths = listOf(PLATFORM_PLUGIN_XML)
 
-    for (jarFile in jarFiles) {
-      val descriptorPath = jarFileSystemProvider.getFileSystem(jarFile).use { jarFs ->
-        descriptorPaths.find { jarFs.getPath(IdePluginManager.META_INF).resolve(it).exists() }
-      }
-      if (descriptorPath != null) {
-        platformPlugins += createBundledPluginExceptionally(idePath, jarFile, platformResourceResolver, descriptorPath, ideVersion)
+    val platformPlugins = arrayListOf<IdePlugin>()
+    val seenPluginIds = hashSetOf<String?>()
+
+    fun loadPlatformPluginsFrom(descriptorPaths: List<String>) {
+      for (jarFile in jarFiles) {
+        val descriptorPath = jarFileSystemProvider.getFileSystem(jarFile).use { jarFs ->
+          descriptorPaths.find { jarFs.getPath(IdePluginManager.META_INF).resolve(it).exists() }
+        } ?: continue
+        val plugin = createBundledPluginExceptionally(idePath, jarFile, platformResourceResolver, descriptorPath, ideVersion)
+        if (seenPluginIds.add(plugin.pluginId)) {
+          platformPlugins += plugin
+        }
       }
     }
 
-    if (platformPlugins.none { it.pluginId == "com.intellij" }) {
-      throw InvalidIdeException(idePath, "Platform plugins are not found. They must be declared in one of ${descriptorPaths.joinToString()}")
+    loadPlatformPluginsFrom(primaryDescriptorPaths)
+    if (CORE_IDE_PLUGIN_ID !in seenPluginIds) {
+      loadPlatformPluginsFrom(fallbackDescriptorPaths)
+    }
+
+    if (CORE_IDE_PLUGIN_ID !in seenPluginIds) {
+      throw InvalidIdeException(
+        idePath,
+        "Platform plugins are not found. They must be declared in one of " +
+          (primaryDescriptorPaths + fallbackDescriptorPaths).joinToString()
+      )
     }
 
     return platformPlugins
@@ -174,6 +189,14 @@ class IdeManagerImpl : AbstractIdeManager() {
   companion object {
 
     private val LOG = LoggerFactory.getLogger(IdeManagerImpl::class.java)
+
+    // PlatformLangPlugin.xml is never the real IDE's core plugin descriptor — it is always
+    // xi:included into one. Used as a fallback when the aggregating core descriptor resolves
+    // to a non-com.intellij ID (e.g. Rider 2023.3 where RiderPlugin.xml yields
+    // com.jetbrains.rider.languages due to JAXB's last-<id>-wins behavior).
+    internal const val PLATFORM_PLUGIN_XML = "PlatformLangPlugin.xml"
+
+    private const val CORE_IDE_PLUGIN_ID = "com.intellij"
 
     fun isDistributionIde(ideaDir: Path) = ideaDir.resolve("lib").isDirectory &&
       !ideaDir.resolve(".idea").isDirectory
