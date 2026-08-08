@@ -132,9 +132,9 @@ class DefaultClassResolverProvider(
   }
 
   private fun createPluginResolver(pluginDependency: PluginDetails): Resolver = with(pluginDependency.pluginInfo) {
-    // reuse cached resolvers from IDE
-    if (pluginResolverProvider.contains(pluginId)) {
-      return pluginResolverProvider.getResolver(pluginDependency.idePlugin)
+    // Reuse only a cached resolver of the plugin's own classes, never its dependency closure.
+    pluginResolverProvider.getCachedPluginResolver(pluginDependency.idePlugin)?.let {
+      return it
     }
 
     return when (this) {
