@@ -132,14 +132,15 @@ class CachingPluginDependencyResolverProvider(
   }
 
   private fun Dependency.createResolverTree(): NamedResolver {
-    return plugin?.createResolverTree()
-      ?.let { (r, resolversToCache) ->
-        pluginResolverCache.put(plugin.resolverCacheKey(r.name), r)
+    val dependencyPlugin = plugin ?: return EmptyResolver(id)
+    return dependencyPlugin.createResolverTree()
+      .let { (r, resolversToCache) ->
+        pluginResolverCache.put(dependencyPlugin.resolverCacheKey(), r)
         resolversToCache.forEach {
-          pluginResolverCache.put(plugin.resolverCacheKey(it.name), it)
+          pluginResolverCache.put(dependencyPlugin.resolverCacheKey(it.name), it)
         }
         r
-      } ?: EmptyResolver(id)
+      }
   }
 
   private val Dependency.id: String
