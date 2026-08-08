@@ -401,6 +401,9 @@ class CachingPluginDependencyResolverProviderTest {
 
     val pluginClasspathFirst = CachingPluginDependencyResolverProvider(ide)
     pluginClasspathFirst.getResolver(alphaPlugin)
+    val cachedBetaResolver = pluginClasspathFirst.getCachedPluginResolver(betaPlugin)
+    assertNotNull(cachedBetaResolver)
+    assertTrue(cachedBetaResolver!!.containsClass(betaAction))
     assertFalse(pluginClasspathFirst.getResolver(betaPlugin).containsClass(betaAction))
   }
 
@@ -431,8 +434,9 @@ class CachingPluginDependencyResolverProviderTest {
 
   @Test
   fun `dependency closure cache distinguishes artifacts with same id and version`() {
-    val pluginArtifact1 = temporaryFolder.newTemporaryFile("same-version/plugin-1.zip")
-    val pluginArtifact2 = temporaryFolder.newTemporaryFile("same-version/plugin-2.zip")
+    val artifactsDir = temporaryFolder.newFolder("same-version").toPath()
+    val pluginArtifact1 = artifactsDir.resolve("plugin-1.zip")
+    val pluginArtifact2 = artifactsDir.resolve("plugin-2.zip")
     val plugin1 = MockIdePlugin(
       pluginId = "com.example.SameVersion",
       pluginVersion = "1.0",

@@ -134,7 +134,7 @@ class CachingPluginDependencyResolverProvider(
     val dependencyPlugin = plugin ?: return EmptyResolver(id)
     return dependencyPlugin.createResolverTree()
       .let { (r, resolversToCache) ->
-        pluginResolverCache.put(dependencyPlugin.resolverCacheKey(r.name), r)
+        pluginResolverCache.put(dependencyPlugin.resolverCacheKey(), r)
         resolversToCache.forEach {
           pluginResolverCache.put(dependencyPlugin.resolverCacheKey(it.name), it)
         }
