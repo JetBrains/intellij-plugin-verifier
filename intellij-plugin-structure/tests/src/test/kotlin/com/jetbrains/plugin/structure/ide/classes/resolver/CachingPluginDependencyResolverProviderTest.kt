@@ -375,6 +375,90 @@ class CachingPluginDependencyResolverProviderTest {
   }
 
   @Test
+  fun `dependency closure and plugin classpath resolvers use different cache entries`() {
+    val betaFiles = buildZipFile(temporaryFolder.newTemporaryFile("cache-collision/beta.jar")) {
+      dirs("com/example/beta") {
+        file("BetaAction.class", createEmptyClass("com/example/beta/BetaAction"))
+      }
+    }
+    val betaPlugin = MockIdePlugin(
+      pluginId = "com.example.Beta",
+      pluginVersion = "1.0",
+      originalFile = betaFiles,
+      classpath = Classpath.of(listOf(betaFiles))
+    )
+    val alphaPlugin = MockIdePlugin(
+      pluginId = "com.example.Alpha",
+      dependencies = dependency("com.example.Beta")
+    )
+    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
+    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(betaPlugin))
+    val betaAction = "com/example/beta/BetaAction"
+
+    val dependencyClosureFirst = CachingPluginDependencyResolverProvider(ide)
+    dependencyClosureFirst.getResolver(betaPlugin)
+    assertTrue(dependencyClosureFirst.getResolver(alphaPlugin).containsClass(betaAction))
+
+    val pluginClasspathFirst = CachingPluginDependencyResolverProvider(ide)
+    pluginClasspathFirst.getResolver(alphaPlugin)
+    assertFalse(pluginClasspathFirst.getResolver(betaPlugin).containsClass(betaAction))
+  }
+
+  @Test
+  fun `dependency closure cache distinguishes plugin versions`() {
+    val pluginV1 = MockIdePlugin(
+      pluginId = "com.example.Versioned",
+      pluginVersion = "1.0",
+      dependencies = dependency("com.intellij.modules.json")
+    )
+    val pluginV2 = MockIdePlugin(
+      pluginId = "com.example.Versioned",
+      pluginVersion = "2.0",
+      dependencies = dependency("com.intellij.java")
+    )
+    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
+    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, javaPlugin, jsonPlugin))
+    val resolverProvider = CachingPluginDependencyResolverProvider(ide)
+
+    val resolverV1 = resolverProvider.getResolver(pluginV1)
+    assertTrue(resolverV1.containsClass("com/intellij/json/JsonNamesValidator"))
+    assertFalse(resolverV1.containsClass("com/intellij/openapi/actionSystem/DataKeys"))
+
+    val resolverV2 = resolverProvider.getResolver(pluginV2)
+    assertTrue(resolverV2.containsClass("com/intellij/openapi/actionSystem/DataKeys"))
+    assertFalse(resolverV2.containsClass("com/intellij/json/JsonNamesValidator"))
+  }
+
+  @Test
+  fun `dependency closure cache distinguishes artifacts with same id and version`() {
+    val pluginArtifact1 = temporaryFolder.newTemporaryFile("same-version/plugin-1.zip")
+    val pluginArtifact2 = temporaryFolder.newTemporaryFile("same-version/plugin-2.zip")
+    val plugin1 = MockIdePlugin(
+      pluginId = "com.example.SameVersion",
+      pluginVersion = "1.0",
+      originalFile = pluginArtifact1,
+      dependencies = dependency("com.intellij.modules.json")
+    )
+    val plugin2 = MockIdePlugin(
+      pluginId = "com.example.SameVersion",
+      pluginVersion = "1.0",
+      originalFile = pluginArtifact2,
+      dependencies = dependency("com.intellij.java")
+    )
+    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
+    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, javaPlugin, jsonPlugin))
+    val resolverProvider = CachingPluginDependencyResolverProvider(ide)
+
+    val resolver1 = resolverProvider.getResolver(plugin1)
+    assertTrue(resolver1.containsClass("com/intellij/json/JsonNamesValidator"))
+    assertFalse(resolver1.containsClass("com/intellij/openapi/actionSystem/DataKeys"))
+
+    val resolver2 = resolverProvider.getResolver(plugin2)
+    assertTrue(resolver2.containsClass("com/intellij/openapi/actionSystem/DataKeys"))
+    assertFalse(resolver2.containsClass("com/intellij/json/JsonNamesValidator"))
+  }
+
+  @Test
   fun `plugin depends on JSON that is in the secondary cache, but not fully`() {
     val ideRoot = temporaryFolder.newFolder("idea-" + UUID.randomUUID().toString()).toPath()
 

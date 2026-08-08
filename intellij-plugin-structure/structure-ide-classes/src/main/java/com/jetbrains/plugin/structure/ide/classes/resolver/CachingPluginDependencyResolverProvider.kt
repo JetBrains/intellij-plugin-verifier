@@ -19,6 +19,17 @@ private const val DEFAULT_CACHE_SIZE = 1024L
 
 private const val UNKNOWN_DEPENDENCY_ID = "Unknown ID"
 
+private data class PluginArtifactKey(
+  val id: String,
+  val version: String?,
+  val originalFile: java.nio.file.Path?
+)
+
+private data class PluginResolverKey(
+  val plugin: PluginArtifactKey,
+  val resolverName: String
+)
+
 class CachingPluginDependencyResolverProvider(
   pluginProvider: PluginProvider,
   private val secondaryPluginResolverProvider: PluginResolverProvider? = null,
@@ -29,10 +40,15 @@ class CachingPluginDependencyResolverProvider(
 
   private val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate, dependencyFilter)
 
-  private val cache = Caffeine.newBuilder()
+  private val dependencyResolverCache = Caffeine.newBuilder()
     .maximumSize(DEFAULT_CACHE_SIZE)
     .recordStats()
-    .build<String, Resolver>()
+    .build<PluginArtifactKey, Resolver>()
+
+  private val pluginResolverCache = Caffeine.newBuilder()
+    .maximumSize(DEFAULT_CACHE_SIZE)
+    .recordStats()
+    .build<PluginResolverKey, NamedResolver>()
 
   /**
    * Provide a unified resolver for all transitive dependencies of this plugin.
@@ -43,21 +59,41 @@ class CachingPluginDependencyResolverProvider(
    * and includes only those that are declared as dependencies in the plugin.
    */
   override fun getResolver(plugin: IdePlugin): Resolver {
-    val id = plugin.id ?: return EMPTY_RESOLVER
+    plugin.id ?: return EMPTY_RESOLVER
     getFromSecondaryCache(plugin)?.let {
-      return it.also {
-        cache.put(id, it)
-      }
+      return it
     }
+    val cacheKey = plugin.artifactKey()
     // Invocation of `getIfPresent` is intentional!
-    // Using `get` would lead to a recursive update triggered by `doGetResolver`.
-    val resolver = cache.getIfPresent(id)
+    // Using `get` would lead to a recursive update triggered by `createResolver`.
+    val resolver = dependencyResolverCache.getIfPresent(cacheKey)
     return resolver ?: createResolver(plugin).also {
-      cache.put(id, it)
+      dependencyResolverCache.put(cacheKey, it)
     }
   }
 
-  override fun contains(pluginId: PluginId) = cache.getIfPresent(pluginId) != null
+  override fun contains(pluginId: PluginId): Boolean {
+    pluginResolverCache.asMap().keys.firstOrNull { it.resolverName == pluginId }?.let { key ->
+      return pluginResolverCache.getIfPresent(key) != null
+    }
+
+    dependencyResolverCache.asMap().keys.firstOrNull { it.id == pluginId }?.let { key ->
+      return dependencyResolverCache.getIfPresent(key) != null
+    }
+
+    return false
+  }
+
+  /**
+   * Returns the resolver containing the plugin's own classes if it is already available.
+   * Unlike [getResolver], this method never returns a dependency-closure resolver.
+   */
+  fun getCachedPluginResolver(plugin: IdePlugin): Resolver? {
+    getFromSecondaryCache(plugin)?.let {
+      return it
+    }
+    return pluginResolverCache.getIfPresent(plugin.resolverCacheKey())
+  }
 
   private fun createResolver(plugin: IdePlugin): Resolver {
     val dependencyTreeResolution = dependencyTree
@@ -71,16 +107,22 @@ class CachingPluginDependencyResolverProvider(
       .mapNotNull { dep -> dep.pluginId?.let { it.intern() to dep } }
       .distinctBy { it.first }
       .associate { (id, dep) ->
-        val dependencyResolver = cache.getIfPresent(id)
+        val dependencyPlugin = dep.plugin
+        if (dependencyPlugin == null) {
+          return@associate id to EmptyResolver(dep.id)
+        }
+        val resolverCacheKey = dependencyPlugin.resolverCacheKey()
+        val dependencyResolver = pluginResolverCache.getIfPresent(resolverCacheKey)
         if (dependencyResolver != null) {
           return@associate id to dependencyResolver
         }
         // it's OK to synchronize on plugin id (String) since we've interned it.
-        // Synchronizing to prevent creating different resolvers for the same plugin in `createResolverTree`
+        // Synchronizing to prevent creating different resolvers for the same plugin in `createResolverTree`.
+        // Different plugin versions may serialize on the same lock, but they use distinct cache keys.
         synchronized(id) {
-          val dependencyResolver = cache.getIfPresent(id)
-          if (dependencyResolver != null) {
-            id to dependencyResolver
+          val resolver = pluginResolverCache.getIfPresent(resolverCacheKey)
+          if (resolver != null) {
+            id to resolver
           } else {
             id to dep.createResolverTree()
           }
@@ -92,9 +134,9 @@ class CachingPluginDependencyResolverProvider(
   private fun Dependency.createResolverTree(): NamedResolver {
     return plugin?.createResolverTree()
       ?.let { (r, resolversToCache) ->
-        pluginId?.let { cache.put(it, r) }
+        pluginResolverCache.put(plugin.resolverCacheKey(r.name), r)
         resolversToCache.forEach {
-          cache.put(it.name, it)
+          pluginResolverCache.put(plugin.resolverCacheKey(it.name), it)
         }
         r
       } ?: EmptyResolver(id)
@@ -110,7 +152,7 @@ class CachingPluginDependencyResolverProvider(
     }
 
   fun getStats(): CacheStats? {
-    return cache.stats()
+    return dependencyResolverCache.stats().plus(pluginResolverCache.stats())
   }
 
   private val IdePlugin.id: String?
@@ -137,7 +179,7 @@ class CachingPluginDependencyResolverProvider(
     val cpResolvers = classpath.entries.map { cpEntry ->
       val origin = IdeFileOrigin.BundledPlugin(cpEntry.path, idePlugin = this)
       val cpEntryResolverName = resolverPrefix + cpEntry.path.fileName.toString()
-      val cpEntryResolver = cache.getIfPresent(cpEntryResolverName)
+      val cpEntryResolver = pluginResolverCache.getIfPresent(resolverCacheKey(cpEntryResolverName))
       if (cpEntryResolver is NamedResolver) {
         return@map cpEntryResolver
       }
@@ -174,6 +216,12 @@ class CachingPluginDependencyResolverProvider(
   private fun Resolver.asNamed(fallbackName: String): NamedResolver {
     return this as? NamedResolver ?: CompositeResolver.create(listOf(this), fallbackName)
   }
+
+  private fun IdePlugin.artifactKey(): PluginArtifactKey =
+    PluginArtifactKey(id ?: UNNAMED_RESOLVER, pluginVersion, originalFile)
+
+  private fun IdePlugin.resolverCacheKey(resolverName: String = newResolverName()): PluginResolverKey =
+    PluginResolverKey(artifactKey(), resolverName)
 
   private fun IdePlugin.newResolverName(): String = id ?: UNNAMED_RESOLVER
 
