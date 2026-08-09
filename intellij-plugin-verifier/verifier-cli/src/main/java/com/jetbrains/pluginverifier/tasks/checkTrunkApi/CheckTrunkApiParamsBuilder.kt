@@ -17,9 +17,9 @@ import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
+import com.jetbrains.pluginverifier.options.PluginParsingConfigurationResolution
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.PluginFilter
-import com.jetbrains.pluginverifier.options.repository.LocalPluginRepositoryProvider
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.repository.PluginInfo
@@ -27,6 +27,7 @@ import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
 import com.jetbrains.pluginverifier.repository.repositories.empty.EmptyPluginRepository
+import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepositoryFactory
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
@@ -259,11 +260,12 @@ class CheckTrunkApiParamsBuilder(
   private fun createRepository(repositoryRoot: String?, opts: CmdOpts): PluginRepository {
     if (repositoryRoot == null) return EmptyPluginRepository
     val repositoryRootPath = Path.of(repositoryRoot)
-    val provision = LocalPluginRepositoryProvider.getLocalPluginRepository(opts, repositoryRootPath, archiveManager)
-    return when (provision) {
-      is LocalPluginRepositoryProvider.Result.Provided -> provision.pluginRepository
-      LocalPluginRepositoryProvider.Result.Unavailable -> EmptyPluginRepository
-    }
+    return LocalPluginRepositoryFactory.createLocalPluginRepository(
+      repositoryRoot = repositoryRootPath,
+      forcePluginCompatibility = opts.offlineMode && opts.forceOfflineCompatibility,
+      archiveManager = archiveManager,
+      problemRemapper = PluginParsingConfigurationResolution.of(opts)
+    )
   }
 }
 
