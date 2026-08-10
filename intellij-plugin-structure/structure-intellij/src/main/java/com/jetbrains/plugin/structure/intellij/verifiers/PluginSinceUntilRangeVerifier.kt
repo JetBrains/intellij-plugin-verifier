@@ -12,7 +12,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersionImpl
 private const val BUILD_NUMBER = "__BUILD_NUMBER__"
 private const val SNAPSHOT = "SNAPSHOT"
 
-private const val SINCE_BASELINE_LOWER_BOUND = 130
+internal const val SINCE_BASELINE_LOWER_BOUND = 130
 private const val UNTIL_BASELINE_LOWER_BOUND = 130
 
 private const val SUSPICIOUS_UNTIL_BASELINE_LOWER_BOUND = 281
@@ -57,43 +57,6 @@ class PluginSinceUntilRangeVerifier {
           descriptorPath = descriptorPath
         )
       }
-    }
-  }
-
-  private fun ProblemRegistrar.verifyIdeBuildComponentsRanges(
-    ideVersion: IdeVersion,
-    baselineLowerBound: Int,
-    attributeName: String,
-    descriptorPath: String
-  ) {
-    val baselineRange = IntRange(baselineLowerBound, CompatibilityUtils.MAX_BRANCH_VALUE - 1)
-    if (ideVersion.baselineVersion !in baselineRange) {
-      registerProblem(IdeBuildComponentsOutOfRange(
-        ideVersion = ideVersion,
-        failedComponent = ideVersion.baselineVersion,
-        range = baselineRange,
-        attributeName = attributeName,
-        descriptorPath = descriptorPath
-      ))
-    }
-    if (ideVersion.build >= CompatibilityUtils.MAX_BUILD_VALUE && ideVersion.build != IdeVersionImpl.SNAPSHOT_VALUE) {
-      registerProblem(IdeBuildComponentsOutOfRange(
-        ideVersion = ideVersion,
-        failedComponent = ideVersion.build,
-        range = IntRange(0, CompatibilityUtils.MAX_BUILD_VALUE - 1),
-        attributeName = attributeName,
-        descriptorPath = descriptorPath
-      ))
-    }
-    val thirdComponent = ideVersion.components.getOrNull(2)
-    if (thirdComponent != null && thirdComponent >= CompatibilityUtils.MAX_COMPONENT_VALUE && thirdComponent != IdeVersionImpl.SNAPSHOT_VALUE) {
-      registerProblem(IdeBuildComponentsOutOfRange(
-        ideVersion = ideVersion,
-        failedComponent = thirdComponent,
-        range = IntRange(0, CompatibilityUtils.MAX_COMPONENT_VALUE - 1),
-        attributeName = attributeName,
-        descriptorPath = descriptorPath
-      ))
     }
   }
 
@@ -163,5 +126,47 @@ class PluginSinceUntilRangeVerifier {
   private fun IdeVersion.isJustASingleComponent(): Boolean {
     val meaningfulComponents = components.filter { it != 0 }
     return meaningfulComponents.size == 1
+  }
+}
+
+/**
+ * Shared by [PluginSinceUntilRangeVerifier] (JAXB path) and
+ * [com.jetbrains.plugin.structure.intellij.plugin.PlatformDescriptorValidator] (platform-parser path)
+ * so the two descriptor pipelines cannot drift apart on build-number component validation.
+ */
+internal fun ProblemRegistrar.verifyIdeBuildComponentsRanges(
+  ideVersion: IdeVersion,
+  baselineLowerBound: Int,
+  attributeName: String,
+  descriptorPath: String
+) {
+  val baselineRange = IntRange(baselineLowerBound, CompatibilityUtils.MAX_BRANCH_VALUE - 1)
+  if (ideVersion.baselineVersion !in baselineRange) {
+    registerProblem(IdeBuildComponentsOutOfRange(
+      ideVersion = ideVersion,
+      failedComponent = ideVersion.baselineVersion,
+      range = baselineRange,
+      attributeName = attributeName,
+      descriptorPath = descriptorPath
+    ))
+  }
+  if (ideVersion.build >= CompatibilityUtils.MAX_BUILD_VALUE && ideVersion.build != IdeVersionImpl.SNAPSHOT_VALUE) {
+    registerProblem(IdeBuildComponentsOutOfRange(
+      ideVersion = ideVersion,
+      failedComponent = ideVersion.build,
+      range = IntRange(0, CompatibilityUtils.MAX_BUILD_VALUE - 1),
+      attributeName = attributeName,
+      descriptorPath = descriptorPath
+    ))
+  }
+  val thirdComponent = ideVersion.components.getOrNull(2)
+  if (thirdComponent != null && thirdComponent >= CompatibilityUtils.MAX_COMPONENT_VALUE && thirdComponent != IdeVersionImpl.SNAPSHOT_VALUE) {
+    registerProblem(IdeBuildComponentsOutOfRange(
+      ideVersion = ideVersion,
+      failedComponent = thirdComponent,
+      range = IntRange(0, CompatibilityUtils.MAX_COMPONENT_VALUE - 1),
+      attributeName = attributeName,
+      descriptorPath = descriptorPath
+    ))
   }
 }

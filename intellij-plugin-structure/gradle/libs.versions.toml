@@ -25,5 +25,9 @@ platform-jps-model-impl = { group = "com.jetbrains.intellij.platform", name = "j
 platform-jps-model-serialization = { group = "com.jetbrains.intellij.platform", name = "jps-model-serialization", version.ref = "platform" }
 platform-util = { group = "com.jetbrains.intellij.platform", name = "util", version.ref = "platform" }
 platform-plugin-system-parser-impl = { group = "com.jetbrains.intellij.platform", name = "plugin-system-parser-impl", version.ref = "platform-plugin-system-parser" }
+# plugin-system-parser-impl's own POM declares this as Maven scope "runtime", which Gradle keeps off
+# our compileClasspath by default - but PlatformPluginDescriptorParser/RawPluginDescriptorToIdePluginConverter
+# reference com.intellij.util.xml.dom.XmlElement/NoOpXmlInterner directly, so it needs to be a direct dependency.
+platform-util-xml-dom = { group = "com.jetbrains.intellij.platform", name = "util-xml-dom", version.ref = "platform-plugin-system-parser" }
 semver4j = { group = "com.vdurmont", name = "semver4j", version.ref = "semver4j" }
 trove4j = { group = "org.jetbrains.intellij.deps", name = "trove4j", version.ref = "trove4j" }
