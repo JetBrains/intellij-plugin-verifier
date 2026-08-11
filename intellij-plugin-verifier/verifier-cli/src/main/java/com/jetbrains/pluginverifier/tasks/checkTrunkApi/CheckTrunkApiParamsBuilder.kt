@@ -12,12 +12,10 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.resolution.*
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.misc.retry
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.options.OptionsParser
-import com.jetbrains.pluginverifier.options.PluginParsingConfigurationResolution
 import com.jetbrains.pluginverifier.options.PluginsSet
 import com.jetbrains.pluginverifier.options.filter.PluginFilter
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
@@ -26,15 +24,14 @@ import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
-import com.jetbrains.pluginverifier.repository.repositories.empty.EmptyPluginRepository
-import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginRepositoryFactory
 import com.jetbrains.pluginverifier.repository.repositories.local.LocalPluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.tasks.TaskParametersBuilder
+import com.jetbrains.pluginverifier.tasks.createDependencyFinder
+import com.jetbrains.pluginverifier.tasks.createRepository
 import com.sampullara.cli.Args
 import com.sampullara.cli.Argument
-import java.nio.file.Path
 import java.nio.file.Paths
 
 class CheckTrunkApiParamsBuilder(
@@ -83,8 +80,8 @@ class CheckTrunkApiParamsBuilder(
     val externalClassesPackageFilter = OptionsParser.getExternalClassesPackageFilter(opts)
     val problemsFilters = OptionsParser.getProblemsFilters(opts)
 
-    val releaseLocalRepository = createRepository(apiOpts.releaseLocalPluginRepositoryRoot, opts)
-    val trunkLocalRepository = createRepository(apiOpts.trunkLocalPluginRepositoryRoot, opts)
+    val releaseLocalRepository = createRepository(apiOpts.releaseLocalPluginRepositoryRoot, opts, archiveManager)
+    val trunkLocalRepository = createRepository(apiOpts.trunkLocalPluginRepositoryRoot, opts, archiveManager)
 
     val message = "Requesting a list of plugins compatible with the release IDE ${releaseIdeDescriptor.ideVersion}"
     reportage.logVerificationStage(message)
@@ -142,7 +139,13 @@ class CheckTrunkApiParamsBuilder(
       )
     }
 
-    val releaseFinder = createDependencyFinder(releaseIdeDescriptor.ide, releaseIdeDescriptor.ide, releaseLocalRepository, pluginDetailsCache)
+    val releaseFinder = createDependencyFinder(
+      releaseIdeDescriptor.ide,
+      releaseIdeDescriptor.ide,
+      pluginRepository,
+      releaseLocalRepository,
+      pluginDetailsCache
+    )
     val releaseResolverProvider = DefaultClassResolverProvider(
       releaseFinder,
       releaseIdeDescriptor,
@@ -153,7 +156,13 @@ class CheckTrunkApiParamsBuilder(
       PluginVerificationDescriptor.IDE(releaseIdeDescriptor, releaseResolverProvider, it)
     }
 
-    val trunkFinder = createDependencyFinder(trunkIdeDescriptor.ide, releaseIdeDescriptor.ide, trunkLocalRepository, pluginDetailsCache)
+    val trunkFinder = createDependencyFinder(
+      trunkIdeDescriptor.ide,
+      releaseIdeDescriptor.ide,
+      pluginRepository,
+      trunkLocalRepository,
+      pluginDetailsCache
+    )
     val trunkResolverProvider = DefaultClassResolverProvider(
       trunkFinder,
       trunkIdeDescriptor,
@@ -184,41 +193,6 @@ class CheckTrunkApiParamsBuilder(
       releaseVerificationTarget,
       trunkVerificationTarget,
       opts.excludeExternalBuildClassesSelector
-    )
-  }
-
-  /**
-   * Creates [DependencyFinder] that searches dependencies using the following order:
-   * 1) Bundled with [releaseOrTrunkIde]
-   * 2) Available in the local repository [localPluginRepository].
-   * 3) Compatible with the **release** IDE
-   */
-  private fun createDependencyFinder(
-    releaseOrTrunkIde: Ide,
-    releaseIde: Ide,
-    localPluginRepository: PluginRepository,
-    pluginDetailsCache: PluginDetailsCache
-  ): DependencyFinder {
-    val bundledFinder = BundledPluginDependencyFinder(releaseOrTrunkIde)
-
-    val localRepositoryDependencyFinder = RepositoryDependencyFinder(
-      localPluginRepository,
-      LastVersionSelector(),
-      pluginDetailsCache
-    )
-
-    val releaseDependencyFinder = RepositoryDependencyFinder(
-      pluginRepository,
-      LastCompatibleVersionSelector(releaseIde.version),
-      pluginDetailsCache
-    )
-
-    return CompositeDependencyFinder(
-      listOf(
-        bundledFinder,
-        localRepositoryDependencyFinder,
-        releaseDependencyFinder
-      )
     )
   }
 
@@ -257,16 +231,6 @@ class CheckTrunkApiParamsBuilder(
     return latestCompatibleVersions
   }
 
-  private fun createRepository(repositoryRoot: String?, opts: CmdOpts): PluginRepository {
-    if (repositoryRoot == null) return EmptyPluginRepository
-    val repositoryRootPath = Path.of(repositoryRoot)
-    return LocalPluginRepositoryFactory.createLocalPluginRepository(
-      repositoryRoot = repositoryRootPath,
-      forcePluginCompatibility = opts.offlineMode && opts.forceOfflineCompatibility,
-      archiveManager = archiveManager,
-      problemRemapper = PluginParsingConfigurationResolution.of(opts)
-    )
-  }
 }
 
 class CheckTrunkApiOpts {
