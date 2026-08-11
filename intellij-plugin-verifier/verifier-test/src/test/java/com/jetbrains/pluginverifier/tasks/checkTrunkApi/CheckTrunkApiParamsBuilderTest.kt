@@ -1,17 +1,16 @@
 package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 
-import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.options.CmdOpts
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.PluginRepository
 import com.jetbrains.pluginverifier.repository.cache.CacheStatistics
+import com.jetbrains.pluginverifier.tasks.createDependencyFinder
+import com.jetbrains.pluginverifier.tasks.createRepository
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
-import com.jetbrains.pluginverifier.tests.mocks.MockPluginVerificationReportage
 import com.jetbrains.pluginverifier.tests.mocks.createMockPluginInfo
 import com.jetbrains.pluginverifier.tests.mocks.createPluginArchiveManager
 import org.junit.After
@@ -30,7 +29,6 @@ class CheckTrunkApiParamsBuilderTest {
   private lateinit var pluginArchiveManager: PluginArchiveManager
   private lateinit var pluginDetailsCache: RecordingPluginDetailsCache
   private lateinit var pluginRepository: PluginRepository
-  private lateinit var paramsBuilder: CheckTrunkApiParamsBuilder
 
   @Before
   fun setUp() {
@@ -47,12 +45,6 @@ class CheckTrunkApiParamsBuilderTest {
       }
     }
 
-    paramsBuilder = CheckTrunkApiParamsBuilder(
-      pluginRepository,
-      MockPluginVerificationReportage(),
-      pluginDetailsCache,
-      pluginArchiveManager
-    )
   }
 
   @Test
@@ -63,14 +55,14 @@ class CheckTrunkApiParamsBuilderTest {
     val opts = CmdOpts().apply {
       offlineMode = false
     }
-    val localRepository = createRepository(localRepositoryRoot, opts)
+    val localRepository = createRepository(localRepositoryRoot.absolutePath, opts, pluginArchiveManager)
 
     // This assertion is the direct regression check: before the fix, online mode
     // replaced -rjbp/-tjbp with EmptyPluginRepository.
     assertEquals("1.0-local", localRepository.getAllVersionsOfPlugin("foo").single().version)
 
     val ide = MockIde(IdeVersion.createIdeVersion("IU-262.1"))
-    val finder = createDependencyFinder(ide, localRepository)
+    val finder = createDependencyFinder(ide, ide, pluginRepository, localRepository, pluginDetailsCache)
 
     finder.findPluginDependency("foo", isModule = false).close()
     finder.findPluginDependency("bar", isModule = false).close()
@@ -81,28 +73,6 @@ class CheckTrunkApiParamsBuilderTest {
       listOf("1.0-local", "2.0-marketplace"),
       pluginDetailsCache.requestedPlugins.map { it.version }
     )
-  }
-
-  private fun createRepository(repositoryRoot: File, opts: CmdOpts): PluginRepository {
-    val method = CheckTrunkApiParamsBuilder::class.java.getDeclaredMethod(
-      "createRepository",
-      String::class.java,
-      CmdOpts::class.java
-    )
-    method.isAccessible = true
-    return method.invoke(paramsBuilder, repositoryRoot.absolutePath, opts) as PluginRepository
-  }
-
-  private fun createDependencyFinder(ide: Ide, localRepository: PluginRepository): DependencyFinder {
-    val method = CheckTrunkApiParamsBuilder::class.java.getDeclaredMethod(
-      "createDependencyFinder",
-      Ide::class.java,
-      Ide::class.java,
-      PluginRepository::class.java,
-      PluginDetailsCache::class.java
-    )
-    method.isAccessible = true
-    return method.invoke(paramsBuilder, ide, ide, localRepository, pluginDetailsCache) as DependencyFinder
   }
 
   private fun createLocalPlugin(repositoryRoot: File, pluginId: String, version: String) {
