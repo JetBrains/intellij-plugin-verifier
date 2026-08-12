@@ -360,8 +360,16 @@ class CachingJarFileSystemProviderTest {
     val fsCacheField = CachingJarFileSystemProvider::class.java.getDeclaredField("fsCache")
     fsCacheField.isAccessible = true
     val fsCache = fsCacheField.get(this) as Cache<String, FsHandleFileSystem>
-    fsCache.invalidate(jarPath.toJarFileUri().toString())
+    val key = jarPath.toJarFileUri().toString()
+    val evicted = fsCache.getIfPresent(key)
+    fsCache.invalidate(key)
     fsCache.cleanUp()
+    // Caffeine's removalListener is notified on its default executor (ForkJoinPool.commonPool),
+    // not inline with invalidate()/cleanUp(). Call the eviction hook directly so this helper's
+    // effect is deterministic instead of racing the assertions that follow it. onCacheRemoval()
+    // is idempotent (guarded by a CAS on referenceCount), so the real async listener still firing
+    // later is harmless.
+    evicted?.onCacheRemoval()
   }
 
   // Regression: MP-7468. Targets the TOCTOU window in `unwrapped` — the FS is open at the
