@@ -48,7 +48,7 @@ object KotlinMethods {
     return cache.get(method.location) { method.isCompilerSynthesizedInterfaceBridge() }
   }
 
-  private fun Method.isCompilerSynthesizedInterfaceBridge(): Boolean {
+  internal fun Method.isCompilerSynthesizedInterfaceBridge(): Boolean {
     // If this method doesn't have any bytecode (e.g. an abstract method), it can't be a bridge.
     if (instructions.isEmpty()) {
       return false
