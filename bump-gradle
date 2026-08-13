@@ -1,0 +1,114 @@
+#!/bin/sh
+set -eu
+
+GRADLE_CURRENT_VERSION_URL=https://services.gradle.org/versions/current
+
+github_repo_from_url() {
+  url=$1
+
+  case "$url" in
+    git@github.com:*)
+      repo=${url#git@github.com:}
+      ;;
+    https://github.com/*)
+      repo=${url#https://github.com/}
+      ;;
+    ssh://git@github.com/*)
+      repo=${url#ssh://git@github.com/}
+      ;;
+    *)
+      repo=$url
+      ;;
+  esac
+
+  repo=${repo%.git}
+  printf '%s\n' "$repo"
+}
+
+detect_latest_stable_gradle_version() {
+  curl -fsSL "$GRADLE_CURRENT_VERSION_URL" |
+    sed -n 's/.*"version"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' |
+    head -n 1
+}
+
+if [ ! -x ./update-gradle ]
+then
+  printf 'Expected executable ./update-gradle in the current directory.\n' >&2
+  exit 1
+fi
+
+if ! git diff --quiet || ! git diff --cached --quiet
+then
+  printf 'Working tree is not clean. Commit or stash changes before running this script.\n' >&2
+  exit 1
+fi
+
+VERSION=$(detect_latest_stable_gradle_version)
+if [ -z "$VERSION" ]
+then
+  printf 'Could not detect latest stable Gradle version from %s\n' "$GRADLE_CURRENT_VERSION_URL" >&2
+  exit 1
+fi
+
+case "$VERSION" in
+  *-*)
+    printf 'Detected Gradle version %s does not look stable.\n' "$VERSION" >&2
+    exit 1
+    ;;
+esac
+
+BRANCH="bump-gradle-$VERSION"
+COMMIT_MESSAGE="Bump Gradle $VERSION"
+PR_TITLE="Bump Gradle to $VERSION"
+PR_BODY="Bump Gradle to [$VERSION](https://docs.gradle.org/$VERSION/release-notes.html)"
+
+REPO=$(github_repo_from_url "$(git config --get remote.origin.url)")
+PR_HEAD=$BRANCH
+
+if git show-ref --verify --quiet "refs/heads/$BRANCH"
+then
+  printf 'Local branch already exists: %s\n' "$BRANCH" >&2
+  exit 1
+fi
+
+if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1
+then
+  printf 'Remote branch already exists on origin: %s\n' "$BRANCH" >&2
+  exit 1
+fi
+
+printf 'Detected Gradle %s\n' "$VERSION"
+printf 'Creating branch %s from origin/master\n' "$BRANCH"
+
+git fetch origin master
+git switch -c "$BRANCH" origin/master
+
+printf 'Bump Gradle to %s? [y/N] ' "$VERSION"
+read -r CONFIRMATION
+case "$CONFIRMATION" in
+  y|Y)
+    ;;
+  *)
+    printf 'Aborted.\n' >&2
+    exit 1
+    ;;
+esac
+
+./update-gradle "$VERSION"
+
+if git diff --quiet && git diff --cached --quiet
+then
+  printf 'No Gradle wrapper changes detected for Gradle %s\n' "$VERSION"
+  exit 0
+fi
+
+git add -A
+git commit -m "$COMMIT_MESSAGE"
+git push -u origin "$BRANCH"
+
+gh pr create \
+  --repo "$REPO" \
+  --base master \
+  --head "$PR_HEAD" \
+  --title "$PR_TITLE" \
+  --body "$PR_BODY"
