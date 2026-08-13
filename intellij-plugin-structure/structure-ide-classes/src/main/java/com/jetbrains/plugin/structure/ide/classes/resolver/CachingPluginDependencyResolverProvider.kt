@@ -86,7 +86,7 @@ class CachingPluginDependencyResolverProvider(
 
   /**
    * Returns the resolver containing the plugin's own classes if it is already available.
-   * Unlike [getResolver], this method never returns a dependency-closure resolver.
+   * Unlike [getResolver], this method never returns a [DependencyTreeAwareResolver].
    */
   fun getCachedPluginResolver(plugin: IdePlugin): Resolver? {
     getFromSecondaryCache(plugin)?.let {
