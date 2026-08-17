@@ -214,7 +214,7 @@ class CachingPluginDependencyResolverProvider(
   }
 
   private fun IdePlugin.artifactKey(): PluginArtifactKey =
-    PluginArtifactKey(id ?: UNNAMED_RESOLVER, pluginVersion, originalFile)
+    PluginArtifactKey(id?.intern() ?: UNNAMED_RESOLVER, pluginVersion, originalFile)
 
   private fun IdePlugin.resolverCacheKey(resolverName: String = newResolverName()): PluginResolverKey =
     PluginResolverKey(artifactKey(), resolverName)
