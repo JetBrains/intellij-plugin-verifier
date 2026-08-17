@@ -41,7 +41,7 @@ class PluginIdVerifier {
       .forEach { problemRegistrar.registerProblem(ForbiddenPluginIdPrefix(descriptorPath, id, it)) }
 
     id.split('.')
-      .filter { idComponent -> PRODUCT_ID_RESTRICTED_WORDS.contains(idComponent.toLowerCase()) }
+      .filter { idComponent -> PRODUCT_ID_RESTRICTED_WORDS.contains(idComponent.lowercase()) }
       .forEach { idComponent -> problemRegistrar.registerProblem(TemplateWordInPluginId(descriptorPath, id, idComponent)) }
   }
 

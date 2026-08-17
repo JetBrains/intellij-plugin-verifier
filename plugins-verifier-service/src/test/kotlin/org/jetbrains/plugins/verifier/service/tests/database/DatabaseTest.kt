@@ -38,7 +38,7 @@ class DatabaseTest {
     }
   }
 
-  private fun <T, R> openSetAndRun(valueType: ValueType<T>, f: MutableSet<T>.() -> R) =
+  private fun <T : Any, R> openSetAndRun(valueType: ValueType<T>, f: MutableSet<T>.() -> R) =
     MapDbServerDatabase(
       temp
         .resolve("database")

@@ -7,7 +7,6 @@ package org.jetbrains.ide.diff.builder.persistence.json
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.deleteLogged
 import com.jetbrains.plugin.structure.base.utils.extension
-import kotlinx.serialization.stringify
 import org.jetbrains.ide.diff.builder.api.ApiReport
 import org.jetbrains.ide.diff.builder.persistence.ApiReportWriter
 import java.nio.file.Files
