@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode
 import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
 import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.*
+import org.jetbrains.annotations.TestOnly
 
 /**
  * See also cache size in [CacheResolver].
@@ -70,6 +71,14 @@ class CachingPluginDependencyResolverProvider(
       dependencyResolverCache.put(cacheKey, it)
     }
   }
+
+  @TestOnly
+  fun dependencyResolverCacheContains(pluginId: PluginId): Boolean =
+    dependencyResolverCache.asMap().keys.any { it.id == pluginId }
+
+  @TestOnly
+  fun pluginResolverCacheContains(resolverName: String): Boolean =
+    pluginResolverCache.asMap().keys.any { it.resolverName == resolverName }
 
   /**
    * This method should be never called. `PluginResolverProvider` should be refactored.
@@ -267,4 +276,3 @@ class CachingPluginDependencyResolverProvider(
     }
   }
 }
-
