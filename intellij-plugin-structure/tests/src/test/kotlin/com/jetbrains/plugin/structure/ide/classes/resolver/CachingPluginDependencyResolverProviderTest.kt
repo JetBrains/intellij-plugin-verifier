@@ -177,7 +177,6 @@ class CachingPluginDependencyResolverProviderTest {
 
     val resolverProvider = CachingPluginDependencyResolverProvider(ide)
     val resolver = resolverProvider.getResolver(plugin)
-    val corePluginCacheHit = 0L
     with(resolverProvider.getStats()) {
       assertNotNull(this); this!!
       /*
@@ -185,7 +184,7 @@ class CachingPluginDependencyResolverProviderTest {
         Cache was not even hit, since the resolver for the second invocation is already in the list
         of modules since the first invocation
        */
-      assertEquals(corePluginCacheHit, hitCount())
+      assertEquals(0, hitCount())
       /*
         1) "com.example.somePlugin" (plugin itself),
         2) "com.intellij" unlocked
@@ -201,8 +200,11 @@ class CachingPluginDependencyResolverProviderTest {
        */
       assertEquals(7,  missCount())
     }
+    listOf("com.example.somePlugin")
+      .forEach {
+        assertTrue("Dependency resolver must cache $it", resolverProvider.dependencyResolverCacheContains(it))
+      }
     listOf(
-      "com.example.somePlugin",
       "com.intellij",
       "com.intellij/product.jar",
       "com.intellij.modules.json",
@@ -210,13 +212,13 @@ class CachingPluginDependencyResolverProviderTest {
       "com.intellij.modules.platform",
       "com.intellij.modules.lang")
       .forEach {
-        assertTrue("Resolver must cache $it", resolverProvider.contains(it))
+        assertTrue("Plugin resolver must cache $it", resolverProvider.pluginResolverCacheContains(it))
       }
 
     with(resolverProvider.getStats()) {
       assertNotNull(this); this!!
-      // 7 elements from several lines above checking `resolverProvider.contains`
-      assertEquals(7, hitCount())
+      // Inspecting the cache contents above does not affect cache statistics.
+      assertEquals(0, hitCount())
     }
 
     with(resolver) {
@@ -228,10 +230,8 @@ class CachingPluginDependencyResolverProviderTest {
 
     with(resolverProvider.getStats()) {
       assertNotNull(this); this!!
-      /*
-        Existing 7 checks from the previous half of the test, plus one for "com.intellij"
-       */
-      assertEquals(8, hitCount())
+      // The resolver for "com.intellij" is already cached.
+      assertEquals(1, hitCount())
       /*
         Existing 7 from the previous half of the test, plus:
         8) "com.example.BetterJava" (plugin itself)
