@@ -434,8 +434,10 @@ internal class PluginCreator private constructor(
     plugin.underlyingDocument = originalDocument
     try {
       rawDescriptorToPluginConverter.convert(raw, originalDocument, parentPlugin, ::registerProblem, plugin)
-    } catch (e: Exception) {
-      // See this method's doc for why this try/catch exists.
+    } catch (e: Throwable) {
+      // See this method's doc for why this try/catch exists. Catches Throwable, not just Exception:
+      // the platform parser's own Logger.error(...) throws AssertionError (an Error) for elements it
+      // doesn't recognize - see PlatformPluginDescriptorParser.parse's matching catch for why.
       LOG.info("Unable to convert plugin descriptor $descriptorPath of $pluginFileName via platform parser", e)
       registerProblem(UnableToReadDescriptor(descriptorPath, e.localizedMessage))
       return false

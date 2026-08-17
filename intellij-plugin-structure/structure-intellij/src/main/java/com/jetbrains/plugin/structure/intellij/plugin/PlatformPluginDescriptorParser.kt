@@ -49,10 +49,15 @@ private val LOG = LoggerFactory.getLogger(PlatformPluginDescriptorParser::class.
  *    malformed-input cases that our JAXB path would just leave as null fields or flag as a
  *    recoverable [com.jetbrains.plugin.structure.base.problems.PluginProblem] (bad/oversized
  *    `namespace` on `<content>`, missing `name`/`interface`/`beanClass` on `<extensionPoints>`,
- *    unknown content item types, unresolvable required includes, etc). Since plugin-verifier's job
- *    is running against arbitrary - sometimes broken or adversarial - third-party plugins, [parse]
- *    wraps the whole call (XInclude resolution included) in a broad try/catch, mirroring
- *    [PluginDescriptorParser.readDocumentIntoXmlBean]'s existing pattern.
+ *    unknown content item types, unresolvable required includes, etc). It also routes any
+ *    `idea-plugin` child element it doesn't recognize (e.g. `<icon>`, unsupported by this parser
+ *    build at all - see `RawPluginDescriptor`, which has no icon field) through the platform's own
+ *    `Logger.error(...)`, whose default (non-IDE) implementation throws `AssertionError` - an
+ *    `Error`, not an `Exception`. Since plugin-verifier's job is running against arbitrary -
+ *    sometimes broken or adversarial - third-party plugins, [parse] wraps the whole call (XInclude
+ *    resolution included) in a broad `catch (Throwable)`, mirroring
+ *    [PluginDescriptorParser.readDocumentIntoXmlBean]'s existing pattern but widened past `Exception`
+ *    specifically to still contain that `AssertionError` case.
  *
  * 3. KNOWN GAP (accepted for this POC, not yet a blocker): [RawPluginDescriptor] has no `eap` field
  *    at all - the library's `readProduct()` only reads code/release-date/release-version/`optional`
@@ -106,10 +111,14 @@ internal class PlatformPluginDescriptorParser {
       // rather than resolving against a guessed-wrong root.
       val xIncludeLoader = pluginRoot(documentPath)?.let { ResourceRootXIncludeLoader(it) }
       parsePluginXml(xml, pluginFileName, readerContext, xIncludeLoader).build()
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
       // Broad catch by design: see class doc, point 2. The library throws plain RuntimeException /
       // XMLStreamException, not our PluginProblem hierarchy, for many malformed-input / unresolved-
-      // include cases.
+      // include cases - and, for any `idea-plugin` child element it doesn't recognize (e.g. `<icon>`,
+      // which this parser build has no support for at all), it goes through the platform's own
+      // `Logger.error(...)`, whose default (non-IDE) implementation throws `AssertionError` - an
+      // `Error`, not an `Exception`. Catching only `Exception` here let that escape uncaught, which
+      // took down the whole verifier worker process instead of just failing this one plugin.
       validationContext += UnableToReadDescriptor(descriptorPath, e.localizedMessage)
       LOG.info("Unable to read plugin descriptor $descriptorPath of $pluginFileName via platform parser", e)
       null
