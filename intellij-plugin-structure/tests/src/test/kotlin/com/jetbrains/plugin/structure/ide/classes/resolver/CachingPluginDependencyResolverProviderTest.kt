@@ -375,7 +375,7 @@ class CachingPluginDependencyResolverProviderTest {
   }
 
   @Test
-  fun `dependency closure and plugin classpath resolvers use different cache entries`() {
+  fun `transitive dependency resolver and plugin classpath resolver use different cache entries`() {
     val betaFiles = buildZipFile(temporaryFolder.newTemporaryFile("cache-collision/beta.jar")) {
       dirs("com/example/beta") {
         file("BetaAction.class", createEmptyClass("com/example/beta/BetaAction"))
@@ -395,9 +395,9 @@ class CachingPluginDependencyResolverProviderTest {
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(betaPlugin))
     val betaAction = "com/example/beta/BetaAction"
 
-    val dependencyClosureFirst = CachingPluginDependencyResolverProvider(ide)
-    dependencyClosureFirst.getResolver(betaPlugin)
-    assertTrue(dependencyClosureFirst.getResolver(alphaPlugin).containsClass(betaAction))
+    val transitiveDependencyFirst = CachingPluginDependencyResolverProvider(ide)
+    transitiveDependencyFirst.getResolver(betaPlugin)
+    assertTrue(transitiveDependencyFirst.getResolver(alphaPlugin).containsClass(betaAction))
 
     val pluginClasspathFirst = CachingPluginDependencyResolverProvider(ide)
     pluginClasspathFirst.getResolver(alphaPlugin)
@@ -408,7 +408,7 @@ class CachingPluginDependencyResolverProviderTest {
   }
 
   @Test
-  fun `dependency closure cache distinguishes plugin versions`() {
+  fun `transitive dependency resolver cache distinguishes plugin versions`() {
     val pluginV1 = MockIdePlugin(
       pluginId = "com.example.Versioned",
       pluginVersion = "1.0",
@@ -433,7 +433,7 @@ class CachingPluginDependencyResolverProviderTest {
   }
 
   @Test
-  fun `dependency closure cache distinguishes artifacts with same id and version`() {
+  fun `transitive dependency resolver cache distinguishes artifacts with same id and version`() {
     val artifactsDir = temporaryFolder.newFolder("same-version").toPath()
     val pluginArtifact1 = artifactsDir.resolve("plugin-1.zip")
     val pluginArtifact2 = artifactsDir.resolve("plugin-2.zip")
