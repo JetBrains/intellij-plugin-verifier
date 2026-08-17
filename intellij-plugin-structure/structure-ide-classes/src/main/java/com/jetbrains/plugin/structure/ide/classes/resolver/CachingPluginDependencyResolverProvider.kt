@@ -72,16 +72,11 @@ class CachingPluginDependencyResolverProvider(
     }
   }
 
+  /**
+   * This method should be never called. `PluginResolverProvider` should be refactored.
+   */
   override fun contains(pluginId: PluginId): Boolean {
-    pluginResolverCache.asMap().keys.firstOrNull { it.resolverName == pluginId }?.let { key ->
-      return pluginResolverCache.getIfPresent(key) != null
-    }
-
-    dependencyResolverCache.asMap().keys.firstOrNull { it.id == pluginId }?.let { key ->
-      return dependencyResolverCache.getIfPresent(key) != null
-    }
-
-    return false
+    throw UnsupportedOperationException("This should not be called")
   }
 
   /**
