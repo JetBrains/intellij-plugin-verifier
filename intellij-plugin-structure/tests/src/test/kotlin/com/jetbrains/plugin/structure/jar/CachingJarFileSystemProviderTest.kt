@@ -368,7 +368,7 @@ class CachingJarFileSystemProviderTest {
     // not inline with invalidate()/cleanUp(). Call the eviction hook directly so this helper's
     // effect is deterministic instead of racing the assertions that follow it. onCacheRemoval()
     // is idempotent (guarded by a CAS on referenceCount), so the real async listener still firing
-    // later is harmless.
+    // later is harmless
     evicted?.onCacheRemoval()
   }
 
