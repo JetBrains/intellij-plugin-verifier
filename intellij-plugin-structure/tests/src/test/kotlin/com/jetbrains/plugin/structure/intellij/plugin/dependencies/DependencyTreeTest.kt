@@ -131,6 +131,21 @@ class DependencyTreeTest {
   }
 
   @Test
+  fun `platform constraints remain part of dependency resolution by default`() {
+    val platformConstraints: List<PluginDependency> = listOf(
+      PluginV1Dependency.Mandatory("com.intellij.modules.os.mac"),
+      PluginV1Dependency.Mandatory("com.intellij.modules.arch.arm64")
+    )
+    val osArchConstrainedPlugin = MockIdePlugin(
+      pluginId = "com.example.OsArch",
+      dependencies = platformConstraints
+    )
+
+    val resolution = DependencyTree(ide).getDependencyTreeResolution(osArchConstrainedPlugin)
+    assertEquals(mapOf(osArchConstrainedPlugin to platformConstraints.toSet()), resolution.missingDependencies)
+  }
+
+  @Test
   fun `plugin has no dependencies`() {
     val noDependenciesPlugin = MockIdePlugin(pluginId = "com.example.NoDependencies")
 

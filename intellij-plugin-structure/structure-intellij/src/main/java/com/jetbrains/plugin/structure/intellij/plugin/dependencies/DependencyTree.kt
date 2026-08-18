@@ -25,7 +25,11 @@ typealias MissingDependencyListener = (IdePlugin, PluginDependency) -> Unit
 
 private val EMPTY_MISSING_DEPENDENCY_LISTENER: MissingDependencyListener = { _, _ -> }
 
-class DependencyTree(private val pluginProvider: PluginProvider, private val ideModulePredicate: IdeModulePredicate = NegativeIdeModulePredicate) {
+class DependencyTree(
+  private val pluginProvider: PluginProvider,
+  private val ideModulePredicate: IdeModulePredicate = NegativeIdeModulePredicate,
+  private val dependencyFilter: (PluginDependency) -> Boolean = { true }
+) {
 
   fun getDependencyTreeResolution(
     plugin: IdePlugin,
@@ -227,7 +231,8 @@ class DependencyTree(private val pluginProvider: PluginProvider, private val ide
   }
 
   private fun ignore(plugin: IdePlugin, dependency: PluginDependency): Boolean {
-    return dependency.isModule && plugin.hasDefinedModuleWithId(dependency.id)
+    return !dependencyFilter(dependency) ||
+      (dependency.isModule && plugin.hasDefinedModuleWithId(dependency.id))
   }
 
   private fun missingId(plugin: IdePlugin): String {

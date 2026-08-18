@@ -23,10 +23,11 @@ class CachingPluginDependencyResolverProvider(
   pluginProvider: PluginProvider,
   private val secondaryPluginResolverProvider: PluginResolverProvider? = null,
   ideModulePredicate: IdeModulePredicate = NegativeIdeModulePredicate,
-  private val dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier
+  private val dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier,
+  dependencyFilter: (PluginDependency) -> Boolean = { true }
 ) : PluginResolverProvider {
 
-  private val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate)
+  private val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate, dependencyFilter)
 
   private val cache = Caffeine.newBuilder()
     .maximumSize(DEFAULT_CACHE_SIZE)

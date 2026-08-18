@@ -14,9 +14,9 @@ import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependen
 import com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver
 import com.jetbrains.plugin.structure.ide.classes.resolver.ProductInfoClassResolver
 import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
+import com.jetbrains.plugin.structure.intellij.plugin.CompositeDependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
-import com.jetbrains.plugin.structure.intellij.plugin.CompositeDependenciesModifier
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.CorePluginDependencyContributor
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DefaultIdeModulePredicate
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdeModulePredicate
@@ -28,6 +28,7 @@ import com.jetbrains.pluginverifier.createPluginResolver
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphProvider
+import com.jetbrains.pluginverifier.dependencies.isPlatformConstraint
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.IdeThenDelegatePluginProvider
 import com.jetbrains.pluginverifier.dependencies.resolution.getDetails
@@ -68,7 +69,14 @@ class DefaultClassResolverProvider(
       CorePluginDependencyContributor(ideDescriptor.ide),
       LegacyPluginDependencyContributor(ideDescriptor.ide, legacyPluginVerifier)
     )
-    CachingPluginDependencyResolverProvider(pluginProvider, secondaryResolver, ideModulePredicate, dependenciesModifier)
+    CachingPluginDependencyResolverProvider(
+      pluginProvider,
+      secondaryResolver,
+      ideModulePredicate,
+      dependenciesModifier,
+      // Excludes OS and architecture constraint modules from verification-only dependency resolution
+      dependencyFilter = { !it.isPlatformConstraint }
+    )
   }
 
   private val bundledPluginClassResolverProvider = BundledPluginClassResolverProvider()
