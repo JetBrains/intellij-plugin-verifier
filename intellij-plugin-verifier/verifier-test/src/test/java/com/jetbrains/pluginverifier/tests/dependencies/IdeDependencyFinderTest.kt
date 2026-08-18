@@ -21,6 +21,7 @@ import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
+import com.jetbrains.pluginverifier.tests.mocks.MockDependencyFinder
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
 import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
@@ -128,6 +129,23 @@ class IdeDependencyFinderTest {
     assertEquals(setOf("myPlugin", "test", "moduleContainer", "somePlugin", "com.intellij", MOCK_IDE_MODULE_ID), deps.toSet())
 
     assertEquals(setOf(MissingDependency(externalModuleDependency, "Failed to fetch plugin.")), dependenciesGraph.getDirectMissingDependencies())
+  }
+
+  @Test
+  fun `os and arch constraints are not reported as missing dependencies`() {
+    val startPlugin = MockIdePlugin(
+      pluginId = "myPlugin",
+      pluginVersion = "1.0",
+      dependencies = listOf(
+        PluginDependencyImpl("com.intellij.modules.os.mac", false, true),
+        PluginDependencyImpl("com.intellij.modules.arch.arm64", false, true)
+      )
+    )
+
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-262.8665.81"))
+    val (dependenciesGraph, _) = DependenciesGraphBuilder(MockDependencyFinder()).buildDependenciesGraph(startPlugin, ide)
+
+    assertEquals(emptySet<MissingDependency>(), dependenciesGraph.getDirectMissingDependencies())
   }
 
   private fun configureTestIdeDependencyFinder(ide: Ide): DependencyFinder {

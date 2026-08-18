@@ -10,6 +10,7 @@ import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
+import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.jdk.DefaultJdkDescriptorProvider
@@ -86,6 +87,40 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
     val classResolver = resolverProvider.provide(plugin.getDetails())
     // class from app.jar from mock IDE
     assertTrue(classResolver.allResolver.containsClass("com/intellij/tasks/Task"))
+  }
+
+  @Test
+  fun `platform constraints are not looked up when building the verification classpath`() {
+    val ide = buildIdeWithBundledPlugins(
+      version = "IU-243.21565.193",
+      productInfo = productInfoJsonIU243,
+      hasModuleDescriptors = true
+    )
+    val ideDescriptor = IdeDescriptor.create(ide.idePath, defaultJdkPath = null, ideFileLock = null)
+    val failingDependencyFinder = object : DependencyFinder {
+      override val presentableName = "Failing dependency finder"
+
+      override fun findPluginDependency(dependencyId: String, isModule: Boolean): DependencyFinder.Result =
+        error("Dependency '$dependencyId' must not be looked up")
+
+      override fun findPluginDependency(dependency: PluginDependency) =
+        findPluginDependency(dependency.id, dependency.isModule)
+    }
+    val resolverProvider = DefaultClassResolverProvider(
+      failingDependencyFinder,
+      ideDescriptor,
+      packageFilter,
+      archiveManager = archiveManager
+    )
+    val platformConstraints = listOf(
+      PluginDependencyImpl("com.intellij.modules.os.windows", false, true),
+      PluginDependencyImpl("com.intellij.modules.arch.arm64", false, true)
+    )
+    val constrainedPlugin = plugin.copy(dependencies = platformConstraints)
+
+    val classResolver = resolverProvider.provide(constrainedPlugin.getDetails())
+
+    assertTrue(classResolver.dependenciesGraph.missingDependencies.isEmpty())
   }
 
   @Test

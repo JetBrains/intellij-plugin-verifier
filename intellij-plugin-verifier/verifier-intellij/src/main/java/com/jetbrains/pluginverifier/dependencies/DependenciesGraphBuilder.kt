@@ -66,6 +66,10 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
       dependencies += getRecursiveOptionalDependencies(vertex.plugin).map { PluginDependencyImpl(it.id, true, it.isModule) }
 
       for (pluginDependency in dependencies) {
+        // OS and architecture dependencies are Marketplace compatibility metadata. Do not resolve them into the
+        // verification graph because the verifier IDE only contains modules matching its own platform.
+        if (pluginDependency.isPlatformConstraint) continue
+
         val resolvedDependency = resolveDependency(pluginProvider, vertex, pluginDependency, graph, missingDependencies)
           ?: continue
 
