@@ -20,6 +20,9 @@ import com.jetbrains.plugin.structure.intellij.resources.JarsResourceResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
+
+private const val JAR_ROOT_DESCRIPTOR_PREFIX = "../"
 
 internal class LibDirectoryPluginLoader(
   private val pluginLoaderRegistry: PluginLoaderProvider,
@@ -36,6 +39,16 @@ internal class LibDirectoryPluginLoader(
 
   private val libDirClasspathProvider = LibDirJarsClasspathProvider()
 
+  /**
+   * Descriptor indexes of plugin artifacts that are currently being parsed, see [ContentModuleScanner.getDescriptorIndex].
+   *
+   * A single plugin artifact parse resolves the plugin descriptor, every content module descriptor and every
+   * optional dependency descriptor from the same `lib` directory, so the directory is indexed once per parse.
+   * Entries are discarded by [invalidateDescriptorIndex] as soon as the parse completes: an index is of no use
+   * for other plugin artifacts, as each of them has its own `lib` directory.
+   */
+  private val descriptorIndexes = ConcurrentHashMap<Path, Map<String, List<Path>>>()
+
   override fun loadPlugin(pluginLoadingContext: Context): PluginCreator = with(pluginLoadingContext) {
     val libDir = libDirectoryParent.resolve("lib")
     val hasDotNetDirectory = libDirectoryParent.resolve("dotnet").exists()
@@ -51,7 +64,7 @@ internal class LibDirectoryPluginLoader(
     val compositeResolver: ResourceResolver = CompositeResourceResolver(listOf(libResourceResolver, resourceResolver))
 
     val results: MutableList<PluginCreator> = ArrayList()
-    for (file in files) {
+    for (file in getDescriptorProviders(libDirectoryParent, descriptorPath, files)) {
       val innerCreator: PluginCreator = if (file.isJar() || file.isZip()) {
         //Use the composite resource resolver, which can resolve resources in lib's jar files.
         jarLoader.loadPlugin(
@@ -110,6 +123,45 @@ internal class LibDirectoryPluginLoader(
       }
     }
   }
+
+  /**
+   * Discards the descriptor index of [pluginArtifactPath] and of any plugin artifact nested in it.
+   * Invoked once a plugin artifact parse completes, see [descriptorIndexes].
+   */
+  internal fun invalidateDescriptorIndex(pluginArtifactPath: Path) {
+    descriptorIndexes.keys.removeIf { it.startsWith(pluginArtifactPath) }
+  }
+
+  /**
+   * Returns those [files] of the `lib` directory that can provide [descriptorPath]: JARs indexed as containing
+   * such a descriptor, along with every directory, as directories are not indexed.
+   *
+   * All [files] are returned for a [descriptorPath] the index cannot answer for, see [getIndexableDescriptorName].
+   * The order of [files] is retained, so that an ambiguous descriptor is reported with the same pair of files
+   * as when every file is probed.
+   */
+  private fun getDescriptorProviders(libDirectoryParent: Path, descriptorPath: String, files: List<Path>): List<Path> {
+    val descriptorName = getIndexableDescriptorName(descriptorPath) ?: return files
+    val index = descriptorIndexes.computeIfAbsent(libDirectoryParent) { contentModuleScanner.getDescriptorIndex(it) }
+    val jars: Set<Path> = index[descriptorName]?.toHashSet() ?: emptySet()
+    return files.filter { it in jars || it.isDirectory }
+  }
+
+  /**
+   * Returns the file name under which [descriptorPath] is indexed, or `null` if it is not indexed at all.
+   *
+   * A JAR is searched for a descriptor in its `META-INF` directory, hence a `../` prefix escapes `META-INF`
+   * and denotes a descriptor in a JAR root. Such content module descriptors are the only indexed ones:
+   * a plugin artifact is parsed once, so indexing its `lib` directory to resolve a single `META-INF` descriptor
+   * would scan the very JARs the index saves from being scanned. Any other descriptor path may also resolve
+   * to an arbitrary JAR entry, which the index does not cover.
+   */
+  private fun getIndexableDescriptorName(descriptorPath: String): String? =
+    if (descriptorPath.startsWith(JAR_ROOT_DESCRIPTOR_PREFIX)) {
+      descriptorPath.removePrefix(JAR_ROOT_DESCRIPTOR_PREFIX).takeIf { it.isNotEmpty() && '/' !in it }
+    } else {
+      null
+    }
 
   private fun PluginCreator.withResolvedClasspath(path: Path): PluginCreator = apply {
     val libDirClasspath = libDirClasspathProvider.getClasspath(path)

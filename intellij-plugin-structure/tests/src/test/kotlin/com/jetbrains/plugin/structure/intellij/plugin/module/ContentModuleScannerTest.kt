@@ -59,6 +59,41 @@ class ContentModuleScannerTest {
   }
 
   @Test
+  fun `descriptor index maps a descriptor file name to every JAR that provides it`() {
+    val root = temporaryFolder.root.toPath()
+
+    val pluginPath = buildDirectory(temporaryFolder.newFolder("scala").toPath()) {
+      dir("lib") {
+        zip("scala.jar") {
+          dir("META-INF") {
+            file("plugin.xml", "<idea-plugin />")
+          }
+          file("intellij.scala.xml", "<idea-plugin />")
+        }
+        zip("scala-shadowed.jar") {
+          file("intellij.scala.xml", "<idea-plugin />")
+        }
+        zip("scala-auxiliary.jar") {
+          file("logback.xml", "<configuration />")
+        }
+      }
+    }
+
+    val descriptorIndex = ContentModuleScanner(jarFileSystemProvider).getDescriptorIndex(pluginPath)
+
+    val indexedJarPaths = descriptorIndex.mapValues { (_, jarPaths) ->
+      jarPaths.map { root.relativize(it).invariantSeparatorsPathString }.sorted()
+    }
+    assertEquals(
+      mapOf(
+        "plugin.xml" to listOf("scala/lib/scala.jar"),
+        "intellij.scala.xml" to listOf("scala/lib/scala-shadowed.jar", "scala/lib/scala.jar")
+      ),
+      indexedJarPaths
+    )
+  }
+
+  @Test
   fun `no content modules are found in a corrupted artifact`() {
     val pluginPath = buildDirectory(temporaryFolder.newFolder("corrupted").toPath()) {
       dir("lib") {
