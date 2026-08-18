@@ -1,29 +1,79 @@
 package com.jetbrains.plugin.structure.intellij.verifiers
 
+import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
+import com.jetbrains.plugin.structure.base.utils.CompatibilityUtils
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
+import com.jetbrains.plugin.structure.intellij.problems.ErroneousSinceBuild
+import com.jetbrains.plugin.structure.intellij.problems.InvalidSinceBuild
 import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuild
 import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithJustBranch
 import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithMagicNumber
 import com.jetbrains.plugin.structure.intellij.problems.NonexistentReleaseInUntilBuild
 import com.jetbrains.plugin.structure.intellij.problems.ProductCodePrefixInBuild
+import com.jetbrains.plugin.structure.intellij.problems.SinceBuildCannotContainWildcard
+import com.jetbrains.plugin.structure.intellij.problems.SinceBuildNotSpecified
 import com.jetbrains.plugin.structure.intellij.problems.SuspiciousUntilBuild
-import com.jetbrains.plugin.structure.intellij.verifiers.PluginUntilBuildVerifier.ValidationResult.INVALID
-import com.jetbrains.plugin.structure.intellij.verifiers.PluginUntilBuildVerifier.ValidationResult.VALID
+import com.jetbrains.plugin.structure.intellij.verifiers.PluginSinceUntilRangeVerifier.ValidationResult.INVALID
+import com.jetbrains.plugin.structure.intellij.verifiers.PluginSinceUntilRangeVerifier.ValidationResult.VALID
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
 
 private const val BUILD_NUMBER = "__BUILD_NUMBER__"
 private const val SNAPSHOT = "SNAPSHOT"
 
+private const val SINCE_BASELINE_LOWER_BOUND = 130
+
 private const val SUSPICIOUS_UNTIL_BASELINE_LOWER_BOUND = 281
 private const val FIRST_YEARLY_BASED_RELEASE_NUMBER_BASELINE = 162
 private const val FIRST_YEARLY_BASED_RELEASE_NUMBER_YEAR = 2016
 
-class PluginUntilBuildVerifier {
-  fun verify(plugin: PluginBean,
-             descriptorPath: String,
-             problemRegistrar: ProblemRegistrar) = with(problemRegistrar) {
-    val untilBuild = plugin.ideaVersion?.untilBuild ?: return
+class PluginSinceUntilRangeVerifier {
+  fun verify(
+    plugin: PluginBean,
+    descriptorPath: String,
+    problemRegistrar: ProblemRegistrar
+  ) = with(problemRegistrar) {
+    val versionBean = plugin.ideaVersion
+    if (versionBean == null) {
+      registerProblem(PropertyNotSpecified("idea-version", descriptorPath))
+      return
+    }
+
+    verifySinceBuild(versionBean.sinceBuild, descriptorPath)
+    verifyUntilBuild(versionBean.untilBuild, descriptorPath)
+  }
+
+  private fun ProblemRegistrar.verifySinceBuild(sinceBuild: String?, descriptorPath: String) {
+    if (sinceBuild == null) {
+      registerProblem(SinceBuildNotSpecified(descriptorPath))
+    } else {
+      val sinceBuildParsed = IdeVersion.createIdeVersionIfValid(sinceBuild)
+      if (sinceBuildParsed == null) {
+        registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
+      } else {
+        if (sinceBuild.endsWith(".*")) {
+          registerProblem(SinceBuildCannotContainWildcard(descriptorPath, sinceBuildParsed))
+        }
+        if (sinceBuildParsed.baselineVersion < SINCE_BASELINE_LOWER_BOUND) {
+          registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
+        }
+        if (sinceBuildParsed.baselineVersion >= CompatibilityUtils.MAX_BRANCH_VALUE) {
+          registerProblem(ErroneousSinceBuild(descriptorPath, sinceBuildParsed))
+        }
+        if (sinceBuildParsed.build >= CompatibilityUtils.MAX_BUILD_VALUE) {
+          registerProblem(ErroneousSinceBuild(descriptorPath, sinceBuildParsed))
+        }
+        if (sinceBuildParsed.productCode.isNotEmpty()) {
+          registerProblem(ProductCodePrefixInBuild(descriptorPath))
+        }
+      }
+    }
+  }
+
+  private fun ProblemRegistrar.verifyUntilBuild(untilBuild: String?, descriptorPath: String) {
+    if (untilBuild == null) {
+      return
+    }
     if (isJustASingleComponent(untilBuild)) {
       if (isSpecialSingleComponent(untilBuild)) {
         return
