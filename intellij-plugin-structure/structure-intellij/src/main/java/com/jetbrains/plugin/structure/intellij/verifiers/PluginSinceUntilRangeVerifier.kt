@@ -2,8 +2,9 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.CompatibilityUtils
+import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
-import com.jetbrains.plugin.structure.intellij.problems.ErroneousSinceBuild
+import com.jetbrains.plugin.structure.intellij.problems.IdeBuildComponentsOutOfRange
 import com.jetbrains.plugin.structure.intellij.problems.InvalidSinceBuild
 import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuild
 import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithJustBranch
@@ -16,6 +17,7 @@ import com.jetbrains.plugin.structure.intellij.problems.SuspiciousUntilBuild
 import com.jetbrains.plugin.structure.intellij.verifiers.PluginSinceUntilRangeVerifier.ValidationResult.INVALID
 import com.jetbrains.plugin.structure.intellij.verifiers.PluginSinceUntilRangeVerifier.ValidationResult.VALID
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.intellij.version.IdeVersionImpl
 
 
 private const val BUILD_NUMBER = "__BUILD_NUMBER__"
@@ -54,19 +56,53 @@ class PluginSinceUntilRangeVerifier {
         if (sinceBuild.endsWith(".*")) {
           registerProblem(SinceBuildCannotContainWildcard(descriptorPath, sinceBuildParsed))
         }
-        if (sinceBuildParsed.baselineVersion < SINCE_BASELINE_LOWER_BOUND) {
-          registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
-        }
-        if (sinceBuildParsed.baselineVersion >= CompatibilityUtils.MAX_BRANCH_VALUE) {
-          registerProblem(ErroneousSinceBuild(descriptorPath, sinceBuildParsed))
-        }
-        if (sinceBuildParsed.build >= CompatibilityUtils.MAX_BUILD_VALUE) {
-          registerProblem(ErroneousSinceBuild(descriptorPath, sinceBuildParsed))
-        }
         if (sinceBuildParsed.productCode.isNotEmpty()) {
           registerProblem(ProductCodePrefixInBuild(descriptorPath))
         }
+        verifyIdeBuildComponentsRanges(
+          ideVersion = sinceBuildParsed,
+          baselineLowerBound = SINCE_BASELINE_LOWER_BOUND,
+          attributeName = IdeaVersionBean.SINCE_BUILD_ATTRIBUTE_NAME,
+          descriptorPath = descriptorPath
+        )
       }
+    }
+  }
+
+  private fun ProblemRegistrar.verifyIdeBuildComponentsRanges(
+    ideVersion: IdeVersion,
+    baselineLowerBound: Int,
+    attributeName: String,
+    descriptorPath: String
+  ) {
+    val baselineRange = IntRange(baselineLowerBound, CompatibilityUtils.MAX_BRANCH_VALUE - 1)
+    if (ideVersion.baselineVersion !in baselineRange) {
+      registerProblem(IdeBuildComponentsOutOfRange(
+        ideVersion = ideVersion,
+        failedComponent = ideVersion.baselineVersion,
+        range = baselineRange,
+        attributeName = attributeName,
+        descriptorPath = descriptorPath
+      ))
+    }
+    if (ideVersion.build >= CompatibilityUtils.MAX_BUILD_VALUE && ideVersion.build != IdeVersionImpl.SNAPSHOT_VALUE) {
+      registerProblem(IdeBuildComponentsOutOfRange(
+        ideVersion = ideVersion,
+        failedComponent = ideVersion.build,
+        range = IntRange(0, CompatibilityUtils.MAX_BUILD_VALUE - 1),
+        attributeName = attributeName,
+        descriptorPath = descriptorPath
+      ))
+    }
+    val thirdComponent = ideVersion.components.getOrNull(2)
+    if (thirdComponent != null && thirdComponent >= CompatibilityUtils.MAX_COMPONENT_VALUE && thirdComponent != IdeVersionImpl.SNAPSHOT_VALUE) {
+      registerProblem(IdeBuildComponentsOutOfRange(
+        ideVersion = ideVersion,
+        failedComponent = thirdComponent,
+        range = IntRange(0, CompatibilityUtils.MAX_COMPONENT_VALUE - 1),
+        attributeName = attributeName,
+        descriptorPath = descriptorPath
+      ))
     }
   }
 
@@ -90,14 +126,21 @@ class PluginSinceUntilRangeVerifier {
     if (untilBuildParsed == null) {
       registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
     } else {
-      verifyBaseLineVersion(untilBuildParsed.baselineVersion, untilBuild, untilBuildParsed, descriptorPath)
+      verifyIdeBuildComponentsRanges(
+        ideVersion = untilBuildParsed,
+        baselineLowerBound = 0,
+        attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
+        descriptorPath = descriptorPath
+      )
+
+      verifyUntilBuildBaselineMagicNumbers(untilBuildParsed.baselineVersion, untilBuild, untilBuildParsed, descriptorPath)
       if (untilBuildParsed.productCode.isNotEmpty()) {
         registerProblem(ProductCodePrefixInBuild(descriptorPath))
       }
     }
   }
 
-  private fun ProblemRegistrar.verifyBaseLineVersion(
+  private fun ProblemRegistrar.verifyUntilBuildBaselineMagicNumbers(
     baseline: Int,
     untilBuildValue: String,
     untilBuild: IdeVersion?,
@@ -105,7 +148,7 @@ class PluginSinceUntilRangeVerifier {
   ) {
     if (baseline >= FIRST_YEARLY_BASED_RELEASE_NUMBER_YEAR) {
       registerProblem(InvalidUntilBuild(descriptorPath, untilBuildValue, untilBuild))
-    } else if (baseline >= 999) {
+    } else if (baseline == 999) {
       registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuildValue, baseline.toString()))
     } else if (baseline >= SUSPICIOUS_UNTIL_BASELINE_LOWER_BOUND) {
       registerProblem(SuspiciousUntilBuild(untilBuildValue))
@@ -131,7 +174,7 @@ class PluginSinceUntilRangeVerifier {
   private fun ProblemRegistrar.verifySingleComponentUntilBuild(untilBuild: String, descriptorPath: String) {
     try {
       val untilBuildNumber = untilBuild.toInt()
-      verifyBaseLineVersion(untilBuildNumber, untilBuild, untilBuild = null, descriptorPath)
+      verifyUntilBuildBaselineMagicNumbers(untilBuildNumber, untilBuild, untilBuild = null, descriptorPath)
     } catch (e: NumberFormatException) {
       registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
     }

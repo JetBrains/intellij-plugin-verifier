@@ -22,6 +22,7 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.getRandomInvalidXmlBasedPluginName
 import com.jetbrains.plugin.structure.base.utils.normalizeNewLines
 import com.jetbrains.plugin.structure.base.utils.simpleName
+import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.verifiers.PRODUCT_ID_RESTRICTED_WORDS
@@ -493,9 +494,15 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
       perfectXmlBuilder.modify {
         ideaVersion = """<idea-version since-build="$wildcardSinceBuild"/>"""
       },
-      listOf(
-        InvalidSinceBuild("plugin.xml", wildcardSinceBuild),
-        SinceBuildCannotContainWildcard("plugin.xml", IdeVersion.createIdeVersion(wildcardSinceBuild))
+      expectedProblems = listOf(
+        SinceBuildCannotContainWildcard("plugin.xml", IdeVersion.createIdeVersion(wildcardSinceBuild)),
+        IdeBuildComponentsOutOfRange(
+          ideVersion = IdeVersion.createIdeVersion(wildcardSinceBuild),
+          failedComponent = 129,
+          range = 130..999,
+          attributeName = IdeaVersionBean.SINCE_BUILD_ATTRIBUTE_NAME,
+          descriptorPath = "plugin.xml"
+        )
       )
     )
   }
@@ -808,13 +815,30 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         ideaVersion = """<idea-version since-build="2018.1"/>"""
-      }, listOf(ErroneousSinceBuild("plugin.xml", IdeVersion.createIdeVersion("2018.1")))
+      },
+      expectedProblems = listOf(IdeBuildComponentsOutOfRange(
+        ideVersion = IdeVersion.createIdeVersion("2018.1"),
+        failedComponent = 2018,
+        range = 130..999,
+        attributeName = IdeaVersionBean.SINCE_BUILD_ATTRIBUTE_NAME,
+        descriptorPath = "plugin.xml"
+      ))
     )
 
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         ideaVersion = """<idea-version since-build="171.1" until-build="2018.*"/>"""
-      }, listOf(InvalidUntilBuild("plugin.xml", "2018.*", IdeVersion.createIdeVersion("2018.*")))
+      },
+      expectedProblems = listOf(
+        InvalidUntilBuild("plugin.xml", "2018.*", IdeVersion.createIdeVersion("2018.*")),
+        IdeBuildComponentsOutOfRange(
+          ideVersion = IdeVersion.createIdeVersion("2018.*"),
+          failedComponent = 2018,
+          range = 0..999,
+          attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
+          descriptorPath = "plugin.xml"
+        )
+      )
     )
   }
 
