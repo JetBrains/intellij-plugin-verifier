@@ -15,7 +15,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 private const val BUILD_NUMBER = "__BUILD_NUMBER__"
 private const val SNAPSHOT = "SNAPSHOT"
 
-private const val SUSPICIOUS_BASELINE_LOWER_BOUND = 281
+private const val SUSPICIOUS_UNTIL_BASELINE_LOWER_BOUND = 281
 private const val FIRST_YEARLY_BASED_RELEASE_NUMBER_BASELINE = 162
 private const val FIRST_YEARLY_BASED_RELEASE_NUMBER_YEAR = 2016
 
@@ -28,11 +28,11 @@ class PluginUntilBuildVerifier {
       if (isSpecialSingleComponent(untilBuild)) {
         return
       }
-      if (verifyMagicNumber(untilBuild, descriptorPath, problemRegistrar) == INVALID) {
+      if (verifyMagicNumber(untilBuild, descriptorPath) == INVALID) {
         return
       }
       registerProblem(InvalidUntilBuildWithJustBranch(descriptorPath, untilBuild))
-      verifySingleComponentUntilBuild(untilBuild, descriptorPath, problemRegistrar)
+      verifySingleComponentUntilBuild(untilBuild, descriptorPath)
       return
     }
 
@@ -40,39 +40,31 @@ class PluginUntilBuildVerifier {
     if (untilBuildParsed == null) {
       registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
     } else {
-      verifyBaseLineVersion(untilBuildParsed, untilBuild, descriptorPath, problemRegistrar)
+      verifyBaseLineVersion(untilBuildParsed.baselineVersion, untilBuild, untilBuildParsed, descriptorPath)
       if (untilBuildParsed.productCode.isNotEmpty()) {
         registerProblem(ProductCodePrefixInBuild(descriptorPath))
       }
     }
   }
 
-  private fun verifyBaseLineVersion(untilBuild: IdeVersion,
-                                    untilBuildValue: String,
-                                    descriptorPath: String,
-                                    problemRegistrar: ProblemRegistrar) = with(problemRegistrar) {
-    verifyBaseline(untilBuild.baselineVersion, untilBuildValue, untilBuild, descriptorPath, problemRegistrar)
-  }
-
-  private fun verifyBaseline(baseline: Int,
-                             untilBuildValue: String,
-                             untilBuild: IdeVersion?,
-                             descriptorPath: String,
-                             problemRegistrar: ProblemRegistrar) = with(problemRegistrar) {
+  private fun ProblemRegistrar.verifyBaseLineVersion(
+    baseline: Int,
+    untilBuildValue: String,
+    untilBuild: IdeVersion?,
+    descriptorPath: String
+  ) {
     if (baseline >= FIRST_YEARLY_BASED_RELEASE_NUMBER_YEAR) {
       registerProblem(InvalidUntilBuild(descriptorPath, untilBuildValue, untilBuild))
     } else if (baseline >= 999) {
       registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuildValue, baseline.toString()))
-    } else if (baseline >= SUSPICIOUS_BASELINE_LOWER_BOUND) {
+    } else if (baseline >= SUSPICIOUS_UNTIL_BASELINE_LOWER_BOUND) {
       registerProblem(SuspiciousUntilBuild(untilBuildValue))
     } else {
-      verifyInThreeReleasesPerYear(untilBuildValue, baselineVersion = baseline, problemRegistrar)
+      verifyInThreeReleasesPerYear(untilBuildValue, baselineVersion = baseline)
     }
   }
 
-  private fun verifyMagicNumber(untilBuildValue: String,
-                                descriptorPath: String,
-                                problemRegistrar: ProblemRegistrar): ValidationResult = with(problemRegistrar) {
+  private fun ProblemRegistrar.verifyMagicNumber(untilBuildValue: String, descriptorPath: String): ValidationResult {
     val untilBuild = untilBuildValue.toIntOrNull() ?: return ValidationResult.NOT_APPLICABLE
     return if (untilBuild >= 999) {
       registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuildValue, untilBuildValue))
@@ -86,20 +78,16 @@ class PluginUntilBuildVerifier {
     VALID, INVALID, NOT_APPLICABLE
   }
 
-  private fun verifySingleComponentUntilBuild(untilBuild: String,
-                                              descriptorPath: String,
-                                              problemRegistrar: ProblemRegistrar) {
+  private fun ProblemRegistrar.verifySingleComponentUntilBuild(untilBuild: String, descriptorPath: String) {
     try {
       val untilBuildNumber = untilBuild.toInt()
-      verifyBaseline(untilBuildNumber, untilBuild, untilBuild = null, descriptorPath, problemRegistrar)
+      verifyBaseLineVersion(untilBuildNumber, untilBuild, untilBuild = null, descriptorPath)
     } catch (e: NumberFormatException) {
-      problemRegistrar.registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
+      registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
     }
   }
 
-  private fun verifyInThreeReleasesPerYear(untilBuildValue: String,
-                                           baselineVersion: Int,
-                                           problemRegistrar: ProblemRegistrar) = with(problemRegistrar) {
+  private fun ProblemRegistrar.verifyInThreeReleasesPerYear(untilBuildValue: String, baselineVersion: Int) {
     if (baselineVersion >= FIRST_YEARLY_BASED_RELEASE_NUMBER_BASELINE) {
       val lastDigit = baselineVersion % 10
       val releaseVersion = baselineVersion / 10
