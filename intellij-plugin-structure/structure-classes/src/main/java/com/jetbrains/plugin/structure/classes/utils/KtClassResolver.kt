@@ -17,12 +17,11 @@ private val LOG: Logger = LoggerFactory.getLogger(KtClassResolver::class.java)
 class KtClassResolver {
   private val cache = Caffeine.newBuilder()
     .maximumSize(16_384)
-    .build<Signature, KtClassNode>()
+    .build<Signature, KtClassNode?>()
 
   operator fun get(classNode: ClassNode): KtClassNode? {
     val signature: Signature = classNode.signature ?: return classNode.ktClassNode
-    return cache.getIfPresent(signature)
-      ?: classNode.ktClassNode?.also { cache.put(signature, it) }
+    return cache.get(signature) { classNode.ktClassNode }
   }
 
   private val ClassNode.ktClassNode: KtClassNode?
