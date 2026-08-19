@@ -450,7 +450,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
   @Test
   fun `since build contains wildcard `() {
     val specifiedVersion = "131.*"
-    `test plugin xml warnings`(
+    `test plugin xml unacceptable warnings`(
       perfectXmlBuilder.modify {
         ideaVersion = """<idea-version since-build="$specifiedVersion" until-build="233.*"/>"""
       },
