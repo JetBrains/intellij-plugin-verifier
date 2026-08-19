@@ -60,10 +60,9 @@ object KotlinMethods {
 
     val kmClass = metadataAnnotation.toKmClassOrNull() ?: return false
 
-    val isDeclaredByThisClass = kmClass.functions.any { function ->
-      val signature = function.signature
-      signature != null && signature.name == name && signature.descriptor == descriptor
-    }
+    val isDeclaredByThisClass = kmClass.functions
+      .mapNotNull { it.signature }
+      .any { it.name == name && it.descriptor == descriptor }
 
     // Kotlin's metadata only lists functions the source actually declared in this class. If this
     // method isn't among them, it wasn't written by a developer -- the compiler synthesized it,
