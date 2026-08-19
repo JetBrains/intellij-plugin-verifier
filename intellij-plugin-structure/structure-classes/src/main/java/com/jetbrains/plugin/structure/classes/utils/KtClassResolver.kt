@@ -20,7 +20,7 @@ class KtClassResolver {
     .build<Signature, KtClassNode>()
 
   /**
-   * Deliberately *not* `cache.get(signature) { ... }`, even though that form is more concise:
+   * Deliberately *not* `cache.get(signature) { ... }`, even though that form is more concise.
    *
    * * a mapper returning `null` doesn't type-check against a non-null value type, and Caffeine
    *   records nothing for a `null` result, so a class without Kotlin metadata is never cached and
