@@ -107,7 +107,7 @@ class InvalidUntilBuildWithJustBranch(
 class InvalidUntilBuildWithMagicNumber(
   descriptorPath: String,
   untilBuild: String,
-  magicNumber: String
+  magicNumber: Int
 ) : InvalidUntilBuild(
   descriptorPath = descriptorPath,
   untilBuild,

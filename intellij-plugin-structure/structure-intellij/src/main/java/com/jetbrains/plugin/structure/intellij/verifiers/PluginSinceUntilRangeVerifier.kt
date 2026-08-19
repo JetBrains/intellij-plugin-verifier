@@ -14,8 +14,6 @@ import com.jetbrains.plugin.structure.intellij.problems.ProductCodePrefixInBuild
 import com.jetbrains.plugin.structure.intellij.problems.SinceBuildCannotContainWildcard
 import com.jetbrains.plugin.structure.intellij.problems.SinceBuildNotSpecified
 import com.jetbrains.plugin.structure.intellij.problems.SuspiciousUntilBuild
-import com.jetbrains.plugin.structure.intellij.verifiers.PluginSinceUntilRangeVerifier.ValidationResult.INVALID
-import com.jetbrains.plugin.structure.intellij.verifiers.PluginSinceUntilRangeVerifier.ValidationResult.VALID
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersionImpl
 
@@ -28,6 +26,7 @@ private const val SINCE_BASELINE_LOWER_BOUND = 130
 private const val SUSPICIOUS_UNTIL_BASELINE_LOWER_BOUND = 281
 private const val FIRST_YEARLY_BASED_RELEASE_NUMBER_BASELINE = 162
 private const val FIRST_YEARLY_BASED_RELEASE_NUMBER_YEAR = 2016
+private const val MAGIC_BASELINE_NUMBER = 999
 
 class PluginSinceUntilRangeVerifier {
   fun verify(
@@ -110,73 +109,52 @@ class PluginSinceUntilRangeVerifier {
     if (untilBuild == null) {
       return
     }
-    if (isJustASingleComponent(untilBuild)) {
-      if (isSpecialSingleComponent(untilBuild)) {
-        return
-      }
-      if (verifyMagicNumber(untilBuild, descriptorPath) == INVALID) {
-        return
-      }
-      registerProblem(InvalidUntilBuildWithJustBranch(descriptorPath, untilBuild))
-      verifySingleComponentUntilBuild(untilBuild, descriptorPath)
+    val untilBuildParsed = IdeVersion.createIdeVersionIfValid(untilBuild)
+
+    if (untilBuildParsed == null) {
+      registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
       return
     }
 
-    val untilBuildParsed = IdeVersion.createIdeVersionIfValid(untilBuild)
-    if (untilBuildParsed == null) {
-      registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
-    } else {
-      verifyIdeBuildComponentsRanges(
-        ideVersion = untilBuildParsed,
-        baselineLowerBound = 0,
-        attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
-        descriptorPath = descriptorPath
-      )
-
-      verifyUntilBuildBaselineMagicNumbers(untilBuildParsed.baselineVersion, untilBuild, untilBuildParsed, descriptorPath)
-      if (untilBuildParsed.productCode.isNotEmpty()) {
-        registerProblem(ProductCodePrefixInBuild(descriptorPath))
+    if (untilBuildParsed.isJustASingleComponent()) {
+      if (untilBuildParsed.baselineVersion == MAGIC_BASELINE_NUMBER) {
+        registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuild, untilBuildParsed.baselineVersion))
+        return // fast fail for magic number, no additional checks needed
       }
+
+      registerProblem(InvalidUntilBuildWithJustBranch(descriptorPath, untilBuild))
+    }
+
+    verifyIdeBuildComponentsRanges(
+      ideVersion = untilBuildParsed,
+      baselineLowerBound = 0,
+      attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
+      descriptorPath = descriptorPath
+    )
+    verifyUntilBuildBaselineMagicNumbers(untilBuildParsed, untilBuild, descriptorPath)
+
+    if (untilBuildParsed.productCode.isNotEmpty()) {
+      registerProblem(ProductCodePrefixInBuild(descriptorPath))
     }
   }
 
   private fun ProblemRegistrar.verifyUntilBuildBaselineMagicNumbers(
-    baseline: Int,
+    untilBuild: IdeVersion,
     untilBuildValue: String,
-    untilBuild: IdeVersion?,
     descriptorPath: String
   ) {
+    if (untilBuildValue == BUILD_NUMBER || untilBuildValue == SNAPSHOT) {
+      return
+    }
+    val baseline = untilBuild.baselineVersion
     if (baseline >= FIRST_YEARLY_BASED_RELEASE_NUMBER_YEAR) {
       registerProblem(InvalidUntilBuild(descriptorPath, untilBuildValue, untilBuild))
-    } else if (baseline == 999) {
-      registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuildValue, baseline.toString()))
+    } else if (baseline == MAGIC_BASELINE_NUMBER) {
+      registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuildValue, baseline))
     } else if (baseline >= SUSPICIOUS_UNTIL_BASELINE_LOWER_BOUND) {
       registerProblem(SuspiciousUntilBuild(untilBuildValue))
     } else {
       verifyInThreeReleasesPerYear(untilBuildValue, baselineVersion = baseline)
-    }
-  }
-
-  private fun ProblemRegistrar.verifyMagicNumber(untilBuildValue: String, descriptorPath: String): ValidationResult {
-    val untilBuild = untilBuildValue.toIntOrNull() ?: return ValidationResult.NOT_APPLICABLE
-    return if (untilBuild >= 999) {
-      registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuildValue, untilBuildValue))
-      INVALID
-    } else {
-      VALID
-    }
-  }
-
-  private enum class ValidationResult {
-    VALID, INVALID, NOT_APPLICABLE
-  }
-
-  private fun ProblemRegistrar.verifySingleComponentUntilBuild(untilBuild: String, descriptorPath: String) {
-    try {
-      val untilBuildNumber = untilBuild.toInt()
-      verifyUntilBuildBaselineMagicNumbers(untilBuildNumber, untilBuild, untilBuild = null, descriptorPath)
-    } catch (e: NumberFormatException) {
-      registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
     }
   }
 
@@ -190,15 +168,8 @@ class PluginSinceUntilRangeVerifier {
     }
   }
 
-  private fun isSpecialSingleComponent(untilBuild: String): Boolean {
-    return BUILD_NUMBER == untilBuild || SNAPSHOT == untilBuild
-  }
-
-  private fun isJustASingleComponent(untilBuild: String): Boolean {
-    if (!untilBuild.contains('.') && untilBuild.isNotBlank()) {
-      return true
-    }
-    val components = untilBuild.split('.').size
-    return components == 1
+  private fun IdeVersion.isJustASingleComponent(): Boolean {
+    val meaningfulComponents = components.filter { it != 0 }
+    return meaningfulComponents.size == 1
   }
 }

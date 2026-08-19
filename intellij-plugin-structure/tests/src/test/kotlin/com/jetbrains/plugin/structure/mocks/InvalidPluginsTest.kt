@@ -843,13 +843,170 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
   }
 
   @Test
+  fun `since baseline component out of range`() {
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="129.1"/>"""
+      },
+      expectedProblems = listOf(IdeBuildComponentsOutOfRange(
+        ideVersion = IdeVersion.createIdeVersion("129.1"),
+        failedComponent = 129,
+        range = 130..999,
+        attributeName = IdeaVersionBean.SINCE_BUILD_ATTRIBUTE_NAME,
+        descriptorPath = "plugin.xml"
+      ))
+    )
+
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="1000.1"/>"""
+      },
+      expectedProblems = listOf(IdeBuildComponentsOutOfRange(
+        ideVersion = IdeVersion.createIdeVersion("1000.1"),
+        failedComponent = 1000,
+        range = 130..999,
+        attributeName = IdeaVersionBean.SINCE_BUILD_ATTRIBUTE_NAME,
+        descriptorPath = "plugin.xml"
+      ))
+    )
+  }
+
+  @Test
+  fun `since build component out of range`() {
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="231.100000"/>"""
+      },
+      expectedProblems = listOf(IdeBuildComponentsOutOfRange(
+        ideVersion = IdeVersion.createIdeVersion("231.100000"),
+        failedComponent = 100000,
+        range = 0..99999,
+        attributeName = IdeaVersionBean.SINCE_BUILD_ATTRIBUTE_NAME,
+        descriptorPath = "plugin.xml"
+      ))
+    )
+  }
+
+
+  @Test
+  fun `since third component out of range`() {
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="231.1.10000"/>"""
+      },
+      expectedProblems = listOf(IdeBuildComponentsOutOfRange(
+        ideVersion = IdeVersion.createIdeVersion("231.1.10000"),
+        failedComponent = 10000,
+        range = 0..9999,
+        attributeName = IdeaVersionBean.SINCE_BUILD_ATTRIBUTE_NAME,
+        descriptorPath = "plugin.xml"
+      ))
+    )
+  }
+
+
+  @Test
+  fun `until baseline component out of range`() {
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="231.1" until-build="1000.1"/>"""
+      },
+      expectedProblems = listOf(
+        IdeBuildComponentsOutOfRange(
+          ideVersion = IdeVersion.createIdeVersion("1000.1"),
+          failedComponent = 1000,
+          range = 0..999,
+          attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
+          descriptorPath = "plugin.xml"
+        ),
+        SuspiciousUntilBuild(
+          untilBuild = "1000.1",
+          additionalMessage = ""
+        )
+      )
+    )
+
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="231.1" until-build="1000"/>"""
+      },
+      expectedProblems = listOf(
+        InvalidUntilBuildWithJustBranch(
+          descriptorPath = "plugin.xml",
+          untilBuild = "1000"
+        ),
+        IdeBuildComponentsOutOfRange(
+          ideVersion = IdeVersion.createIdeVersion("1000"),
+          failedComponent = 1000,
+          range = 0..999,
+          attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
+          descriptorPath = "plugin.xml"
+        ),
+        SuspiciousUntilBuild(
+          untilBuild = "1000",
+          additionalMessage = ""
+        )
+      )
+    )
+  }
+
+  @Test
+  fun `until build component out of range`() {
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="231.1" until-build="231.100000"/>"""
+      },
+      expectedProblems = listOf(IdeBuildComponentsOutOfRange(
+        ideVersion = IdeVersion.createIdeVersion("231.100000"),
+        failedComponent = 100000,
+        range = 0..99999,
+        attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
+        descriptorPath = "plugin.xml"
+      ))
+    )
+  }
+
+
+  @Test
+  fun `until third component out of range`() {
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="231.1" until-build="231.1.10000"/>"""
+      },
+      expectedProblems = listOf(IdeBuildComponentsOutOfRange(
+        ideVersion = IdeVersion.createIdeVersion("231.1.10000"),
+        failedComponent = 10000,
+        range = 0..9999,
+        attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
+        descriptorPath = "plugin.xml"
+      ))
+    )
+  }
+
+  @Test
+  fun `until build special constant`() {
+    `test valid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="231.1" until-build="__BUILD_NUMBER__"/>"""
+      }
+    )
+
+    `test valid plugin xml`(
+      perfectXmlBuilder.modify {
+        ideaVersion = """<idea-version since-build="231.1" until-build="SNAPSHOT"/>"""
+      }
+    )
+  }
+
+
+  @Test
   fun `until build is a 999`() {
     val suspiciousUntilBuild = "999"
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="241" />"""
       }, listOf(
-            InvalidUntilBuildWithMagicNumber(PLUGIN_XML, suspiciousUntilBuild, "999"),
+            InvalidUntilBuildWithMagicNumber(PLUGIN_XML, suspiciousUntilBuild, 999),
         )
     )
   }
@@ -915,7 +1072,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
   @Test
   fun `until build is a 999 dot star`() {
     val suspiciousUntilBuild = "999.*"
-    val magicNumber = "999"
+    val magicNumber = 999
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         ideaVersion = """<idea-version until-build="$suspiciousUntilBuild" since-build="241" />"""
