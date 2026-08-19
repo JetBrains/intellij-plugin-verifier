@@ -1,6 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
-
 plugins {
   war
   idea
@@ -18,13 +15,6 @@ kotlin {
 tasks {
   publishToMavenLocal {
     dependsOn(test)
-  }
-}
-
-tasks.withType<KotlinCompile>().configureEach {
-  compilerOptions {
-    apiVersion = KotlinVersion.KOTLIN_2_2
-    languageVersion = KotlinVersion.KOTLIN_2_2
   }
 }
 
