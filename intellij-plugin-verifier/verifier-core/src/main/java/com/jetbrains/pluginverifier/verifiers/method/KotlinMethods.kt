@@ -8,13 +8,20 @@ import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import kotlinx.metadata.KmClass
 import kotlinx.metadata.jvm.KotlinClassMetadata
 import kotlinx.metadata.jvm.Metadata
+import kotlinx.metadata.jvm.getterSignature
+import kotlinx.metadata.jvm.setterSignature
 import kotlinx.metadata.jvm.signature
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.AnnotationNode
+import org.objectweb.asm.tree.MethodInsnNode
 
 object KotlinMethods {
   private const val CAPACITY = 100L
+
+  private const val DEFAULT_IMPLS_SUFFIX = "\$DefaultImpls"
 
   private val cache: Cache<MethodLocation, Boolean> = Caffeine.newBuilder()
     .maximumSize(CAPACITY)
@@ -38,10 +45,21 @@ object KotlinMethods {
    * compile to the exact same instructions as the synthesized bridge, so no bytecode shape can
    * distinguish the two cases in general.
    *
-   * Instead, this reads the class's own `@kotlin.Metadata` annotation (the compiler's structured
-   * record of what the *source* actually declared, via `kotlinx-metadata-jvm`) and checks whether
-   * this method is present in the class's own declared functions. If it isn't, the compiler must
-   * have synthesized it -- regardless of which lowering strategy produced its bytecode.
+   * Neither signal is sufficient on its own, so this requires **both** to agree:
+   *
+   * 1. The class's own `@kotlin.Metadata` annotation (the compiler's structured record of what the
+   *    *source* actually declared, via `kotlinx-metadata-jvm`) does not list this method. This is
+   *    what rules out a developer-authored trivial override, which no bytecode shape can exclude.
+   * 2. The method's body actually forwards to an interface's default implementation. This is what
+   *    positively establishes that the method *is* a bridge, rather than merely being absent from
+   *    the metadata.
+   *
+   * Requiring (2) matters because "absent from metadata" covers far more than bridges: metadata
+   * tracks constructors and property accessors in [KmClass.constructors] and [KmClass.properties]
+   * rather than [KmClass.functions], and synthetic `name$default` overloads are not listed at all.
+   * Classifying any of those as a bridge would silently disable the argument-type, return-type and
+   * local-variable checks that [MethodArgumentTypesVerifier], [MethodReturnTypeVerifier] and
+   * [MethodLocalVarsVerifier] skip for default methods.
    */
   fun Method.isKotlinDefaultMethod(): Boolean {
     val method: Method = this
@@ -54,23 +72,60 @@ object KotlinMethods {
       return false
     }
 
+    // A constructor or a static initializer is never an interface default method.
+    if (isConstructor || isClassInitializer) {
+      return false
+    }
+
     val metadataAnnotation = containingClassFile.annotations
       .firstOrNull { it.desc == "Lkotlin/Metadata;" }
       ?: return false // filter non-Kotlin classes
 
     val kmClass = metadataAnnotation.toKmClassOrNull() ?: return false
 
-    val isDeclaredByThisClass = kmClass.functions
-      .mapNotNull { it.signature }
-      .any { it.name == name && it.descriptor == descriptor }
-
-    // Kotlin's metadata only lists functions the source actually declared in this class. If this
-    // method isn't among them, it wasn't written by a developer -- the compiler synthesized it,
-    // most commonly as a compatibility bridge for an inherited-but-unoverridden default method.
-    return !isDeclaredByThisClass
+    return !isDeclaredBy(kmClass) && forwardsToInterfaceDefaultImplementation()
   }
 
-  private fun AnnotationNode.toKmClassOrNull(): kotlinx.metadata.KmClass? {
+  /**
+   * Whether the Kotlin source of this class declared this method itself, in any member position:
+   * an ordinary function, a constructor, or a property accessor.
+   */
+  private fun Method.isDeclaredBy(kmClass: KmClass): Boolean {
+    val declaredSignatures = kmClass.functions.mapNotNull { it.signature } +
+      kmClass.constructors.mapNotNull { it.signature } +
+      kmClass.properties.flatMap { listOfNotNull(it.getterSignature, it.setterSignature) }
+
+    return declaredSignatures.any { it.name == name && it.descriptor == descriptor }
+  }
+
+  /**
+   * Whether this method's body hands the call off to an interface's own default implementation of
+   * the same method, which is what every Kotlin default-method lowering emits:
+   *
+   * * legacy and `-Xjvm-default=all-compatibility` lowering call the static holder,
+   *   `INVOKESTATIC SomeInterface$DefaultImpls.method(...)`;
+   * * newer compatibility lowering calls the interface method directly,
+   *   `INVOKESPECIAL SomeInterface.method(...)`.
+   *
+   * Forwarding to anything else -- a method on this same class (`name$default` overloads) or an
+   * `INVOKEINTERFACE` call through a delegate (`class Foo : Bar by delegate`) -- is not a default
+   * method bridge.
+   */
+  private fun Method.forwardsToInterfaceDefaultImplementation(): Boolean =
+    instructions.any { it is MethodInsnNode && it.forwardsTo(name) }
+
+  private fun MethodInsnNode.forwardsTo(bridgedMethodName: String): Boolean {
+    if (name != bridgedMethodName) {
+      return false
+    }
+    return when (opcode) {
+      Opcodes.INVOKESTATIC -> owner.endsWith(DEFAULT_IMPLS_SUFFIX)
+      Opcodes.INVOKESPECIAL -> itf
+      else -> false
+    }
+  }
+
+  private fun AnnotationNode.toKmClassOrNull(): KmClass? {
     val metadata = toMetadata()
     if (metadata.metadataVersion.isEmpty()) {
       return null
