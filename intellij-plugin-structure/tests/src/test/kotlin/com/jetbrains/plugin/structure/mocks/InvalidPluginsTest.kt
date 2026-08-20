@@ -891,47 +891,19 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
 
 
   @Test
-  fun `until baseline component out of range`() {
+  fun `until baseline component contains magic number`() {
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         ideaVersion = """<idea-version since-build="231.1" until-build="1000.1"/>"""
       },
-      expectedProblems = listOf(
-        IdeBuildComponentsOutOfRange(
-          ideVersion = IdeVersion.createIdeVersion("1000.1"),
-          failedComponent = 1000,
-          range = 0..999,
-          attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
-          descriptorPath = "plugin.xml"
-        ),
-        SuspiciousUntilBuild(
-          untilBuild = "1000.1",
-          additionalMessage = ""
-        )
-      )
+      expectedProblems = listOf(InvalidUntilBuildWithMagicNumber(PLUGIN_XML, "1000.1", 1000))
     )
 
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
         ideaVersion = """<idea-version since-build="231.1" until-build="1000"/>"""
       },
-      expectedProblems = listOf(
-        InvalidUntilBuildWithJustBranch(
-          descriptorPath = "plugin.xml",
-          untilBuild = "1000"
-        ),
-        IdeBuildComponentsOutOfRange(
-          ideVersion = IdeVersion.createIdeVersion("1000"),
-          failedComponent = 1000,
-          range = 0..999,
-          attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
-          descriptorPath = "plugin.xml"
-        ),
-        SuspiciousUntilBuild(
-          untilBuild = "1000",
-          additionalMessage = ""
-        )
-      )
+      expectedProblems = listOf(InvalidUntilBuildWithMagicNumber(PLUGIN_XML, "1000", 1000))
     )
   }
 
