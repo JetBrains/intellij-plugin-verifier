@@ -24,6 +24,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 class CachingJarFileSystemProviderTest {
@@ -311,7 +312,8 @@ class CachingJarFileSystemProviderTest {
     assertTrue("Raw filesystem rawFs must stay open while fs2 is idle but still cached", rawFs.isOpen)
 
     fs2.onCacheRemoval()
-    assertFalse("Raw filesystem rawFs must close after the last wrapper is evicted", rawFs.isOpen)
+    // fs1's Caffeine removal notification may still be queued on the cache executor.
+    assertEventuallyClosed("Raw filesystem rawFs must close after the last wrapper is evicted", rawFs)
 
     fileSystemProvider.close()
   }
@@ -347,7 +349,8 @@ class CachingJarFileSystemProviderTest {
     // Close the reopened wrapper first. This used to decrement only the URI-level count,
     // leaving rawFs2 open until a stale wrapper released rawFs1.
     fs1.close()
-    assertFalse("Reopened raw filesystem rawFs2 must close with fs1 eviction", rawFs2.isOpen)
+    // The eviction callback can arrive after close(), so wait for its observable effect.
+    assertEventuallyClosed("Reopened raw filesystem rawFs2 must close with fs1 eviction", rawFs2)
 
     fs2.close()
     fs2.onCacheRemoval()
@@ -362,6 +365,15 @@ class CachingJarFileSystemProviderTest {
     val fsCache = fsCacheField.get(this) as Cache<String, FsHandleFileSystem>
     fsCache.invalidate(jarPath.toJarFileUri().toString())
     fsCache.cleanUp()
+  }
+
+  private fun assertEventuallyClosed(message: String, fileSystem: FileSystem) {
+    val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+
+    while (fileSystem.isOpen && System.nanoTime() < deadline) {
+      Thread.sleep(100)
+    }
+    assertFalse(message, fileSystem.isOpen)
   }
 
   // Regression: MP-7468. Targets the TOCTOU window in `unwrapped` — the FS is open at the
