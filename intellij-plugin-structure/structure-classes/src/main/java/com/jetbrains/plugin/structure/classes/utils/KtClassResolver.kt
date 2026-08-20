@@ -27,8 +27,8 @@ class KtClassResolver {
   }
 
   private val ClassNode.ktClassNode: KtClassNode?
-    get() = findMetadataAnnotation(this)
-      ?.let { annotation -> getKtClassNode(this, annotation) }
+    get() = findMetadataAnnotation(this)?.let { annotation ->
+      getKtClassNode(this, annotation) }
 
   private fun getKtClassNode(classNode: ClassNode, metadataAnnotation: Metadata): KtClassNode? {
     return readMetadata(classNode, metadataAnnotation)?.let { metadata ->
