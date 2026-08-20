@@ -122,6 +122,7 @@ class EduPluginManager private constructor(private val extractDirectory: Path) :
           programmingLanguageId = programmingLanguageId,
           programmingLanguageVersion = this.programmingLanguageVersion,
           environment = this.environment,
+          environmentSettings = this.environmentSettings,
           isPrivate = this.isPrivate ?: false,
           certification = this.certification,
           eduStat = EduStat.fromDescriptor(this),
