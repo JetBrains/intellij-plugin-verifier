@@ -19,7 +19,12 @@ import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.MethodInsnNode
 
 object KotlinMethods {
-  private const val CAPACITY = 100L
+  /**
+   * Sized to survive concurrent verification: [isKotlinDefaultMethod] is asked about every method
+   * by three verifiers, on as many threads as `intellij.plugin.verifier.concurrency.level` allows,
+   * so a cache of a hundred booleans evicts an entry before its second reader arrives.
+   */
+  private const val CAPACITY = 16_384L
 
   private const val DEFAULT_IMPLS_SUFFIX = "\$DefaultImpls"
 
@@ -77,13 +82,22 @@ object KotlinMethods {
       return false
     }
 
+    // Evaluate the bytecode signal first: it is a single instruction scan, and it is false for
+    // almost every method, whereas reading `@kotlin.Metadata` below deserializes the *whole*
+    // class's metadata. That deserialization costs ~16 us per call, and every method of every
+    // Kotlin class reaches this code (three verifiers ask about each method), so ordering the
+    // cheap test first keeps metadata parsing to the handful of genuine bridge candidates.
+    if (!forwardsToInterfaceDefaultImplementation()) {
+      return false
+    }
+
     val metadataAnnotation = containingClassFile.annotations
       .firstOrNull { it.desc == "Lkotlin/Metadata;" }
       ?: return false // filter non-Kotlin classes
 
     val kmClass = metadataAnnotation.toKmClassOrNull() ?: return false
 
-    return !isDeclaredBy(kmClass) && forwardsToInterfaceDefaultImplementation()
+    return !isDeclaredBy(kmClass)
   }
 
   /**
