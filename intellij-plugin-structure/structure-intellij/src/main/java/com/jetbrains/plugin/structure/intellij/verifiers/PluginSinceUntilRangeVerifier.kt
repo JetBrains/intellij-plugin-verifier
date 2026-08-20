@@ -4,16 +4,7 @@ import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.CompatibilityUtils
 import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
-import com.jetbrains.plugin.structure.intellij.problems.IdeBuildComponentsOutOfRange
-import com.jetbrains.plugin.structure.intellij.problems.InvalidSinceBuild
-import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuild
-import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithJustBranch
-import com.jetbrains.plugin.structure.intellij.problems.InvalidUntilBuildWithMagicNumber
-import com.jetbrains.plugin.structure.intellij.problems.NonexistentReleaseInUntilBuild
-import com.jetbrains.plugin.structure.intellij.problems.ProductCodePrefixInBuild
-import com.jetbrains.plugin.structure.intellij.problems.SinceBuildCannotContainWildcard
-import com.jetbrains.plugin.structure.intellij.problems.SinceBuildNotSpecified
-import com.jetbrains.plugin.structure.intellij.problems.SuspiciousUntilBuild
+import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersionImpl
 
@@ -116,13 +107,15 @@ class PluginSinceUntilRangeVerifier {
       return
     }
 
-    if (untilBuildParsed.isJustASingleComponent()) {
+    if (untilBuildParsed.isJustASingleComponent() || untilBuild.isZeroOnlySingleComponent()) {
       if (untilBuildParsed.baselineVersion == MAGIC_BASELINE_NUMBER) {
         registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuild, untilBuildParsed.baselineVersion))
         return // fast fail for magic number, no additional checks needed
       }
 
       registerProblem(InvalidUntilBuildWithJustBranch(descriptorPath, untilBuild))
+    } else if (untilBuildParsed.isZeroOnly()) {
+      registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
     }
 
     verifyIdeBuildComponentsRanges(
@@ -168,8 +161,16 @@ class PluginSinceUntilRangeVerifier {
     }
   }
 
+  private fun String.isZeroOnlySingleComponent(): Boolean {
+    return !contains('.') && isNotBlank() && all { it == '0' }
+  }
+
   private fun IdeVersion.isJustASingleComponent(): Boolean {
     val meaningfulComponents = components.filter { it != 0 }
     return meaningfulComponents.size == 1
+  }
+
+  private fun IdeVersion.isZeroOnly(): Boolean {
+    return components.all { it == 0 }
   }
 }

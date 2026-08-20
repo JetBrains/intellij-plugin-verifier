@@ -1,22 +1,7 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.problems.ContainsNewlines
-import com.jetbrains.plugin.structure.base.problems.DescriptionNotStartingWithLatinCharacters
-import com.jetbrains.plugin.structure.base.problems.HttpLinkInDescription
-import com.jetbrains.plugin.structure.base.problems.IncorrectZipOrJarFile
-import com.jetbrains.plugin.structure.base.problems.InvalidPluginName
-import com.jetbrains.plugin.structure.base.problems.MultiplePluginDescriptors
-import com.jetbrains.plugin.structure.base.problems.NotBoolean
-import com.jetbrains.plugin.structure.base.problems.NotNumber
-import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
-import com.jetbrains.plugin.structure.base.problems.PluginProblem
-import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
-import com.jetbrains.plugin.structure.base.problems.PropertyWithDefaultValue
-import com.jetbrains.plugin.structure.base.problems.TooLongPropertyValue
-import com.jetbrains.plugin.structure.base.problems.UnableToExtractZip
-import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
-import com.jetbrains.plugin.structure.base.problems.VendorCannotBeEmpty
+import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.getRandomInvalidXmlBasedPluginName
@@ -996,6 +981,30 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         ideaVersion = """<idea-version since-build="231.1" until-build="SNAPSHOT"/>"""
       }
     )
+  }
+
+  @Test
+  fun `until build zero-only single-component values are invalid`() {
+    listOf("0", "000").forEach { zeroOnlyUntilBuild ->
+      `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="231.1" until-build="$zeroOnlyUntilBuild"/>"""
+        },
+        listOf(InvalidUntilBuildWithJustBranch(PLUGIN_XML, zeroOnlyUntilBuild))
+      )
+    }
+  }
+
+  @Test
+  fun `until build zero-only multi-component values are invalid`() {
+    listOf("0.0", "0.0.0").forEach { zeroOnlyUntilBuild ->
+      `test invalid plugin xml`(
+        perfectXmlBuilder.modify {
+          ideaVersion = """<idea-version since-build="231.1" until-build="$zeroOnlyUntilBuild"/>"""
+        },
+        listOf(InvalidUntilBuild(PLUGIN_XML, zeroOnlyUntilBuild))
+      )
+    }
   }
 
 
