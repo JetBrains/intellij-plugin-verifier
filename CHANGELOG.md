@@ -25,7 +25,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 - Close `ZipFile` handles eagerly in `ZipFileHandler` to release archive files after use to restore compatibility with Windows ([#1521](https://github.com/JetBrains/intellij-plugin-verifier/pull/1521), [#1549](https://github.com/JetBrains/intellij-plugin-verifier/pull/1549))
 
-- Plugin Verifier no longer checks that operating system (`com.intellij.modules.os.*`) and CPU architecture (`com.intellij.modules.arch.*`) constraint modules are present in the verification IDE. The declarations remain available as plugin dependencies so Marketplace can use them when calculating OS and architecture compatibility.
+- Add `-ignore-os-arch` to skip checking that operating system (`com.intellij.modules.os.*`) and CPU architecture (`com.intellij.modules.arch.*`) constraint modules are present in the verification IDE. The checks are enabled by default; the declarations remain available as plugin dependencies so Marketplace can use them when calculating OS and architecture compatibility.
 
 ## 1.408 - 2026-07-02
 

@@ -19,7 +19,10 @@ private const val INTELLIJ_MODULE_PREFIX = "com.intellij.modules."
 /**
  * Builds the dependencies graph using the [dependencyFinder].
  */
-class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
+class DependenciesGraphBuilder(
+  private val dependencyFinder: DependencyFinder,
+  private val ignoreOsArch: Boolean = false
+) {
 
   private companion object {
     const val CORE_IDE_PLUGIN_ID = "com.intellij"
@@ -66,9 +69,9 @@ class DependenciesGraphBuilder(private val dependencyFinder: DependencyFinder) {
       dependencies += getRecursiveOptionalDependencies(vertex.plugin).map { PluginDependencyImpl(it.id, true, it.isModule) }
 
       for (pluginDependency in dependencies) {
-        // OS and architecture dependencies are Marketplace compatibility metadata. Do not resolve them into the
+        // OS and architecture dependencies are Marketplace compatibility metadata. They can be excluded from the
         // verification graph because the verifier IDE only contains modules matching its own platform.
-        if (pluginDependency.isPlatformConstraint) continue
+        if (ignoreOsArch && pluginDependency.isPlatformConstraint) continue
 
         val resolvedDependency = resolveDependency(pluginProvider, vertex, pluginDependency, graph, missingDependencies)
           ?: continue

@@ -342,6 +342,11 @@ Here is the full syntax of the command:
     The prefixes of classes from the external libraries.
     The Plugin Verifier will not report 'No such class' for classes of these packages.
 
+* `-ignore-os-arch`
+
+    Ignore missing operating system (`com.intellij.modules.os.*`) and CPU architecture (`com.intellij.modules.arch.*`) constraint modules during verification.
+    These checks are enabled by default.
+
 * `-plugins-to-check-all-builds (-p-all)`
 
     The plugin IDs to check with the IDE.

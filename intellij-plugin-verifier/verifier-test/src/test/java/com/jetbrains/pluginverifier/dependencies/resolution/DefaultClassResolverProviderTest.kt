@@ -110,7 +110,8 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       failingDependencyFinder,
       ideDescriptor,
       packageFilter,
-      archiveManager = archiveManager
+      archiveManager = archiveManager,
+      ignoreOsArch = true
     )
     val platformConstraints = listOf(
       PluginDependencyImpl("com.intellij.modules.os.windows", false, true),
@@ -121,6 +122,34 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
     val classResolver = resolverProvider.provide(constrainedPlugin.getDetails())
 
     assertTrue(classResolver.dependenciesGraph.missingDependencies.isEmpty())
+  }
+
+  @Test
+  fun `platform constraints are reported as missing by default`() {
+    val ide = buildIdeWithBundledPlugins(
+      version = "IU-243.21565.193",
+      productInfo = productInfoJsonIU243,
+      hasModuleDescriptors = true
+    )
+    val ideDescriptor = IdeDescriptor.create(ide.idePath, defaultJdkPath = null, ideFileLock = null)
+    val resolverProvider = DefaultClassResolverProvider(
+      dependencyFinder,
+      ideDescriptor,
+      packageFilter,
+      archiveManager = archiveManager
+    )
+    val platformConstraints = listOf(
+      PluginDependencyImpl("com.intellij.modules.os.windows", false, true),
+      PluginDependencyImpl("com.intellij.modules.arch.arm64", false, true)
+    )
+    val constrainedPlugin = plugin.copy(dependencies = platformConstraints)
+
+    val classResolver = resolverProvider.provide(constrainedPlugin.getDetails())
+
+    assertEquals(
+      setOf("com.intellij.modules.os.windows", "com.intellij.modules.arch.arm64"),
+      classResolver.dependenciesGraph.getDirectMissingDependencies().map { it.dependency.id }.toSet()
+    )
   }
 
   @Test

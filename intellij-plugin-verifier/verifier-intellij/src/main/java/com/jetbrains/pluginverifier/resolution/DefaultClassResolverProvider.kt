@@ -45,7 +45,8 @@ class DefaultClassResolverProvider(
   private val externalClassesPackageFilter: PackageFilter,
   private val additionalClassResolvers: List<Resolver> = emptyList(),
   private val pluginDetailsBasedResolverProvider: PluginDetailsBasedResolverProvider = DefaultPluginDetailsBasedResolverProvider(),
-  archiveManager: PluginArchiveManager
+  archiveManager: PluginArchiveManager,
+  private val ignoreOsArch: Boolean = false
 ) : ClassResolverProvider {
 
   private val secondaryResolver = ideDescriptor.ideResolver as? ProductInfoClassResolver
@@ -74,8 +75,9 @@ class DefaultClassResolverProvider(
       secondaryResolver,
       ideModulePredicate,
       dependenciesModifier,
-      // Excludes OS and architecture constraint modules from verification-only dependency resolution
-      dependencyFilter = { !it.isPlatformConstraint }
+      // OS and architecture constraint modules are Marketplace compatibility metadata. They can be ignored when
+      // requested because the verifier IDE only contains modules matching its own platform.
+      dependencyFilter = { !ignoreOsArch || !it.isPlatformConstraint }
     )
   }
 
@@ -103,7 +105,8 @@ class DefaultClassResolverProvider(
         || ideResolver !is DependencyTreeAwareResolver
         ) {
         val (depGraph, dependenciesResults) =
-          DependenciesGraphBuilder(dependencyFinder).buildDependenciesGraph(checkedPluginDetails.idePlugin, ideDescriptor.ide)
+          DependenciesGraphBuilder(dependencyFinder, ignoreOsArch)
+            .buildDependenciesGraph(checkedPluginDetails.idePlugin, ideDescriptor.ide)
         closeableResources += dependenciesResults
 
         // Resolve dependencies via DependencyFinder mechanism.
