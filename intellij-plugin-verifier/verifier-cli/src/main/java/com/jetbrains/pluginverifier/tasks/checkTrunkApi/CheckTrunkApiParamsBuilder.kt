@@ -150,7 +150,8 @@ class CheckTrunkApiParamsBuilder(
       releaseFinder,
       releaseIdeDescriptor,
       externalClassesPackageFilter,
-      archiveManager = archiveManager
+      archiveManager = archiveManager,
+      ignoreOsArch = opts.ignoreOsArch
     )
     val releaseVerificationDescriptors = releasePluginsSet.pluginsToCheck.map {
       PluginVerificationDescriptor.IDE(releaseIdeDescriptor, releaseResolverProvider, it)
@@ -167,7 +168,8 @@ class CheckTrunkApiParamsBuilder(
       trunkFinder,
       trunkIdeDescriptor,
       externalClassesPackageFilter,
-      archiveManager = archiveManager
+      archiveManager = archiveManager,
+      ignoreOsArch = opts.ignoreOsArch
     )
     val trunkVerificationDescriptors = trunkPluginsSet.pluginsToCheck.map {
       PluginVerificationDescriptor.IDE(trunkIdeDescriptor, trunkResolverProvider, it)

@@ -132,7 +132,7 @@ class IdeDependencyFinderTest {
   }
 
   @Test
-  fun `os and arch constraints are not reported as missing dependencies`() {
+  fun `os and arch constraints are reported as missing dependencies by default`() {
     val startPlugin = MockIdePlugin(
       pluginId = "myPlugin",
       pluginVersion = "1.0",
@@ -144,6 +144,29 @@ class IdeDependencyFinderTest {
 
     val ide = MockIde(IdeVersion.createIdeVersion("IU-262.8665.81"))
     val (dependenciesGraph, _) = DependenciesGraphBuilder(MockDependencyFinder()).buildDependenciesGraph(startPlugin, ide)
+
+    assertEquals(
+      setOf("com.intellij.modules.os.mac", "com.intellij.modules.arch.arm64"),
+      dependenciesGraph.getDirectMissingDependencies().map { it.dependency.id }.toSet()
+    )
+  }
+
+  @Test
+  fun `os and arch constraints can be ignored`() {
+    val startPlugin = MockIdePlugin(
+      pluginId = "myPlugin",
+      pluginVersion = "1.0",
+      dependencies = listOf(
+        PluginDependencyImpl("com.intellij.modules.os.mac", false, true),
+        PluginDependencyImpl("com.intellij.modules.arch.arm64", false, true)
+      )
+    )
+
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-262.8665.81"))
+    val (dependenciesGraph, _) = DependenciesGraphBuilder(
+      MockDependencyFinder(),
+      ignoreOsArch = true
+    ).buildDependenciesGraph(startPlugin, ide)
 
     assertEquals(emptySet<MissingDependency>(), dependenciesGraph.getDirectMissingDependencies())
   }

@@ -49,6 +49,7 @@ class CheckIdeParamsBuilder(
         ideDescriptor,
         externalClassesPackageFilter,
         archiveManager = archiveManager,
+        ignoreOsArch = opts.ignoreOsArch,
       )
 
       val verificationDescriptors = pluginsSet.pluginsToCheck.map {

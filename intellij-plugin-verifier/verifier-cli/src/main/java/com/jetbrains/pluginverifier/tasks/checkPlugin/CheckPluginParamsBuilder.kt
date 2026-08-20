@@ -73,7 +73,8 @@ class CheckPluginParamsBuilder(
         dependencyFinder,
         ideDescriptor,
         externalClassesPackageFilter,
-        archiveManager = archiveManager
+        archiveManager = archiveManager,
+        ignoreOsArch = opts.ignoreOsArch
       )
 
       pluginsSet.pluginsToCheck.map {
