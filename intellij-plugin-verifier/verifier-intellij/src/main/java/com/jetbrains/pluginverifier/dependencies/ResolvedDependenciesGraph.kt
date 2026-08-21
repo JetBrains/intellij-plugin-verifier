@@ -66,17 +66,12 @@ data class ResolvedDependenciesGraph(
   val edges: Set<ResolvedDependencyEdge>,
   val missingDependencies: Map<ResolvedDependencyNode, Set<ResolvedMissingDependency>>
 ) {
-  // Adjacency index: getEdgesFrom is invoked once per node when pretty-printing the graph,
-  // and a linear scan over all edges each time makes that traversal O(V*E).
-  private val edgesFromNode: Map<ResolvedDependencyNode, List<ResolvedDependencyEdge>> by lazy {
-    edges.groupBy { it.from }
-  }
-
   fun getDirectMissingDependencies(): Set<ResolvedMissingDependency> =
     missingDependencies.getOrDefault(verifiedPlugin, emptySet())
 
+  @Deprecated("Build an index from 'edges' when repeated lookups are needed")
   fun getEdgesFrom(node: ResolvedDependencyNode): List<ResolvedDependencyEdge> =
-    edgesFromNode[node].orEmpty()
+    edges.filter { it.from == node }
 }
 
 /**

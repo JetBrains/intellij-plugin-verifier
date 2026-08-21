@@ -26,6 +26,7 @@ import com.jetbrains.pluginverifier.dependencies.ResolvedDependencyNode
 class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependenciesGraph) {
 
   private val visitedNodes = hashSetOf<ResolvedDependencyNode>()
+  private val edgesFromNode = graph.edges.groupBy { it.from }
 
   fun prettyPresentation(): String {
     val result = StringBuilder()
@@ -41,7 +42,7 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
       .getOrDefault(currentNode, emptySet())
       .sortedBy { it.dependency.id }
 
-    val directEdges = graph.getEdgesFrom(currentNode)
+    val directEdges = edgesFromNode[currentNode].orEmpty()
       .sortedWith(
         compareBy<ResolvedDependencyEdge> { if (it.dependency.isOptional) 1 else -1 }
           .thenBy { if (it.dependency.isModule) 1 else -1 }
