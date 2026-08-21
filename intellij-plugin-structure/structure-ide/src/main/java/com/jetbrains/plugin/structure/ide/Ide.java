@@ -59,7 +59,7 @@ public abstract class Ide implements PluginProvider {
    */
   @Nullable
   @Override
-  final public IdePlugin findPluginById(@NotNull String pluginId) {
+  public IdePlugin findPluginById(@NotNull String pluginId) {
     return getBundledPluginsById().get(pluginId);
   }
 
@@ -71,7 +71,7 @@ public abstract class Ide implements PluginProvider {
    */
   @Nullable
   @Override
-  final public IdePlugin findPluginByModule(@NotNull String moduleId) {
+  public IdePlugin findPluginByModule(@NotNull String moduleId) {
     return getBundledPluginsByModuleId().get(moduleId);
   }
 
