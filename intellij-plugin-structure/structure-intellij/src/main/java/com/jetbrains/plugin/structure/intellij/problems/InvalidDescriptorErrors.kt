@@ -145,7 +145,7 @@ class SinceBuildCannotContainWildcard(
   detailedMessage = "The <since-build> parameter ($sinceBuild) must not contain a wildcard (dot-star suffix) '.*')."
 ) {
   override val level
-    get() = Level.WARNING
+    get() = Level.UNACCEPTABLE_WARNING
 
   override val hint = ProblemSolutionHint(
     example = "<since-build>241</vendor>",
