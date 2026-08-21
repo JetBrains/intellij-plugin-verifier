@@ -10,6 +10,9 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.PluginVerificationTarget
+import com.jetbrains.pluginverifier.dependencies.resolution.CompositeDependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.LastVersionSelector
+import com.jetbrains.pluginverifier.dependencies.resolution.RepositoryDependencyFinder
 import com.jetbrains.pluginverifier.dependencies.resolution.createIdeBundledOrPluginRepositoryDependencyFinder
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.options.CmdOpts
@@ -42,7 +45,14 @@ class CheckIdeParamsBuilder(
 
       val missingCompatibleVersionsProblems = findMissingCompatibleVersionsProblems(ideDescriptor.ideVersion, pluginsSet)
 
-      val dependencyFinder = createIdeBundledOrPluginRepositoryDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
+      val overrideRepository = OptionsParser.parseOverrideDependencyRepository(opts, archiveManager)
+      val baseDependencyFinder = createIdeBundledOrPluginRepositoryDependencyFinder(ideDescriptor.ide, pluginRepository, pluginDetailsCache)
+      val dependencyFinder = if (overrideRepository != null) {
+        val overrideFinder = RepositoryDependencyFinder(overrideRepository, LastVersionSelector(), pluginDetailsCache)
+        CompositeDependencyFinder(listOf(overrideFinder, baseDependencyFinder))
+      } else {
+        baseDependencyFinder
+      }
 
       val classResolverProvider = DefaultClassResolverProvider(
         dependencyFinder,
