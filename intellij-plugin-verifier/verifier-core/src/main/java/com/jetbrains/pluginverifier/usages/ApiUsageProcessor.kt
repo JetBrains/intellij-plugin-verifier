@@ -17,7 +17,8 @@ interface ApiUsageProcessor {
     resolvedClass: ClassFile,
     context: VerificationContext,
     referrer: ClassFileMember,
-    classUsageType: ClassUsageType
+    classUsageType: ClassUsageType,
+    instructionNode: AbstractInsnNode? = null
   ) = Unit
 
   fun processMethodInvocation(

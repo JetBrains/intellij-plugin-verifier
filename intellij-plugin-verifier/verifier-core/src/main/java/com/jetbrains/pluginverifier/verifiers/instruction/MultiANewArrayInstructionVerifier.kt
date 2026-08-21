@@ -19,6 +19,6 @@ class MultiANewArrayInstructionVerifier : InstructionVerifier {
 
     //During resolution of the symbolic reference to the class, array, or interface type,
     // any of the exceptions documented in §5.4.3.1 can be thrown.
-    context.classResolver.resolveClassChecked(className, method, context)
+    context.classResolver.resolveClassChecked(className, method, context, instructionNode)
   }
 }

@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.usages.ApiUsageProcessor
+import com.jetbrains.pluginverifier.usages.util.KotlinInlinedCodeDetector
 import com.jetbrains.pluginverifier.usages.util.isFromVerifiedPlugin
 import com.jetbrains.pluginverifier.verifiers.ProblemRegistrar
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
@@ -26,15 +27,23 @@ abstract class BaseInternalApiUsageProcessor(
 ) :
   ApiUsageProcessor {
 
+  private val inlinedCodeDetector = KotlinInlinedCodeDetector()
+
   override fun processClassReference(
     classReference: ClassReference,
     resolvedClass: ClassFile,
     context: VerificationContext,
     referrer: ClassFileMember,
-    classUsageType: ClassUsageType
+    classUsageType: ClassUsageType,
+    instructionNode: AbstractInsnNode?
   ) {
     val usageLocation = referrer.location
     if (isInternal(resolvedClass, context, usageLocation) && context.isFromVerifiedPlugin(referrer)) {
+      if (instructionNode != null && referrer is Method
+        && inlinedCodeDetector.isInlinedFromOutsidePlugin(instructionNode, referrer, context)) {
+        return
+      }
+
       internalUsageRegistrar.registerClass(classReference, resolvedClass.location, usageLocation)
     }
   }
@@ -48,6 +57,10 @@ abstract class BaseInternalApiUsageProcessor(
   ) {
     val usageLocation = callerMethod.location
     if (isInternal(resolvedMethod, context, usageLocation)) {
+      if (inlinedCodeDetector.isInlinedFromOutsidePlugin(instructionNode, callerMethod, context)) {
+        return
+      }
+
       // Check if the method is an override, and if so check top declaration
       val canBeOverridden = !resolvedMethod.isStatic && !resolvedMethod.isPrivate
         && resolvedMethod.name != "<init>" && resolvedMethod.name != "<clinit>"
