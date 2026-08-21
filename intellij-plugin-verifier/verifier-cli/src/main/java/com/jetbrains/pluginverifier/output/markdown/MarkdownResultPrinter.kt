@@ -153,7 +153,7 @@ private operator fun Markdown.plus(result: PluginVerificationResult.Verified) {
 
 private fun Markdown.printVerificationResult(result: PluginVerificationResult.Verified) = with(result) {
   printVerificationResult("Plugin structure warnings", pluginStructureWarnings, PluginStructureWarning::describe)
-  printVerificationResult("Missing dependencies", dependenciesGraph.getDirectMissingDependencies(), ResolvedMissingDependency::describe)
+  printVerificationResult("Missing dependencies", directMissingMandatoryDependencies.toSet(), ResolvedMissingDependency::describe)
   printVerificationResult("Compatibility warnings", compatibilityWarnings, CompatibilityWarning::describe)
   printVerificationResult("Compatibility problems", compatibilityProblems, CompatibilityProblem::describe)
   printVerificationResult("Deprecated API usages", deprecatedUsages, DeprecatedApiUsage::describe)

@@ -204,27 +204,26 @@ class TeamCityResultPrinter(
   private fun getMessageCompatibilityProblemsAndMissingDependencies(
     plugin: PluginInfo,
     problems: Set<CompatibilityProblem>,
-    missingDependencies: List<ResolvedMissingDependency>
+    missingMandatoryDependencies: List<ResolvedMissingDependency>
   ): String? {
-    val mandatoryMissingDependencies = missingDependencies.filterNot { it.dependency.isOptional }
-    if (problems.isNotEmpty() || mandatoryMissingDependencies.isNotEmpty()) {
+    if (problems.isNotEmpty() || missingMandatoryDependencies.isNotEmpty()) {
       return buildString {
         appendLine(getPluginOverviewLink(plugin))
         if (problems.isNotEmpty()) {
           appendLine("$plugin has ${problems.size} compatibility " + "problem".pluralize(problems.size))
         }
 
-        if (missingDependencies.isNotEmpty()) {
+        if (missingMandatoryDependencies.isNotEmpty()) {
           if (problems.isNotEmpty()) {
             appendLine("Some problems might have been caused by missing dependencies: ")
           }
-          for (missingDependency in missingDependencies) {
+          for (missingDependency in missingMandatoryDependencies) {
             appendLine("Missing dependency ${missingDependency.dependency}: ${missingDependency.missingReason}")
           }
         }
 
         val notFoundClassesProblems = problems.filterIsInstance<ClassNotFoundProblem>()
-        val problemsContent = if (missingDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
+        val problemsContent = if (missingMandatoryDependencies.isNotEmpty() && notFoundClassesProblems.size > 20) {
           getTooManyUnknownClassesProblems(notFoundClassesProblems, problems)
         } else {
           getProblemsContent(problems)

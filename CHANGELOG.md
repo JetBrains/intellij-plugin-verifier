@@ -10,6 +10,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
+- Stop reporting unresolved optional dependencies in the `Missing dependencies` section of _plain_ and _Markdown_ reports, matching _HTML_ and _TeamCity_ reports. Now, all reports list only missing MANDATORY dependencies. ([MP-2974](https://youtrack.jetbrains.com/issue/MP-2974))
+
 ## 1.409 - 2026-07-17
 
 ### Changed
