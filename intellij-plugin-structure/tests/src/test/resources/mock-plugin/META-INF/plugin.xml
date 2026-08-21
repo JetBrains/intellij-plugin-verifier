@@ -7,7 +7,7 @@
     <version>1.0.0-beta-1038-IJ141-17</version>
     <vendor email="vendor_email" url="https://www.jetbrains.com">JetBrains s.r.o.</vendor>
 
-    <idea-version since-build="141.1009.5" until-build="141.9999999"/>
+    <idea-version since-build="141.1009.5" until-build="141.99999"/>
 
     <product-descriptor code="PABC" release-date="20180118" release-version="10" eap="true" optional="true"/>
 

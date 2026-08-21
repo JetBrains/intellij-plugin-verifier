@@ -6,7 +6,11 @@ package com.jetbrains.plugin.structure.intellij.beans;
 
 import jakarta.xml.bind.annotation.XmlAttribute;
 
+
 public class IdeaVersionBean {
-  @XmlAttribute(name = "since-build") public String sinceBuild;
-  @XmlAttribute(name = "until-build") public String untilBuild;
+  public static final String SINCE_BUILD_ATTRIBUTE_NAME = "since-build";
+  public static final String UNTIL_BUILD_ATTRIBUTE_NAME = "until-build";
+
+  @XmlAttribute(name = SINCE_BUILD_ATTRIBUTE_NAME) public String sinceBuild;
+  @XmlAttribute(name = UNTIL_BUILD_ATTRIBUTE_NAME) public String untilBuild;
 }

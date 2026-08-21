@@ -61,8 +61,7 @@ class InvalidSinceBuild(
   sinceBuild: String
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
-  detailedMessage = "The <since-build> parameter ($sinceBuild) format is invalid. Ensure it is greater than <130> " +
-                    "and represents the actual build numbers."
+  detailedMessage = "The <since-build> parameter ($sinceBuild) format is invalid. Ensure it represents the actual build numbers."
 ) {
   override val level
     get() = Level.ERROR
@@ -108,7 +107,7 @@ class InvalidUntilBuildWithJustBranch(
 class InvalidUntilBuildWithMagicNumber(
   descriptorPath: String,
   untilBuild: String,
-  magicNumber: String
+  magicNumber: Int
 ) : InvalidUntilBuild(
   descriptorPath = descriptorPath,
   untilBuild,
@@ -163,6 +162,25 @@ class ErroneousSinceBuild(
 ) {
   override val hint = ProblemSolutionHint(
     example = "since-build=\"182.4132.789\"",
+    documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
+  )
+
+  override val level: Level
+    get() = Level.ERROR
+}
+
+class IdeBuildComponentsOutOfRange(
+  ideVersion: IdeVersion,
+  failedComponent: Int,
+  range: IntRange,
+  attributeName: String,
+  descriptorPath: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The `$failedComponent` component of the <$attributeName> parameter ($ideVersion) is out of range [${range.first}; ${range.last}]."
+) {
+  override val hint = ProblemSolutionHint(
+    example = "$attributeName=\"182.4132.789\"",
     documentationUrl = "https://plugins.jetbrains.com/docs/intellij/build-number-ranges.html"
   )
 

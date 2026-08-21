@@ -8,7 +8,6 @@ import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.intellij.beans.*
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.verifiers.*
-import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
@@ -28,7 +27,7 @@ private val PLUGIN_NAME_RESTRICTED_WORDS = setOf(
 
 class PluginBeanValidator {
   private val pluginIdVerifier = PluginIdVerifier()
-  private val pluginUntilBuildVerifier = PluginUntilBuildVerifier()
+  private val pluginSinceUntilRangeVerifier = PluginSinceUntilRangeVerifier()
   private val pluginProductReleaseVersionVerifier = ProductReleaseVersionVerifier()
 
   fun validate(pluginBean: PluginBean, validationContext: ValidationContext, validateDescriptor: Boolean) {
@@ -44,8 +43,7 @@ class PluginBeanValidator {
       validateDescription(bean.description)
       validateChangeNotes(bean.changeNotes)
       validateVendor(bean.vendor)
-      validateIdeaVersion(bean.ideaVersion)
-      pluginUntilBuildVerifier.verify(bean, descriptorPath, ::registerProblem)
+      pluginSinceUntilRangeVerifier.verify(bean, descriptorPath, ::registerProblem)
       validateProductDescriptor(bean, bean.productDescriptor)
     }
     validateDependencies(bean.dependencies)
@@ -143,40 +141,6 @@ class PluginBeanValidator {
       registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL, vendorBean.email))
     }
     validatePropertyLength("vendor email", vendorBean.email, MAX_PROPERTY_LENGTH)
-  }
-
-  private fun ValidationContext.validateIdeaVersion(versionBean: IdeaVersionBean?) {
-    if (versionBean == null) {
-      registerProblem(PropertyNotSpecified("idea-version", descriptorPath))
-      return
-    }
-
-    val sinceBuild = versionBean.sinceBuild
-    validateSinceBuild(sinceBuild)
-  }
-
-  private fun ValidationContext.validateSinceBuild(sinceBuild: String?) {
-    if (sinceBuild == null) {
-      registerProblem(SinceBuildNotSpecified(descriptorPath))
-    } else {
-      val sinceBuildParsed = IdeVersion.createIdeVersionIfValid(sinceBuild)
-      if (sinceBuildParsed == null) {
-        registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
-      } else {
-        if (sinceBuild.endsWith(".*")) {
-          registerProblem(SinceBuildCannotContainWildcard(descriptorPath, sinceBuildParsed))
-        }
-        if (sinceBuildParsed.baselineVersion < 130) {
-          registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
-        }
-        if (sinceBuildParsed.baselineVersion > 999) {
-          registerProblem(ErroneousSinceBuild(descriptorPath, sinceBuildParsed))
-        }
-        if (sinceBuildParsed.productCode.isNotEmpty()) {
-          registerProblem(ProductCodePrefixInBuild(descriptorPath))
-        }
-      }
-    }
   }
 
   private fun ValidationContext.validateProductDescriptor(plugin: PluginBean, productDescriptor: ProductDescriptorBean?) {

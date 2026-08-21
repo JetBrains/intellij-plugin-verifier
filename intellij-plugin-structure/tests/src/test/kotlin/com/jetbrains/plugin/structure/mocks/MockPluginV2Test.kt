@@ -109,7 +109,7 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
 
     assertEquals("Plugin description must be at least 40 characters long", plugin.description)
     assertEquals(IdeVersion.createIdeVersion("141.1009.5"), plugin.sinceBuild)
-    assertEquals(IdeVersion.createIdeVersion("141.9999999"), plugin.untilBuild)
+    assertEquals(IdeVersion.createIdeVersion("141.99999"), plugin.untilBuild)
 
     assertNull(plugin.changeNotes)
     assertFalse(plugin.useIdeClassLoader)
@@ -118,7 +118,7 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
   }
 
   private fun checkIdeCompatibility(plugin: IdePlugin) {
-    //  <idea-version since-build="141.1009.5" until-build="141.9999999"/>
+    //  <idea-version since-build="141.1009.5" until-build="141.99999"/>
     assertTrue(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("141.1009.5")))
     assertTrue(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("141.99999")))
     assertFalse(plugin.isCompatibleWithIde(IdeVersion.createIdeVersion("142.0")))
