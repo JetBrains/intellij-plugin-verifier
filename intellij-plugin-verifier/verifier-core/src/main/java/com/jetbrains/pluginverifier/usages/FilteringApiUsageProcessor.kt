@@ -10,6 +10,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileMember
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassUsageType
 import com.jetbrains.pluginverifier.verifiers.resolution.Field
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.isKotlinDefaultMethodCompatibilityStub
 import org.objectweb.asm.tree.AbstractInsnNode
 
 abstract class FilteringApiUsageProcessor(private val usageFilter: ApiUsageFilter) : ApiUsageProcessor {
@@ -31,6 +32,7 @@ abstract class FilteringApiUsageProcessor(private val usageFilter: ApiUsageFilte
     callerMethod: Method,
     context: VerificationContext
   ) {
+    if (callerMethod.isKotlinDefaultMethodCompatibilityStub(resolvedMethod)) return
     if (usageFilter.allow(resolvedMethod, instructionNode, callerMethod, context)) return
     doProcessMethodInvocation(methodReference, resolvedMethod, instructionNode, callerMethod, context)
   }
