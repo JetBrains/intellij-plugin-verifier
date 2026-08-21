@@ -13,6 +13,7 @@ private const val BUILD_NUMBER = "__BUILD_NUMBER__"
 private const val SNAPSHOT = "SNAPSHOT"
 
 private const val SINCE_BASELINE_LOWER_BOUND = 130
+private const val UNTIL_BASELINE_LOWER_BOUND = 130
 
 private const val SUSPICIOUS_UNTIL_BASELINE_LOWER_BOUND = 281
 private const val FIRST_YEARLY_BASED_RELEASE_NUMBER_BASELINE = 162
@@ -107,20 +108,18 @@ class PluginSinceUntilRangeVerifier {
       return
     }
 
-    if (untilBuildParsed.isJustASingleComponent() || untilBuild.isZeroOnlySingleComponent()) {
+    if (untilBuildParsed.isJustASingleComponent()) {
       if (untilBuildParsed.baselineVersion == MAGIC_BASELINE_NUMBER) {
         registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuild, untilBuildParsed.baselineVersion))
         return // fast fail for magic number, no additional checks needed
       }
 
       registerProblem(InvalidUntilBuildWithJustBranch(descriptorPath, untilBuild))
-    } else if (untilBuildParsed.isZeroOnly()) {
-      registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
     }
 
     verifyIdeBuildComponentsRanges(
       ideVersion = untilBuildParsed,
-      baselineLowerBound = 0,
+      baselineLowerBound = UNTIL_BASELINE_LOWER_BOUND,
       attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
       descriptorPath = descriptorPath
     )
@@ -161,16 +160,8 @@ class PluginSinceUntilRangeVerifier {
     }
   }
 
-  private fun String.isZeroOnlySingleComponent(): Boolean {
-    return !contains('.') && isNotBlank() && all { it == '0' }
-  }
-
   private fun IdeVersion.isJustASingleComponent(): Boolean {
     val meaningfulComponents = components.filter { it != 0 }
     return meaningfulComponents.size == 1
-  }
-
-  private fun IdeVersion.isZeroOnly(): Boolean {
-    return components.all { it == 0 }
   }
 }

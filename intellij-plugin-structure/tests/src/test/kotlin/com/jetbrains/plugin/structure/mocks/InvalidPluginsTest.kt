@@ -427,9 +427,9 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
   fun `since build less then until `() {
     `test invalid plugin xml`(
       perfectXmlBuilder.modify {
-        ideaVersion = """<idea-version since-build="131.1" until-build="120.1"/>"""
+        ideaVersion = """<idea-version since-build="131.1" until-build="130.1"/>"""
       },
-      listOf(SinceBuildGreaterThanUntilBuild("plugin.xml", IdeVersion.createIdeVersion("131.1"), IdeVersion.createIdeVersion("120.1")))
+      listOf(SinceBuildGreaterThanUntilBuild("plugin.xml", IdeVersion.createIdeVersion("131.1"), IdeVersion.createIdeVersion("130.1")))
     )
   }
 
@@ -819,7 +819,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         IdeBuildComponentsOutOfRange(
           ideVersion = IdeVersion.createIdeVersion("2018.*"),
           failedComponent = 2018,
-          range = 0..999,
+          range = 130..999,
           attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
           descriptorPath = "plugin.xml"
         )
@@ -900,7 +900,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         IdeBuildComponentsOutOfRange(
           ideVersion = IdeVersion.createIdeVersion("1000.1"),
           failedComponent = 1000,
-          range = 0..999,
+          range = 130..999,
           attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
           descriptorPath = "plugin.xml"
         ),
@@ -923,7 +923,7 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         IdeBuildComponentsOutOfRange(
           ideVersion = IdeVersion.createIdeVersion("1000"),
           failedComponent = 1000,
-          range = 0..999,
+          range = 130..999,
           attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
           descriptorPath = "plugin.xml"
         ),
@@ -990,7 +990,13 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         perfectXmlBuilder.modify {
           ideaVersion = """<idea-version since-build="231.1" until-build="$zeroOnlyUntilBuild"/>"""
         },
-        listOf(InvalidUntilBuildWithJustBranch(PLUGIN_XML, zeroOnlyUntilBuild))
+        listOf(IdeBuildComponentsOutOfRange(
+          ideVersion = IdeVersion.createIdeVersion(zeroOnlyUntilBuild),
+          failedComponent = 0,
+          range = 130..999,
+          attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
+          descriptorPath = "plugin.xml"
+        ))
       )
     }
   }
@@ -1002,7 +1008,13 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
         perfectXmlBuilder.modify {
           ideaVersion = """<idea-version since-build="231.1" until-build="$zeroOnlyUntilBuild"/>"""
         },
-        listOf(InvalidUntilBuild(PLUGIN_XML, zeroOnlyUntilBuild))
+        listOf(IdeBuildComponentsOutOfRange(
+          ideVersion = IdeVersion.createIdeVersion(zeroOnlyUntilBuild),
+          failedComponent = 0,
+          range = 130..999,
+          attributeName = IdeaVersionBean.UNTIL_BUILD_ATTRIBUTE_NAME,
+          descriptorPath = "plugin.xml"
+        ))
       )
     }
   }
