@@ -177,7 +177,6 @@ class CachingPluginDependencyResolverProviderTest {
 
     val resolverProvider = CachingPluginDependencyResolverProvider(ide)
     val resolver = resolverProvider.getResolver(plugin)
-    val corePluginCacheHit = 0L
     with(resolverProvider.getStats()) {
       assertNotNull(this); this!!
       /*
@@ -185,7 +184,7 @@ class CachingPluginDependencyResolverProviderTest {
         Cache was not even hit, since the resolver for the second invocation is already in the list
         of modules since the first invocation
        */
-      assertEquals(corePluginCacheHit, hitCount())
+      assertEquals(0, hitCount())
       /*
         1) "com.example.somePlugin" (plugin itself),
         2) "com.intellij" unlocked
@@ -201,8 +200,11 @@ class CachingPluginDependencyResolverProviderTest {
        */
       assertEquals(7,  missCount())
     }
+    listOf("com.example.somePlugin")
+      .forEach {
+        assertTrue("Dependency resolver must cache $it", resolverProvider.dependencyResolverCacheContains(it))
+      }
     listOf(
-      "com.example.somePlugin",
       "com.intellij",
       "com.intellij/product.jar",
       "com.intellij.modules.json",
@@ -210,13 +212,13 @@ class CachingPluginDependencyResolverProviderTest {
       "com.intellij.modules.platform",
       "com.intellij.modules.lang")
       .forEach {
-        assertTrue("Resolver must cache $it", resolverProvider.contains(it))
+        assertTrue("Plugin resolver must cache $it", resolverProvider.pluginResolverCacheContains(it))
       }
 
     with(resolverProvider.getStats()) {
       assertNotNull(this); this!!
-      // 7 elements from several lines above checking `resolverProvider.contains`
-      assertEquals(7, hitCount())
+      // Inspecting the cache contents above does not affect cache statistics.
+      assertEquals(0, hitCount())
     }
 
     with(resolver) {
@@ -228,10 +230,8 @@ class CachingPluginDependencyResolverProviderTest {
 
     with(resolverProvider.getStats()) {
       assertNotNull(this); this!!
-      /*
-        Existing 7 checks from the previous half of the test, plus one for "com.intellij"
-       */
-      assertEquals(8, hitCount())
+      // The resolver for "com.intellij" is already cached.
+      assertEquals(1, hitCount())
       /*
         Existing 7 from the previous half of the test, plus:
         8) "com.example.BetterJava" (plugin itself)
@@ -372,6 +372,94 @@ class CachingPluginDependencyResolverProviderTest {
       assertTrue(resolver.containsResolverName("com.example.Beta"))
       assertFalse(resolver.containsResolverName("com.example.Alpha"))
     }
+  }
+
+  @Test
+  fun `transitive dependency resolver and plugin classpath resolver use different cache entries`() {
+    val betaFiles = buildZipFile(temporaryFolder.newTemporaryFile("cache-collision/beta.jar")) {
+      dirs("com/example/beta") {
+        file("BetaAction.class", createEmptyClass("com/example/beta/BetaAction"))
+      }
+    }
+    val betaPlugin = MockIdePlugin(
+      pluginId = "com.example.Beta",
+      pluginVersion = "1.0",
+      originalFile = betaFiles,
+      classpath = Classpath.of(listOf(betaFiles))
+    )
+    val alphaPlugin = MockIdePlugin(
+      pluginId = "com.example.Alpha",
+      dependencies = dependency("com.example.Beta")
+    )
+    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
+    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(betaPlugin))
+    val betaAction = "com/example/beta/BetaAction"
+
+    val transitiveDependencyFirst = CachingPluginDependencyResolverProvider(ide)
+    transitiveDependencyFirst.getResolver(betaPlugin)
+    assertTrue(transitiveDependencyFirst.getResolver(alphaPlugin).containsClass(betaAction))
+
+    val pluginClasspathFirst = CachingPluginDependencyResolverProvider(ide)
+    pluginClasspathFirst.getResolver(alphaPlugin)
+    val cachedBetaResolver = pluginClasspathFirst.getCachedPluginResolver(betaPlugin)
+    assertNotNull(cachedBetaResolver)
+    assertTrue(cachedBetaResolver!!.containsClass(betaAction))
+    assertFalse(pluginClasspathFirst.getResolver(betaPlugin).containsClass(betaAction))
+  }
+
+  @Test
+  fun `transitive dependency resolver cache distinguishes plugin versions`() {
+    val pluginV1 = MockIdePlugin(
+      pluginId = "com.example.Versioned",
+      pluginVersion = "1.0",
+      dependencies = dependency("com.intellij.modules.json")
+    )
+    val pluginV2 = MockIdePlugin(
+      pluginId = "com.example.Versioned",
+      pluginVersion = "2.0",
+      dependencies = dependency("com.intellij.java")
+    )
+    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
+    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, javaPlugin, jsonPlugin))
+    val resolverProvider = CachingPluginDependencyResolverProvider(ide)
+
+    val resolverV1 = resolverProvider.getResolver(pluginV1)
+    assertTrue(resolverV1.containsClass("com/intellij/json/JsonNamesValidator"))
+    assertFalse(resolverV1.containsClass("com/intellij/openapi/actionSystem/DataKeys"))
+
+    val resolverV2 = resolverProvider.getResolver(pluginV2)
+    assertTrue(resolverV2.containsClass("com/intellij/openapi/actionSystem/DataKeys"))
+    assertFalse(resolverV2.containsClass("com/intellij/json/JsonNamesValidator"))
+  }
+
+  @Test
+  fun `transitive dependency resolver cache distinguishes artifacts with same id and version`() {
+    val artifactsDir = temporaryFolder.newFolder("same-version").toPath()
+    val pluginArtifact1 = artifactsDir.resolve("plugin-1.zip")
+    val pluginArtifact2 = artifactsDir.resolve("plugin-2.zip")
+    val plugin1 = MockIdePlugin(
+      pluginId = "com.example.SameVersion",
+      pluginVersion = "1.0",
+      originalFile = pluginArtifact1,
+      dependencies = dependency("com.intellij.modules.json")
+    )
+    val plugin2 = MockIdePlugin(
+      pluginId = "com.example.SameVersion",
+      pluginVersion = "1.0",
+      originalFile = pluginArtifact2,
+      dependencies = dependency("com.intellij.java")
+    )
+    val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
+    val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, javaPlugin, jsonPlugin))
+    val resolverProvider = CachingPluginDependencyResolverProvider(ide)
+
+    val resolver1 = resolverProvider.getResolver(plugin1)
+    assertTrue(resolver1.containsClass("com/intellij/json/JsonNamesValidator"))
+    assertFalse(resolver1.containsClass("com/intellij/openapi/actionSystem/DataKeys"))
+
+    val resolver2 = resolverProvider.getResolver(plugin2)
+    assertTrue(resolver2.containsClass("com/intellij/openapi/actionSystem/DataKeys"))
+    assertFalse(resolver2.containsClass("com/intellij/json/JsonNamesValidator"))
   }
 
   @Test
