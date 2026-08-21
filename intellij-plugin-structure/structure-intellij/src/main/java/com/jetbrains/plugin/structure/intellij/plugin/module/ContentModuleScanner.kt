@@ -27,22 +27,46 @@ class ContentModuleScanner(private val fileSystemProvider: JarFileSystemProvider
   private val ideaPluginXmlDetector = createIdeaPluginXmlDetector()
 
   fun getContentModules(pluginArtifact: Path) : ContentModules {
-    val libDir = pluginArtifact.resolve(LIB_DIRECTORY)
-    if (!libDir.exists()) {
-      return ContentModules(pluginArtifact, emptyList())
-    }
-    val jarPaths = libDir.listJars()
-    val moduleJarPaths = libDir.resolve(MODULES_DIR).listJars()
-    val contentModules = (jarPaths + moduleJarPaths).flatMap { jarPath ->
+    val jarPaths = getLibJarPaths(pluginArtifact)
+      ?: return ContentModules(pluginArtifact, emptyList())
+    val contentModules = jarPaths.flatMap { jarPath ->
       getJarContentModules(jarPath)
     }
 
     return ContentModules(pluginArtifact, contentModules)
   }
 
+  /**
+   * Maps a plugin descriptor file name to the JARs of [pluginArtifact] that contain such a descriptor.
+   *
+   * Keys are bare file names: a descriptor is either `META-INF/plugin.xml` or a Plugin Model V2 module
+   * descriptor in a JAR root, hence its file name identifies it within a single plugin artifact.
+   * This allows a plugin loader to open only those JARs that can provide a requested descriptor
+   * instead of every JAR of the plugin.
+   */
+  fun getDescriptorIndex(pluginArtifact: Path): Map<String, List<Path>> {
+    val jarPaths = getLibJarPaths(pluginArtifact) ?: return emptyMap()
+    return jarPaths
+      .flatMap { jarPath -> getJarDescriptorNames(jarPath).map { descriptorName -> descriptorName to jarPath } }
+      .groupBy({ (descriptorName, _) -> descriptorName }, { (_, jarPath) -> jarPath })
+  }
+
+  private fun getLibJarPaths(pluginArtifact: Path): List<Path>? {
+    val libDir = pluginArtifact.resolve(LIB_DIRECTORY)
+    if (!libDir.exists()) {
+      return null
+    }
+    return libDir.listJars() + libDir.resolve(MODULES_DIR).listJars()
+  }
+
   private fun getJarContentModules(jarPath: Path): List<ContentModule> = withPluginJar(jarPath) { jar ->
     jar.resolveDescriptors { it.isDescriptor() }
       .map { resolveContentModule(jarPath, it) }
+  } ?: emptyList()
+
+  private fun getJarDescriptorNames(jarPath: Path): List<String> = withPluginJar(jarPath) { jar ->
+    jar.resolveDescriptors { it.isDescriptor() }
+      .map { it.fileName.toString() }
   } ?: emptyList()
 
   private fun resolveContentModule(jarPath: Path, descriptorPath: Path): ContentModule {
