@@ -107,11 +107,6 @@ class PluginSinceUntilRangeVerifier {
       return
     }
 
-    untilBuild.magicNumberSingleComponent()?.let { magicNumber ->
-      registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuild, magicNumber))
-      return
-    }
-
     if (untilBuildParsed.isJustASingleComponent() || untilBuild.isZeroOnlySingleComponent()) {
       if (untilBuildParsed.baselineVersion == MAGIC_BASELINE_NUMBER) {
         registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuild, untilBuildParsed.baselineVersion))
@@ -121,14 +116,6 @@ class PluginSinceUntilRangeVerifier {
       registerProblem(InvalidUntilBuildWithJustBranch(descriptorPath, untilBuild))
     } else if (untilBuildParsed.isZeroOnly()) {
       registerProblem(InvalidUntilBuild(descriptorPath, untilBuild))
-    }
-
-    if (!untilBuild.isSpecialConstant() && untilBuildParsed.hasMagicBaseline()) {
-      registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuild, untilBuildParsed.baselineVersion))
-      if (untilBuildParsed.productCode.isNotEmpty()) {
-        registerProblem(ProductCodePrefixInBuild(descriptorPath))
-      }
-      return
     }
 
     verifyIdeBuildComponentsRanges(
@@ -155,7 +142,7 @@ class PluginSinceUntilRangeVerifier {
     val baseline = untilBuild.baselineVersion
     if (baseline >= FIRST_YEARLY_BASED_RELEASE_NUMBER_YEAR) {
       registerProblem(InvalidUntilBuild(descriptorPath, untilBuildValue, untilBuild))
-    } else if (baseline >= MAGIC_BASELINE_NUMBER) {
+    } else if (baseline == MAGIC_BASELINE_NUMBER) {
       registerProblem(InvalidUntilBuildWithMagicNumber(descriptorPath, untilBuildValue, baseline))
     } else if (baseline >= SUSPICIOUS_UNTIL_BASELINE_LOWER_BOUND) {
       registerProblem(SuspiciousUntilBuild(untilBuildValue))
@@ -178,24 +165,9 @@ class PluginSinceUntilRangeVerifier {
     return !contains('.') && isNotBlank() && all { it == '0' }
   }
 
-  private fun String.magicNumberSingleComponent(): Int? {
-    if (contains('.') || isBlank()) {
-      return null
-    }
-    return toIntOrNull()?.takeIf { it >= MAGIC_BASELINE_NUMBER }
-  }
-
-  private fun String.isSpecialConstant(): Boolean {
-    return this == BUILD_NUMBER || this == SNAPSHOT
-  }
-
   private fun IdeVersion.isJustASingleComponent(): Boolean {
     val meaningfulComponents = components.filter { it != 0 }
     return meaningfulComponents.size == 1
-  }
-
-  private fun IdeVersion.hasMagicBaseline(): Boolean {
-    return baselineVersion in MAGIC_BASELINE_NUMBER until FIRST_YEARLY_BASED_RELEASE_NUMBER_YEAR
   }
 
   private fun IdeVersion.isZeroOnly(): Boolean {
