@@ -17,19 +17,19 @@ interface ServerDatabase : Closeable {
    * Provides a set of objects with the specified [elementType]
    * that will be persisted on the database shutdown.
    */
-  fun <T> openOrCreateSet(setName: String, elementType: ValueType<T>): MutableSet<T>
+  fun <T : Any> openOrCreateSet(setName: String, elementType: ValueType<T>): MutableSet<T>
 
   /**
    * Provides a map of objects with key types [keyType] and value types [valueType]
    * that will be persisted on the database shutdown.
    */
-  fun <K, V> openOrCreateMap(mapName: String, keyType: ValueType<K>, valueType: ValueType<V>): MutableMap<K, V>
+  fun <K : Any, V : Any> openOrCreateMap(mapName: String, keyType: ValueType<K>, valueType: ValueType<V>): MutableMap<K, V>
 
   /**
    * Provides a list of objects with key types [keyType]
    * that will be persisted on the database shutdown.
    */
-  fun <K> openOrCreateList(listName: String, keyType: ValueType<K>): MutableList<K>
+  fun <K : Any> openOrCreateList(listName: String, keyType: ValueType<K>): MutableList<K>
 
   /**
    * Flush allocated database resources and save data.

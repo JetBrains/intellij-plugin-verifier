@@ -1,4 +1,6 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -57,12 +59,12 @@ artifacts {
 }
 
 tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        jvmTarget = "11"
-        apiVersion = "1.4"
-        languageVersion = "1.4"
-        freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
-    }
+  compilerOptions {
+    jvmTarget = JvmTarget.JVM_11
+    apiVersion = KotlinVersion.KOTLIN_2_2
+    languageVersion = KotlinVersion.KOTLIN_2_2
+    freeCompilerArgs = listOf("-Xjvm-default=all-compatibility")
+  }
 }
 
 dependencies {
@@ -78,7 +80,7 @@ dependencies {
 
     implementation(sharedLibs.spullara.cliParser)
     implementation("org.apache.commons:commons-text:1.15.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:1.0-M1-1.4.0-rc")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
 }
 
 val copyMockIdes by tasks.registering(Copy::class) {

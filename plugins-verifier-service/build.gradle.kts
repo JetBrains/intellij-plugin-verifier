@@ -13,12 +13,6 @@ kotlin {
 }
 
 tasks {
-  compileKotlin {
-    kotlinOptions {
-      apiVersion = "1.4"
-      languageVersion = "1.4"
-    }
-  }
   publishToMavenLocal {
     dependsOn(test)
   }
