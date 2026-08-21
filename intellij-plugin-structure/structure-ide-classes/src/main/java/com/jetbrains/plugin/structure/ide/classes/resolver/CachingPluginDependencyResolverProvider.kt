@@ -41,8 +41,9 @@ class CachingPluginDependencyResolverProvider(
 
   private val dependencyTree = DependencyTree(pluginProvider, ideModulePredicate, dependencyFilter)
 
+  // Dependency resolvers retain substantially more state than plugin resolvers.
   private val dependencyResolverCache = Caffeine.newBuilder()
-    .maximumSize(DEFAULT_CACHE_SIZE)
+    .maximumSize(DEFAULT_CACHE_SIZE / 4)
     .recordStats()
     .build<PluginArtifactKey, Resolver>()
 
