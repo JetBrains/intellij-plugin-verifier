@@ -108,13 +108,13 @@ fun DependenciesGraph.toResolved(batchContext: PluginVerifierBatchContext? = nul
     ResolvedDependencyNode(node.id.dedup(), node.version.dedup(), aliases, isProductModule).dedup()
   }
 
-  val resolvedEdges = edges.mapTo(hashSetOf()) { edge ->
+  val resolvedEdges = java.util.Set.copyOf(edges.map { edge ->
     ResolvedDependencyEdge(
       nodeMap.getValue(edge.from),
       nodeMap.getValue(edge.to),
       ResolvedPluginDependency(edge.dependency.id.dedup(), edge.dependency.isOptional, edge.dependency.isModule).dedup()
     ).dedup()
-  }.dedup()
+  }).dedup()
 
   val resolvedMissingDeps = missingDependencies.entries.associate { (node, missing) ->
     nodeMap.getValue(node) to missing.mapTo(hashSetOf()) { md ->
