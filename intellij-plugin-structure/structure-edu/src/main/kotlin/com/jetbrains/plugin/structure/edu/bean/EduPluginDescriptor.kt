@@ -62,6 +62,8 @@ data class EduPluginDescriptor(
   val programmingLanguageVersion: String? = null,
   @JsonProperty(ENVIRONMENT)
   val environment: String? = null,
+  @JsonProperty(ENVIRONMENT_SETTINGS)
+  val environmentSettings: Map<String, String>? = null,
   @JsonProperty(ITEMS)
   val items: List<EduItem> = mutableListOf(),
   @JsonProperty(VENDOR)
