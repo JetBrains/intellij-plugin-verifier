@@ -171,10 +171,16 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       xmlId: StringPluginId,
       ideBuild: String,
       targetPath: File,
-      channel: String?
+      channel: String?,
+      os: OsFilter?,
+      arch: ArchFilter?
     ): File? {
-      LOG.debug("Downloading latest compatible plugin '{}' with IDE '{} 'to [{}] (channel: {})", xmlId, ideBuild, targetPath, channel)
-      return delegate.downloadLatestCompatiblePlugin(xmlId, ideBuild, targetPath, channel)
+      return delegate.downloadLatestCompatiblePlugin(xmlId, ideBuild, targetPath, channel, os, arch).also {
+        LOG.debug(
+          "Downloading latest compatible plugin '{}' with IDE '{} 'to [{}] (channel: {}, OS: {}, arch: {})",
+          xmlId, ideBuild, targetPath, channel, os, arch
+        )
+      }
     }
 
     override fun downloadLatestCompatiblePluginViaBlockMap(
@@ -182,10 +188,16 @@ class LoggingAndTracingPluginRepository(private val delegateRepository: PluginRe
       ideBuild: String,
       targetPath: File,
       oldFile: File,
-      channel: String?
+      channel: String?,
+      os: OsFilter?,
+      arch: ArchFilter?
     ): File? {
-      LOG.debug("Downloading latest compatible plugin '{}' with IDE '{} 'to [{}] (channel: {})", xmlId, ideBuild, targetPath, channel)
-      return delegate.downloadLatestCompatiblePluginViaBlockMap(xmlId, ideBuild, targetPath, oldFile, channel)
+      return delegate.downloadLatestCompatiblePluginViaBlockMap(xmlId, ideBuild, targetPath, oldFile, channel, os, arch).also {
+        LOG.debug(
+          "Downloading latest compatible plugin '{}' with IDE '{} 'to [{}] (channel: {}, OS: {}, arch: {}, via blockmap)",
+          xmlId, ideBuild, targetPath, channel, os, arch
+        )
+      }
     }
 
     override fun downloadViaBlockMap(
