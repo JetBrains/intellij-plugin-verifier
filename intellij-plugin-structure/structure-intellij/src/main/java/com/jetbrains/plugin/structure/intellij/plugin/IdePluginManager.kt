@@ -52,6 +52,7 @@ class IdePluginManager private constructor(
   private val moduleFromDescriptorLoader = pluginLoaderRegistry.get<ModuleFromDescriptorLoader.Context, ModuleFromDescriptorLoader>()
   private val jarModuleLoader = pluginLoaderRegistry.get<JarModuleLoader.Context, JarModuleLoader>()
   private val jarOrDirLoader = pluginLoaderRegistry.get<JarOrDirectoryPluginLoader.Context, JarOrDirectoryPluginLoader>()
+  private val libDirectoryLoader = pluginLoaderRegistry.get<LibDirectoryPluginLoader.Context, LibDirectoryPluginLoader>()
 
   private val contentModuleLoader = ContentModuleLoader(jarOrDirLoader, moduleFromDescriptorLoader)
 
@@ -210,11 +211,16 @@ class IdePluginManager private constructor(
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
-    val pluginCreator = jarOrDirLoader.loadPlugin(JarOrDirectoryPluginLoader.Context(pluginFile, descriptorPath, validateDescriptor, resourceResolver, null, problemResolver))
-    resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver, problemResolver)
-    resolveContentModules(pluginFile, pluginCreator, myResourceResolver, problemResolver)
+    try {
+      val pluginCreator = jarOrDirLoader.loadPlugin(JarOrDirectoryPluginLoader.Context(pluginFile, descriptorPath, validateDescriptor, resourceResolver, null, problemResolver))
+      resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver, problemResolver)
+      resolveContentModules(pluginFile, pluginCreator, myResourceResolver, problemResolver)
 
-    return pluginCreator
+      return pluginCreator
+    } finally {
+      //The 'lib' directory is indexed for the duration of a single plugin artifact parse only.
+      libDirectoryLoader.invalidateDescriptorIndex(pluginFile)
+    }
   }
 
   private fun getInvalidPluginFileCreator(pluginFileName: String, descriptorPath: String): PluginCreator {
