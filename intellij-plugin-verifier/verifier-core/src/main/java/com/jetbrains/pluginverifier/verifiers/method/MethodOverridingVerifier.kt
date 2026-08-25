@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.isKotlinDefaultMethodCompatibilityStub
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.WarningRegistrar
 
@@ -28,6 +29,7 @@ class MethodOverridingVerifier(private val methodOverridingProcessors: List<Meth
       VerificationContextWithSilentProblemRegistrar(context)
     )
     if (overriddenMethod != null && method.containingClassFile.name != overriddenMethod.containingClassFile.name) {
+      if (method.isKotlinDefaultMethodCompatibilityStub(overriddenMethod)) return
       for (processor in methodOverridingProcessors) {
         processor.processMethodOverriding(method, overriddenMethod, context)
       }

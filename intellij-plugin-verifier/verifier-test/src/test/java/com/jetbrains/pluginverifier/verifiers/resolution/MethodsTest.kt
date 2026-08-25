@@ -5,6 +5,8 @@ import com.jetbrains.pluginverifier.jdk.JdkDescriptorCreator
 import com.jetbrains.pluginverifier.tests.findMockPluginJarPath
 import com.jetbrains.pluginverifier.verifiers.resolution.classDump.InnerClassExampleDump
 import com.jetbrains.pluginverifier.verifiers.resolution.classDump.JavaEnumExampleDump
+import com.jetbrains.pluginverifier.verifiers.resolution.classDump.KotlinDefaultMethodInterfaceDump
+import com.jetbrains.pluginverifier.verifiers.resolution.classDump.KotlinDefaultMethodStubDump
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.MatcherAssert.assertThat
 import org.junit.Assert.*
@@ -12,10 +14,16 @@ import org.junit.Test
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Opcodes.ASM7
+import org.objectweb.asm.tree.AbstractInsnNode
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.FrameNode
 import org.objectweb.asm.tree.InsnNode
+import org.objectweb.asm.tree.LabelNode
+import org.objectweb.asm.tree.LineNumberNode
+import org.objectweb.asm.tree.MethodInsnNode
 import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.tree.VarInsnNode
 import java.nio.file.Path
 
 class MethodsTest {
@@ -242,6 +250,275 @@ class MethodsTest {
       assertEquals(1, annotations.size)
       assertEquals("Lorg/jetbrains/annotations/PropertyKey;", annotations[0].desc)
     }
+  }
+
+  @Test
+  fun `Kotlin ENABLE-mode dump fixtures parse and expose the expected methods`() {
+    val origin = object : FileOrigin {
+      override val parent = null
+    }
+
+    val interfaceClassNode = ClassNode(ASM7)
+    ClassReader(KotlinDefaultMethodInterfaceDump.dump()).accept(interfaceClassNode, 0)
+    val interfaceClassFile = ClassFileAsm(interfaceClassNode, origin)
+    assertEquals(setOf("entryPoint", "internalMethod"), interfaceClassFile.methods.map { it.name }.toSet())
+
+    val internalMethod = interfaceClassFile.methods.first { it.name == "internalMethod" }
+    assertTrue(internalMethod.annotations.any { it.desc == "Lorg/jetbrains/annotations/ApiStatus\$Internal;" })
+
+    val implClassNode = ClassNode(ASM7)
+    ClassReader(KotlinDefaultMethodStubDump.dump()).accept(implClassNode, 0)
+    val implClassFile = ClassFileAsm(implClassNode, origin)
+    assertEquals(setOf("<init>", "entryPoint", "internalMethod"), implClassFile.methods.map { it.name }.toSet())
+
+    val stubMethod = implClassFile.methods.first { it.name == "internalMethod" }
+    val realInstructions = stubMethod.instructions.filterNot {
+      it is LabelNode || it is LineNumberNode || it is FrameNode
+    }
+    assertEquals(3, realInstructions.size)
+    assertEquals(Opcodes.ALOAD, (realInstructions[0] as VarInsnNode).opcode)
+    val invoke = realInstructions[1] as MethodInsnNode
+    assertEquals(Opcodes.INVOKESPECIAL, invoke.opcode)
+    assertEquals("com/jetbrains/test/TestInterface", invoke.owner)
+    assertEquals("internalMethod", invoke.name)
+    assertTrue(invoke.itf)
+    assertEquals(Opcodes.RETURN, realInstructions[2].opcode)
+  }
+
+  @Test
+  fun `real Kotlin 2_2 ENABLE-mode compiler stub overriding an internal default method is detected as a compatibility stub`() {
+    val origin = object : FileOrigin {
+      override val parent = null
+    }
+
+    val interfaceClassNode = ClassNode(ASM7)
+    ClassReader(KotlinDefaultMethodInterfaceDump.dump()).accept(interfaceClassNode, 0)
+    val internalMethod = ClassFileAsm(interfaceClassNode, origin).methods.first { it.name == "internalMethod" }
+
+    val implClassNode = ClassNode(ASM7)
+    ClassReader(KotlinDefaultMethodStubDump.dump()).accept(implClassNode, 0)
+    val stubMethod = ClassFileAsm(implClassNode, origin).methods.first { it.name == "internalMethod" }
+
+    assertTrue(stubMethod.isKotlinDefaultMethodCompatibilityStub(internalMethod))
+  }
+
+  @Test
+  fun `compiler stub overriding a two-parameter default method with a wide-type parameter is detected as a compatibility stub`() {
+    val descriptor = "(JLjava/lang/String;)J"
+    val (overriddenMethod, overridingMethod) = buildOverriddenAndOverridingMethod(
+      overriddenClassName = "mock/plugin/stub/StubInterface",
+      overriddenClassAccess = Opcodes.ACC_PUBLIC or Opcodes.ACC_ABSTRACT or Opcodes.ACC_INTERFACE,
+      methodName = "combine",
+      descriptor = descriptor,
+      overriddenMethodInstructions = listOf(InsnNode(Opcodes.LCONST_0), InsnNode(Opcodes.LRETURN)),
+      overridingClassName = "mock/plugin/stub/StubImpl",
+      overridingMethodInstructions = listOf(
+        VarInsnNode(Opcodes.ALOAD, 0),
+        VarInsnNode(Opcodes.LLOAD, 1),
+        VarInsnNode(Opcodes.ALOAD, 3),
+        MethodInsnNode(Opcodes.INVOKESPECIAL, "mock/plugin/stub/StubInterface", "combine", descriptor, true),
+        InsnNode(Opcodes.LRETURN)
+      )
+    )
+
+    assertTrue(overridingMethod.isKotlinDefaultMethodCompatibilityStub(overriddenMethod))
+  }
+
+  @Test
+  fun `override with additional logic beyond the forwarding call is not a compatibility stub`() {
+    val descriptor = "()V"
+    val (overriddenMethod, overridingMethod) = buildOverriddenAndOverridingMethod(
+      overriddenClassName = "mock/plugin/stub/StubInterface2",
+      overriddenClassAccess = Opcodes.ACC_PUBLIC or Opcodes.ACC_ABSTRACT or Opcodes.ACC_INTERFACE,
+      methodName = "greet",
+      descriptor = descriptor,
+      overriddenMethodInstructions = listOf(InsnNode(Opcodes.RETURN)),
+      overridingClassName = "mock/plugin/stub/StubImpl2",
+      overridingMethodInstructions = listOf(
+        VarInsnNode(Opcodes.ALOAD, 0),
+        MethodInsnNode(Opcodes.INVOKESPECIAL, "mock/plugin/stub/StubInterface2", "greet", descriptor, true),
+        InsnNode(Opcodes.NOP),
+        InsnNode(Opcodes.RETURN)
+      )
+    )
+
+    assertFalse(overridingMethod.isKotlinDefaultMethodCompatibilityStub(overriddenMethod))
+  }
+
+  @Test
+  fun `override that calls a different method than the overridden one is not a compatibility stub`() {
+    val descriptor = "()V"
+    val (overriddenMethod, overridingMethod) = buildOverriddenAndOverridingMethod(
+      overriddenClassName = "mock/plugin/stub/StubInterface3",
+      overriddenClassAccess = Opcodes.ACC_PUBLIC or Opcodes.ACC_ABSTRACT or Opcodes.ACC_INTERFACE,
+      methodName = "greet",
+      descriptor = descriptor,
+      overriddenMethodInstructions = listOf(InsnNode(Opcodes.RETURN)),
+      overridingClassName = "mock/plugin/stub/StubImpl3",
+      overridingMethodInstructions = listOf(
+        VarInsnNode(Opcodes.ALOAD, 0),
+        MethodInsnNode(Opcodes.INVOKESPECIAL, "mock/plugin/stub/StubInterface3", "somethingElse", descriptor, true),
+        InsnNode(Opcodes.RETURN)
+      )
+    )
+
+    assertFalse(overridingMethod.isKotlinDefaultMethodCompatibilityStub(overriddenMethod))
+  }
+
+  @Test
+  fun `override of a non-interface (abstract class) method is never a compatibility stub`() {
+    val descriptor = "()V"
+    val (overriddenMethod, overridingMethod) = buildOverriddenAndOverridingMethod(
+      overriddenClassName = "mock/plugin/stub/AbstractBase",
+      overriddenClassAccess = Opcodes.ACC_PUBLIC or Opcodes.ACC_ABSTRACT,
+      methodName = "greet",
+      descriptor = descriptor,
+      overriddenMethodInstructions = listOf(InsnNode(Opcodes.RETURN)),
+      overridingClassName = "mock/plugin/stub/BaseImpl",
+      overridingMethodInstructions = listOf(
+        VarInsnNode(Opcodes.ALOAD, 0),
+        MethodInsnNode(Opcodes.INVOKESPECIAL, "mock/plugin/stub/AbstractBase", "greet", descriptor, false),
+        InsnNode(Opcodes.RETURN)
+      )
+    )
+
+    assertFalse(overridingMethod.isKotlinDefaultMethodCompatibilityStub(overriddenMethod))
+  }
+
+  @Test
+  fun `compiler stub inheriting the default method indirectly forwards to the direct superinterface and is detected as a compatibility stub`() {
+    // Kotlin 2.2.0 emits `INVOKESPECIAL B.f()` for `interface A { fun f() {} }; interface B : A; class Impl : B` —
+    // when the default method is inherited indirectly, invokespecial targets the direct superinterface, not the
+    // originally declaring one.
+    val descriptor = "()V"
+    val (overriddenMethod, overridingMethod) = buildOverriddenAndOverridingMethod(
+      overriddenClassName = "mock/plugin/stub/GrandParentInterface",
+      overriddenClassAccess = Opcodes.ACC_PUBLIC or Opcodes.ACC_ABSTRACT or Opcodes.ACC_INTERFACE,
+      methodName = "f",
+      descriptor = descriptor,
+      overriddenMethodInstructions = listOf(InsnNode(Opcodes.RETURN)),
+      overridingClassName = "mock/plugin/stub/IndirectImpl",
+      overridingClassInterfaces = listOf("mock/plugin/stub/ParentInterface"),
+      overridingMethodInstructions = listOf(
+        VarInsnNode(Opcodes.ALOAD, 0),
+        MethodInsnNode(Opcodes.INVOKESPECIAL, "mock/plugin/stub/ParentInterface", "f", descriptor, true),
+        InsnNode(Opcodes.RETURN)
+      )
+    )
+
+    assertTrue(overridingMethod.isKotlinDefaultMethodCompatibilityStub(overriddenMethod))
+  }
+
+  @Test
+  fun `forwarding call to an interface that is not a superinterface of the caller is not a compatibility stub`() {
+    val descriptor = "()V"
+    val (overriddenMethod, overridingMethod) = buildOverriddenAndOverridingMethod(
+      overriddenClassName = "mock/plugin/stub/UnrelatedInterface",
+      overriddenClassAccess = Opcodes.ACC_PUBLIC or Opcodes.ACC_ABSTRACT or Opcodes.ACC_INTERFACE,
+      methodName = "f",
+      descriptor = descriptor,
+      overriddenMethodInstructions = listOf(InsnNode(Opcodes.RETURN)),
+      overridingClassName = "mock/plugin/stub/UnrelatedImpl",
+      overridingClassInterfaces = listOf("mock/plugin/stub/SomeOtherInterface"),
+      overridingMethodInstructions = listOf(
+        VarInsnNode(Opcodes.ALOAD, 0),
+        MethodInsnNode(Opcodes.INVOKESPECIAL, "mock/plugin/stub/SomeThirdInterface", "f", descriptor, true),
+        InsnNode(Opcodes.RETURN)
+      )
+    )
+
+    assertFalse(overridingMethod.isKotlinDefaultMethodCompatibilityStub(overriddenMethod))
+  }
+
+  @Test
+  fun `a stub-shaped method whose own name differs from the invoked method is not a compatibility stub`() {
+    val descriptor = "()V"
+    val (overriddenMethod, overridingMethod) = buildOverriddenAndOverridingMethod(
+      overriddenClassName = "mock/plugin/stub/StubInterface4",
+      overriddenClassAccess = Opcodes.ACC_PUBLIC or Opcodes.ACC_ABSTRACT or Opcodes.ACC_INTERFACE,
+      methodName = "internalMethod",
+      descriptor = descriptor,
+      overriddenMethodInstructions = listOf(InsnNode(Opcodes.RETURN)),
+      overridingClassName = "mock/plugin/stub/StubImpl4",
+      // `void refresh() { StubInterface4.super.internalMethod(); }` — a deliberate internal-API use
+      overridingMethodName = "refresh",
+      overridingMethodInstructions = listOf(
+        VarInsnNode(Opcodes.ALOAD, 0),
+        MethodInsnNode(Opcodes.INVOKESPECIAL, "mock/plugin/stub/StubInterface4", "internalMethod", descriptor, true),
+        InsnNode(Opcodes.RETURN)
+      )
+    )
+
+    assertFalse(overridingMethod.isKotlinDefaultMethodCompatibilityStub(overriddenMethod))
+  }
+
+  @Test
+  fun `a stub-shaped method whose own descriptor differs from the invoked method is not a compatibility stub`() {
+    val (overriddenMethod, overridingMethod) = buildOverriddenAndOverridingMethod(
+      overriddenClassName = "mock/plugin/stub/StubInterface5",
+      overriddenClassAccess = Opcodes.ACC_PUBLIC or Opcodes.ACC_ABSTRACT or Opcodes.ACC_INTERFACE,
+      methodName = "internalMethod",
+      descriptor = "()V",
+      overriddenMethodInstructions = listOf(InsnNode(Opcodes.RETURN)),
+      overridingClassName = "mock/plugin/stub/StubImpl5",
+      // `void internalMethod(int unused) { StubInterface5.super.internalMethod(); }` — an overload, not an override
+      overridingDescriptor = "(I)V",
+      overridingMethodInstructions = listOf(
+        VarInsnNode(Opcodes.ALOAD, 0),
+        MethodInsnNode(Opcodes.INVOKESPECIAL, "mock/plugin/stub/StubInterface5", "internalMethod", "()V", true),
+        InsnNode(Opcodes.RETURN)
+      )
+    )
+
+    assertFalse(overridingMethod.isKotlinDefaultMethodCompatibilityStub(overriddenMethod))
+  }
+
+  private fun buildOverriddenAndOverridingMethod(
+    overriddenClassName: String,
+    overriddenClassAccess: Int,
+    methodName: String,
+    descriptor: String,
+    overriddenMethodInstructions: List<AbstractInsnNode>,
+    overridingClassName: String,
+    overridingMethodInstructions: List<AbstractInsnNode>,
+    overridingClassInterfaces: List<String> = listOf(overriddenClassName),
+    overridingMethodName: String = methodName,
+    overridingDescriptor: String = descriptor
+  ): Pair<Method, Method> {
+    val origin = object : FileOrigin {
+      override val parent = null
+    }
+
+    val overriddenClassNode = ClassNode(Opcodes.ASM9).apply {
+      version = Opcodes.V1_8
+      access = overriddenClassAccess
+      name = overriddenClassName
+      superName = "java/lang/Object"
+      methods.add(MethodNode().apply {
+        access = Opcodes.ACC_PUBLIC
+        name = methodName
+        desc = descriptor
+        overriddenMethodInstructions.forEach { instructions.add(it) }
+      })
+    }
+    val overriddenMethod = ClassFileAsm(overriddenClassNode, origin).methods.first { it.name == methodName }
+
+    val overridingClassNode = ClassNode(Opcodes.ASM9).apply {
+      version = Opcodes.V1_8
+      access = Opcodes.ACC_PUBLIC
+      name = overridingClassName
+      superName = "java/lang/Object"
+      interfaces = overridingClassInterfaces.toMutableList()
+      methods.add(MethodNode().apply {
+        access = Opcodes.ACC_PUBLIC
+        name = overridingMethodName
+        desc = overridingDescriptor
+        overridingMethodInstructions.forEach { instructions.add(it) }
+      })
+    }
+    val overridingMethod = ClassFileAsm(overridingClassNode, origin).methods.first { it.name == overridingMethodName }
+
+    return overriddenMethod to overridingMethod
   }
 
   @Throws(AssertionError::class)

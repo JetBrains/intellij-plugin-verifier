@@ -17,6 +17,7 @@ import com.jetbrains.pluginverifier.verifiers.resolution.ClassUsageType
 import com.jetbrains.pluginverifier.verifiers.resolution.Field
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodResolver
+import com.jetbrains.pluginverifier.verifiers.resolution.isKotlinDefaultMethodCompatibilityStub
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import com.jetbrains.pluginverifier.warnings.WarningRegistrar
 import org.objectweb.asm.tree.AbstractInsnNode
@@ -48,6 +49,8 @@ abstract class BaseInternalApiUsageProcessor(
   ) {
     val usageLocation = callerMethod.location
     if (isInternal(resolvedMethod, context, usageLocation)) {
+      if (callerMethod.isKotlinDefaultMethodCompatibilityStub(resolvedMethod)) return
+
       // Check if the method is an override, and if so check top declaration
       val canBeOverridden = !resolvedMethod.isStatic && !resolvedMethod.isPrivate
         && resolvedMethod.name != "<init>" && resolvedMethod.name != "<clinit>"
