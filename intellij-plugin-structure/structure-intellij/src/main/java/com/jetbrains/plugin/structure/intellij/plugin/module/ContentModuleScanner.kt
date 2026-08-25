@@ -49,11 +49,14 @@ class ContentModuleScanner(private val fileSystemProvider: JarFileSystemProvider
    * instead of every archive of the plugin.
    *
    * Both JARs and ZIPs are indexed, as a plugin loader searches a descriptor in either of them.
+   *
+   * Only the `lib` directory itself is indexed, not its `modules` subdirectory: a plugin loader picks a
+   * descriptor provider among the direct children of `lib`, so an archive nested deeper can never be chosen
+   * from this index and indexing it would only open it for nothing.
    */
   fun getDescriptorIndex(pluginArtifact: Path): Map<String, List<Path>> {
     val libDir = pluginArtifact.getLibDirectory() ?: return emptyMap()
-    val archivePaths = libDir.listArchives() + libDir.resolve(MODULES_DIR).listArchives()
-    return archivePaths
+    return libDir.listArchives()
       .flatMap { archivePath -> getJarDescriptorNames(archivePath).map { descriptorName -> descriptorName to archivePath } }
       .groupBy({ (descriptorName, _) -> descriptorName }, { (_, archivePath) -> archivePath })
   }
