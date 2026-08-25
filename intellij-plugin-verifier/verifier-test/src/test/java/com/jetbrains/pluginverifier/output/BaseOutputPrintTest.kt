@@ -68,9 +68,17 @@ open class BaseOutputPrintTest<T : ResultPrinter>: BaseOutputTest() {
     testRunner.runTest(PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph, experimentalApiUsages = mockExperimentalApiUsages()))
   }
 
-  open fun `when plugin has missing dependencies`(testRunner: VerifiedPluginHandler) {
+  open fun `when plugin has missing mandatory dependencies`(testRunner: VerifiedPluginHandler) {
+    testRunner.runTest(verifiedResultWithMissingDependency(isOptional = false))
+  }
+
+  open fun `when plugin has missing optional dependencies`(testRunner: VerifiedPluginHandler) {
+    testRunner.runTest(verifiedResultWithMissingDependency(isOptional = true))
+  }
+
+  private fun verifiedResultWithMissingDependency(isOptional: Boolean): PluginVerificationResult.Verified {
     val pluginDependency = ResolvedDependencyNode(PLUGIN_ID, PLUGIN_VERSION)
-    val expectedDependency = ResolvedMissingDependency(ResolvedPluginDependency("MissingPlugin", true, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-211.500")
+    val expectedDependency = ResolvedMissingDependency(ResolvedPluginDependency("MissingPlugin", isOptional, false), "Dependency MissingPlugin is not found among the bundled plugins of IU-211.500")
 
     val dependenciesGraph = ResolvedDependenciesGraph(
       verifiedPlugin = pluginDependency,
@@ -79,7 +87,7 @@ open class BaseOutputPrintTest<T : ResultPrinter>: BaseOutputTest() {
       missingDependencies = mapOf(pluginDependency to setOf(expectedDependency))
     )
 
-    testRunner.runTest(PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph))
+    return PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)
   }
 
   open fun `when plugin is dynamic`(testRunner: VerifiedPluginHandler) {
