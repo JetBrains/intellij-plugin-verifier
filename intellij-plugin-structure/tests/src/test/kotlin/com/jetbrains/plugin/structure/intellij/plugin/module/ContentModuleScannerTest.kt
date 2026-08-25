@@ -94,6 +94,37 @@ class ContentModuleScannerTest {
   }
 
   @Test
+  fun `descriptor index covers ZIP archives of the lib directory`() {
+    val root = temporaryFolder.root.toPath()
+
+    val pluginPath = buildDirectory(temporaryFolder.newFolder("zipped").toPath()) {
+      dir("lib") {
+        zip("main.jar") {
+          dir("META-INF") {
+            file("plugin.xml", "<idea-plugin />")
+          }
+        }
+        zip("modules.zip") {
+          file("intellij.zipped.xml", "<idea-plugin />")
+        }
+      }
+    }
+
+    val descriptorIndex = ContentModuleScanner(jarFileSystemProvider).getDescriptorIndex(pluginPath)
+
+    val indexedPaths = descriptorIndex.mapValues { (_, archivePaths) ->
+      archivePaths.map { root.relativize(it).invariantSeparatorsPathString }.sorted()
+    }
+    assertEquals(
+      mapOf(
+        "plugin.xml" to listOf("zipped/lib/main.jar"),
+        "intellij.zipped.xml" to listOf("zipped/lib/modules.zip")
+      ),
+      indexedPaths
+    )
+  }
+
+  @Test
   fun `no content modules are found in a corrupted artifact`() {
     val pluginPath = buildDirectory(temporaryFolder.newFolder("corrupted").toPath()) {
       dir("lib") {
