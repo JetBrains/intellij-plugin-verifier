@@ -279,7 +279,7 @@ abstract class BaseBytecodeTest {
     return ide
   }
 
-  private fun buildIdePlugin(
+  internal fun buildIdePlugin(
     ideaPluginSpec: IdeaPluginSpec = IdeaPluginSpec("com.intellij", "JetBrains s.r.o."),
     pluginClassesContentBuilder: (ContentBuilder).() -> Unit
   ): IdePlugin {

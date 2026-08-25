@@ -18,7 +18,7 @@ class MethodLocalVarsVerifier : MethodVerifier {
 
     for (variable in method.localVariables) {
       val className = variable.desc.extractClassNameFromDescriptor() ?: continue
-      context.classResolver.resolveClassChecked(className, method, context)
+      context.classResolver.resolveClassChecked(className, method, context, instructionNode = variable.start)
     }
   }
 }

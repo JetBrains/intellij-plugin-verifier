@@ -23,7 +23,7 @@ class TypeInstructionVerifier : InstructionVerifier {
 
     val className = instructionNode.desc.extractClassNameFromDescriptor() ?: return
 
-    val typeClassFile = context.classResolver.resolveClassChecked(className, method, context) ?: return
+    val typeClassFile = context.classResolver.resolveClassChecked(className, method, context, instructionNode) ?: return
 
     if (instructionNode.opcode == Opcodes.NEW) {
       if (typeClassFile.isInterface) {

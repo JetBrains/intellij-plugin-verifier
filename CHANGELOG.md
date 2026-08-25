@@ -24,6 +24,7 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Fixed
 
 - Close `ZipFile` handles eagerly in `ZipFileHandler` to release archive files after use to restore compatibility with Windows ([#1521](https://github.com/JetBrains/intellij-plugin-verifier/pull/1521), [#1549](https://github.com/JetBrains/intellij-plugin-verifier/pull/1549))
+- Do not attribute internal, experimental, and `OverrideOnly` API usages inlined from Kotlin `inline fun`s declared outside the plugin to the plugin ([MP-7133](https://youtrack.jetbrains.com/issue/MP-7133))
 
 - Add `-ignore-os-arch` to skip checking that operating system (`com.intellij.modules.os.*`) and CPU architecture (`com.intellij.modules.arch.*`) constraint modules are present in the verification IDE. The checks are enabled by default; the declarations remain available as plugin dependencies so Marketplace can use them when calculating OS and architecture compatibility.
 

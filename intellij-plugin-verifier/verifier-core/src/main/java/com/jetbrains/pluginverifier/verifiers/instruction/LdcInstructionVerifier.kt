@@ -18,17 +18,17 @@ class LdcInstructionVerifier : InstructionVerifier {
 
     val type = instructionNode.cst as? Type ?: return
     if (type.sort == Type.OBJECT) {
-      checkTypeExists(type, context, method)
+      checkTypeExists(type, context, method, instructionNode)
     } else if (type.sort == Type.METHOD) {
       for (argumentType in type.argumentTypes) {
-        checkTypeExists(argumentType, context, method)
+        checkTypeExists(argumentType, context, method, instructionNode)
       }
-      checkTypeExists(type.returnType, context, method)
+      checkTypeExists(type.returnType, context, method, instructionNode)
     }
   }
 
-  private fun checkTypeExists(type: Type, context: VerificationContext, method: Method) {
+  private fun checkTypeExists(type: Type, context: VerificationContext, method: Method, instructionNode: AbstractInsnNode) {
     val className = type.descriptor.extractClassNameFromDescriptor() ?: return
-    context.classResolver.resolveClassChecked(className, method, context)
+    context.classResolver.resolveClassChecked(className, method, context, instructionNode)
   }
 }
