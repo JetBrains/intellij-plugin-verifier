@@ -218,7 +218,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
     val problemResolver = LevelRemappingPluginCreationResultResolver(
       delegateResolver,
-      warning<InvalidSinceBuild>() + warning<ForbiddenPluginIdPrefix>())
+      warning<IdeBuildComponentsOutOfRange>() + warning<ForbiddenPluginIdPrefix>())
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -243,7 +243,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
     assertEquals(2, reclassifiedProblems.size)
     assertThat("Reclassified problems contains an 'IllegalPluginIdPrefix' plugin problem ", reclassifiedProblems.find { ForbiddenPluginIdPrefix::class.isInstance(it) } != null)
-    assertThat("Reclassified problems contains an 'InvalidSinceBuild' plugin problem ", reclassifiedProblems.find { InvalidSinceBuild::class.isInstance(it) } != null)
+    assertThat("Reclassified problems contains an 'IdeBuildComponentsOutOfRange' plugin problem ", reclassifiedProblems.find { IdeBuildComponentsOutOfRange::class.isInstance(it) } != null)
   }
 
   @Test
@@ -282,7 +282,7 @@ class ExistingPluginValidationTest : BasePluginTest() {
     val erroneousUntilBuild = "1000"
     val header = ideaPlugin("plugin.with.two.problems", sinceBuild = erroneousSinceBuild, untilBuild = erroneousUntilBuild)
     val delegateResolver = IntelliJPluginCreationResultResolver()
-    val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver, warning<InvalidSinceBuild>())
+    val problemResolver = LevelRemappingPluginCreationResultResolver(delegateResolver, warning<InvalidUntilBuildWithJustBranch>())
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -297,14 +297,14 @@ class ExistingPluginValidationTest : BasePluginTest() {
     }
     assertTrue(result is PluginCreationFail)
     val failure = result as PluginCreationFail
-    assertEquals(2, failure.errorsAndWarnings.size)
+    assertEquals(4, failure.errorsAndWarnings.size)
     val reclassifiedProblems = failure.errorsAndWarnings
       .filter { ReclassifiedPluginProblem::class.isInstance(it) }
       .map { it as ReclassifiedPluginProblem }
       .map { it.unwrapped }
 
     assertEquals(1, reclassifiedProblems.size)
-    assertThat("Reclassified problems contains an 'InvalidSinceBuild' plugin problem ", reclassifiedProblems.find { InvalidSinceBuild::class.isInstance(it) } != null)
+    assertThat("Reclassified problems contains an 'InvalidUntilBuildWithJustBranch' plugin problem ", reclassifiedProblems.find { InvalidUntilBuildWithJustBranch::class.isInstance(it) } != null)
   }
 
   @Test
@@ -316,12 +316,12 @@ class ExistingPluginValidationTest : BasePluginTest() {
       description = "<![CDATA[A failing plugin with HTTP link leading to <a href='http://jetbrains.com'>JetBrains</a>]]>")
 
     val problemResolver = LevelRemappingPluginCreationResultResolver(IntelliJPluginCreationResultResolver(),
-      warning<HttpLinkInDescription>() + ignore<InvalidSinceBuild>()
+      warning<HttpLinkInDescription>() + ignore<IdeBuildComponentsOutOfRange>()
     )
 
     val result = buildPluginWithResult(problemResolver, pluginOf(header))
 
-    // InvalidSinceBuild is an ignored ERROR, hence leading to a creation success
+    // IdeBuildComponentsOutOfRange is an ignored ERROR, hence leading to a creation success
     assertTrue(result is PluginCreationSuccess)
     val success = result as PluginCreationSuccess
 
@@ -347,8 +347,10 @@ class ExistingPluginValidationTest : BasePluginTest() {
       sinceBuild = erroneousSinceBuild,
       description = "<![CDATA[A failing plugin with HTTP link leading to <a href='http://jetbrains.com'>JetBrains</a>]]>")
 
-    val problemResolver = LevelRemappingPluginCreationResultResolver(IntelliJPluginCreationResultResolver(),
-      unacceptableWarning<InvalidSinceBuild>())
+    val problemResolver = LevelRemappingPluginCreationResultResolver(
+      delegatedResolver = IntelliJPluginCreationResultResolver(),
+      remappedLevel = unacceptableWarning<SinceBuildCannotContainWildcard>() + unacceptableWarning<IdeBuildComponentsOutOfRange>()
+    )
 
     val result = buildPluginWithResult(problemResolver) {
       dir("META-INF") {
@@ -364,14 +366,15 @@ class ExistingPluginValidationTest : BasePluginTest() {
 
     assertTrue(result is PluginCreationSuccess)
     val success = result as PluginCreationSuccess
-    assertEquals(2, success.unacceptableWarnings.size)
+    assertEquals(3, success.unacceptableWarnings.size)
     val reclassifiedProblems = success.unacceptableWarnings
       .filter { ReclassifiedPluginProblem::class.isInstance(it) }
       .map { it as ReclassifiedPluginProblem }
       .map { it.unwrapped }
 
-    assertEquals(1, reclassifiedProblems.size)
-    assertThat("Reclassified problems contains an 'InvalidSinceBuild' plugin problem ", reclassifiedProblems.find { InvalidSinceBuild::class.isInstance(it) } != null)
+    assertEquals(2, reclassifiedProblems.size)
+    assertThat("Reclassified problems contains an 'SinceBuildCannotContainWildcard' plugin problem ", reclassifiedProblems.find { SinceBuildCannotContainWildcard::class.isInstance(it) } != null)
+    assertThat("Reclassified problems contains an 'IdeBuildComponentsOutOfRange' plugin problem ", reclassifiedProblems.find { IdeBuildComponentsOutOfRange::class.isInstance(it) } != null)
   }
 
   @Test
