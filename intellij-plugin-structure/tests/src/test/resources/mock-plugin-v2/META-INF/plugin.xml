@@ -6,7 +6,7 @@
     <version>231.7515.9</version>
     <vendor email="vendor_email" url="https://www.jetbrains.com">JetBrains s.r.o.</vendor>
 
-    <idea-version since-build="141.1009.5" until-build="141.9999999"/>
+    <idea-version since-build="141.1009.5" until-build="141.99999"/>
 
     <xi:include href="../xiIncludeDir/ultimate-plugin.xml" xpointer="xpointer(/idea-plugin/*)">
         <xi:fallback/>

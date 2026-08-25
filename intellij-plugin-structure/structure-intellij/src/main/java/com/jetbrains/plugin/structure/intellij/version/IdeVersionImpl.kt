@@ -57,7 +57,7 @@ class IdeVersionImpl(
     private const val STAR = "*"
     private const val SNAPSHOT = "SNAPSHOT"
     private const val FALLBACK_VERSION = "999.SNAPSHOT"
-    private const val SNAPSHOT_VALUE = Integer.MAX_VALUE
+    const val SNAPSHOT_VALUE = Integer.MAX_VALUE
 
     @Throws(IllegalArgumentException::class)
     fun fromString(version: String): IdeVersionImpl {
