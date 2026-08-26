@@ -6,9 +6,21 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Support `environment_settings` in Educational course descriptors ([#1593](https://github.com/JetBrains/intellij-plugin-verifier/pull/1593))
+
 ### Changed
 
-### Fixed
+- Kotlin 2.2 is used to compile all projects, with Java 11 as the target.
+- Report wildcard `<since-build>` values as unacceptable warnings ([MP-6542](https://youtrack.jetbrains.com/issue/MP-6542))
+- Validate `<since-build>` and `<until-build>` components more granularly, including single-component `until-build` values, magic numbers, and out-of-range components ([#1585](https://github.com/JetBrains/intellij-plugin-verifier/pull/1585))
+- Reduce dependency resolver memory usage by splitting transitive dependency and plugin-class resolver caches.
+- Reduce resolved dependency graph memory usage.
+- Speed up content module descriptor resolution by indexing `lib` directory descriptors ([#1567](https://github.com/JetBrains/intellij-plugin-verifier/pull/1567), [#1605](https://github.com/JetBrains/intellij-plugin-verifier/pull/1605))
+- Update Gradle to 9.7.1 ([#1604](https://github.com/JetBrains/intellij-plugin-verifier/pull/1604))
+- Update Jimfs to 1.3.2 ([#1595](https://github.com/JetBrains/intellij-plugin-verifier/pull/1595), [#1596](https://github.com/JetBrains/intellij-plugin-verifier/pull/1596))
+- Update Byte Buddy to 1.18.12 ([#1594](https://github.com/JetBrains/intellij-plugin-verifier/pull/1594))
+- Update `plugin-repository-rest-client` to 2.0.51 ([#1475](https://github.com/JetBrains/intellij-plugin-verifier/pull/1475))
+- Update `actions/cache` to 6.1.0 ([#1530](https://github.com/JetBrains/intellij-plugin-verifier/pull/1530))
 
 ## 1.409 - 2026-07-17
 
