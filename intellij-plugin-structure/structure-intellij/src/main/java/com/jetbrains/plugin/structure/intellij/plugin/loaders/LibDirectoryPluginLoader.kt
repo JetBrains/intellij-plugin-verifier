@@ -133,8 +133,8 @@ internal class LibDirectoryPluginLoader(
   }
 
   /**
-   * Returns those [files] of the `lib` directory that can provide [descriptorPath]: JARs indexed as containing
-   * such a descriptor, along with every directory, as directories are not indexed.
+   * Returns those [files] of the `lib` directory that can provide [descriptorPath]: archives indexed as
+   * containing such a descriptor, along with every directory, as directories are not indexed.
    *
    * All [files] are returned for a [descriptorPath] the index cannot answer for, see [getIndexableDescriptorName].
    * The order of [files] is retained, so that an ambiguous descriptor is reported with the same pair of files
@@ -143,8 +143,8 @@ internal class LibDirectoryPluginLoader(
   private fun getDescriptorProviders(libDirectoryParent: Path, descriptorPath: String, files: List<Path>): List<Path> {
     val descriptorName = getIndexableDescriptorName(descriptorPath) ?: return files
     val index = descriptorIndexes.computeIfAbsent(libDirectoryParent) { contentModuleScanner.getDescriptorIndex(it) }
-    val jars: Set<Path> = index[descriptorName]?.toHashSet() ?: emptySet()
-    return files.filter { it in jars || it.isDirectory }
+    val archives: Set<Path> = index[descriptorName]?.toHashSet() ?: emptySet()
+    return files.filter { it in archives || it.isDirectory }
   }
 
   /**

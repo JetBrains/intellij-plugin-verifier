@@ -64,6 +64,40 @@ class ContentModuleDescriptorResolutionTest {
   }
 
   @Test
+  fun `content module descriptor available in a ZIP of the lib directory is resolved`() {
+    /*
+    A `lib` directory archive is searched for a descriptor whether it is a JAR or a ZIP, so the descriptor
+    index must cover both. Indexing JARs alone silently left such a content module unresolved.
+    Note that a ZIP is still absent from the resolved classpath, which is derived from JARs only.
+    */
+    val pluginPath = buildPlugin("zip-provider", moduleNames = listOf("example.module"), moduleJarNames = listOf("modules.zip"), auxiliaryJarCount = 3)
+
+    val plugin = createPlugin(pluginPath)
+
+    assertEquals("example.module", plugin.modulesDescriptors.single().name)
+  }
+
+  @Test
+  fun `content module descriptor available in both a JAR and a ZIP is reported as ambiguous and is not resolved`() {
+    val pluginPath = buildPlugin(
+      "mixed-archive-providers",
+      moduleNames = listOf("example.module"),
+      moduleJarNames = listOf("modules-a.jar", "modules-b.zip"),
+      auxiliaryJarCount = 3
+    )
+
+    val creationResult = createManager(SingletonCachingJarFileSystemProvider).createPlugin(pluginPath, false)
+    assertTrue("Expected a successfully created plugin but got $creationResult", creationResult is PluginCreationSuccess)
+    creationResult as PluginCreationSuccess
+
+    assertTrue("Expected an unresolved module but got ${creationResult.plugin.modulesDescriptors}", creationResult.plugin.modulesDescriptors.isEmpty())
+
+    val ambiguityWarnings = creationResult.warnings.filter { it.message.contains("Found multiple plugin descriptors") }
+    assertEquals("Expected a single ambiguity warning but got ${creationResult.warnings}", 1, ambiguityWarnings.size)
+    assertTrue(ambiguityWarnings.single().message.contains("example.module"))
+  }
+
+  @Test
   fun `content module descriptors are not searched for in every JAR of the plugin`() {
     val moduleNames = (1..10).map { "example.module$it" }
 

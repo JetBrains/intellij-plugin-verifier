@@ -2,6 +2,9 @@ package com.jetbrains.plugin.structure.intellij.plugin.module
 
 import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.hasExtension
+import com.jetbrains.plugin.structure.base.utils.isJar
+import com.jetbrains.plugin.structure.base.utils.isZip
+import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.base.utils.listJars
 import com.jetbrains.plugin.structure.intellij.plugin.LIB_DIRECTORY
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.createIdeaPluginXmlDetector
@@ -27,8 +30,9 @@ class ContentModuleScanner(private val fileSystemProvider: JarFileSystemProvider
   private val ideaPluginXmlDetector = createIdeaPluginXmlDetector()
 
   fun getContentModules(pluginArtifact: Path) : ContentModules {
-    val jarPaths = getLibJarPaths(pluginArtifact)
+    val libDir = pluginArtifact.getLibDirectory()
       ?: return ContentModules(pluginArtifact, emptyList())
+    val jarPaths = libDir.listJars() + libDir.resolve(MODULES_DIR).listJars()
     val contentModules = jarPaths.flatMap { jarPath ->
       getJarContentModules(jarPath)
     }
@@ -37,27 +41,32 @@ class ContentModuleScanner(private val fileSystemProvider: JarFileSystemProvider
   }
 
   /**
-   * Maps a plugin descriptor file name to the JARs of [pluginArtifact] that contain such a descriptor.
+   * Maps a plugin descriptor file name to the archives of [pluginArtifact] that contain such a descriptor.
    *
    * Keys are bare file names: a descriptor is either `META-INF/plugin.xml` or a Plugin Model V2 module
-   * descriptor in a JAR root, hence its file name identifies it within a single plugin artifact.
-   * This allows a plugin loader to open only those JARs that can provide a requested descriptor
-   * instead of every JAR of the plugin.
+   * descriptor in an archive root, hence its file name identifies it within a single plugin artifact.
+   * This allows a plugin loader to open only those archives that can provide a requested descriptor
+   * instead of every archive of the plugin.
+   *
+   * Both JARs and ZIPs are indexed, as a plugin loader searches a descriptor in either of them.
+   *
+   * Only the `lib` directory itself is indexed, not its `modules` subdirectory: a plugin loader picks a
+   * descriptor provider among the direct children of `lib`, so an archive nested deeper can never be chosen
+   * from this index and indexing it would only open it for nothing.
    */
   fun getDescriptorIndex(pluginArtifact: Path): Map<String, List<Path>> {
-    val jarPaths = getLibJarPaths(pluginArtifact) ?: return emptyMap()
-    return jarPaths
-      .flatMap { jarPath -> getJarDescriptorNames(jarPath).map { descriptorName -> descriptorName to jarPath } }
-      .groupBy({ (descriptorName, _) -> descriptorName }, { (_, jarPath) -> jarPath })
+    val libDir = pluginArtifact.getLibDirectory() ?: return emptyMap()
+    return libDir.listArchives()
+      .flatMap { archivePath -> getJarDescriptorNames(archivePath).map { descriptorName -> descriptorName to archivePath } }
+      .groupBy({ (descriptorName, _) -> descriptorName }, { (_, archivePath) -> archivePath })
   }
 
-  private fun getLibJarPaths(pluginArtifact: Path): List<Path>? {
-    val libDir = pluginArtifact.resolve(LIB_DIRECTORY)
-    if (!libDir.exists()) {
-      return null
-    }
-    return libDir.listJars() + libDir.resolve(MODULES_DIR).listJars()
-  }
+  private fun Path.getLibDirectory(): Path? = resolve(LIB_DIRECTORY).takeIf { it.exists() }
+
+  /**
+   * Lists the archives of this directory that a plugin loader can search for a descriptor.
+   */
+  private fun Path.listArchives(): List<Path> = listFiles().filter { it.isJar() || it.isZip() }
 
   private fun getJarContentModules(jarPath: Path): List<ContentModule> = withPluginJar(jarPath) { jar ->
     jar.resolveDescriptors { it.isDescriptor() }
