@@ -7,8 +7,11 @@ package com.jetbrains.plugin.structure.intellij.plugin
 import com.intellij.platform.pluginSystem.parser.impl.RawPluginDescriptor
 import com.intellij.platform.pluginSystem.parser.impl.elements.DependsElement
 import com.jetbrains.plugin.structure.base.problems.*
+import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.verifiers.MAX_PROPERTY_LENGTH
+import com.jetbrains.plugin.structure.intellij.verifiers.SINCE_BASELINE_LOWER_BOUND
+import com.jetbrains.plugin.structure.intellij.verifiers.verifyIdeBuildComponentsRanges
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 
 private val DEFAULT_TEMPLATE_NAMES = setOf("Plugin display name here", "My Framework Support", "Template", "Demo")
@@ -145,15 +148,17 @@ internal class PlatformDescriptorValidator {
     if (sinceBuild.endsWith(".*")) {
       registerProblem(SinceBuildCannotContainWildcard(descriptorPath, parsed))
     }
-    if (parsed.baselineVersion < 130) {
-      registerProblem(InvalidSinceBuild(descriptorPath, sinceBuild))
-    }
-    if (parsed.baselineVersion > 999) {
-      registerProblem(ErroneousSinceBuild(descriptorPath, parsed))
-    }
     if (parsed.productCode.isNotEmpty()) {
       registerProblem(ProductCodePrefixInBuild(descriptorPath))
     }
+    // Shared with PluginSinceUntilRangeVerifier (the JAXB path) so both pipelines report identical
+    // per-component range problems - see verifyIdeBuildComponentsRanges.
+    verifyIdeBuildComponentsRanges(
+      ideVersion = parsed,
+      baselineLowerBound = SINCE_BASELINE_LOWER_BOUND,
+      attributeName = IdeaVersionBean.SINCE_BUILD_ATTRIBUTE_NAME,
+      descriptorPath = descriptorPath
+    )
   }
 
   private fun ValidationContext.validateDependencies(dependencies: List<DependsElement>) {
