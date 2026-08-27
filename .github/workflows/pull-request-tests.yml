@@ -9,7 +9,8 @@ permissions:
 
 concurrency:
   group: pull-request-tests-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Don't cancel queued merge_group runs; only supersede outdated PR runs.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   gradleValidation:
@@ -26,6 +27,7 @@ jobs:
     name: ${{ matrix.name }}
     needs: gradleValidation
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
