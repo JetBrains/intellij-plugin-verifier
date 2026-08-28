@@ -52,3 +52,14 @@ internal fun getRandomInvalidXmlBasedPluginName(length: Int): String {
 internal fun String.normalizeNewLines(): String = replace("\r\n", "\n").replace("\r", "\n")
 
 private fun Int.range() = IntRange(this, this)
+
+/**
+ * Escape the characters that are not allowed to appear literally in XML character data.
+ *
+ * A randomly generated plugin name may contain `<`, which would corrupt the descriptor and make the parser
+ * report a malformed-XML problem instead of the expected invalid-name problem.
+ *
+ * Carriage returns are deliberately left unescaped, so that they keep being normalized by the XML parser
+ * according to [normalizeNewLines].
+ */
+internal fun String.escapeXmlCharacterData(): String = replace("&", "&amp;").replace("<", "&lt;")

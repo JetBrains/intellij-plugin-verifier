@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.UnexpectedDescriptorElements
+import com.jetbrains.plugin.structure.base.utils.escapeXmlCharacterData
 import com.jetbrains.plugin.structure.base.utils.getRandomInvalidXmlBasedPluginName
 import com.jetbrains.plugin.structure.base.utils.normalizeNewLines
 import com.jetbrains.plugin.structure.base.utils.simpleName
@@ -121,11 +122,22 @@ class TeamcityInvalidPluginsTest(fileSystemType: FileSystemType) : BasePluginMan
       }
       `test invalid plugin xml`(
         perfectXmlBuilder.modify {
-          displayName = "<display-name>$name</display-name>"
+          displayName = "<display-name>${name.escapeXmlCharacterData()}</display-name>"
         },
         listOf(expectedProblems)
       )
     }
+  }
+
+  @Test
+  fun `plugin display name contains an XML markup character`() {
+    val name = "\n\u8CDF\u0ACD<\n\n"
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        displayName = "<display-name>${name.escapeXmlCharacterData()}</display-name>"
+      },
+      listOf(InvalidPluginName("teamcity-plugin.xml", name.normalizeNewLines()))
+    )
   }
 
   @Test
