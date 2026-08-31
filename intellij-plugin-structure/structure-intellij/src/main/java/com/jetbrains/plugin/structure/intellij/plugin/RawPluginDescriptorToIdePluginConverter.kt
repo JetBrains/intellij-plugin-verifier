@@ -179,9 +179,15 @@ internal class RawPluginDescriptorToIdePluginConverter {
     // Mirrors PluginModuleResolver's synthetic-namespace convention for private modules.
     val actualNamespace = namespace ?: "${pluginId}_\$implicit"
     val rule = loadingRule.toDomainLoadingRule()
-    val embedded = embeddedDescriptorContent
-    return if (embedded != null) {
-      Module.InlineModule(name, namespace, actualNamespace, rule, String(embedded))
+    // Blank content means file-based, not "an inline module whose descriptor happens to be empty".
+    // Both `<module name="x"/>` and `<module name="x"></module>` are references to a separate
+    // descriptor file, but the library reports the latter as an EMPTY `embeddedDescriptorContent`
+    // rather than a null one, so a plain null check would classify it as inline and then hand an
+    // empty string to a JDOM parse. This mirrors PluginModuleResolver's `isNullOrBlank()` test,
+    // which is what the JAXB path uses to draw the same line.
+    val embedded = embeddedDescriptorContent?.let { String(it) }
+    return if (!embedded.isNullOrBlank()) {
+      Module.InlineModule(name, namespace, actualNamespace, rule, embedded)
     } else {
       // Same file-name convention as PluginModuleResolver.resolvePluginModules.
       val configFile = "../${name.replace("/", ".")}.xml"

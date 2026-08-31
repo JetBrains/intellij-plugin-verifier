@@ -21,6 +21,12 @@ dependencies {
   // See comment on the catalog entry: needed directly because Maven "runtime" scope keeps it off
   // the default compileClasspath, but we reference com.intellij.util.xml.dom.* types directly.
   implementation(libs.platform.util.xml.dom)
+  // Also runtime-scoped in the parser's POM, and needed at compile time by PlatformParserLogging, which
+  // reroutes this very library's com.intellij.openapi.diagnostic.Logger away from a throwing default.
+  // Carries the same lz4 exclusion as the parser dependency above, and for the same reason.
+  implementation(libs.platform.plugin.system.util) {
+    exclude(group = "at.yawk.lz4", module = "lz4-java")
+  }
 
   testImplementation(sharedLibs.junit)
   testImplementation(sharedLibs.mockk)
