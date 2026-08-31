@@ -8,7 +8,8 @@ dependencies {
   // JetBrains' own plugin.xml parser, extracted from the IntelliJ Platform.
   // Consumed by PlatformPluginDescriptorParser / RawPluginDescriptorToIdePluginConverter as an
   // alternative to the JDOM+JAXB pipeline above (PluginBeanExtractor / PluginBeanToIdePluginConverter).
-  // Selected per plugin via PluginCreator.shouldUsePlatformParser (based on its declared since-build).
+  // Selected per plugin via PluginCreator.shouldUsePlatformParser (based on its declared compatibility
+  // range).
   implementation(libs.platform.plugin.system.parser.impl) {
     // Its transitive com.jetbrains.intellij.platform:util pulls in at.yawk.lz4:lz4-java, a newer fork
     // that declares itself a Gradle-capability replacement for net.jpountz.lz4:lz4. Any consumer that
@@ -21,6 +22,12 @@ dependencies {
   // See comment on the catalog entry: needed directly because Maven "runtime" scope keeps it off
   // the default compileClasspath, but we reference com.intellij.util.xml.dom.* types directly.
   implementation(libs.platform.util.xml.dom)
+  // Also runtime-scoped in the parser's POM, and needed at compile time by PlatformParserLogging, which
+  // reroutes this very library's com.intellij.openapi.diagnostic.Logger away from a throwing default.
+  // Carries the same lz4 exclusion as the parser dependency above, and for the same reason.
+  implementation(libs.platform.plugin.system.util) {
+    exclude(group = "at.yawk.lz4", module = "lz4-java")
+  }
 
   testImplementation(sharedLibs.junit)
   testImplementation(sharedLibs.mockk)

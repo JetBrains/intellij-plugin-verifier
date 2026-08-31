@@ -11,8 +11,24 @@ import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 class ProductReleaseVersionVerifier {
   fun verify(plugin: PluginBean, descriptorPath: String, problemRegistrar: ProblemRegistrar): VerificationResult {
     if (plugin.productDescriptor == null) return VerificationResult.NotApplicable
+    return verify(plugin.productDescriptor?.releaseVersion, plugin.pluginVersion, descriptorPath, problemRegistrar)
+  }
 
-    val releaseVersionValue = plugin.productDescriptor?.releaseVersion
+  /**
+   * The raw `release-version` and plugin `version` strings are all this verifier needs, so it takes them
+   * directly and both descriptor pipelines can share it. The strings matter: `release-version` is checked
+   * for a leading-zero/single-digit shape that is gone the moment it is parsed to an `Int`, which is why
+   * [PlatformDescriptorValidator][com.jetbrains.plugin.structure.intellij.plugin.PlatformDescriptorValidator]
+   * reads it off the descriptor XML rather than from `RawPluginDescriptor.releaseVersion`.
+   *
+   * Call only when a `<product-descriptor>` is present; absence is the caller's `NotApplicable`.
+   */
+  fun verify(
+    releaseVersionValue: String?,
+    pluginVersion: String?,
+    descriptorPath: String,
+    problemRegistrar: ProblemRegistrar
+  ): VerificationResult {
     if (releaseVersionValue.isNullOrEmpty()) {
       return Invalid("Attribute '$RELEASE_VERSION_ATTRIBUTE_NAME' is missing").also {
         problemRegistrar.registerProblem(PropertyNotSpecified(RELEASE_VERSION_ATTRIBUTE_NAME, descriptorPath))
@@ -27,7 +43,7 @@ class ProductReleaseVersionVerifier {
           }
         } else {
           verifyPluginVersionAndReleaseVersionMatch(
-            plugin,
+            pluginVersion,
             productReleaseVersion = this,
             descriptorPath,
             problemRegistrar
@@ -43,20 +59,20 @@ class ProductReleaseVersionVerifier {
   }
 
   private fun verifyPluginVersionAndReleaseVersionMatch(
-    plugin: PluginBean,
+    pluginVersion: String?,
     productReleaseVersion: ProductReleaseVersion,
     descriptorPath: String,
     problemRegistrar: ProblemRegistrar
   ) {
-    if (plugin.pluginVersion == null) return
+    if (pluginVersion == null) return
 
-    val pluginVersion = MajorMinorVersion.parse(plugin) ?: return
-    if (!pluginVersion.matches(productReleaseVersion)) {
+    val majorMinorVersion = MajorMinorVersion.parse(pluginVersion) ?: return
+    if (!majorMinorVersion.matches(productReleaseVersion)) {
       problemRegistrar.registerProblem(
         ReleaseVersionAndPluginVersionMismatch(
           descriptorPath,
           productReleaseVersion,
-          plugin.pluginVersion
+          pluginVersion
         )
       )
     }
@@ -68,8 +84,8 @@ class ProductReleaseVersionVerifier {
     }
 
     companion object {
-      fun parse(plugin: PluginBean): MajorMinorVersion? {
-        val pluginVersionParts = plugin.pluginVersion.split(".")
+      fun parse(pluginVersion: String): MajorMinorVersion? {
+        val pluginVersionParts = pluginVersion.split(".")
         val major = pluginVersionParts[0].toIntOrNull() ?: return null
         val minor = if (pluginVersionParts.size > 1) {
           pluginVersionParts[1].split("-")[0].toIntOrNull() ?: 0

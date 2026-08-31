@@ -16,8 +16,18 @@ val PRODUCT_ID_RESTRICTED_WORDS = listOf(
 
 class PluginIdVerifier {
 
-  fun verify(plugin: PluginBean, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
-    val id = plugin.id ?: return
+  fun verify(plugin: PluginBean, descriptorPath: String, problemRegistrar: ProblemRegistrar) =
+    verify(plugin.id, descriptorPath, problemRegistrar)
+
+  /**
+   * The `id` is all this verifier ever needed off the descriptor, so it is taken directly - which lets
+   * both descriptor pipelines share it, [PluginBeanValidator][com.jetbrains.plugin.structure.intellij.plugin.PluginBeanValidator]
+   * through the overload above and
+   * [PlatformDescriptorValidator][com.jetbrains.plugin.structure.intellij.plugin.PlatformDescriptorValidator]
+   * directly.
+   */
+  fun verify(id: String?, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
+    if (id == null) return
 
     when {
       id.isBlank() -> {
@@ -29,13 +39,12 @@ class PluginIdVerifier {
       else -> {
         verifyPropertyLength("id", id, MAX_PROPERTY_LENGTH, descriptorPath, problemRegistrar)
         verifyNewlines("id", id, descriptorPath, problemRegistrar)
-        verifyPrefix(plugin, descriptorPath, problemRegistrar)
+        verifyPrefix(id, descriptorPath, problemRegistrar)
       }
     }
   }
 
-  private fun verifyPrefix(plugin: PluginBean, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
-    val id = plugin.id
+  private fun verifyPrefix(id: String, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
     DEFAULT_ILLEGAL_PREFIXES
       .filter(id::startsWith)
       .forEach { problemRegistrar.registerProblem(ForbiddenPluginIdPrefix(descriptorPath, id, it)) }
