@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.*
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.base.utils.escapeXmlCharacterData
 import com.jetbrains.plugin.structure.base.utils.getRandomInvalidXmlBasedPluginName
 import com.jetbrains.plugin.structure.base.utils.normalizeNewLines
 import com.jetbrains.plugin.structure.base.utils.simpleName
@@ -209,11 +210,22 @@ class InvalidPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(
       val pluginName = "bla ${getRandomInvalidXmlBasedPluginName(i)}bla"
       `test invalid plugin xml`(
         perfectXmlBuilder.modify {
-          name = "<name>$pluginName</name>"
+          name = "<name>${pluginName.escapeXmlCharacterData()}</name>"
         },
         listOf(InvalidPluginName("plugin.xml", pluginName.normalizeNewLines()))
       )
     }
+  }
+
+  @Test
+  fun `plugin name contains an XML markup character`() {
+    val pluginName = "bla <bla"
+    `test invalid plugin xml`(
+      perfectXmlBuilder.modify {
+        name = "<name>${pluginName.escapeXmlCharacterData()}</name>"
+      },
+      listOf(InvalidPluginName("plugin.xml", pluginName))
+    )
   }
 
   @Test
