@@ -134,6 +134,20 @@ class ProductInfoClassResolverTest {
   }
 
   @Test
+  fun `resolver supports macOS IDE with product-info in Resources directory`() {
+    val macIdeRoot = temporaryFolder.newFolder("idea-macos").toPath()
+    val resourcesDir = macIdeRoot.resolve("Resources")
+    Files.createDirectories(resourcesDir)
+    copyResource("/ide/productInfo/product-info_mini.json", resourcesDir.resolve("product-info.json"))
+    macIdeRoot.resolve("build.txt").writeText(IDEA_ULTIMATE_2024_2)
+
+    assertTrue(
+      "ProductInfoClassResolver should support macOS IDE layout with Resources/product-info.json",
+      ProductInfoClassResolver.supports(macIdeRoot)
+    )
+  }
+
+  @Test
   fun `resolver does not parse ProductInfo-aware IDE`() {
     val ideRoot = temporaryFolder.newFolder("idea-${UUID.randomUUID()}").toPath()
 
