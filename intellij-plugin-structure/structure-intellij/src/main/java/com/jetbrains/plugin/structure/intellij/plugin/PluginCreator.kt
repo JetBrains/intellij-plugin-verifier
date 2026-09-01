@@ -36,7 +36,12 @@ internal class PluginCreator private constructor(
   val pluginFileName: String,
   val descriptorPath: String,
   private val parentPlugin: PluginCreator?,
-  private val problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
+  private val problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
+  /**
+   * Version of the IDE this descriptor is bundled in, or `null` for a plugin being verified rather than
+   * loaded as part of an IDE. See [shouldUsePlatformParser], which falls back to it.
+   */
+  private val containingIdeVersion: IdeVersion? = null
 ) {
 
   companion object {
@@ -133,6 +138,7 @@ internal class PluginCreator private constructor(
     )
 
     @JvmStatic
+    @JvmOverloads
     fun createPlugin(
       pluginFileName: String,
       descriptorPath: String,
@@ -141,9 +147,11 @@ internal class PluginCreator private constructor(
       document: Document,
       documentPath: Path,
       pathResolver: ResourceResolver,
-      problemResolver: PluginCreationResultResolver
+      problemResolver: PluginCreationResultResolver,
+      containingIdeVersion: IdeVersion? = null
     ): PluginCreator {
-      val pluginCreator = PluginCreator(pluginFileName, descriptorPath, parentPlugin, problemResolver)
+      val pluginCreator =
+        PluginCreator(pluginFileName, descriptorPath, parentPlugin, problemResolver, containingIdeVersion)
       pluginCreator.resolveDocumentAndValidateBean(
         document, documentPath, descriptorPath, pathResolver, validateDescriptor
       )
@@ -461,8 +469,15 @@ internal class PluginCreator private constructor(
       return untilBuild.baselineVersion >= CONDITIONAL_INCLUDE_REMOVAL_BASELINE
     }
     val sinceBuild = ideaVersion?.getAttributeValue(SINCE_BUILD_ATTRIBUTE)
-      ?.let { IdeVersion.createIdeVersionIfValid(it) } ?: return false
-    return sinceBuild.baselineVersion >= UNBOUNDED_UNTIL_SINCE_FLOOR
+      ?.let { IdeVersion.createIdeVersionIfValid(it) }
+    if (sinceBuild != null) {
+      return sinceBuild.baselineVersion >= UNBOUNDED_UNTIL_SINCE_FLOOR
+    }
+    // Declares nothing and has no parent to inherit from - which is every descriptor loaded as part of
+    // an IDE rather than as a plugin under verification. Its compatibility is not its own to declare:
+    // it ships with the IDE, so the IDE's version is the only meaningful answer, and using it is what
+    // keeps a bundled plugin and its module descriptors on the same parser.
+    return containingIdeVersion?.let { it.baselineVersion >= CONDITIONAL_INCLUDE_REMOVAL_BASELINE } ?: false
   }
 
   /**
