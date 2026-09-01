@@ -9,6 +9,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.base.telemetry.MutablePluginTelemetry
+import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_DESCRIPTOR_PARSER
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.plugin.PluginBeanToIdePluginConverter.UnsupportedClientAttributeValue
@@ -40,6 +41,16 @@ internal class PluginCreator private constructor(
 
   companion object {
     private val LOG = LoggerFactory.getLogger(PluginCreator::class.java)
+
+    /**
+     * Deliberately its own logger, so that which-parser-ran can be switched on for a corpus run in
+     * isolation - see [recordParserChoice].
+     */
+    private val PARSER_CHOICE_LOG = LoggerFactory.getLogger("com.jetbrains.plugin.structure.intellij.plugin.DescriptorParserChoice")
+
+    /** Values of the [PLUGIN_DESCRIPTOR_PARSER] telemetry key. Kept stable: corpus runs count these. */
+    private const val PLATFORM_PARSER_NAME = "platform"
+    private const val JAXB_PARSER_NAME = "jaxb"
 
     val v2ModulePrefix = Regex("^intellij\\..*")
 
@@ -352,6 +363,7 @@ internal class PluginCreator private constructor(
     // Evaluated unconditionally, before the `||`, so that the rule keeps running - and keeps being
     // exercised - even while FORCE_PLATFORM_PARSER_FOR_EVERY_DESCRIPTOR overrides its verdict.
     usedPlatformParser = shouldUsePlatformParser(originalDocument) || FORCE_PLATFORM_PARSER_FOR_EVERY_DESCRIPTOR
+    recordParserChoice()
 
     // Branch point: everything downstream of this `if` (theme loading, final structural validation)
     // is shared and unaware of which parser ran - both branches converge on the same
@@ -377,6 +389,31 @@ internal class PluginCreator private constructor(
     }
 
     validatePlugin(plugin)
+  }
+
+  /**
+   * Reports which parser this descriptor got, on two channels, because neither alone covers the whole
+   * corpus:
+   *
+   *  - [telemetry], under [PLUGIN_DESCRIPTOR_PARSER]. Structured and already plumbed to disk by the
+   *    verifier's reportage, but attached to a [PluginCreationSuccess] only - a plugin that fails to
+   *    build carries no telemetry at all, and those are exactly the plugins a parser migration most
+   *    needs to attribute.
+   *  - [PARSER_CHOICE_LOG], at DEBUG. Covers the failures the telemetry channel drops. It is a separate
+   *    logger from this class's own so that a corpus run can turn just this on, without the rest of
+   *    [PluginCreator] at DEBUG.
+   *
+   * Only the top-level creator's telemetry is reported, which is the right granularity: the choice is
+   * made once per plugin and inherited, so one record per plugin is one record per decision.
+   */
+  private fun recordParserChoice() {
+    val parser = if (usedPlatformParser) PLATFORM_PARSER_NAME else JAXB_PARSER_NAME
+    telemetry[PLUGIN_DESCRIPTOR_PARSER] = parser
+    if (PARSER_CHOICE_LOG.isDebugEnabled) {
+      PARSER_CHOICE_LOG.debug(
+        "Parsed descriptor '{}' of '{}' with the {} parser", descriptorPath, pluginFileName, parser
+      )
+    }
   }
 
   /**
