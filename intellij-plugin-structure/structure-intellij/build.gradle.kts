@@ -9,7 +9,7 @@ dependencies {
   // Consumed by PlatformPluginDescriptorParser / RawPluginDescriptorToIdePluginConverter as an
   // alternative to the JDOM+JAXB pipeline above (PluginBeanExtractor / PluginBeanToIdePluginConverter).
   // Selected per plugin via PluginCreator.shouldUsePlatformParser (based on its declared compatibility
-  // range).
+  // range, or on the containing IDE's version for bundled plugins).
   implementation(libs.platform.plugin.system.parser.impl) {
     // Its transitive com.jetbrains.intellij.platform:util pulls in at.yawk.lz4:lz4-java, a newer fork
     // that declares itself a Gradle-capability replacement for net.jpountz.lz4:lz4. Any consumer that

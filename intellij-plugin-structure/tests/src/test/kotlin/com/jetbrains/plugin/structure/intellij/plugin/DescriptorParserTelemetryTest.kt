@@ -8,7 +8,10 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_DESCRIPTOR_PARSER
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -75,6 +78,87 @@ class DescriptorParserTelemetryTest {
     assertEquals(2, plugin.plugin.contentModules.size)
     assertEquals("platform", plugin.telemetry[PLUGIN_DESCRIPTOR_PARSER])
   }
+
+  // --- bundled descriptors: no declaration of their own, so the IDE decides -----------------
+
+  @Test
+  fun `a bundled module follows the version of the IDE it ships with`() {
+    // A module descriptor carries no <idea-version> and is loaded with no parent creator, so without
+    // the IDE-version fallback it would be judged as an undeclared plugin and always land on JAXB -
+    // splitting a bundled plugin from its own modules. See PluginCreator.shouldUsePlatformParser.
+    assertEquals("platform", bundledModuleParser("263.SNAPSHOT"))
+    assertEquals("platform", bundledModuleParser("263.100"))
+    assertEquals("jaxb", bundledModuleParser("262.2500"))
+    assertEquals("jaxb", bundledModuleParser("241.0"))
+  }
+
+  @Test
+  fun `a bundled plugin declaring nothing at all follows the IDE version`() {
+    assertEquals("platform", bundledPluginParser("263.SNAPSHOT"))
+    assertEquals("jaxb", bundledPluginParser("262.2500"))
+  }
+
+  @Test
+  fun `a bundled plugin range cannot override its IDE version`() {
+    assertEquals("platform", bundledPluginParser("263.100", pluginXml("262.*")))
+    assertEquals("jaxb", bundledPluginParser("262.2500", pluginXml("263.*")))
+  }
+
+  @Test
+  fun `a top-level bundled module range cannot override its IDE version`() {
+    val oldRange = """
+      <idea-plugin>
+        <id>intellij.example.module</id>
+        <idea-version since-build="241.0" until-build="262.*"/>
+      </idea-plugin>
+    """.trimIndent()
+    val newRange = """
+      <idea-plugin>
+        <id>intellij.example.module</id>
+        <idea-version since-build="263.0" until-build="263.*"/>
+      </idea-plugin>
+    """.trimIndent()
+    assertEquals("platform", bundledModuleParser("263.100", oldRange))
+    assertEquals("jaxb", bundledModuleParser("262.2500", newRange))
+  }
+
+  private fun bundledModuleParser(
+    ideVersion: String,
+    descriptor: String = "<idea-plugin><id>intellij.example.module</id></idea-plugin>"
+  ): Any? {
+    val jar = buildZipFile(temporaryFolder.newFolder().toPath().resolve("modules.jar")) {
+      file("intellij.example.module.xml", descriptor)
+    }
+    val result = manager().createBundledModule(
+      jar, IdeVersion.createIdeVersion(ideVersion), "intellij.example.module.xml",
+      AnyProblemToWarningPluginCreationResultResolver
+    )
+    assertTrue("expected a created module but got $result", result is PluginCreationSuccess)
+    return (result as PluginCreationSuccess).telemetry[PLUGIN_DESCRIPTOR_PARSER]
+  }
+
+  private fun bundledPluginParser(
+    ideVersion: String,
+    descriptor: String = "<idea-plugin><id>com.example.bundled</id><name>Bundled</name></idea-plugin>"
+  ): Any? {
+    val jar = buildZipFile(temporaryFolder.newFolder().toPath().resolve("bundled.jar")) {
+      dir("META-INF") {
+        // No <idea-version> at all - the shape of an IDE-internal plugin such as
+        // intellij.idea.ultimate.customization.
+        file("plugin.xml", descriptor)
+      }
+    }
+    val result = manager().createBundledPlugin(
+      jar, IdeVersion.createIdeVersion(ideVersion), "plugin.xml",
+      AnyProblemToWarningPluginCreationResultResolver
+    )
+    assertTrue("expected a created plugin but got $result", result is PluginCreationSuccess)
+    return (result as PluginCreationSuccess).telemetry[PLUGIN_DESCRIPTOR_PARSER]
+  }
+
+  private fun manager() = IdePluginManager.createManager(
+    DefaultResourceResolver, temporaryFolder.newFolder().toPath(), SingletonCachingJarFileSystemProvider
+  )
 
   private fun assertParser(
     expected: String,

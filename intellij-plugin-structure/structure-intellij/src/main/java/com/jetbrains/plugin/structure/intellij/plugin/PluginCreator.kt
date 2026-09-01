@@ -36,7 +36,13 @@ internal class PluginCreator private constructor(
   val pluginFileName: String,
   val descriptorPath: String,
   private val parentPlugin: PluginCreator?,
-  private val problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
+  private val problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
+  /**
+   * Version of the IDE this descriptor is bundled in, or `null` for a plugin being verified rather than
+   * loaded as part of an IDE. See [shouldUsePlatformParser], where it takes precedence over a bundled
+   * descriptor's own compatibility declaration.
+   */
+  private val containingIdeVersion: IdeVersion? = null
 ) {
 
   companion object {
@@ -116,6 +122,7 @@ internal class PluginCreator private constructor(
     )
 
     @JvmStatic
+    @JvmOverloads
     fun createPlugin(
       pluginFileName: String,
       descriptorPath: String,
@@ -124,9 +131,11 @@ internal class PluginCreator private constructor(
       document: Document,
       documentPath: Path,
       pathResolver: ResourceResolver,
-      problemResolver: PluginCreationResultResolver
+      problemResolver: PluginCreationResultResolver,
+      containingIdeVersion: IdeVersion? = null
     ): PluginCreator {
-      val pluginCreator = PluginCreator(pluginFileName, descriptorPath, parentPlugin, problemResolver)
+      val pluginCreator =
+        PluginCreator(pluginFileName, descriptorPath, parentPlugin, problemResolver, containingIdeVersion)
       pluginCreator.resolveDocumentAndValidateBean(
         document, documentPath, descriptorPath, pathResolver, validateDescriptor
       )
@@ -406,11 +415,16 @@ internal class PluginCreator private constructor(
   /**
    * Whether this descriptor should be parsed by the platform parser rather than the JAXB pipeline.
    *
+   * Nested descriptors inherit their enclosing plugin's choice. A top-level descriptor loaded through
+   * a bundled API is parsed according to the containing IDE version, matching the parser that the real
+   * IDE ships, regardless of the descriptor's own compatibility declaration. Only standalone plugins
+   * are selected from their declared compatibility range.
+   *
    * The platform parser rejects `includeIf`/`includeUnless` (see
    * [com.jetbrains.plugin.structure.intellij.problems.ConditionalIncludeNotSupported]), which the JAXB
-   * path still honours. Handing a plugin to it is therefore only safe once the plugin itself cannot be
-   * relying on those attributes - and what settles that is the plugin's declared compatibility
-   * *interval* overlapping the range of IDEs the attributes no longer exist in,
+   * path still honours. Handing a standalone plugin to it is therefore only safe once the plugin itself
+   * cannot be relying on those attributes - and what settles that is the plugin's declared compatibility
+   * *interval* overlapping the range of IDEs where the attributes no longer exist,
    * `[CONDITIONAL_INCLUDE_REMOVAL_BASELINE, infinity)`.
    *
    * Overlap with a half-open upper interval only ever constrains the upper bound, so the decision is
@@ -440,6 +454,9 @@ internal class PluginCreator private constructor(
    */
   internal fun shouldUsePlatformParser(document: Document): Boolean {
     parentPlugin?.let { return it.usedPlatformParser }
+    containingIdeVersion?.let {
+      return it.baselineVersion >= CONDITIONAL_INCLUDE_REMOVAL_BASELINE
+    }
 
     val ideaVersion = document.rootElement.getChild(IDEA_VERSION_ELEMENT)
     val untilBuild = ideaVersion?.getAttributeValue(UNTIL_BUILD_ATTRIBUTE)
@@ -448,8 +465,11 @@ internal class PluginCreator private constructor(
       return untilBuild.baselineVersion >= CONDITIONAL_INCLUDE_REMOVAL_BASELINE
     }
     val sinceBuild = ideaVersion?.getAttributeValue(SINCE_BUILD_ATTRIBUTE)
-      ?.let { IdeVersion.createIdeVersionIfValid(it) } ?: return false
-    return sinceBuild.baselineVersion >= UNBOUNDED_UNTIL_SINCE_FLOOR
+      ?.let { IdeVersion.createIdeVersionIfValid(it) }
+    if (sinceBuild != null) {
+      return sinceBuild.baselineVersion >= UNBOUNDED_UNTIL_SINCE_FLOOR
+    }
+    return false
   }
 
   /**
