@@ -18,6 +18,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.cr
 import com.jetbrains.plugin.structure.intellij.problems.DuplicateEntryInJar
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.JarArchiveCannotBeOpenException
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult
@@ -48,7 +49,7 @@ internal class JarPluginLoader(private val fileSystemProvider: JarFileSystemProv
           is Found -> {
             try {
               val descriptorXml = descriptor.loadXml()
-              createPlugin(jarPath.simpleName, descriptorPath, parentPlugin, validateDescriptor, descriptorXml, descriptor.path, resourceResolver, problemResolver).apply {
+              createPlugin(jarPath.simpleName, descriptorPath, parentPlugin, validateDescriptor, descriptorXml, descriptor.path, resourceResolver, problemResolver, ideVersion).apply {
                 setIcons(jar.getIcons())
                 setThirdPartyDependencies(jar.getThirdPartyDependencies())
                 setHasDotNetPart(hasDotNetDirectory)
@@ -94,7 +95,9 @@ internal class JarPluginLoader(private val fileSystemProvider: JarFileSystemProv
     override val resourceResolver: ResourceResolver,
     val parentPlugin: PluginCreator?,
     override val problemResolver: PluginCreationResultResolver,
-    val hasDotNetDirectory: Boolean = false
+    val hasDotNetDirectory: Boolean = false,
+    /** Version of the IDE this descriptor is bundled in, see [PluginCreator.shouldUsePlatformParser]. */
+    val ideVersion: IdeVersion? = null,
   ) : PluginLoadingContext(
     resourceResolver,
     problemResolver,
