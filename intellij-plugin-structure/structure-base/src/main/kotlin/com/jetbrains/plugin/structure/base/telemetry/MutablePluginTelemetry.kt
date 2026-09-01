@@ -12,6 +12,13 @@ const val ARCHIVE_FILE_SIZE = "plugin.archive.file.size"
 const val PARSING_DURATION = "plugin.parsing.duration"
 const val PLUGIN_VERIFICATION_TIME = "plugin.verification.duration"
 const val PLUGIN_VERIFIED_CLASSES_COUNT = "plugin.verification.verified.classes.count"
+
+/**
+ * Which of the two descriptor parsers handled this plugin: `platform` for JetBrains'
+ * `plugin-system-parser-impl`, `jaxb` for the JDOM+JAXB pipeline. Recorded once per plugin, at its main
+ * descriptor - every descriptor nested in it inherits the same choice.
+ */
+const val PLUGIN_DESCRIPTOR_PARSER = "plugin.descriptor.parser"
 const val UNKNOWN_SIZE: Bytes = -1
 
 class MutablePluginTelemetry : PluginTelemetry() {
