@@ -15,7 +15,6 @@ import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.io.IOException
 
 private val LOG: Logger = LoggerFactory.getLogger(ModuleFromDescriptorLoader::class.java)
 
@@ -34,7 +33,11 @@ internal class ModuleFromDescriptorLoader : PluginLoader<ModuleFromDescriptorLoa
         ).also {
           logPluginCreationWarnings(moduleId, it)
         }
-      } catch (e: IOException) {
+      } catch (e: Exception) {
+        // Not just IOException: an inline module's descriptor is arbitrary text taken straight from
+        // the containing plugin.xml, so JDOMUtil.loadDocument can just as easily throw
+        // JDOMParseException on it - and that escaped all the way out of IdePluginManager.createPlugin,
+        // failing the whole plugin rather than this one module.
         with(descriptorResource) {
           LOG.warn("Unable to read descriptor stream (source: '$uri')", e)
           val problem = UnableToReadDescriptor(fileName, e.localizedMessage)
