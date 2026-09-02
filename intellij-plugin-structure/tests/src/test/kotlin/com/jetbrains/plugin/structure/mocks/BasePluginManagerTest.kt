@@ -58,7 +58,9 @@ abstract class BasePluginManagerTest<P : Plugin, M : PluginManager<P>>(fileSyste
     val pattern = ALLOWED_NAME_SYMBOLS
     while (true) {
       val randomChar = RandomStringUtils.random(length)
-      if (!randomChar.matches(pattern)) {
+      // A blank name is reported as an unspecified property rather than as an invalid name,
+      // so it must not be used as a sample of a name with not allowed symbols.
+      if (randomChar.isNotBlank() && !randomChar.matches(pattern)) {
         return randomChar
       }
     }
