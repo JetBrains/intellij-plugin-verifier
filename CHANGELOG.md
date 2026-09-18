@@ -10,6 +10,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
+- Resolve content module classes of a bundled plugin for every plugin that depends on it, not just for the first one verified ([MP-7234](https://youtrack.jetbrains.com/issue/MP-7234))
+
 ## 1.411 - 2026-10-19
 
 ### Added
