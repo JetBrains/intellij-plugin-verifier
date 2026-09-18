@@ -11,6 +11,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 ### Fixed
 
 - Resolve content modules of a bundled plugin for every plugin that depends on it, not just for the first verified one. A cached module resolver could replace the resolver of the plugin declaring it, so batch verifications such as `check-ide` reported spurious _Access to unresolved class_ problems for classes in content modules, for example `com.jetbrains.php.*` in `intellij.php.backend` ([MP-7234](https://youtrack.jetbrains.com/issue/MP-7234))
+- Resolve dependencies of a plugin that the verification IDE also bundles. Such a plugin was resolved to the bundled copy of itself, which skipped dependency tree resolution altogether and reported spurious _Access to unresolved class_ problems for every dependency class located in a content module, for example `com.jetbrains.php.*` and `com.intellij.database.*` for the Laravel Idea plugin bundled in PhpStorm
+- Include the classes of a plugin's content modules in the plugin resolver used for dependencies resolved through `DependencyFinder`
 
 ## 1.410 - 2026-08-26
 

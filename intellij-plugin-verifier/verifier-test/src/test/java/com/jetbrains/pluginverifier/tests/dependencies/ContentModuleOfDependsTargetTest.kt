@@ -29,6 +29,8 @@ import org.objectweb.asm.Opcodes.V1_8
 
 private const val IDE_VERSION = "PS-263.4589"
 
+private const val BUNDLED_PLUGIN_ID = "com.example.bundledPhpExtension"
+
 private const val PHP_MAIN_MODULE_CLASS = "com/jetbrains/php/lang/PhpLanguage"
 private const val PHP_BACKEND_MODULE_CLASS = "com/jetbrains/php/PhpIndexImpl"
 
@@ -89,10 +91,43 @@ class ContentModuleOfDependsTargetTest : BasePluginTest() {
     }
   }
 
-  private fun buildPhpStormLikeIde(): Ide {
+  @Test
+  fun `plugin that the IDE also bundles sees the content module classes of its dependencies`() {
+    val ide = buildPhpStormLikeIde(bundlesPhpExtension = true)
+
+    IdeDescriptor.create(ide.idePath, defaultJdkPath = null, ideFileLock = null).use { ideDescriptor ->
+      val resolverProvider = DefaultClassResolverProvider(
+        MockDependencyFinder(),
+        ideDescriptor,
+        MockPackageFilter(),
+        archiveManager = archiveManager
+      )
+
+      // A newer version of a plugin that the IDE bundles, as verified by the Marketplace.
+      val plugin = temporaryFolder.newFile("bundled-php-extension.jar").toPath().buildIdePlugin {
+        descriptor(
+          ideaPlugin(pluginId = BUNDLED_PLUGIN_ID, sinceBuild = "263.1", untilBuild = "263.9999") +
+            "<depends>com.jetbrains.php</depends>"
+        )
+      }
+
+      with(resolverProvider.provide(plugin.getDetails()).allResolver) {
+        assertTrue(
+          "The plugin must resolve the classes of the PHP plugin main module",
+          containsClass(PHP_MAIN_MODULE_CLASS)
+        )
+        assertTrue(
+          "The plugin must resolve the classes of the 'intellij.php.backend' content module of the PHP plugin",
+          containsClass(PHP_BACKEND_MODULE_CLASS)
+        )
+      }
+    }
+  }
+
+  private fun buildPhpStormLikeIde(bundlesPhpExtension: Boolean = false): Ide {
     val ideRoot = buildDirectory(ideaPath) {
       file("build.txt", IDE_VERSION)
-      file("product-info.json", productInfoJson)
+      file("product-info.json", productInfoJson(bundlesPhpExtension))
       dir("lib") {
         zip("app.jar") {
           dir("META-INF") {
@@ -107,6 +142,17 @@ class ContentModuleOfDependsTargetTest : BasePluginTest() {
         zip("module-descriptors.jar") { /* content modules are declared inline in 'plugin.xml' */ }
       }
       dir("plugins") {
+        if (bundlesPhpExtension) {
+          dir("bundled-php-extension") {
+            dir("lib") {
+              zip("bundled-php-extension.jar") {
+                dir("META-INF") {
+                  file("plugin.xml", bundledPluginXml)
+                }
+              }
+            }
+          }
+        }
         dir("php-impl") {
           dir("lib") {
             zip("php.jar") {
@@ -172,8 +218,19 @@ class ContentModuleOfDependsTargetTest : BasePluginTest() {
     </idea-plugin>
   """.trimIndent()
 
+  @Language("XML")
+  private val bundledPluginXml = """
+    <idea-plugin>
+      <id>$BUNDLED_PLUGIN_ID</id>
+      <name>Bundled PHP Extension</name>
+      <version>1.0</version>
+      <depends>com.intellij.modules.platform</depends>
+      <depends>com.jetbrains.php</depends>
+    </idea-plugin>
+  """.trimIndent()
+
   @Language("JSON")
-  private val productInfoJson = """
+  private fun productInfoJson(bundlesPhpExtension: Boolean) = """
     {
       "name": "PhpStorm",
       "version": "2026.3",
@@ -193,7 +250,7 @@ class ContentModuleOfDependsTargetTest : BasePluginTest() {
           "bootClassPathJarNames": ["app.jar"]
         }
       ],
-      "bundledPlugins": ["com.jetbrains.php"],
+      "bundledPlugins": ["com.jetbrains.php"${bundledPluginNames(bundlesPhpExtension)}],
       "modules": [],
       "layout": [
         {
@@ -215,10 +272,22 @@ class ContentModuleOfDependsTargetTest : BasePluginTest() {
           "name": "intellij.php.backend",
           "kind": "moduleV2",
           "classPath": ["plugins/php-impl/lib/modules/intellij.php.backend.jar"]
-        }
+        }${bundledPluginLayoutComponent(bundlesPhpExtension)}
       ]
     }
   """.trimIndent()
+
+  private fun bundledPluginNames(bundlesPhpExtension: Boolean) =
+    if (bundlesPhpExtension) ", \"$BUNDLED_PLUGIN_ID\"" else ""
+
+  private fun bundledPluginLayoutComponent(bundlesPhpExtension: Boolean) = if (bundlesPhpExtension) """
+    ,
+        {
+          "name": "$BUNDLED_PLUGIN_ID",
+          "kind": "plugin",
+          "classPath": ["plugins/bundled-php-extension/lib/bundled-php-extension.jar"]
+        }
+  """.trimIndent() else ""
 
   private fun emptyClass(binaryName: String): ByteArray = ClassWriter(0).apply {
     visit(V1_8, ACC_PUBLIC or ACC_SUPER, binaryName, null, "java/lang/Object", null)

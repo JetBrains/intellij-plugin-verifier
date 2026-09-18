@@ -31,6 +31,15 @@ private data class PluginResolverKey(
   val resolverName: String
 )
 
+/**
+ * A resolver of the plugin's own classes, including the classes of its content modules,
+ * along with the resolvers of the modules the plugin defines.
+ */
+private data class PluginResolverTree(
+  val resolver: NamedResolver,
+  val definedModuleResolvers: List<NamedResolver>
+)
+
 class CachingPluginDependencyResolverProvider(
   pluginProvider: PluginProvider,
   private val secondaryPluginResolverProvider: PluginResolverProvider? = null,
@@ -62,9 +71,8 @@ class CachingPluginDependencyResolverProvider(
    */
   override fun getResolver(plugin: IdePlugin): Resolver {
     plugin.id ?: return EMPTY_RESOLVER
-    getFromSecondaryCache(plugin)?.let {
-      return it
-    }
+    // The IDE resolver of an identically named bundled plugin must not be used here:
+    // it provides the plugin's own classes instead of the dependencies of the plugin being resolved.
     val cacheKey = plugin.artifactKey()
     // Invocation of `getIfPresent` is intentional!
     // Using `get` would lead to a recursive update triggered by `createResolver`.
@@ -90,12 +98,13 @@ class CachingPluginDependencyResolverProvider(
   }
 
   /**
-   * Returns the resolver containing the plugin's own classes if it is already available.
+   * Returns the resolver containing the plugin's own classes, including the classes of its content modules,
+   * if it is already available.
    * Unlike [getResolver], this method never returns a [DependencyTreeAwareResolver].
    */
   fun getCachedPluginResolver(plugin: IdePlugin): Resolver? {
     getFromSecondaryCache(plugin)?.let {
-      return it
+      return plugin.composeWithDefinedModuleResolvers(it).resolver
     }
     return pluginResolverCache.getIfPresent(plugin.resolverCacheKey())
   }
@@ -172,21 +181,30 @@ class CachingPluginDependencyResolverProvider(
   private val IdePlugin.id: String?
     get() = pluginId ?: pluginName
 
+  /**
+   * Composes the [pluginResolver] with the resolvers of the modules this plugin defines,
+   * so that classes of the plugin's content modules are resolvable via the plugin itself.
+   */
+  private fun IdePlugin.composeWithDefinedModuleResolvers(pluginResolver: NamedResolver): PluginResolverTree {
+    val definedModuleResolvers = definedModules.map { moduleId ->
+      // A module has no own resolver when it is not a layout component of the 'product-info.json',
+      // or when its layout component was skipped due to a missing classpath file.
+      // Such a module is served by the resolver of the plugin that declares it.
+      getFromSecondaryCache(moduleId) ?: pluginResolver
+    }.unique()
+
+    val resultResolver = if (definedModuleResolvers.isNotEmpty()) {
+      composeUniqueResolvers(newResolverName(), pluginResolver, definedModuleResolvers)
+    } else {
+      pluginResolver
+    }
+
+    return PluginResolverTree(resultResolver, definedModuleResolvers)
+  }
+
   private fun IdePlugin.createResolverTree(): Pair<NamedResolver, List<NamedResolver>> {
     getFromSecondaryCache(this)?.let { pluginResolver ->
-      val definedModuleResolvers = definedModules.map { moduleId ->
-        // A module has no own resolver when it is not a layout component of the 'product-info.json',
-        // or when its layout component was skipped due to a missing classpath file.
-        // Such a module is served by the resolver of the plugin that declares it.
-        getFromSecondaryCache(moduleId) ?: pluginResolver
-      }.unique()
-
-      val resultResolver = if (definedModuleResolvers.isNotEmpty()) {
-        composeUniqueResolvers(newResolverName(), pluginResolver, definedModuleResolvers)
-      } else {
-        pluginResolver
-      }
-
+      val (resultResolver, definedModuleResolvers) = composeWithDefinedModuleResolvers(pluginResolver)
       return resultResolver to definedModuleResolvers
     }
 
