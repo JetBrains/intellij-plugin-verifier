@@ -477,6 +477,30 @@ class CachingPluginDependencyResolverProviderTest {
     }
   }
 
+  @Test
+  fun `plugin bundled in the IDE is resolved to its dependencies, not to the bundled copy of itself`() {
+    val resolverProvider = createPartiallyResolvableJsonIde()
+
+    // Same ID as the plugin bundled in the IDE, as for a Marketplace plugin that the IDE also bundles.
+    val bundledPluginId = "com.intellij.modules.json"
+    // Not built with `idePlugin`, which can't set the version that tells this plugin apart from the bundled one.
+    val plugin = MockIdePlugin(
+      pluginId = bundledPluginId,
+      pluginVersion = "2.0",
+      dependsList = dependency("com.intellij.modules.lang")
+    )
+
+    val pluginResolver = resolverProvider.getResolver(plugin)
+    assertTrue(
+      "A dependency resolver must be built for the plugin",
+      pluginResolver is CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver
+    )
+    assertFalse(
+      "Classes of the bundled plugin of the same ID must not be resolved as the plugin's own dependencies",
+      pluginResolver.containsClass("com/intellij/json/JsonNamesValidator")
+    )
+  }
+
   /**
    * Sets up an IDE with a JSON plugin that declares two modules: `intellij.json` and `intellij.json.split`.
    *

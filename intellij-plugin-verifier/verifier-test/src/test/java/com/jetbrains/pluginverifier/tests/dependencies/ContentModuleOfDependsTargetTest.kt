@@ -111,6 +111,15 @@ class ContentModuleOfDependsTargetTest : BasePluginTest() {
     }
   }
 
+  @Test
+  fun `plugin that the IDE also bundles sees the content module classes of its dependencies`() {
+    withResolverProvider(buildPhpStormLikeIde()) { resolverProvider ->
+      // A newer version of a plugin that the IDE bundles, as verified by the Marketplace.
+      val plugin = buildPlugin(BUNDLED_PLUGIN_ID, "<depends>$PHP_PLUGIN_ID</depends>")
+      resolverProvider.assertResolvesPhpClasses(plugin, "The plugin")
+    }
+  }
+
   /**
    * Runs the [block] against a resolver provider that has already verified another plugin depending on the PHP plugin,
    * as in `check-ide`, where all plugins verified against an IDE share the resolver caches.

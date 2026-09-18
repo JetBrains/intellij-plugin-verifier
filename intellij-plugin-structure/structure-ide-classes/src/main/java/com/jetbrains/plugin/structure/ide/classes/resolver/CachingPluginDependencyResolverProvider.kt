@@ -59,12 +59,11 @@ class CachingPluginDependencyResolverProvider(
    * This mechanism functions as a classpath filter.
    * It takes classes and resource bundles from the IDE
    * and includes only those that are declared as dependencies in the plugin.
+   * This holds even when the IDE bundles a plugin with the same ID,
+   * such as another version of the plugin being resolved.
    */
   override fun getResolver(plugin: IdePlugin): Resolver {
     plugin.id ?: return EMPTY_RESOLVER
-    getFromSecondaryCache(plugin)?.let {
-      return it
-    }
     val cacheKey = plugin.artifactKey()
     // Invocation of `getIfPresent` is intentional!
     // Using `get` would lead to a recursive update triggered by `createResolver`.
