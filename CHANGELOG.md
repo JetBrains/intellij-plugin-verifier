@@ -10,6 +10,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
+- Resolve content modules of a bundled plugin for every plugin that depends on it, not just for the first verified one. A cached module resolver could replace the resolver of the plugin declaring it, so batch verifications such as `check-ide` reported spurious _Access to unresolved class_ problems for classes in content modules, for example `com.jetbrains.php.*` in `intellij.php.backend` ([MP-7234](https://youtrack.jetbrains.com/issue/MP-7234))
+
 ## 1.410 - 2026-08-26
 
 ### Added

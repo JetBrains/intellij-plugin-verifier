@@ -464,6 +464,46 @@ class CachingPluginDependencyResolverProviderTest {
 
   @Test
   fun `plugin depends on JSON that is in the secondary cache, but not fully`() {
+    val resolverProvider = createPartiallyResolvableJsonIde()
+
+    val alphaPlugin = MockIdePlugin(
+      pluginId = "com.example.Alpha",
+      dependencies = dependency("com.intellij.modules.json"),
+    )
+
+    val pluginResolver = resolverProvider.getResolver(alphaPlugin)
+    assertTrue(pluginResolver.containsClass("com/intellij/json/JsonNamesValidator"))
+    assertTrue(pluginResolver.containsClass("com/intellij/json/JsonBundle"))
+  }
+
+  @Test
+  fun `every plugin depending on JSON sees its content modules, not just the first one`() {
+    val resolverProvider = createPartiallyResolvableJsonIde()
+
+    repeat(3) { i ->
+      val plugin = MockIdePlugin(
+        pluginId = "com.example.Alpha$i",
+        dependencies = dependency("com.intellij.modules.json"),
+      )
+      val pluginResolver = resolverProvider.getResolver(plugin)
+      assertTrue(
+        "Plugin #$i must resolve the JSON plugin classes",
+        pluginResolver.containsClass("com/intellij/json/JsonNamesValidator")
+      )
+      assertTrue(
+        "Plugin #$i must resolve the classes of the 'intellij.json.split' content module of the JSON plugin",
+        pluginResolver.containsClass("com/intellij/json/JsonBundle")
+      )
+    }
+  }
+
+  /**
+   * Sets up an IDE with a JSON plugin that declares two modules: `intellij.json` and `intellij.json.split`.
+   *
+   * Only `intellij.json.split` has a JAR on disk, so the `intellij.json` layout component is skipped
+   * and cannot be resolved separately from the plugin that declares it.
+   */
+  private fun createPartiallyResolvableJsonIde(): CachingPluginDependencyResolverProvider {
     val ideRoot = temporaryFolder.newFolder("idea-" + UUID.randomUUID().toString()).toPath()
 
     val jsonPluginDir = buildDirectory(ideRoot) {
@@ -521,16 +561,7 @@ class CachingPluginDependencyResolverProviderTest {
     )
     val ide = MockProductInfoBasedIde(ideRoot, productInfo, bundledPlugins = listOf(jsonPlugin))
     val productInfoClassResolver = ProductInfoClassResolver.of(ide, IdeResolverConfiguration(readMode = Resolver.ReadMode.SIGNATURES))
-    val resolverProvider = CachingPluginDependencyResolverProvider(ide, productInfoClassResolver)
-
-    val alphaPlugin = MockIdePlugin(
-      pluginId = "com.example.Alpha",
-      dependencies = dependency("com.intellij.modules.json"),
-    )
-
-    val pluginResolver = resolverProvider.getResolver(alphaPlugin)
-    assertTrue(pluginResolver.containsClass("com/intellij/json/JsonNamesValidator"))
-    assertTrue(pluginResolver.containsClass("com/intellij/json/JsonBundle"))
+    return CachingPluginDependencyResolverProvider(ide, productInfoClassResolver)
   }
 
   private fun dependency(id: String): List<PluginDependency> {
