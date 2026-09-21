@@ -25,18 +25,60 @@ class CompositeDependenciesModifier(
 
   constructor(vararg modifiers: DependenciesModifier) : this(modifiers.toList())
 
-  override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<PluginDependency> {
+  override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<DependencyModification> {
     if (modifiers.isEmpty()) {
-      return plugin.dependencies
+      return getInitialDependencyModifications(plugin)
     }
 
-    var currentDependencies = plugin.dependencies
+    var currentDependencyModifications = getInitialDependencyModifications(plugin)
     for (modifier in modifiers) {
-      val pluginView = DependencyModifiedPluginView(plugin, currentDependencies)
-      currentDependencies = modifier.apply(pluginView, pluginProvider)
+      val pluginView = DependencyModifiedPluginView(plugin, currentDependencyModifications)
+      currentDependencyModifications = mergeDependencyModifications(
+        currentDependencyModifications,
+        modifier.apply(pluginView, pluginProvider)
+      )
     }
 
-    return currentDependencies
+    return currentDependencyModifications
+  }
+
+  private fun getInitialDependencyModifications(plugin: IdePlugin): List<DependencyModification> =
+    plugin.dependencies.map { it to it.inferredModificationReason() }
+
+  private fun PluginDependency.inferredModificationReason(): DependencyModificationReason {
+    return if (this is ModuleV2Dependency) {
+      DependencyModificationReason.CONTENT_MODULE
+    } else {
+      DependencyModificationReason.PLUGIN
+    }
+  }
+
+  private fun mergeDependencyModifications(
+    current: List<DependencyModification>,
+    modified: List<DependencyModification>
+  ): List<DependencyModification> {
+    val currentByDependencyId = current.withHighestPriorityReasons().associateBy { it.first.id }
+    return modified
+      .map { dependencyModification ->
+        currentByDependencyId[dependencyModification.first.id]
+          ?.withHighestPriorityReason(dependencyModification)
+          ?: dependencyModification
+      }
+      .withHighestPriorityReasons()
+  }
+
+  private fun List<DependencyModification>.withHighestPriorityReasons(): List<DependencyModification> {
+    val merged = linkedMapOf<String, DependencyModification>()
+    for (dependencyModification in this) {
+      val id = dependencyModification.first.id
+      val previous = merged[id]
+      merged[id] = previous?.withHighestPriorityReason(dependencyModification) ?: dependencyModification
+    }
+    return merged.values.toList()
+  }
+
+  private fun DependencyModification.withHighestPriorityReason(other: DependencyModification): DependencyModification {
+    return if (second >= other.second) this else other
   }
 
   /**
@@ -45,7 +87,9 @@ class CompositeDependenciesModifier(
    */
   private class DependencyModifiedPluginView(
     private val delegate: IdePlugin,
+    override val dependencyModifications: List<DependencyModification>
+  ) : IdePlugin by delegate, DependencyModificationsAware {
     @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
-    override val dependencies: List<PluginDependency>
-  ) : IdePlugin by delegate
+    override val dependencies: List<PluginDependency> = dependencyModifications.map { it.first }
+  }
 }

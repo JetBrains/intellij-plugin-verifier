@@ -4,11 +4,7 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
-import com.jetbrains.plugin.structure.intellij.plugin.DependenciesModifier
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.*
 
 private const val CORE_IDE_PLUGIN_ID = "com.intellij"
 
@@ -24,23 +20,25 @@ private const val CORE_IDE_PLUGIN_ID = "com.intellij"
  */
 class CorePluginDependencyContributor(private val ide: PluginProvider) : DependenciesModifier {
 
-  override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<PluginDependency> {
+  override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<DependencyModification> {
+    val dependencies = plugin.getDependencyModifications()
+
     // Core plugin doesn't depend on itself
     if (plugin.pluginId == CORE_IDE_PLUGIN_ID) {
-      return plugin.dependencies
+      return dependencies
     }
 
     // Check if plugin already has a dependency on the core plugin
     if (plugin.dependencies.any { it.id == CORE_IDE_PLUGIN_ID }) {
-      return plugin.dependencies
+      return dependencies
     }
 
     // Add core plugin as implicit dependency if it exists in the IDE
     val corePlugin = ide.findPluginById(CORE_IDE_PLUGIN_ID)
     if (corePlugin != null) {
-      return plugin.dependencies + PluginV1Dependency.Mandatory(CORE_IDE_PLUGIN_ID)
+      return dependencies + (PluginV1Dependency.Mandatory(CORE_IDE_PLUGIN_ID) to DependencyModificationReason.IDE)
     }
 
-    return plugin.dependencies
+    return dependencies
   }
 }
