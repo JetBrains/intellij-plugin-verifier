@@ -78,6 +78,15 @@ class DependencyTree(
       .resolveDuplicateDependencies(dependencyResolutionContext)
   }
 
+  fun toString(plugin: IdePlugin): CharSequence {
+    requireNotNull(plugin.pluginId) { missingId(plugin) }
+    val graph = getDependencyGraph(plugin, ResolutionContext())
+    val visitedNodes = LinkedHashSet<NodeId>()
+    val string = StringBuilder()
+    graph.toDebugString(NodeId.ofPlugin(plugin), indentSize = 0, visitedNodes, string)
+    return string
+  }
+
   private fun getDependencyGraph(plugin: IdePlugin, context: ResolutionContext): DependencyGraph {
     val rootDependency = Plugin(plugin)
     val graph = DependencyGraph(rootDependency)
@@ -233,12 +242,6 @@ class DependencyTree(
   private fun ignore(plugin: IdePlugin, dependency: PluginDependency): Boolean {
     return !dependencyFilter(dependency) ||
       (dependency.isModule && plugin.hasDefinedModuleWithId(dependency.id))
-  }
-
-  private fun missingId(plugin: IdePlugin): String {
-    val name = plugin.pluginName ?: "unknown name"
-    val originalFile = plugin.originalFile ?: "unknown plugin artifact path"
-    return "Plugin must have an ID. Name: $name. Path: $originalFile"
   }
 
   private val Dependency.artifactId: PluginId?

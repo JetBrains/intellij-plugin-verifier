@@ -12,7 +12,15 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
  * For plugin dependencies, [moduleId] is `null` and only [pluginId] is set.
  * For module dependencies, [moduleId] is non-null and [pluginId] refers to the plugin that provides the module.
  */
-data class NodeId(val pluginId: PluginId, val moduleId: PluginId?)
+data class NodeId(val pluginId: PluginId, val moduleId: PluginId?) {
+  companion object {
+    fun ofPlugin(plugin: IdePlugin) : NodeId {
+      val id = plugin.pluginId
+      requireNotNull(id) { missingId(plugin) }
+      return NodeId(id, null)
+    }
+  }
+}
 
 interface PluginAware {
   val plugin: IdePlugin

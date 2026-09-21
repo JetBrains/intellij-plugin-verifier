@@ -34,3 +34,9 @@ val Dependency.pluginDependency: PluginDependency?
       Dependency.None -> null
     }
   }
+
+internal fun missingId(plugin: IdePlugin): String {
+  val name = plugin.pluginName ?: "unknown name"
+  val originalFile = plugin.originalFile ?: "unknown plugin artifact path"
+  return "Plugin must have an ID. Name: $name. Path: $originalFile"
+}
