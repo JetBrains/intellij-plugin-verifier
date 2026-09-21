@@ -132,7 +132,7 @@ class DependencyTree(
         // Already visited and resolved/resolving dependencies, recursive SOE prevention
         return@with
       }
-      val dependencies = context.dependenciesModifier.apply(this, pluginProvider).map { it.first }
+      val dependencies = context.dependenciesModifier.apply(this, pluginProvider).map { it.dependency }
       val pluginId = pluginId ?: return@with
       val number = if (dependencyIndex < 0) "" else "" + (dependencyIndex + 1) + ") "
       val indent = getIndent(resolutionDepth, parentDependencyIndex)

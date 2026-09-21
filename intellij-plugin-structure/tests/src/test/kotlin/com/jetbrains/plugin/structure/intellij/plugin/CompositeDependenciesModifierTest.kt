@@ -61,13 +61,13 @@ class CompositeDependenciesModifierTest {
     // Should have core plugin (from CorePluginDependencyContributor)
     assertTrue(
       "Should contain core plugin dependency",
-      modifiedDependencies.any { it.first.id == CORE_PLUGIN_ID }
+      modifiedDependencies.any { it.dependency.id == CORE_PLUGIN_ID }
     )
     assertEquals(DependencyModificationReason.IDE, modifiedDependencies.reasonOf(CORE_PLUGIN_ID))
     // Should have Java module (from LegacyPluginDependencyContributor for legacy plugins)
     assertTrue(
       "Should contain Java module dependency (from legacy contributor)",
-      modifiedDependencies.any { it.first.id == "com.intellij.modules.java" }
+      modifiedDependencies.any { it.dependency.id == "com.intellij.modules.java" }
     )
     assertEquals(DependencyModificationReason.IDE, modifiedDependencies.reasonOf("com.intellij.modules.java"))
   }
@@ -82,8 +82,8 @@ class CompositeDependenciesModifierTest {
     val modifiedDependencies = compositeModifier.apply(plugin, ide)
 
     assertEquals(1, modifiedDependencies.size)
-    assertEquals("some.dependency", modifiedDependencies.first().first.id)
-    assertEquals(DependencyModificationReason.PLUGIN, modifiedDependencies.first().second)
+    assertEquals("some.dependency", modifiedDependencies.first().dependency.id)
+    assertEquals(DependencyModificationReason.PLUGIN, modifiedDependencies.first().reason)
   }
 
   @Test
@@ -110,25 +110,41 @@ class CompositeDependenciesModifierTest {
     val plugin = MockIdePlugin(pluginId = "com.example.plugin")
     val compositeModifier = CompositeDependenciesModifier(
       DependenciesModifier { _, _ ->
-        listOf(PluginV1Dependency.Mandatory(sharedDependencyId) to DependencyModificationReason.IDE)
+        listOf(
+          DependencyModification(
+            PluginV1Dependency.Mandatory(sharedDependencyId), DependencyModificationReason.IDE
+          )
+        )
       },
       DependenciesModifier { _, _ ->
-        listOf(PluginV1Dependency.Mandatory(sharedDependencyId) to DependencyModificationReason.PLUGIN)
+        listOf(
+          DependencyModification(
+            PluginV1Dependency.Mandatory(sharedDependencyId), DependencyModificationReason.PLUGIN
+          )
+        )
       },
       DependenciesModifier { _, _ ->
-        listOf(PluginV1Dependency.Mandatory(sharedDependencyId) to DependencyModificationReason.OTHER)
+        listOf(
+          DependencyModification(
+            PluginV1Dependency.Mandatory(sharedDependencyId), DependencyModificationReason.OTHER
+          )
+        )
       },
       DependenciesModifier { _, _ ->
-        listOf(ModuleV2Dependency(sharedDependencyId) to DependencyModificationReason.CONTENT_MODULE)
+        listOf(
+          DependencyModification(
+            ModuleV2Dependency(sharedDependencyId), DependencyModificationReason.CONTENT_MODULE
+          )
+        )
       }
     )
 
     val modifiedDependencies = compositeModifier.apply(plugin, ide)
 
     assertEquals(1, modifiedDependencies.size)
-    assertEquals(sharedDependencyId, modifiedDependencies.first().first.id)
-    assertEquals(DependencyModificationReason.CONTENT_MODULE, modifiedDependencies.first().second)
+    assertEquals(sharedDependencyId, modifiedDependencies.first().dependency.id)
+    assertEquals(DependencyModificationReason.CONTENT_MODULE, modifiedDependencies.first().reason)
   }
 
-  private fun List<DependencyModification>.reasonOf(id: String) = first { it.first.id == id }.second
+  private fun List<DependencyModification>.reasonOf(id: String) = first { it.dependency.id == id }.reason
 }

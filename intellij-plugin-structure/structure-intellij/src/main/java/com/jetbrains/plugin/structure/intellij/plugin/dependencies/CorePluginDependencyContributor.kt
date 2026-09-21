@@ -5,6 +5,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.DependencyModificationReason.IDE
 
 private const val CORE_IDE_PLUGIN_ID = "com.intellij"
 
@@ -34,11 +35,7 @@ class CorePluginDependencyContributor(private val ide: PluginProvider) : Depende
     }
 
     // Add core plugin as implicit dependency if it exists in the IDE
-    val corePlugin = ide.findPluginById(CORE_IDE_PLUGIN_ID)
-    if (corePlugin != null) {
-      return dependencies + (PluginV1Dependency.Mandatory(CORE_IDE_PLUGIN_ID) to DependencyModificationReason.IDE)
-    }
-
-    return dependencies
+    val corePlugin = ide.findPluginById(CORE_IDE_PLUGIN_ID) ?: return dependencies
+    return dependencies + DependencyModification(PluginV1Dependency.Mandatory(CORE_IDE_PLUGIN_ID), IDE)
   }
 }

@@ -39,7 +39,9 @@ class CompositeDependenciesModifier(
   }
 
   private fun getInitialDependencyModifications(plugin: IdePlugin): List<DependencyModification> =
-    plugin.dependencies.map { it to it.inferredModificationReason() }
+    plugin.dependencies.map {
+      DependencyModification(it, it.inferredModificationReason())
+    }
 
   private fun PluginDependency.inferredModificationReason(): DependencyModificationReason {
     return if (this is ModuleV2Dependency) {
@@ -53,10 +55,10 @@ class CompositeDependenciesModifier(
     current: List<DependencyModification>,
     modified: List<DependencyModification>
   ): List<DependencyModification> {
-    val currentByDependencyId = current.withHighestPriorityReasons().associateBy { it.first.id }
+    val currentByDependencyId = current.withHighestPriorityReasons().associateBy { it.dependency.id }
     return modified
       .map { dependencyModification ->
-        currentByDependencyId[dependencyModification.first.id]
+        currentByDependencyId[dependencyModification.dependency.id]
           ?.withHighestPriorityReason(dependencyModification)
           ?: dependencyModification
       }
@@ -66,7 +68,7 @@ class CompositeDependenciesModifier(
   private fun List<DependencyModification>.withHighestPriorityReasons(): List<DependencyModification> {
     val merged = linkedMapOf<String, DependencyModification>()
     for (dependencyModification in this) {
-      val id = dependencyModification.first.id
+      val id = dependencyModification.dependency.id
       val previous = merged[id]
       merged[id] = previous?.withHighestPriorityReason(dependencyModification) ?: dependencyModification
     }
@@ -74,7 +76,7 @@ class CompositeDependenciesModifier(
   }
 
   private fun DependencyModification.withHighestPriorityReason(other: DependencyModification): DependencyModification {
-    return if (second >= other.second) this else other
+    return if (reason >= other.reason) this else other
   }
 
   /**
@@ -86,6 +88,6 @@ class CompositeDependenciesModifier(
     override val dependencyModifications: List<DependencyModification>
   ) : IdePlugin by delegate, DependencyModificationsAware {
     @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
-    override val dependencies: List<PluginDependency> = dependencyModifications.map { it.first }
+    override val dependencies: List<PluginDependency> = dependencyModifications.map { it.dependency }
   }
 }

@@ -14,7 +14,7 @@ enum class DependencyModificationReason {
   CONTENT_MODULE
 }
 
-typealias DependencyModification = Pair<PluginDependency, DependencyModificationReason>
+data class DependencyModification(val dependency: PluginDependency, val reason: DependencyModificationReason)
 
 fun interface DependenciesModifier {
   fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<DependencyModification>
@@ -25,7 +25,7 @@ fun interface DependenciesModifier {
  *
  * [IdePlugin.dependencies] exposes only raw [PluginDependency]s, so consumers would otherwise have to infer reasons
  * again and could lose explicit modifier-provided reasons such as [DependencyModificationReason.IDE].
- * [getDependencyModifications] uses this interface to preserve existing [DependencyModification] pairs while chaining
+ * [getDependencyModifications] uses this interface to preserve existing [DependencyModification]s while chaining
  * [DependenciesModifier] instances.
  */
 internal interface DependencyModificationsAware {
@@ -37,9 +37,11 @@ internal fun IdePlugin.getDependencyModifications(): List<DependencyModification
     ?: dependencies.withInferredModificationReasons()
 }
 
-internal fun List<PluginDependency>.withInferredModificationReasons(): List<DependencyModification> = associateWith {
-  when (it) {
+internal fun List<PluginDependency>.withInferredModificationReasons(): List<DependencyModification> = map {
+  DependencyModification(
+    it, when (it) {
     is ModuleV2Dependency -> CONTENT_MODULE
     else -> PLUGIN
   }
-}.toList()
+  )
+}

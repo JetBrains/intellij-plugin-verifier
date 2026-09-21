@@ -5,6 +5,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy
 
 import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.DependencyModificationReason.IDE
 import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier.VerificationResult.NotLegacyPlugin
 
@@ -36,7 +37,7 @@ class LegacyPluginDependencyContributor(private val ide: PluginProvider, private
     if (isNonBundledPlugin && plugin.isLegacy()) {
       val javaModule = ide.findPluginByModule(JAVA_MODULE_ID)
       if (javaModule != null) {
-        return dependencies + (JAVA_MODULE_DEPENDENCY to DependencyModificationReason.IDE)
+        return dependencies + DependencyModification(JAVA_MODULE_DEPENDENCY, IDE)
       }
     }
     return dependencies

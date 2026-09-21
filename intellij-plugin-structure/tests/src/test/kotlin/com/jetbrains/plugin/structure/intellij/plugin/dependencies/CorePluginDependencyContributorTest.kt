@@ -48,13 +48,16 @@ class CorePluginDependencyContributorTest {
     assertEquals(2, modifiedDependencies.size)
     assertTrue(
       "Should contain original dependency",
-      modifiedDependencies.any { it.first.id == "com.intellij.modules.platform" }
+      modifiedDependencies.any { it.dependency.id == "com.intellij.modules.platform" }
     )
     assertTrue(
       "Should contain core plugin dependency",
-      modifiedDependencies.any { it.first.id == CORE_PLUGIN_ID }
+      modifiedDependencies.any { it.dependency.id == CORE_PLUGIN_ID }
     )
-    assertEquals(DependencyModificationReason.IDE, modifiedDependencies.first { it.first.id == CORE_PLUGIN_ID }.second)
+    assertEquals(
+      DependencyModificationReason.IDE,
+      modifiedDependencies.first { it.dependency.id == CORE_PLUGIN_ID }.reason
+    )
   }
 
   @Test
@@ -67,7 +70,7 @@ class CorePluginDependencyContributorTest {
     val modifiedDependencies = contributor.apply(pluginWithCoreDependency, ide)
 
     assertEquals(1, modifiedDependencies.size)
-    assertEquals(CORE_PLUGIN_ID, modifiedDependencies.first().first.id)
+    assertEquals(CORE_PLUGIN_ID, modifiedDependencies.first().dependency.id)
   }
 
   @Test
@@ -77,7 +80,7 @@ class CorePluginDependencyContributorTest {
 
     assertTrue(
       "Core plugin should not have dependency on itself",
-      modifiedDependencies.none { it.first.id == CORE_PLUGIN_ID }
+      modifiedDependencies.none { it.dependency.id == CORE_PLUGIN_ID }
     )
   }
 
@@ -89,8 +92,8 @@ class CorePluginDependencyContributorTest {
     val modifiedDependencies = contributor.apply(pluginWithNoDeps, ide)
 
     assertEquals(1, modifiedDependencies.size)
-    assertEquals(CORE_PLUGIN_ID, modifiedDependencies.first().first.id)
-    assertEquals(DependencyModificationReason.IDE, modifiedDependencies.first().second)
+    assertEquals(CORE_PLUGIN_ID, modifiedDependencies.first().dependency.id)
+    assertEquals(DependencyModificationReason.IDE, modifiedDependencies.first().reason)
   }
 
   @Test
