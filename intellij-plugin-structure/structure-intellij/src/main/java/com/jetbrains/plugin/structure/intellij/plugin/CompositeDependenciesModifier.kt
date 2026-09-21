@@ -26,10 +26,6 @@ class CompositeDependenciesModifier(
   constructor(vararg modifiers: DependenciesModifier) : this(modifiers.toList())
 
   override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<DependencyModification> {
-    if (modifiers.isEmpty()) {
-      return getInitialDependencyModifications(plugin)
-    }
-
     var currentDependencyModifications = getInitialDependencyModifications(plugin)
     for (modifier in modifiers) {
       val pluginView = DependencyModifiedPluginView(plugin, currentDependencyModifications)
