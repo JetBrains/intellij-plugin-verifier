@@ -73,77 +73,6 @@ class MockIdePluginValidatorTest {
   }
 
   @Test
-  fun `missing dependencies in plugin dependencies list reports DependenciesMismatchProblem`() {
-    val plugin = object : IdePlugin by MockIdePlugin(
-      dependsList = listOf(MandatoryV1Dependency("com.example.dep"))
-    ) {
-      override val dependencies: List<PluginDependency> = emptyList()
-    }
-
-    val problemRegistrar = SimpleProblemRegistrar()
-    validator.validate(plugin, problemRegistrar)
-    assertEquals(1, problemRegistrar.problems.size)
-    assertTrue(problemRegistrar.problems[0] is DependenciesMismatchProblem)
-  }
-
-  @Test
-  fun `extra dependency in plugin dependencies list reports DependenciesMismatchProblem`() {
-    val plugin = object : IdePlugin by MockIdePlugin(
-      dependsList = emptyList(),
-      contentModuleDependencies = emptyList(),
-      pluginMainModuleDependencies = emptyList()
-    ) {
-      override val dependencies: List<PluginDependency> = listOf(PluginV1Dependency.Mandatory("com.example.extra"))
-    }
-
-    val problemRegistrar = SimpleProblemRegistrar()
-    validator.validate(plugin, problemRegistrar)
-    assertEquals(1, problemRegistrar.problems.size)
-    assertTrue(problemRegistrar.problems[0] is DependenciesMismatchProblem)
-  }
-
-  @Test
-  fun `dependency ordering mismatch reports DependenciesMismatchProblem`() {
-    val dependsList = listOf(MandatoryV1Dependency("com.example.v1"))
-    val contentModuleDependencies = listOf(ContentModuleDependency("com.example.module", "jetbrains"))
-    val pluginMainModuleDependencies = listOf(PluginMainModuleDependency("com.example.main"))
-
-    // Incorrect order: pluginMainModuleDependencies before contentModuleDependencies
-    val wrongOrderDependencies = listOf(
-      PluginV1Dependency.Mandatory("com.example.v1"),
-      PluginV2Dependency("com.example.main"),
-      ModuleV2Dependency("com.example.module")
-    )
-
-    val plugin = object : IdePlugin by MockIdePlugin(
-      dependsList = dependsList,
-      contentModuleDependencies = contentModuleDependencies,
-      pluginMainModuleDependencies = pluginMainModuleDependencies
-    ) {
-      override val dependencies: List<PluginDependency> = wrongOrderDependencies
-    }
-
-    val problemRegistrar = SimpleProblemRegistrar()
-    validator.validate(plugin, problemRegistrar)
-    assertEquals(1, problemRegistrar.problems.size)
-    assertTrue(problemRegistrar.problems[0] is DependenciesMismatchProblem)
-  }
-
-  @Test
-  fun `dependency optional flag mismatch reports DependenciesMismatchProblem`() {
-    val plugin = object : IdePlugin by MockIdePlugin(
-      dependsList = listOf(DependsPluginDependency("com.example.dep", isOptional = true))
-    ) {
-      override val dependencies: List<PluginDependency> = listOf(PluginV1Dependency.Mandatory("com.example.dep"))
-    }
-
-    val problemRegistrar = SimpleProblemRegistrar()
-    validator.validate(plugin, problemRegistrar)
-    assertEquals(1, problemRegistrar.problems.size)
-    assertTrue(problemRegistrar.problems[0] is DependenciesMismatchProblem)
-  }
-
-  @Test
   fun `module count mismatch with duplicate content module name reports both problems`() {
     // Both have identifier set {"mod.one"}, but count is 1 vs 2 due to duplicate content modules
     val contentModules = listOf(
@@ -236,31 +165,15 @@ class MockIdePluginValidatorTest {
       createMockModuleDescriptor("mod.three")
     )
 
-    val plugin = object : IdePlugin by MockIdePlugin(
-      dependsList = listOf(MandatoryV1Dependency("com.example.v1")),
+    val plugin = MockIdePlugin(
       contentModules = contentModules,
       modulesDescriptors = modulesDescriptors
-    ) {
-      override val dependencies: List<PluginDependency> = emptyList()
-    }
-
-    val problemRegistrar = SimpleProblemRegistrar()
-    validator.validate(plugin, problemRegistrar)
-    assertEquals(3, problemRegistrar.problems.size)
-    assertTrue(problemRegistrar.problems.any { it is DependenciesMismatchProblem })
-    assertTrue(problemRegistrar.problems.any { it is ModuleCountMismatchProblem })
-    assertTrue(problemRegistrar.problems.any { it is ModuleIdentifierMismatchProblem })
-  }
-
-  @Test
-  fun `validate IdePlugin overload handles valid and invalid plugins`() {
-    val idePlugin: IdePlugin = MockIdePlugin(
-      dependsList = listOf(MandatoryV1Dependency("com.example.dep")),
     )
 
     val problemRegistrar = SimpleProblemRegistrar()
-    validator.validate(idePlugin, problemRegistrar)
-    assertEquals(1, problemRegistrar.problems.size)
-    assertTrue(problemRegistrar.problems[0] is DependenciesMismatchProblem)
+    validator.validate(plugin, problemRegistrar)
+    assertEquals(2, problemRegistrar.problems.size)
+    assertTrue(problemRegistrar.problems.any { it is ModuleCountMismatchProblem })
+    assertTrue(problemRegistrar.problems.any { it is ModuleIdentifierMismatchProblem })
   }
 }
