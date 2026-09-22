@@ -12,6 +12,8 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.idePlugin
+import com.jetbrains.plugin.structure.mocks.idePlugin
+import com.jetbrains.plugin.structure.mocks.validation.MockIdePluginValidator.Companion.assertValid
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Before
