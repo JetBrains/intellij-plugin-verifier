@@ -83,7 +83,7 @@ class CorePluginDependencyContributorTest {
 
   @Test
   fun `core plugin dependency is added even for plugins with no dependencies`() {
-    val pluginWithNoDeps = idePlugin( "com.example.nodeps")
+    val pluginWithNoDeps = idePlugin("com.example.nodeps")
 
     val contributor = CorePluginDependencyContributor(ide)
     val modifiedDependencies = contributor.apply(pluginWithNoDeps, ide)

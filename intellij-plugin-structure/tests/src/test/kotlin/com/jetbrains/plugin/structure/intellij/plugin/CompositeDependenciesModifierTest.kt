@@ -47,7 +47,7 @@ class CompositeDependenciesModifierTest {
     val ide = MockIde(IdeVersion.createIdeVersion("IU-261.1000"), ideRoot, bundledPlugins)
 
     // Legacy plugin has no module dependencies
-    val legacyPlugin = idePlugin( "com.example.Legacy")
+    val legacyPlugin = idePlugin("com.example.Legacy")
 
     val legacyPluginVerifier = LegacyIntelliJIdeaPluginVerifier()
     val compositeModifier = CompositeDependenciesModifier(
