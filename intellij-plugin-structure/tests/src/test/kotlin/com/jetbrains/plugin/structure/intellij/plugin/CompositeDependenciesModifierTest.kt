@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.CorePluginDependencyContributor
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
 import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier
@@ -75,7 +76,7 @@ class CompositeDependenciesModifierTest {
   fun `composite modifier with empty list returns original dependencies`() {
     val plugin = MockIdePlugin(
       pluginId = "com.example.plugin",
-      dependsList = listOf(DependsPluginDependency("some.dependency", false))
+      dependsList = listOf(MandatoryV1Dependency("some.dependency"))
     )
 
     val compositeModifier = CompositeDependenciesModifier(emptyList())

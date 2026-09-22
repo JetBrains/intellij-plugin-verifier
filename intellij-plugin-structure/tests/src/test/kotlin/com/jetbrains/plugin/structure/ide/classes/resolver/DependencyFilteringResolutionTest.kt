@@ -15,7 +15,7 @@ import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent.PluginAl
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
@@ -113,12 +113,8 @@ class DependencyFilteringResolutionTest {
     val plugin = MockIdePlugin(
       pluginId = "com.example.somePlugin",
       dependsList = listOf(
-        DependsPluginDependency(/* id = */ "com.intellij.modules.platform",
-          /* isOptional = */ false
-        ),
-        DependsPluginDependency(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false
-        ),
+        MandatoryV1Dependency("com.intellij.modules.platform"),
+        MandatoryV1Dependency("com.intellij.modules.json"),
       )
     )
 
@@ -169,12 +165,8 @@ class DependencyFilteringResolutionTest {
       pluginId = "com.example.somePlugin",
       vendor = "JetBrains",
       dependsList = listOf(
-        DependsPluginDependency(/* id = */ "com.intellij.modules.lang",
-          /* isOptional = */ false
-        ),
-        DependsPluginDependency(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false
-        ),
+        MandatoryV1Dependency("com.intellij.modules.lang"),
+        MandatoryV1Dependency("com.intellij.modules.json"),
       )
     )
 
@@ -222,12 +214,8 @@ class DependencyFilteringResolutionTest {
       pluginId = "com.example.somePlugin",
       vendor = "JetBrains",
       dependsList = listOf(
-        DependsPluginDependency(/* id = */ "com.intellij.java",
-          /* isOptional = */ false
-        ),
-        DependsPluginDependency(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false
-        ),
+        MandatoryV1Dependency("com.intellij.java"),
+        MandatoryV1Dependency("com.intellij.modules.json"),
       )
     )
 
@@ -276,12 +264,8 @@ class DependencyFilteringResolutionTest {
       pluginId = "com.example.somePlugin",
       vendor = "JetBrains",
       dependsList = listOf(
-        DependsPluginDependency(/* id = */ "com.intellij.modules.lang",
-          /* isOptional = */ false
-        ),
-        DependsPluginDependency(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false
-        ),
+        MandatoryV1Dependency("com.intellij.modules.lang"),
+        MandatoryV1Dependency("com.intellij.modules.json"),
       )
     )
 

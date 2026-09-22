@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
@@ -38,7 +38,7 @@ class CorePluginDependencyContributorTest {
   fun `core plugin dependency is added for v2 plugin without explicit core dependency`() {
     val v2Plugin = MockIdePlugin(
       pluginId = "com.example.v2plugin",
-      dependsList = listOf(DependsPluginDependency("com.intellij.modules.platform", false))
+      dependsList = listOf(MandatoryV1Dependency("com.intellij.modules.platform"))
     )
 
     val contributor = CorePluginDependencyContributor(ide)
@@ -59,7 +59,7 @@ class CorePluginDependencyContributorTest {
   fun `core plugin dependency is not duplicated if already present`() {
     val pluginWithCoreDependency = MockIdePlugin(
       pluginId = "com.example.plugin",
-      dependsList = listOf(DependsPluginDependency(CORE_PLUGIN_ID, false))
+      dependsList = listOf(MandatoryV1Dependency(CORE_PLUGIN_ID))
     )
 
     val contributor = CorePluginDependencyContributor(ide)
@@ -97,7 +97,7 @@ class CorePluginDependencyContributorTest {
   fun `dependency tree includes core plugin classes for v2 plugins`() {
     val v2Plugin = MockIdePlugin(
       pluginId = "com.example.v2plugin",
-      dependsList = listOf(DependsPluginDependency("com.intellij.modules.platform", false))
+      dependsList = listOf(MandatoryV1Dependency("com.intellij.modules.platform"))
     )
 
     val contributor = CorePluginDependencyContributor(ide)

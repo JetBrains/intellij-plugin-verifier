@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
@@ -139,8 +140,8 @@ class DependencyTreeTest {
     val osArchConstrainedPlugin = MockIdePlugin(
       pluginId = "com.example.OsArch",
       dependsList = listOf(
-        DependsPluginDependency("com.intellij.modules.os.mac", false),
-        DependsPluginDependency("com.intellij.modules.arch.arm64", false)
+        MandatoryV1Dependency("com.intellij.modules.os.mac"),
+        MandatoryV1Dependency("com.intellij.modules.arch.arm64")
       )
     )
 
@@ -290,11 +291,11 @@ class DependencyTreeTest {
   }
 
   private fun dependOn(id: String): DependsPluginDependency {
-    return DependsPluginDependency(id, false)
+    return MandatoryV1Dependency(id)
   }
 
   private fun dependOnModule(@Suppress("unused") module: MockIdePlugin, via: String): DependsPluginDependency {
-    return DependsPluginDependency(via, false)
+    return MandatoryV1Dependency(via)
   }
 
   class MissingDependencyCollector(private val missingDependencies: MutableSet<PluginDependency> = mutableSetOf()) : MissingDependencyListener, Set<PluginDependency> {

@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.MockIdeBuilder
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
@@ -87,7 +88,7 @@ class InlineModuleTest {
       MockIdePlugin(
         pluginId = "com.intellij.modules.idea.community",
         // fictional dependency that will become a transitive one
-        dependsList = listOf(DependsPluginDependency("com.intellij.transitiveDependency", false))
+        dependsList = listOf(MandatoryV1Dependency("com.intellij.transitiveDependency"))
       ),
       MockIdePlugin(pluginId = "com.intellij.modules.structuralsearch"),
       // fictional plugin that poses as a transitional dependency

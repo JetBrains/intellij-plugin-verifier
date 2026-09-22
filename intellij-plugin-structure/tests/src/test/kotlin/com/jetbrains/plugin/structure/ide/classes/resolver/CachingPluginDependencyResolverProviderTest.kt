@@ -18,6 +18,7 @@ import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
 import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
@@ -156,20 +157,14 @@ class CachingPluginDependencyResolverProviderTest {
     val plugin = MockIdePlugin(
       pluginId = "com.example.somePlugin",
       dependsList = listOf(
-        DependsPluginDependency(/* id = */ "com.intellij.modules.platform",
-          /* isOptional = */ false
-        ),
-        DependsPluginDependency(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false
-        ),
+        MandatoryV1Dependency("com.intellij.modules.platform"),
+        MandatoryV1Dependency("com.intellij.modules.json"),
       )
     )
     val pluginDependingOnJava = MockIdePlugin(
       pluginId = "com.example.BetterJava",
       dependsList = listOf(
-        DependsPluginDependency(/* id = */ "com.intellij.modules.java",
-          /* isOptional = */ false
-        )
+        MandatoryV1Dependency("com.intellij.modules.java")
       )
     )
 
@@ -253,9 +248,7 @@ class CachingPluginDependencyResolverProviderTest {
     val pluginDependingOnJava = MockIdePlugin(
       pluginId = "com.example.BetterJava",
       dependsList = listOf(
-        DependsPluginDependency(/* id = */ "com.intellij.modules.java",
-          /* isOptional = */ false
-        )
+        MandatoryV1Dependency("com.intellij.modules.java")
       )
     )
 
@@ -533,9 +526,7 @@ class CachingPluginDependencyResolverProviderTest {
   }
 
   private fun dependency(id: String): List<DependsPluginDependency> {
-    return listOf(DependsPluginDependency(id,
-      /* isOptional = */ false
-    ))
+    return listOf(MandatoryV1Dependency(id))
   }
 
   private fun assertEquals(expected: Set<BinaryClassName>, actual: Set<BinaryClassName>): Boolean {

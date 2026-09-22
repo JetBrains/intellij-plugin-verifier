@@ -30,4 +30,10 @@ class DependsPluginDependency(val pluginId: String, val isOptional: Boolean, val
       null
     }
   }
+
+  companion object {
+    fun MandatoryV1Dependency(pluginId: String): DependsPluginDependency {
+      return DependsPluginDependency(pluginId, false)
+    }
+  }
 }
