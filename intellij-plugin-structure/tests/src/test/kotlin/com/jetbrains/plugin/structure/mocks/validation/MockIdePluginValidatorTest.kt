@@ -2,7 +2,6 @@ package com.jetbrains.plugin.structure.mocks.validation
 
 import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
-import com.jetbrains.plugin.structure.mocks.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.SimpleProblemRegistrar
 import com.jetbrains.plugin.structure.mocks.idePlugin
@@ -76,7 +75,7 @@ class MockIdePluginValidatorTest {
   @Test
   fun `missing dependencies in plugin dependencies list reports DependenciesMismatchProblem`() {
     val plugin = object : IdePlugin by MockIdePlugin(
-      dependsList = listOf(DependsPluginDependency("com.example.dep", false))
+      dependsList = listOf(MandatoryV1Dependency("com.example.dep"))
     ) {
       override val dependencies: List<PluginDependency> = emptyList()
     }
@@ -105,7 +104,7 @@ class MockIdePluginValidatorTest {
 
   @Test
   fun `dependency ordering mismatch reports DependenciesMismatchProblem`() {
-    val dependsList = listOf(DependsPluginDependency("com.example.v1", false))
+    val dependsList = listOf(MandatoryV1Dependency("com.example.v1"))
     val contentModuleDependencies = listOf(ContentModuleDependency("com.example.module", "jetbrains"))
     val pluginMainModuleDependencies = listOf(PluginMainModuleDependency("com.example.main"))
 
@@ -238,7 +237,7 @@ class MockIdePluginValidatorTest {
     )
 
     val plugin = object : IdePlugin by MockIdePlugin(
-      dependsList = listOf(DependsPluginDependency("com.example.v1", false)),
+      dependsList = listOf(MandatoryV1Dependency("com.example.v1")),
       contentModules = contentModules,
       modulesDescriptors = modulesDescriptors
     ) {
@@ -256,7 +255,7 @@ class MockIdePluginValidatorTest {
   @Test
   fun `validate IdePlugin overload handles valid and invalid plugins`() {
     val idePlugin: IdePlugin = MockIdePlugin(
-      dependsList = listOf(DependsPluginDependency("com.example.dep", false)),
+      dependsList = listOf(MandatoryV1Dependency("com.example.dep")),
     )
 
     val problemRegistrar = SimpleProblemRegistrar()

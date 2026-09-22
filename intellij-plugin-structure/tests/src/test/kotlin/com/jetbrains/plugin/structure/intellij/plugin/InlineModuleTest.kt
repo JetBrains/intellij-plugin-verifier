@@ -7,6 +7,7 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.MockIdeBuilder
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware

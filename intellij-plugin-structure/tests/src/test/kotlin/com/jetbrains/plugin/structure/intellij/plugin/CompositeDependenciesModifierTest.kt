@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.CorePluginDependencyContributor
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
 import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier

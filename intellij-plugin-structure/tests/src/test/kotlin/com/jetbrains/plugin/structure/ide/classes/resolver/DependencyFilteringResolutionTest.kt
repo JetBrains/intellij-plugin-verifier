@@ -15,7 +15,6 @@ import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent.PluginAl
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
