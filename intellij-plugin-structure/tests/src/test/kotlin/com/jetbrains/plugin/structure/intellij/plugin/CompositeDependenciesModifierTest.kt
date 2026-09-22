@@ -106,28 +106,28 @@ class CompositeDependenciesModifierTest {
     val sharedDependencyId = "com.example.shared"
     val plugin = MockIdePlugin(pluginId = "com.example.plugin")
     val compositeModifier = CompositeDependenciesModifier(
-      DependenciesModifier { _, _ ->
+      { _, _ ->
         listOf(
           DependencyModification(
             PluginV1Dependency.Mandatory(sharedDependencyId), DependencyModificationReason.IDE
           )
         )
       },
-      DependenciesModifier { _, _ ->
+      { _, _ ->
         listOf(
           DependencyModification(
             PluginV1Dependency.Mandatory(sharedDependencyId), DependencyModificationReason.PLUGIN
           )
         )
       },
-      DependenciesModifier { _, _ ->
+      { _, _ ->
         listOf(
           DependencyModification(
             PluginV1Dependency.Mandatory(sharedDependencyId), DependencyModificationReason.OTHER
           )
         )
       },
-      DependenciesModifier { _, _ ->
+      { _, _ ->
         listOf(
           DependencyModification(
             ModuleV2Dependency(sharedDependencyId), DependencyModificationReason.CONTENT_MODULE
