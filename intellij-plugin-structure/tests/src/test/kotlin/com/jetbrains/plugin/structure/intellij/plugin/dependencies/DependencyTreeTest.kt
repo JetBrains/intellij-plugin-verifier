@@ -1,7 +1,5 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
@@ -51,7 +49,7 @@ class DependencyTreeTest {
     }
 
     ijPlugin = idePlugin("ij") {
-      tenIjDependencies.forEach { depends(it.pluginId!!) }
+      tenIjDependencies.forEach { depends(it) }
     }
 
     dozenOfPlugins = (1..12).map {
@@ -61,7 +59,7 @@ class DependencyTreeTest {
     }
 
     pluginAlpha = idePlugin("alpha") {
-      dozenOfPlugins.forEach { depends(it.pluginId!!) }
+      dozenOfPlugins.forEach { depends(it) }
     }
 
     ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, listOf(pluginAlpha, ijPlugin) + dozenOfPlugins + tenIjDependencies)
@@ -72,7 +70,7 @@ class DependencyTreeTest {
 
     somePlugin = idePlugin("com.example.A") {
       depends("alpha")
-      depends(pluginNotInIde.pluginId!!)
+      depends(pluginNotInIde)
     }
   }
 
@@ -104,7 +102,7 @@ class DependencyTreeTest {
   fun `missing optional dependency`() {
     val optionalPlugin = idePlugin("com.example.Optional")
     val somePlugin = idePlugin("com.example.A") {
-      optionalDepends(optionalPlugin.pluginId!!)
+      optionalDepends(optionalPlugin)
     }
     // optionalPlugin is not in the IDE
     val bundledPlugins = emptyList<IdePlugin>()
@@ -124,10 +122,10 @@ class DependencyTreeTest {
   fun `missing transitive optional dependency`() {
     val optionalPlugin = idePlugin("com.example.Optional")
     val alphaPlugin = idePlugin("alpha") {
-      optionalDepends(optionalPlugin.pluginId!!)
+      optionalDepends(optionalPlugin)
     }
     val somePlugin = idePlugin("com.example.A") {
-      depends(alphaPlugin.pluginId!!)
+      depends(alphaPlugin)
     }
 
     // optionalPlugin is not in the IDE
@@ -289,29 +287,6 @@ class DependencyTreeTest {
       }
       fail(message)
     }
-  }
-
-  private val MockIdePlugin.id: String
-    get() = pluginId ?: pluginName ?: "unknown"
-
-  private fun optionallyDependOn(plugin: MockIdePlugin): DependsPluginDependency {
-    return optionallyDependOn(plugin.id)
-  }
-
-  private fun optionallyDependOn(id: String): DependsPluginDependency {
-    return DependsPluginDependency(id, true)
-  }
-
-  private fun dependOn(plugin: MockIdePlugin): DependsPluginDependency {
-    return dependOn(plugin.id)
-  }
-
-  private fun dependOn(id: String): DependsPluginDependency {
-    return MandatoryV1Dependency(id)
-  }
-
-  private fun dependOnModule(@Suppress("unused") module: MockIdePlugin, via: String): DependsPluginDependency {
-    return MandatoryV1Dependency(via)
   }
 
   class MissingDependencyCollector(private val missingDependencies: MutableSet<PluginDependency> = mutableSetOf()) : MissingDependencyListener, Set<PluginDependency> {

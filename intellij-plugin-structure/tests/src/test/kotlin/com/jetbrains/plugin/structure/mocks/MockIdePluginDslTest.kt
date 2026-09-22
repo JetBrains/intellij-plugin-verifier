@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.mocks
 
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
@@ -80,5 +81,33 @@ class MockIdePluginDslTest {
     val dependency = plugin.contentModuleDependencies.single()
     assertEquals("intellij.css", dependency.moduleName)
     assertEquals("custom", dependency.namespace)
+  }
+
+  @Test
+  fun `accepts prebuilt plugin dependencies`() {
+    val mandatoryDependency = DependsPluginDependency.MandatoryV1Dependency("com.jetbrains.platform")
+    val optionalDependency = DependsPluginDependency("com.jetbrains.kotlin", isOptional = true)
+
+    val plugin = idePlugin("com.example.somePlugin") {
+      depends(mandatoryDependency)
+      depends(optionalDependency)
+    }
+
+    assertEquals(listOf(mandatoryDependency, optionalDependency), plugin.dependsList)
+    assertEquals(listOf(false, true), plugin.dependsList.map { it.isOptional })
+  }
+
+  @Test
+  fun `accepts direct plugin dependencies`() {
+    val platformPlugin = idePlugin("com.jetbrains.platform")
+    val kotlinPlugin = idePlugin("com.jetbrains.kotlin")
+
+    val plugin = idePlugin("com.example.somePlugin") {
+      depends(platformPlugin)
+      optionalDepends(kotlinPlugin)
+    }
+
+    assertEquals(listOf("com.jetbrains.platform"), plugin.dependsList.filterNot { it.isOptional }.map { it.pluginId })
+    assertEquals(listOf("com.jetbrains.kotlin"), plugin.dependsList.filter { it.isOptional }.map { it.pluginId })
   }
 }

@@ -77,8 +77,20 @@ class MockIdePluginBuilder(private val id: String) {
     dependsList += DependsPluginDependency.MandatoryV1Dependency(pluginId)
   }
 
+  fun depends(plugin: MockIdePlugin) {
+    depends(plugin.requireId())
+  }
+
+  fun depends(dependency: DependsPluginDependency) {
+    dependsList += dependency
+  }
+
   fun optionalDepends(pluginId: String) {
     dependsList += DependsPluginDependency(pluginId, true)
+  }
+
+  fun optionalDepends(plugin: MockIdePlugin) {
+    optionalDepends(plugin.requireId())
   }
 
   fun pluginDependency(pluginId: String) {
@@ -88,6 +100,8 @@ class MockIdePluginBuilder(private val id: String) {
   fun moduleDependency(moduleName: String, namespace: String = "jetbrains") {
     contentModuleDependencies += ContentModuleDependency(moduleName, namespace)
   }
+
+  private fun MockIdePlugin.requireId() = requireNotNull(pluginId) { "Plugin ID is required to declare a dependency" }
 
   fun build() = MockIdePlugin(
     pluginId = id,
