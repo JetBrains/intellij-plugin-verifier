@@ -32,7 +32,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `only one dependency on com_intellij_modules_platform`() {
-    val plugin = idePlugin {
+    val plugin = idePlugin("com.example.platform") {
       depends("com.intellij.modules.platform")
     }
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
@@ -42,7 +42,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `only one dependency on a plugin`() {
-    val plugin = idePlugin {
+    val plugin = idePlugin("com.example.javascript") {
       depends("JavaScript")
     }
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
@@ -55,7 +55,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `dependency just on com_intellij_modules_lang`() {
-    val plugin = idePlugin {
+    val plugin = idePlugin("com.example.lang") {
       depends("com.intellij.modules.lang")
     }
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
@@ -65,7 +65,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `dependency just on com_intellij_modules_ultimate`() {
-    val plugin = idePlugin {
+    val plugin = idePlugin("com.example.ultimate") {
       depends("com.intellij.modules.ultimate")
     }
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
@@ -75,7 +75,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `dependency just on com_intellij_java`() {
-    val plugin = idePlugin {
+    val plugin = idePlugin("com.example.java") {
       depends("com.intellij.java")
     }
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)

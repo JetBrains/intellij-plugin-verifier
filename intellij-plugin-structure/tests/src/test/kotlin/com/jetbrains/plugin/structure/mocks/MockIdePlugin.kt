@@ -64,13 +64,11 @@ data class MockIdePlugin(
     sinceBuild <= ideVersion && (untilBuild == null || ideVersion <= untilBuild)
 }
 
-fun idePlugin(configure: MockIdePluginBuilder.() -> Unit): MockIdePlugin {
-  return MockIdePluginBuilder().apply(configure).build()
+fun idePlugin(id: String, configure: MockIdePluginBuilder.() -> Unit = {}): MockIdePlugin {
+  return MockIdePluginBuilder(id).apply(configure).build()
 }
 
-class MockIdePluginBuilder {
-  var id: String? = null
-
+class MockIdePluginBuilder(private val id: String) {
   private val dependsList = mutableListOf<DependsPluginDependency>()
   private val pluginMainModuleDependencies = mutableListOf<PluginMainModuleDependency>()
   private val contentModuleDependencies = mutableListOf<ContentModuleDependency>()

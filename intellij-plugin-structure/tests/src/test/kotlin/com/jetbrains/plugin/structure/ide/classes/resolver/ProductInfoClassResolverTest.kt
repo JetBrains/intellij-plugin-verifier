@@ -124,7 +124,7 @@ class ProductInfoClassResolverTest {
     }
 
     val resolvers = expectedPlugins.mapNotNull {
-      resolver.getResolver(idePlugin { id = it })
+      resolver.getResolver(idePlugin(it))
     }
     assertEquals(expectedPlugins.size, resolvers.size)
   }

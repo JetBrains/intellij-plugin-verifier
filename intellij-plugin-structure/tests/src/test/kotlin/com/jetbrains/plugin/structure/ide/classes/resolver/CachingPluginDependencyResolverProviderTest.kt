@@ -155,13 +155,11 @@ class CachingPluginDependencyResolverProviderTest {
   fun `cache is used properly`() {
     val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
 
-    val plugin = idePlugin {
-      id = "com.example.somePlugin"
+    val plugin = idePlugin("com.example.somePlugin") {
       depends("com.intellij.modules.platform")
       depends("com.intellij.modules.json")
     }
-    val pluginDependingOnJava = idePlugin {
-      id = "com.example.BetterJava"
+    val pluginDependingOnJava = idePlugin("com.example.BetterJava") {
       depends("com.intellij.modules.java")
     }
 
@@ -242,8 +240,7 @@ class CachingPluginDependencyResolverProviderTest {
 
   @Test
   fun `dependencies are resolved`() {
-    val pluginDependingOnJava = idePlugin {
-      id = "com.example.BetterJava"
+    val pluginDependingOnJava = idePlugin("com.example.BetterJava") {
       depends("com.intellij.modules.java")
     }
 
@@ -374,8 +371,7 @@ class CachingPluginDependencyResolverProviderTest {
       originalFile = betaFiles,
       classpath = Classpath.of(listOf(betaFiles))
     )
-    val alphaPlugin = idePlugin {
-      id = "com.example.Alpha"
+    val alphaPlugin = idePlugin("com.example.Alpha") {
       depends("com.example.Beta")
     }
     val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
@@ -510,8 +506,7 @@ class CachingPluginDependencyResolverProviderTest {
     val productInfoClassResolver = ProductInfoClassResolver.of(ide, IdeResolverConfiguration(readMode = Resolver.ReadMode.SIGNATURES))
     val resolverProvider = CachingPluginDependencyResolverProvider(ide, productInfoClassResolver)
 
-    val alphaPlugin = idePlugin {
-      id = "com.example.Alpha"
+    val alphaPlugin = idePlugin("com.example.Alpha") {
       depends("com.intellij.modules.json")
     }
 

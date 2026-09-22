@@ -9,9 +9,7 @@ import org.junit.Test
 class MockIdePluginDslTest {
   @Test
   fun `creates plugin with id`() {
-    val plugin = idePlugin {
-      id = "com.example.somePlugin"
-    }
+    val plugin = idePlugin("com.example.somePlugin")
 
     assertEquals("com.example.somePlugin", plugin.pluginId)
     assertEquals("com.example.somePlugin", plugin.pluginName)
@@ -19,9 +17,7 @@ class MockIdePluginDslTest {
 
   @Test
   fun `creates plugin with all dependency types`() {
-    val plugin = idePlugin {
-      id = "com.example.somePlugin"
-
+    val plugin = idePlugin("com.example.somePlugin") {
       depends("com.jetbrains.platform")
       depends("com.jetbrains.platform.second")
       optionalDepends("com.jetbrains.kotlin")
@@ -57,7 +53,7 @@ class MockIdePluginDslTest {
   @Test
   @Suppress("DEPRECATION")
   fun `exposes dsl dependencies through mixed dependencies view`() {
-    val plugin = idePlugin {
+    val plugin = idePlugin("com.example.somePlugin") {
       depends("com.jetbrains.platform")
       optionalDepends("com.jetbrains.kotlin")
       pluginDependency("com.jetbrains.css")
@@ -77,7 +73,7 @@ class MockIdePluginDslTest {
 
   @Test
   fun `allows custom namespace for module dependencies`() {
-    val plugin = idePlugin {
+    val plugin = idePlugin("com.example.somePlugin") {
       moduleDependency("intellij.css", namespace = "custom")
     }
 

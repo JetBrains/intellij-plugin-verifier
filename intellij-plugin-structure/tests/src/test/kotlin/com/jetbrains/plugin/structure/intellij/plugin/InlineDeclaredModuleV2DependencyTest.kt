@@ -20,9 +20,7 @@ class InlineDeclaredModuleV2DependencyTest {
    */
   @Test
   fun `created inline dependency is consistent`() {
-    val tomlPlugin = idePlugin {
-      id = "org.toml.lang"
-    }
+    val tomlPlugin = idePlugin("org.toml.lang")
     val contentModuleContent = """
     <idea-plugin>
       <dependencies>
@@ -53,9 +51,7 @@ class InlineDeclaredModuleV2DependencyTest {
 
   @Test
   fun `create inline dependency on a module`() {
-    val thymeleafPlugin = idePlugin {
-      id = "com.intellij.thymeleaf"
-    }
+    val thymeleafPlugin = idePlugin("com.intellij.thymeleaf")
     val contentModuleContent = """
       <idea-plugin package="com.intellij.thymeleaf.spring">
         <dependencies>

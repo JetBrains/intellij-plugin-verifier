@@ -83,21 +83,14 @@ class InlineModuleTest {
     }.plugin
 
     val idePlugins = listOf(
-      idePlugin {
-        id = "com.intellij.modules.lang"
-      },
-      idePlugin {
-        id = "com.intellij.modules.idea.community"
+      idePlugin("com.intellij.modules.lang"),
+      idePlugin("com.intellij.modules.idea.community") {
         // fictional dependency that will become a transitive one
         depends("com.intellij.transitiveDependency")
       },
-      idePlugin {
-        id = "com.intellij.modules.structuralsearch"
-      },
+      idePlugin("com.intellij.modules.structuralsearch"),
       // fictional plugin that poses as a transitional dependency
-      idePlugin {
-        id = "com.intellij.transitiveDependency"
-      }
+      idePlugin("com.intellij.transitiveDependency")
     )
     val ideVersionStr = "IU-242.10180.25"
     val ide = MockIde(IdeVersion.createIdeVersion(ideVersionStr), temporaryFolder.newFolder(ideVersionStr).toPath(), idePlugins)
@@ -125,12 +118,8 @@ class InlineModuleTest {
     }.plugin
 
     val idePlugins = listOf(
-      idePlugin {
-        id = "com.intellij.modules.lang"
-      },
-      idePlugin {
-        id = "com.intellij.modules.structuralsearch"
-      },
+      idePlugin("com.intellij.modules.lang"),
+      idePlugin("com.intellij.modules.structuralsearch"),
     )
     val ideVersionStr = "IU-242.10180.25"
     val ide = MockIde(IdeVersion.createIdeVersion(ideVersionStr), temporaryFolder.newFolder(ideVersionStr).toPath(), idePlugins)

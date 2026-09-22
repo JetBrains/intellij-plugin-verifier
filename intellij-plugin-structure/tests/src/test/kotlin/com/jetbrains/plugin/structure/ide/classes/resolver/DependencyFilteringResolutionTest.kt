@@ -111,8 +111,7 @@ class DependencyFilteringResolutionTest {
   fun `plugin dependency-based resolvers are resolved`() {
     val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
 
-    val plugin = idePlugin {
-      id = "com.example.somePlugin"
+    val plugin = idePlugin("com.example.somePlugin") {
       depends("com.intellij.modules.platform")
       depends("com.intellij.modules.json")
     }

@@ -24,7 +24,7 @@ class MockIdePluginValidatorTest {
 
   private fun createMockModuleDescriptor(name: String): ModuleDescriptor {
     val moduleDef = createMockModule(name)
-    return ModuleDescriptor(idePlugin { id = name }, moduleDef)
+    return ModuleDescriptor(idePlugin(name), moduleDef)
   }
 
   @Test

@@ -37,8 +37,7 @@ class CorePluginDependencyContributorTest {
 
   @Test
   fun `core plugin dependency is added for v2 plugin without explicit core dependency`() {
-    val v2Plugin = idePlugin {
-      id = "com.example.v2plugin"
+    val v2Plugin = idePlugin("com.example.v2plugin") {
       depends("com.intellij.modules.platform")
     }
 
@@ -58,8 +57,7 @@ class CorePluginDependencyContributorTest {
 
   @Test
   fun `core plugin dependency is not duplicated if already present`() {
-    val pluginWithCoreDependency = idePlugin {
-      id = "com.example.plugin"
+    val pluginWithCoreDependency = idePlugin("com.example.plugin") {
       depends(CORE_PLUGIN_ID)
     }
 
@@ -83,9 +81,7 @@ class CorePluginDependencyContributorTest {
 
   @Test
   fun `core plugin dependency is added even for plugins with no dependencies`() {
-    val pluginWithNoDeps = idePlugin {
-      id = "com.example.nodeps"
-    }
+    val pluginWithNoDeps = idePlugin("com.example.nodeps")
 
     val contributor = CorePluginDependencyContributor(ide)
     val modifiedDependencies = contributor.apply(pluginWithNoDeps, ide)
@@ -96,8 +92,7 @@ class CorePluginDependencyContributorTest {
 
   @Test
   fun `dependency tree includes core plugin classes for v2 plugins`() {
-    val v2Plugin = idePlugin {
-      id = "com.example.v2plugin"
+    val v2Plugin = idePlugin("com.example.v2plugin") {
       depends("com.intellij.modules.platform")
     }
 
