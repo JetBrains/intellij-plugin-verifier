@@ -20,8 +20,6 @@ data class MockIdePlugin(
   override val changeNotes: String? = null,
   override val icons: List<PluginIcon> = emptyList(),
   override val productDescriptor: ProductDescriptor? = null,
-  override val dependencies: List<PluginDependency> = emptyList(),
-  // FIXME [dependencies] should be built from these three
   override val dependsList: List<DependsPluginDependency> = emptyList(),
   override val pluginMainModuleDependencies: List<PluginMainModuleDependency> = emptyList(),
   override val contentModuleDependencies: List<ContentModuleDependency> = emptyList(),
@@ -45,6 +43,12 @@ data class MockIdePlugin(
   override val contentModules: List<Module> = emptyList(),
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
 ) : IdePlugin {
+
+  @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
+  override val dependencies: List<PluginDependency>
+    get() = dependsList.map { it.asPluginDependency() } +
+      contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) } +
+      pluginMainModuleDependencies.map { PluginV2Dependency(it.pluginId) }
 
   override val useIdeClassLoader = false
   override val isImplementationDetail = false

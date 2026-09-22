@@ -46,13 +46,6 @@ class MockIdePluginValidatorTest {
       PluginMainModuleDependency("com.example.main.module")
     )
 
-    val dependencies = listOf(
-      PluginV1Dependency.Mandatory("com.example.v1.mandatory"),
-      PluginV1Dependency.Optional("com.example.v1.optional"),
-      ModuleV2Dependency("com.example.content.module"),
-      PluginV2Dependency("com.example.main.module")
-    )
-
     val contentModules = listOf(
       createMockModule("mod.one"),
       createMockModule("mod.two")
@@ -63,7 +56,6 @@ class MockIdePluginValidatorTest {
     )
 
     val plugin = MockIdePlugin(
-      dependencies = dependencies,
       dependsList = dependsList,
       contentModuleDependencies = contentModuleDependencies,
       pluginMainModuleDependencies = pluginMainModuleDependencies,
@@ -78,10 +70,11 @@ class MockIdePluginValidatorTest {
 
   @Test
   fun `missing dependencies in plugin dependencies list reports DependenciesMismatchProblem`() {
-    val plugin = MockIdePlugin(
-      dependsList = listOf(DependsPluginDependency("com.example.dep", false)),
-      dependencies = emptyList()
-    )
+    val plugin = object : IdePlugin by MockIdePlugin(
+      dependsList = listOf(DependsPluginDependency("com.example.dep", false))
+    ) {
+      override val dependencies: List<PluginDependency> = emptyList()
+    }
 
     val problemRegistrar = SimpleProblemRegistrar()
     validator.validate(plugin, problemRegistrar)
@@ -91,12 +84,13 @@ class MockIdePluginValidatorTest {
 
   @Test
   fun `extra dependency in plugin dependencies list reports DependenciesMismatchProblem`() {
-    val plugin = MockIdePlugin(
-      dependencies = listOf(PluginV1Dependency.Mandatory("com.example.extra")),
+    val plugin = object : IdePlugin by MockIdePlugin(
       dependsList = emptyList(),
       contentModuleDependencies = emptyList(),
       pluginMainModuleDependencies = emptyList()
-    )
+    ) {
+      override val dependencies: List<PluginDependency> = listOf(PluginV1Dependency.Mandatory("com.example.extra"))
+    }
 
     val problemRegistrar = SimpleProblemRegistrar()
     validator.validate(plugin, problemRegistrar)
@@ -117,12 +111,13 @@ class MockIdePluginValidatorTest {
       ModuleV2Dependency("com.example.module")
     )
 
-    val plugin = MockIdePlugin(
-      dependencies = wrongOrderDependencies,
+    val plugin = object : IdePlugin by MockIdePlugin(
       dependsList = dependsList,
       contentModuleDependencies = contentModuleDependencies,
       pluginMainModuleDependencies = pluginMainModuleDependencies
-    )
+    ) {
+      override val dependencies: List<PluginDependency> = wrongOrderDependencies
+    }
 
     val problemRegistrar = SimpleProblemRegistrar()
     validator.validate(plugin, problemRegistrar)
@@ -132,10 +127,11 @@ class MockIdePluginValidatorTest {
 
   @Test
   fun `dependency optional flag mismatch reports DependenciesMismatchProblem`() {
-    val plugin = MockIdePlugin(
-      dependsList = listOf(DependsPluginDependency("com.example.dep", isOptional = true)),
-      dependencies = listOf(PluginV1Dependency.Mandatory("com.example.dep"))
-    )
+    val plugin = object : IdePlugin by MockIdePlugin(
+      dependsList = listOf(DependsPluginDependency("com.example.dep", isOptional = true))
+    ) {
+      override val dependencies: List<PluginDependency> = listOf(PluginV1Dependency.Mandatory("com.example.dep"))
+    }
 
     val problemRegistrar = SimpleProblemRegistrar()
     validator.validate(plugin, problemRegistrar)
@@ -195,12 +191,13 @@ class MockIdePluginValidatorTest {
       createMockModuleDescriptor("mod.three")
     )
 
-    val plugin = MockIdePlugin(
-      dependencies = emptyList(),
+    val plugin = object : IdePlugin by MockIdePlugin(
       dependsList = listOf(DependsPluginDependency("com.example.v1", false)),
       contentModules = contentModules,
       modulesDescriptors = modulesDescriptors
-    )
+    ) {
+      override val dependencies: List<PluginDependency> = emptyList()
+    }
 
     val problemRegistrar = SimpleProblemRegistrar()
     validator.validate(plugin, problemRegistrar)
@@ -212,10 +209,11 @@ class MockIdePluginValidatorTest {
 
   @Test
   fun `validate IdePlugin overload handles valid and invalid plugins`() {
-    val idePlugin: IdePlugin = MockIdePlugin(
-      dependsList = listOf(DependsPluginDependency("com.example.dep", false)),
-      dependencies = emptyList()
-    )
+    val idePlugin: IdePlugin = object : IdePlugin by MockIdePlugin(
+      dependsList = listOf(DependsPluginDependency("com.example.dep", false))
+    ) {
+      override val dependencies: List<PluginDependency> = emptyList()
+    }
 
     val problemRegistrar = SimpleProblemRegistrar()
     validator.validate(idePlugin, problemRegistrar)

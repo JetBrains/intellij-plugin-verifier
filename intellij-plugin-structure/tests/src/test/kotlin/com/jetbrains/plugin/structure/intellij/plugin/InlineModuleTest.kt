@@ -87,7 +87,7 @@ class InlineModuleTest {
       MockIdePlugin(
         pluginId = "com.intellij.modules.idea.community",
         // fictional dependency that will become a transitive one
-        dependencies = listOf(PluginDependencyImpl("com.intellij.transitiveDependency", false, false))
+        dependsList = listOf(DependsPluginDependency("com.intellij.transitiveDependency", false))
       ),
       MockIdePlugin(pluginId = "com.intellij.modules.structuralsearch"),
       // fictional plugin that poses as a transitional dependency

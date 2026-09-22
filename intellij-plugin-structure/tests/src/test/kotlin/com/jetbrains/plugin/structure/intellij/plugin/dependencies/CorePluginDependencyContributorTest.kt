@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
@@ -38,7 +38,7 @@ class CorePluginDependencyContributorTest {
   fun `core plugin dependency is added for v2 plugin without explicit core dependency`() {
     val v2Plugin = MockIdePlugin(
       pluginId = "com.example.v2plugin",
-      dependencies = listOf(PluginV1Dependency.Mandatory("com.intellij.modules.platform"))
+      dependsList = listOf(DependsPluginDependency("com.intellij.modules.platform", false))
     )
 
     val contributor = CorePluginDependencyContributor(ide)
@@ -59,7 +59,7 @@ class CorePluginDependencyContributorTest {
   fun `core plugin dependency is not duplicated if already present`() {
     val pluginWithCoreDependency = MockIdePlugin(
       pluginId = "com.example.plugin",
-      dependencies = listOf(PluginV1Dependency.Mandatory(CORE_PLUGIN_ID))
+      dependsList = listOf(DependsPluginDependency(CORE_PLUGIN_ID, false))
     )
 
     val contributor = CorePluginDependencyContributor(ide)
@@ -83,8 +83,7 @@ class CorePluginDependencyContributorTest {
   @Test
   fun `core plugin dependency is added even for plugins with no dependencies`() {
     val pluginWithNoDeps = MockIdePlugin(
-      pluginId = "com.example.nodeps",
-      dependencies = emptyList()
+      pluginId = "com.example.nodeps"
     )
 
     val contributor = CorePluginDependencyContributor(ide)
@@ -98,7 +97,7 @@ class CorePluginDependencyContributorTest {
   fun `dependency tree includes core plugin classes for v2 plugins`() {
     val v2Plugin = MockIdePlugin(
       pluginId = "com.example.v2plugin",
-      dependencies = listOf(PluginV1Dependency.Mandatory("com.intellij.modules.platform"))
+      dependsList = listOf(DependsPluginDependency("com.intellij.modules.platform", false))
     )
 
     val contributor = CorePluginDependencyContributor(ide)

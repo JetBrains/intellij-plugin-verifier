@@ -15,7 +15,10 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
-import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.Classpath
+import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
@@ -124,8 +127,8 @@ class CachingPluginDependencyResolverProviderTest {
       pluginAliases = setOf(
         "com.intellij.modules.java",
       ),
-      dependencies = listOf(
-        ModuleV2Dependency("com.intellij.modules.lang")
+      contentModuleDependencies = listOf(
+        ContentModuleDependency("com.intellij.modules.lang", "jetbrains")
       ),
       classpath = Classpath.of(listOf(javaPluginFile))
     )
@@ -139,8 +142,8 @@ class CachingPluginDependencyResolverProviderTest {
       pluginId = "com.intellij.modules.json",
       pluginName = "JSON",
       originalFile = jsonPluginFile,
-      dependencies = listOf(
-        ModuleV2Dependency("com.intellij.modules.lang")
+      contentModuleDependencies = listOf(
+        ContentModuleDependency("com.intellij.modules.lang", "jetbrains")
       ),
       classpath = Classpath.of(listOf(jsonPluginFile))
     )
@@ -152,23 +155,20 @@ class CachingPluginDependencyResolverProviderTest {
 
     val plugin = MockIdePlugin(
       pluginId = "com.example.somePlugin",
-      dependencies = listOf(
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.platform",
-          /* isOptional = */ false,
-          /* isModule = */ true
+      dependsList = listOf(
+        DependsPluginDependency(/* id = */ "com.intellij.modules.platform",
+          /* isOptional = */ false
         ),
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false,
-          /* isModule = */ true
+        DependsPluginDependency(/* id = */ "com.intellij.modules.json",
+          /* isOptional = */ false
         ),
       )
     )
     val pluginDependingOnJava = MockIdePlugin(
       pluginId = "com.example.BetterJava",
-      dependencies = listOf(
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.java",
-          /* isOptional = */ false,
-          /* isModule = */ true
+      dependsList = listOf(
+        DependsPluginDependency(/* id = */ "com.intellij.modules.java",
+          /* isOptional = */ false
         )
       )
     )
@@ -252,10 +252,9 @@ class CachingPluginDependencyResolverProviderTest {
   fun `dependencies are resolved`() {
     val pluginDependingOnJava = MockIdePlugin(
       pluginId = "com.example.BetterJava",
-      dependencies = listOf(
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.java",
-          /* isOptional = */ false,
-          /* isModule = */ true
+      dependsList = listOf(
+        DependsPluginDependency(/* id = */ "com.intellij.modules.java",
+          /* isOptional = */ false
         )
       )
     )
@@ -279,7 +278,7 @@ class CachingPluginDependencyResolverProviderTest {
     }
     val alphaPlugin = MockIdePlugin(
       pluginId = "com.example.Alpha",
-      dependencies = dependency("com.example.Beta"),
+      dependsList = dependency("com.example.Beta"),
       classpath = Classpath.of(listOf(alphaFiles))
     )
 
@@ -290,7 +289,7 @@ class CachingPluginDependencyResolverProviderTest {
     }
     val betaPlugin = MockIdePlugin(
       pluginId = "com.example.Beta",
-      dependencies = dependency("com.example.Gamma"),
+      dependsList = dependency("com.example.Gamma"),
       classpath = Classpath.of(listOf(betaFiles))
     )
 
@@ -301,7 +300,7 @@ class CachingPluginDependencyResolverProviderTest {
     }
     val gammaPlugin = MockIdePlugin(
       pluginId = "com.example.Gamma",
-      dependencies = dependency("com.example.Alpha"),
+      dependsList = dependency("com.example.Alpha"),
       classpath = Classpath.of(listOf(gammaFiles))
     )
 
@@ -346,7 +345,7 @@ class CachingPluginDependencyResolverProviderTest {
     }
     val alphaPlugin = MockIdePlugin(
       pluginId = "com.example.Alpha",
-      dependencies = dependency("com.example.Beta"),
+      dependsList = dependency("com.example.Beta"),
       classpath = Classpath.of(listOf(alphaFiles))
     )
 
@@ -357,7 +356,7 @@ class CachingPluginDependencyResolverProviderTest {
     }
     val betaPlugin = MockIdePlugin(
       pluginId = "com.example.Beta",
-      dependencies = dependency("com.example.Alpha"),
+      dependsList = dependency("com.example.Alpha"),
       classpath = Classpath.of(listOf(betaFiles))
     )
 
@@ -389,7 +388,7 @@ class CachingPluginDependencyResolverProviderTest {
     )
     val alphaPlugin = MockIdePlugin(
       pluginId = "com.example.Alpha",
-      dependencies = dependency("com.example.Beta")
+      dependsList = dependency("com.example.Beta")
     )
     val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(betaPlugin))
@@ -412,12 +411,12 @@ class CachingPluginDependencyResolverProviderTest {
     val pluginV1 = MockIdePlugin(
       pluginId = "com.example.Versioned",
       pluginVersion = "1.0",
-      dependencies = dependency("com.intellij.modules.json")
+      dependsList = dependency("com.intellij.modules.json")
     )
     val pluginV2 = MockIdePlugin(
       pluginId = "com.example.Versioned",
       pluginVersion = "2.0",
-      dependencies = dependency("com.intellij.java")
+      dependsList = dependency("com.intellij.java")
     )
     val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, javaPlugin, jsonPlugin))
@@ -441,13 +440,13 @@ class CachingPluginDependencyResolverProviderTest {
       pluginId = "com.example.SameVersion",
       pluginVersion = "1.0",
       originalFile = pluginArtifact1,
-      dependencies = dependency("com.intellij.modules.json")
+      dependsList = dependency("com.intellij.modules.json")
     )
     val plugin2 = MockIdePlugin(
       pluginId = "com.example.SameVersion",
       pluginVersion = "1.0",
       originalFile = pluginArtifact2,
-      dependencies = dependency("com.intellij.java")
+      dependsList = dependency("com.intellij.java")
     )
     val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, javaPlugin, jsonPlugin))
@@ -494,8 +493,8 @@ class CachingPluginDependencyResolverProviderTest {
       pluginId = "com.intellij.modules.json",
       pluginName = "JSON",
       originalFile = jsonPluginDir,
-      dependencies = listOf(
-        ModuleV2Dependency("com.intellij.modules.lang")
+      contentModuleDependencies = listOf(
+        ContentModuleDependency("com.intellij.modules.lang", "jetbrains")
       ),
       pluginAliases = setOf("intellij.json", "intellij.json.split"),
       classpath = Classpath.of(listOf(ideRoot.resolve("plugins/json/lib/json.jar"), ideRoot.resolve("plugins/json/lib/modules/intellij.json.split.jar")))
@@ -525,7 +524,7 @@ class CachingPluginDependencyResolverProviderTest {
 
     val alphaPlugin = MockIdePlugin(
       pluginId = "com.example.Alpha",
-      dependencies = dependency("com.intellij.modules.json"),
+      dependsList = dependency("com.intellij.modules.json"),
     )
 
     val pluginResolver = resolverProvider.getResolver(alphaPlugin)
@@ -533,20 +532,10 @@ class CachingPluginDependencyResolverProviderTest {
     assertTrue(pluginResolver.containsClass("com/intellij/json/JsonBundle"))
   }
 
-  private fun dependency(id: String): List<PluginDependency> {
-    return listOf(PluginDependencyImpl(id,
-      /* isOptional = */ false,
-      /* isModule = */ false
+  private fun dependency(id: String): List<DependsPluginDependency> {
+    return listOf(DependsPluginDependency(id,
+      /* isOptional = */ false
     ))
-  }
-
-  private fun dependency(vararg pluginIdentifiers: String): List<PluginDependency> {
-    return pluginIdentifiers.map { id ->
-      PluginDependencyImpl(id,
-        /* isOptional = */ false,
-        /* isModule = */ false
-      )
-    }
   }
 
   private fun assertEquals(expected: Set<BinaryClassName>, actual: Set<BinaryClassName>): Boolean {

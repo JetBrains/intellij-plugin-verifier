@@ -14,9 +14,9 @@ import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent.Plugin
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent.PluginAlias
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.Classpath
+import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
@@ -94,8 +94,8 @@ class DependencyFilteringResolutionTest {
       pluginAliases = setOf(
         "com.intellij.modules.java",
       ),
-      dependencies = listOf(
-        ModuleV2Dependency("com.intellij.modules.lang")
+      contentModuleDependencies = listOf(
+        ContentModuleDependency("com.intellij.modules.lang", "jetbrains")
       )
     )
 
@@ -112,14 +112,12 @@ class DependencyFilteringResolutionTest {
 
     val plugin = MockIdePlugin(
       pluginId = "com.example.somePlugin",
-      dependencies = listOf(
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.platform",
-          /* isOptional = */ false,
-          /* isModule = */ true
+      dependsList = listOf(
+        DependsPluginDependency(/* id = */ "com.intellij.modules.platform",
+          /* isOptional = */ false
         ),
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false,
-          /* isModule = */ true
+        DependsPluginDependency(/* id = */ "com.intellij.modules.json",
+          /* isOptional = */ false
         ),
       )
     )
@@ -170,14 +168,12 @@ class DependencyFilteringResolutionTest {
     val plugin = MockIdePlugin(
       pluginId = "com.example.somePlugin",
       vendor = "JetBrains",
-      dependencies = listOf(
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.lang",
-          /* isOptional = */ false,
-          /* isModule = */ true
+      dependsList = listOf(
+        DependsPluginDependency(/* id = */ "com.intellij.modules.lang",
+          /* isOptional = */ false
         ),
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false,
-          /* isModule = */ true
+        DependsPluginDependency(/* id = */ "com.intellij.modules.json",
+          /* isOptional = */ false
         ),
       )
     )
@@ -225,14 +221,12 @@ class DependencyFilteringResolutionTest {
     val plugin = MockIdePlugin(
       pluginId = "com.example.somePlugin",
       vendor = "JetBrains",
-      dependencies = listOf(
-        PluginDependencyImpl(/* id = */ "com.intellij.java",
-          /* isOptional = */ false,
-          /* isModule = */ false
+      dependsList = listOf(
+        DependsPluginDependency(/* id = */ "com.intellij.java",
+          /* isOptional = */ false
         ),
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false,
-          /* isModule = */ true
+        DependsPluginDependency(/* id = */ "com.intellij.modules.json",
+          /* isOptional = */ false
         ),
       )
     )
@@ -281,14 +275,12 @@ class DependencyFilteringResolutionTest {
     val plugin = MockIdePlugin(
       pluginId = "com.example.somePlugin",
       vendor = "JetBrains",
-      dependencies = listOf(
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.lang",
-          /* isOptional = */ false,
-          /* isModule = */ true
+      dependsList = listOf(
+        DependsPluginDependency(/* id = */ "com.intellij.modules.lang",
+          /* isOptional = */ false
         ),
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false,
-          /* isModule = */ true
+        DependsPluginDependency(/* id = */ "com.intellij.modules.json",
+          /* isOptional = */ false
         ),
       )
     )

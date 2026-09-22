@@ -28,7 +28,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `only one dependency on com_intellij_modules_platform`() {
-    val plugin = MockIdePlugin(dependencies = listOf(PluginV1Dependency.Mandatory("com.intellij.modules.platform")))
+    val plugin = MockIdePlugin(dependsList = listOf(DependsPluginDependency("com.intellij.modules.platform", false)))
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
 
     assertEquals(0, problems.size)
@@ -36,7 +36,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `only one dependency on a plugin`() {
-    val plugin = MockIdePlugin(dependencies = listOf(PluginV1Dependency.Mandatory("JavaScript")))
+    val plugin = MockIdePlugin(dependsList = listOf(DependsPluginDependency("JavaScript", false)))
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
 
     assertEquals(1, problems.size)
@@ -47,7 +47,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `dependency just on com_intellij_modules_lang`() {
-    val plugin = MockIdePlugin(dependencies = listOf(PluginV1Dependency.Mandatory("com.intellij.modules.lang")))
+    val plugin = MockIdePlugin(dependsList = listOf(DependsPluginDependency("com.intellij.modules.lang", false)))
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
 
     assertEquals(0, problems.size)
@@ -55,7 +55,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `dependency just on com_intellij_modules_ultimate`() {
-    val plugin = MockIdePlugin(dependencies = listOf(PluginV1Dependency.Mandatory("com.intellij.modules.ultimate")))
+    val plugin = MockIdePlugin(dependsList = listOf(DependsPluginDependency("com.intellij.modules.ultimate", false)))
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
 
     assertEquals(0, problems.size)
@@ -63,7 +63,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `dependency just on com_intellij_java`() {
-    val plugin = MockIdePlugin(dependencies = listOf(PluginV1Dependency.Mandatory("com.intellij.java")))
+    val plugin = MockIdePlugin(dependsList = listOf(DependsPluginDependency("com.intellij.java", false)))
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
 
     assertEquals(0, problems.size)
@@ -74,7 +74,6 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
     val plugin = MockIdePlugin(
       pluginId = "com.intellij.classic.ui",
       incompatibleWith = listOf("com.intellij.jetbrains.client"),
-      dependencies = listOf(ModuleV2Dependency("intellij.platform.monolith")),
       contentModuleDependencies = listOf(ContentModuleDependency("intellij.platform.monolith", "jetbrains"))
     )
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
@@ -86,9 +85,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
     val plugin = MockIdePlugin(
       pluginId = "com.intellij.classic.ui",
       incompatibleWith = listOf("com.intellij.jetbrains.client"),
-      // using legacy class for dependency
-      dependencies = listOf(PluginV2Dependency ("intellij.platform.monolith")),
-      contentModuleDependencies = listOf(ContentModuleDependency("intellij.platform.monolith", "jetbrains"))
+      pluginMainModuleDependencies = listOf(PluginMainModuleDependency("intellij.platform.monolith"))
     )
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
     assertEquals(0, problems.size)
@@ -101,9 +98,6 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
     val contentModuleDescriptor = ModuleDescriptor(contentModule, contentModuleMetadata)
     val plugin = MockIdePlugin(
       pluginId = "somePlugin",
-      dependencies = emptyList(),
-      pluginMainModuleDependencies = emptyList(),
-      contentModuleDependencies = emptyList(),
       contentModules = listOf(contentModuleMetadata),
       modulesDescriptors = listOf(contentModuleDescriptor)
     )

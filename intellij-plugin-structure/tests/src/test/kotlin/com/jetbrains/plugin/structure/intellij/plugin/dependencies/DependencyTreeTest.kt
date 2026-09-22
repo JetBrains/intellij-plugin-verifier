@@ -1,8 +1,8 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
@@ -47,21 +47,21 @@ class DependencyTreeTest {
       MockIdePlugin(pluginId = "ij-dependency-$it")
     }
 
-    ijPlugin = MockIdePlugin("ij", dependencies = tenIjDependencies.map { dependOn(it.pluginId!!) })
+    ijPlugin = MockIdePlugin("ij", dependsList = tenIjDependencies.map { dependOn(it.pluginId!!) })
 
     dozenOfPlugins = (1..12).map {
-      MockIdePlugin(pluginId = "plugin$it", dependencies = listOf(dependOn("ij")))
+      MockIdePlugin(pluginId = "plugin$it", dependsList = listOf(dependOn("ij")))
     }
 
-    pluginAlpha = MockIdePlugin(pluginId = "alpha", dependencies =
+    pluginAlpha = MockIdePlugin(pluginId = "alpha", dependsList =
       dozenOfPlugins.map { dependOn(it.pluginId!!) }
     )
 
     ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, listOf(pluginAlpha, ijPlugin) + dozenOfPlugins + tenIjDependencies)
 
-    pluginNotInIde = MockIdePlugin(pluginId = "notInIde", dependencies = listOf(dependOn("pluginAlpha")))
+    pluginNotInIde = MockIdePlugin(pluginId = "notInIde", dependsList = listOf(dependOn("pluginAlpha")))
 
-    somePlugin = MockIdePlugin(pluginId = "com.example.A", dependencies = listOf(dependOn("alpha"), dependOn(pluginNotInIde.pluginId!!)))
+    somePlugin = MockIdePlugin(pluginId = "com.example.A", dependsList = listOf(dependOn("alpha"), dependOn(pluginNotInIde.pluginId!!)))
   }
 
   @Test
@@ -91,7 +91,7 @@ class DependencyTreeTest {
   @Test
   fun `missing optional dependency`() {
     val optionalPlugin = MockIdePlugin(pluginId = "com.example.Optional")
-    val somePlugin = MockIdePlugin(pluginId = "com.example.A", dependencies = listOf(optionallyDependOn(optionalPlugin)))
+    val somePlugin = MockIdePlugin(pluginId = "com.example.A", dependsList = listOf(optionallyDependOn(optionalPlugin)))
     // optionalPlugin is not in the IDE
     val bundledPlugins = emptyList<IdePlugin>()
     val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, bundledPlugins)
@@ -102,15 +102,15 @@ class DependencyTreeTest {
 
     assertEquals(emptySet<Dependency>(), transitiveDependencies)
 
-    val missingOptionalDependency = PluginDependencyImpl(optionalPlugin.id, true, false)
+    val missingOptionalDependency = PluginV1Dependency.Optional(optionalPlugin.id)
     assertEquals(setOf(missingOptionalDependency), missingDependencies)
   }
 
   @Test
   fun `missing transitive optional dependency`() {
     val optionalPlugin = MockIdePlugin(pluginId = "com.example.Optional")
-    val alphaPlugin = MockIdePlugin(pluginId = "alpha", dependencies = listOf(optionallyDependOn(optionalPlugin)))
-    val somePlugin = MockIdePlugin(pluginId = "com.example.A", dependencies = listOf(dependOn(alphaPlugin)))
+    val alphaPlugin = MockIdePlugin(pluginId = "alpha", dependsList = listOf(optionallyDependOn(optionalPlugin)))
+    val somePlugin = MockIdePlugin(pluginId = "com.example.A", dependsList = listOf(dependOn(alphaPlugin)))
 
     // optionalPlugin is not in the IDE
     val bundledPlugins = listOf(alphaPlugin)
@@ -126,19 +126,22 @@ class DependencyTreeTest {
     )
     assertEquals(expectedTransitiveDependencies, transitiveDependencies)
 
-    val missingOptionalDependency = PluginDependencyImpl(optionalPlugin.id, true, false)
+    val missingOptionalDependency = PluginV1Dependency.Optional(optionalPlugin.id)
     assertEquals(setOf(missingOptionalDependency), missingDependencies)
   }
 
   @Test
   fun `platform constraints remain part of dependency resolution by default`() {
-    val platformConstraints: List<PluginDependency> = listOf(
+    val platformConstraints = listOf(
       PluginV1Dependency.Mandatory("com.intellij.modules.os.mac"),
       PluginV1Dependency.Mandatory("com.intellij.modules.arch.arm64")
     )
     val osArchConstrainedPlugin = MockIdePlugin(
       pluginId = "com.example.OsArch",
-      dependencies = platformConstraints
+      dependsList = listOf(
+        DependsPluginDependency("com.intellij.modules.os.mac", false),
+        DependsPluginDependency("com.intellij.modules.arch.arm64", false)
+      )
     )
 
     val resolution = DependencyTree(ide).getDependencyTreeResolution(osArchConstrainedPlugin)
@@ -193,7 +196,7 @@ class DependencyTreeTest {
 
     val dependencyTree = DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
 
-    val somePlugin = MockIdePlugin(pluginId = "com.example.A", dependencies = listOf(dependOnModule(platformPlugin, via = "com.intellij.modules.platform")))
+    val somePlugin = MockIdePlugin(pluginId = "com.example.A", dependsList = listOf(dependOnModule(platformPlugin, via = "com.intellij.modules.platform")))
 
     val legacyPluginVerifier = LegacyIntelliJIdeaPluginVerifier()
     val transitiveDependencies =
@@ -274,24 +277,24 @@ class DependencyTreeTest {
   private val MockIdePlugin.id: String
     get() = pluginId ?: pluginName ?: "unknown"
 
-  private fun optionallyDependOn(plugin: MockIdePlugin): PluginDependencyImpl {
+  private fun optionallyDependOn(plugin: MockIdePlugin): DependsPluginDependency {
     return optionallyDependOn(plugin.id)
   }
 
-  private fun optionallyDependOn(id: String): PluginDependencyImpl {
-    return PluginDependencyImpl(id, true, false)
+  private fun optionallyDependOn(id: String): DependsPluginDependency {
+    return DependsPluginDependency(id, true)
   }
 
-  private fun dependOn(plugin: MockIdePlugin): PluginDependency {
+  private fun dependOn(plugin: MockIdePlugin): DependsPluginDependency {
     return dependOn(plugin.id)
   }
 
-  private fun dependOn(id: String): PluginDependency {
-    return PluginV1Dependency.Mandatory(id)
+  private fun dependOn(id: String): DependsPluginDependency {
+    return DependsPluginDependency(id, false)
   }
 
-  private fun dependOnModule(@Suppress("unused") module: MockIdePlugin, via: String): PluginDependency {
-    return PluginV1Dependency.Mandatory(via)
+  private fun dependOnModule(@Suppress("unused") module: MockIdePlugin, via: String): DependsPluginDependency {
+    return DependsPluginDependency(via, false)
   }
 
   class MissingDependencyCollector(private val missingDependencies: MutableSet<PluginDependency> = mutableSetOf()) : MissingDependencyListener, Set<PluginDependency> {

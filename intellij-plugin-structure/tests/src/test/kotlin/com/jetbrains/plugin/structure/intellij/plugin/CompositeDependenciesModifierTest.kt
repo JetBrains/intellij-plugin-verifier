@@ -47,8 +47,7 @@ class CompositeDependenciesModifierTest {
 
     // Legacy plugin has no module dependencies
     val legacyPlugin = MockIdePlugin(
-      pluginId = "com.example.Legacy",
-      dependencies = emptyList()
+      pluginId = "com.example.Legacy"
     )
 
     val legacyPluginVerifier = LegacyIntelliJIdeaPluginVerifier()
@@ -76,7 +75,7 @@ class CompositeDependenciesModifierTest {
   fun `composite modifier with empty list returns original dependencies`() {
     val plugin = MockIdePlugin(
       pluginId = "com.example.plugin",
-      dependencies = listOf(PluginV1Dependency.Mandatory("some.dependency"))
+      dependsList = listOf(DependsPluginDependency("some.dependency", false))
     )
 
     val compositeModifier = CompositeDependenciesModifier(emptyList())
