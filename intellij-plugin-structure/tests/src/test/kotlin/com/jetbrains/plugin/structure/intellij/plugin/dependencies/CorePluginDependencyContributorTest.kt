@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeMo
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
+import com.jetbrains.plugin.structure.mocks.validation.MockIdePluginValidator.Companion.assertValid
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -30,7 +31,7 @@ class CorePluginDependencyContributorTest {
     corePlugin = MockIdePlugin(
       pluginId = CORE_PLUGIN_ID,
       pluginAliases = setOf("com.intellij.modules.all", "com.intellij.modules.platform")
-    )
+    ).assertValid()
     ide = MockIde(IdeVersion.createIdeVersion("IU-261.1000"), ideRoot, listOf(corePlugin))
   }
 
@@ -39,7 +40,7 @@ class CorePluginDependencyContributorTest {
     val v2Plugin = MockIdePlugin(
       pluginId = "com.example.v2plugin",
       dependsList = listOf(MandatoryV1Dependency("com.intellij.modules.platform"))
-    )
+    ).assertValid()
 
     val contributor = CorePluginDependencyContributor(ide)
     val modifiedDependencies = contributor.apply(v2Plugin, ide)
@@ -60,7 +61,7 @@ class CorePluginDependencyContributorTest {
     val pluginWithCoreDependency = MockIdePlugin(
       pluginId = "com.example.plugin",
       dependsList = listOf(MandatoryV1Dependency(CORE_PLUGIN_ID))
-    )
+    ).assertValid()
 
     val contributor = CorePluginDependencyContributor(ide)
     val modifiedDependencies = contributor.apply(pluginWithCoreDependency, ide)
@@ -84,7 +85,7 @@ class CorePluginDependencyContributorTest {
   fun `core plugin dependency is added even for plugins with no dependencies`() {
     val pluginWithNoDeps = MockIdePlugin(
       pluginId = "com.example.nodeps"
-    )
+    ).assertValid()
 
     val contributor = CorePluginDependencyContributor(ide)
     val modifiedDependencies = contributor.apply(pluginWithNoDeps, ide)
@@ -98,7 +99,7 @@ class CorePluginDependencyContributorTest {
     val v2Plugin = MockIdePlugin(
       pluginId = "com.example.v2plugin",
       dependsList = listOf(MandatoryV1Dependency("com.intellij.modules.platform"))
-    )
+    ).assertValid()
 
     val contributor = CorePluginDependencyContributor(ide)
     val dependencyTree = DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
