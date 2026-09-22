@@ -1,5 +1,7 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
@@ -81,7 +83,8 @@ class CorePluginDependencyContributorTest {
 
   @Test
   fun `core plugin dependency is added even for plugins with no dependencies`() {
-    val pluginWithNoDeps = idePlugin("com.example.nodeps")
+    val pluginWithNoDeps = idePlugin( "com.example.nodeps"
+    )
 
     val contributor = CorePluginDependencyContributor(ide)
     val modifiedDependencies = contributor.apply(pluginWithNoDeps, ide)

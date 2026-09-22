@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
