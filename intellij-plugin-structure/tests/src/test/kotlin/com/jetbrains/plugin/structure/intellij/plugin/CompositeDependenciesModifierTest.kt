@@ -88,14 +88,11 @@ class CompositeDependenciesModifierTest {
 
   @Test
   fun `pass-through modifier infers reasons from merged dependencies`() {
-    val plugin = MockIdePlugin(
-      pluginId = "com.example.plugin",
-      dependencies = listOf(
-        PluginV1Dependency.Mandatory("com.example.v1"),
-        PluginV2Dependency("com.example.v2"),
-        ModuleV2Dependency("com.example.content")
-      )
-    )
+    val plugin = idePlugin("com.example.plugin") {
+      depends("com.example.v1")
+      pluginDependency("com.example.v2")
+      moduleDependency("com.example.content")
+    }
 
     val modifiedDependencies = PassThruDependenciesModifier.apply(plugin, ide)
 
