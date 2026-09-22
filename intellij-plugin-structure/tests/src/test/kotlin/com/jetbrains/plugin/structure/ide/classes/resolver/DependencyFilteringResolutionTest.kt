@@ -21,6 +21,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.MockProductInfoBasedIde
+import com.jetbrains.plugin.structure.mocks.idePlugin
 import net.bytebuddy.ByteBuddy
 import org.junit.Assert.*
 import org.junit.Before
@@ -110,13 +111,11 @@ class DependencyFilteringResolutionTest {
   fun `plugin dependency-based resolvers are resolved`() {
     val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
 
-    val plugin = MockIdePlugin(
-      pluginId = "com.example.somePlugin",
-      dependsList = listOf(
-        MandatoryV1Dependency("com.intellij.modules.platform"),
-        MandatoryV1Dependency("com.intellij.modules.json"),
-      )
-    )
+    val plugin = idePlugin {
+      id = "com.example.somePlugin"
+      depends("com.intellij.modules.platform")
+      depends("com.intellij.modules.json")
+    }
 
     val productInfo = ProductInfo(
       name = "IntelliJ IDEA",

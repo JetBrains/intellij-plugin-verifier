@@ -24,6 +24,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.MockProductInfoBasedIde
+import com.jetbrains.plugin.structure.mocks.idePlugin
 import net.bytebuddy.ByteBuddy
 import org.junit.Assert.*
 import org.junit.Before
@@ -154,19 +155,15 @@ class CachingPluginDependencyResolverProviderTest {
   fun `cache is used properly`() {
     val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
 
-    val plugin = MockIdePlugin(
-      pluginId = "com.example.somePlugin",
-      dependsList = listOf(
-        MandatoryV1Dependency("com.intellij.modules.platform"),
-        MandatoryV1Dependency("com.intellij.modules.json"),
-      )
-    )
-    val pluginDependingOnJava = MockIdePlugin(
-      pluginId = "com.example.BetterJava",
-      dependsList = listOf(
-        MandatoryV1Dependency("com.intellij.modules.java")
-      )
-    )
+    val plugin = idePlugin {
+      id = "com.example.somePlugin"
+      depends("com.intellij.modules.platform")
+      depends("com.intellij.modules.json")
+    }
+    val pluginDependingOnJava = idePlugin {
+      id = "com.example.BetterJava"
+      depends("com.intellij.modules.java")
+    }
 
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, javaPlugin, jsonPlugin))
 
@@ -245,12 +242,10 @@ class CachingPluginDependencyResolverProviderTest {
 
   @Test
   fun `dependencies are resolved`() {
-    val pluginDependingOnJava = MockIdePlugin(
-      pluginId = "com.example.BetterJava",
-      dependsList = listOf(
-        MandatoryV1Dependency("com.intellij.modules.java")
-      )
-    )
+    val pluginDependingOnJava = idePlugin {
+      id = "com.example.BetterJava"
+      depends("com.intellij.modules.java")
+    }
 
     val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(ideaCorePlugin, javaPlugin, jsonPlugin))
@@ -379,10 +374,10 @@ class CachingPluginDependencyResolverProviderTest {
       originalFile = betaFiles,
       classpath = Classpath.of(listOf(betaFiles))
     )
-    val alphaPlugin = MockIdePlugin(
-      pluginId = "com.example.Alpha",
-      dependsList = dependency("com.example.Beta")
-    )
+    val alphaPlugin = idePlugin {
+      id = "com.example.Alpha"
+      depends("com.example.Beta")
+    }
     val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
     val ide = MockIde(ideVersion, ideRoot, bundledPlugins = listOf(betaPlugin))
     val betaAction = "com/example/beta/BetaAction"
@@ -515,10 +510,10 @@ class CachingPluginDependencyResolverProviderTest {
     val productInfoClassResolver = ProductInfoClassResolver.of(ide, IdeResolverConfiguration(readMode = Resolver.ReadMode.SIGNATURES))
     val resolverProvider = CachingPluginDependencyResolverProvider(ide, productInfoClassResolver)
 
-    val alphaPlugin = MockIdePlugin(
-      pluginId = "com.example.Alpha",
-      dependsList = dependency("com.intellij.modules.json"),
-    )
+    val alphaPlugin = idePlugin {
+      id = "com.example.Alpha"
+      depends("com.intellij.modules.json")
+    }
 
     val pluginResolver = resolverProvider.getResolver(alphaPlugin)
     assertTrue(pluginResolver.containsClass("com/intellij/json/JsonNamesValidator"))

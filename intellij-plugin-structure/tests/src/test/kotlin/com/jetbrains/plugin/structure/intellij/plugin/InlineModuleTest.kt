@@ -7,14 +7,13 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.ide.MockIdeBuilder
 import com.jetbrains.plugin.structure.ide.ProductInfoBasedIdeManager
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
-import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.SimplePluginCreatorResultResolver
+import com.jetbrains.plugin.structure.mocks.idePlugin
 import org.intellij.lang.annotations.Language
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -84,15 +83,21 @@ class InlineModuleTest {
     }.plugin
 
     val idePlugins = listOf(
-      MockIdePlugin(pluginId = "com.intellij.modules.lang"),
-      MockIdePlugin(
-        pluginId = "com.intellij.modules.idea.community",
+      idePlugin {
+        id = "com.intellij.modules.lang"
+      },
+      idePlugin {
+        id = "com.intellij.modules.idea.community"
         // fictional dependency that will become a transitive one
-        dependsList = listOf(MandatoryV1Dependency("com.intellij.transitiveDependency"))
-      ),
-      MockIdePlugin(pluginId = "com.intellij.modules.structuralsearch"),
+        depends("com.intellij.transitiveDependency")
+      },
+      idePlugin {
+        id = "com.intellij.modules.structuralsearch"
+      },
       // fictional plugin that poses as a transitional dependency
-      MockIdePlugin(pluginId = "com.intellij.transitiveDependency")
+      idePlugin {
+        id = "com.intellij.transitiveDependency"
+      }
     )
     val ideVersionStr = "IU-242.10180.25"
     val ide = MockIde(IdeVersion.createIdeVersion(ideVersionStr), temporaryFolder.newFolder(ideVersionStr).toPath(), idePlugins)
@@ -120,8 +125,12 @@ class InlineModuleTest {
     }.plugin
 
     val idePlugins = listOf(
-      MockIdePlugin(pluginId = "com.intellij.modules.lang"),
-      MockIdePlugin(pluginId = "com.intellij.modules.structuralsearch"),
+      idePlugin {
+        id = "com.intellij.modules.lang"
+      },
+      idePlugin {
+        id = "com.intellij.modules.structuralsearch"
+      },
     )
     val ideVersionStr = "IU-242.10180.25"
     val ide = MockIde(IdeVersion.createIdeVersion(ideVersionStr), temporaryFolder.newFolder(ideVersionStr).toPath(), idePlugins)

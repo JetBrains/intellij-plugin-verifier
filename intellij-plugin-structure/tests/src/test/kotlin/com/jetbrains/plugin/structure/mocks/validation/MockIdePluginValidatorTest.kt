@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.SimpleProblemRegistrar
+import com.jetbrains.plugin.structure.mocks.idePlugin
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -23,7 +24,7 @@ class MockIdePluginValidatorTest {
 
   private fun createMockModuleDescriptor(name: String): ModuleDescriptor {
     val moduleDef = createMockModule(name)
-    return ModuleDescriptor(MockIdePlugin(pluginId = name), moduleDef)
+    return ModuleDescriptor(idePlugin { id = name }, moduleDef)
   }
 
   @Test

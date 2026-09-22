@@ -1,12 +1,12 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.CorePluginDependencyContributor
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
 import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
+import com.jetbrains.plugin.structure.mocks.idePlugin
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -47,9 +47,9 @@ class CompositeDependenciesModifierTest {
     val ide = MockIde(IdeVersion.createIdeVersion("IU-261.1000"), ideRoot, bundledPlugins)
 
     // Legacy plugin has no module dependencies
-    val legacyPlugin = MockIdePlugin(
-      pluginId = "com.example.Legacy"
-    )
+    val legacyPlugin = idePlugin {
+      id = "com.example.Legacy"
+    }
 
     val legacyPluginVerifier = LegacyIntelliJIdeaPluginVerifier()
     val compositeModifier = CompositeDependenciesModifier(
@@ -74,10 +74,10 @@ class CompositeDependenciesModifierTest {
 
   @Test
   fun `composite modifier with empty list returns original dependencies`() {
-    val plugin = MockIdePlugin(
-      pluginId = "com.example.plugin",
-      dependsList = listOf(MandatoryV1Dependency("some.dependency"))
-    )
+    val plugin = idePlugin {
+      id = "com.example.plugin"
+      depends("some.dependency")
+    }
 
     val compositeModifier = CompositeDependenciesModifier(emptyList())
     val modifiedDependencies = compositeModifier.apply(plugin, ide)
