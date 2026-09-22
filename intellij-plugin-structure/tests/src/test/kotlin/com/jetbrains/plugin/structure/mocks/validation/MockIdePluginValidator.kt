@@ -5,6 +5,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.verifiers.ProblemRegistrar
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
+import com.jetbrains.plugin.structure.mocks.SimpleProblemRegistrar
 
 class MockIdePluginValidator {
   fun validate(plugin: MockIdePlugin, problemRegistrar: ProblemRegistrar) {
@@ -39,6 +40,17 @@ class MockIdePluginValidator {
     val contentModuleIdentifiers = plugin.contentModules.map { it.name }.toSet()
     if (descriptorIdentifiers != contentModuleIdentifiers) {
       problemRegistrar.registerProblem(ModuleIdentifierMismatchProblem(descriptorIdentifiers, contentModuleIdentifiers))
+    }
+  }
+
+  companion object {
+    fun MockIdePlugin.assertValid(): MockIdePlugin {
+      val problems = SimpleProblemRegistrar()
+      MockIdePluginValidator().validate(this, problems)
+      if (problems.isNotEmpty()) {
+        throw IllegalStateException(problems.joinToString())
+      }
+      return this
     }
   }
 }
