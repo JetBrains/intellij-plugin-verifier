@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.mocks.validation
 
 import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.mocks.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.SimpleProblemRegistrar
@@ -50,6 +51,13 @@ class MockIdePluginValidatorTest {
       PluginMainModuleDependency("com.example.main.module")
     )
 
+    val dependencies = listOf(
+      PluginV1Dependency.Mandatory("com.example.v1.mandatory"),
+      PluginV1Dependency.Optional("com.example.v1.optional"),
+      ModuleV2Dependency("com.example.content.module"),
+      PluginV2Dependency("com.example.main.module")
+    )
+
     val contentModules = listOf(
       createMockModule("mod.one"),
       createMockModule("mod.two")
@@ -60,6 +68,7 @@ class MockIdePluginValidatorTest {
     )
 
     val plugin = MockIdePlugin(
+      dependencies = dependencies,
       dependsList = dependsList,
       contentModuleDependencies = contentModuleDependencies,
       pluginMainModuleDependencies = pluginMainModuleDependencies,
@@ -70,6 +79,73 @@ class MockIdePluginValidatorTest {
     val problemRegistrar = SimpleProblemRegistrar()
     validator.validate(plugin, problemRegistrar)
     assertTrue(problemRegistrar.problems.isEmpty())
+  }
+
+  @Test
+  fun `missing dependencies in plugin dependencies list reports DependenciesMismatchProblem`() {
+    val plugin = MockIdePlugin(
+      dependsList = listOf(DependsPluginDependency("com.example.dep", false)),
+      dependencies = emptyList()
+    )
+
+    val problemRegistrar = SimpleProblemRegistrar()
+    validator.validate(plugin, problemRegistrar)
+    assertEquals(1, problemRegistrar.problems.size)
+    assertTrue(problemRegistrar.problems[0] is DependenciesMismatchProblem)
+  }
+
+  @Test
+  fun `extra dependency in plugin dependencies list reports DependenciesMismatchProblem`() {
+    val plugin = MockIdePlugin(
+      dependencies = listOf(PluginV1Dependency.Mandatory("com.example.extra")),
+      dependsList = emptyList(),
+      contentModuleDependencies = emptyList(),
+      pluginMainModuleDependencies = emptyList()
+    )
+
+    val problemRegistrar = SimpleProblemRegistrar()
+    validator.validate(plugin, problemRegistrar)
+    assertEquals(1, problemRegistrar.problems.size)
+    assertTrue(problemRegistrar.problems[0] is DependenciesMismatchProblem)
+  }
+
+  @Test
+  fun `dependency ordering mismatch reports DependenciesMismatchProblem`() {
+    val dependsList = listOf(DependsPluginDependency("com.example.v1", false))
+    val contentModuleDependencies = listOf(ContentModuleDependency("com.example.module", "jetbrains"))
+    val pluginMainModuleDependencies = listOf(PluginMainModuleDependency("com.example.main"))
+
+    // Incorrect order: pluginMainModuleDependencies before contentModuleDependencies
+    val wrongOrderDependencies = listOf(
+      PluginV1Dependency.Mandatory("com.example.v1"),
+      PluginV2Dependency("com.example.main"),
+      ModuleV2Dependency("com.example.module")
+    )
+
+    val plugin = MockIdePlugin(
+      dependencies = wrongOrderDependencies,
+      dependsList = dependsList,
+      contentModuleDependencies = contentModuleDependencies,
+      pluginMainModuleDependencies = pluginMainModuleDependencies
+    )
+
+    val problemRegistrar = SimpleProblemRegistrar()
+    validator.validate(plugin, problemRegistrar)
+    assertEquals(1, problemRegistrar.problems.size)
+    assertTrue(problemRegistrar.problems[0] is DependenciesMismatchProblem)
+  }
+
+  @Test
+  fun `dependency optional flag mismatch reports DependenciesMismatchProblem`() {
+    val plugin = MockIdePlugin(
+      dependsList = listOf(DependsPluginDependency("com.example.dep", isOptional = true)),
+      dependencies = listOf(PluginV1Dependency.Mandatory("com.example.dep"))
+    )
+
+    val problemRegistrar = SimpleProblemRegistrar()
+    validator.validate(plugin, problemRegistrar)
+    assertEquals(1, problemRegistrar.problems.size)
+    assertTrue(problemRegistrar.problems[0] is DependenciesMismatchProblem)
   }
 
   @Test
@@ -166,14 +242,28 @@ class MockIdePluginValidatorTest {
     )
 
     val plugin = MockIdePlugin(
+      dependsList = listOf(DependsPluginDependency("com.example.v1", false)),
       contentModules = contentModules,
       modulesDescriptors = modulesDescriptors
     )
 
     val problemRegistrar = SimpleProblemRegistrar()
     validator.validate(plugin, problemRegistrar)
-    assertEquals(2, problemRegistrar.problems.size)
+    assertEquals(3, problemRegistrar.problems.size)
+    assertTrue(problemRegistrar.problems.any { it is DependenciesMismatchProblem })
     assertTrue(problemRegistrar.problems.any { it is ModuleCountMismatchProblem })
     assertTrue(problemRegistrar.problems.any { it is ModuleIdentifierMismatchProblem })
+  }
+
+  @Test
+  fun `validate IdePlugin overload handles valid and invalid plugins`() {
+    val idePlugin: IdePlugin = MockIdePlugin(
+      dependsList = listOf(DependsPluginDependency("com.example.dep", false)),
+    )
+
+    val problemRegistrar = SimpleProblemRegistrar()
+    validator.validate(idePlugin, problemRegistrar)
+    assertEquals(1, problemRegistrar.problems.size)
+    assertTrue(problemRegistrar.problems[0] is DependenciesMismatchProblem)
   }
 }

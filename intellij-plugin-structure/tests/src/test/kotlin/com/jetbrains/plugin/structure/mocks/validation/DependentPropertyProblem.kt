@@ -7,6 +7,10 @@ open class DependentPropertyProblem(
   override val level: Level = Level.ERROR
 ) : PluginProblem()
 
+class DependenciesMismatchProblem(
+  message: String = "The 'dependencies' property is inconsistent with 'dependsList', 'pluginMainModuleDependencies', and 'contentModuleDependencies'."
+) : DependentPropertyProblem(message)
+
 class ModuleCountMismatchProblem(
   val descriptorCount: Int? = null,
   val contentModuleCount: Int? = null,

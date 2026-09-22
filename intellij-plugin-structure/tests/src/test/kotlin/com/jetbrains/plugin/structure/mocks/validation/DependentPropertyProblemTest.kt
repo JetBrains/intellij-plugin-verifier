@@ -28,6 +28,13 @@ class DependentPropertyProblemTest {
   }
 
   @Test
+  fun `dependencies mismatch problem diagnostic message`() {
+    val problem = DependenciesMismatchProblem()
+    assertEquals(PluginProblem.Level.ERROR, problem.level)
+    assertEquals("The 'dependencies' property is inconsistent with 'dependsList', 'pluginMainModuleDependencies', and 'contentModuleDependencies'.", problem.message)
+  }
+
+  @Test
   fun `module count mismatch problem diagnostic message`() {
     val problem = ModuleCountMismatchProblem(descriptorCount = 1, contentModuleCount = 2)
     assertEquals(PluginProblem.Level.ERROR, problem.level)
