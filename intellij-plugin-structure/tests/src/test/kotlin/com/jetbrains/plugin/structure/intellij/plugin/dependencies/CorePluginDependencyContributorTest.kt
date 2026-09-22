@@ -16,6 +16,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
+import kotlin.collections.none
 
 private const val CORE_PLUGIN_ID = "com.intellij"
 
@@ -84,8 +85,7 @@ class CorePluginDependencyContributorTest {
 
   @Test
   fun `core plugin dependency is added even for plugins with no dependencies`() {
-    val pluginWithNoDeps = idePlugin( "com.example.nodeps"
-    )
+    val pluginWithNoDeps = idePlugin( "com.example.nodeps")
 
     val contributor = CorePluginDependencyContributor(ide)
     val modifiedDependencies = contributor.apply(pluginWithNoDeps, ide)
