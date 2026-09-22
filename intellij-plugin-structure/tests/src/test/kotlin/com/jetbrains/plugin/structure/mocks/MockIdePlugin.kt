@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.mocks.validation.MockIdePluginValidator.Companion.assertValid
 import org.jdom2.Document
 import org.jdom2.Element
 import java.nio.file.Path
@@ -61,4 +62,39 @@ data class MockIdePlugin(
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
     sinceBuild <= ideVersion && (untilBuild == null || ideVersion <= untilBuild)
+}
+
+fun idePlugin(configure: MockIdePluginBuilder.() -> Unit): MockIdePlugin {
+  return MockIdePluginBuilder().apply(configure).build()
+}
+
+class MockIdePluginBuilder {
+  var id: String? = null
+
+  private val dependsList = mutableListOf<DependsPluginDependency>()
+  private val pluginMainModuleDependencies = mutableListOf<PluginMainModuleDependency>()
+  private val contentModuleDependencies = mutableListOf<ContentModuleDependency>()
+
+  fun depends(pluginId: String) {
+    dependsList += DependsPluginDependency.MandatoryV1Dependency(pluginId)
+  }
+
+  fun optionalDepends(pluginId: String) {
+    dependsList += DependsPluginDependency(pluginId, true)
+  }
+
+  fun pluginDependency(pluginId: String) {
+    pluginMainModuleDependencies += PluginMainModuleDependency(pluginId)
+  }
+
+  fun moduleDependency(moduleName: String, namespace: String = "jetbrains") {
+    contentModuleDependencies += ContentModuleDependency(moduleName, namespace)
+  }
+
+  fun build() = MockIdePlugin(
+    pluginId = id,
+    dependsList = dependsList.toList(),
+    pluginMainModuleDependencies = pluginMainModuleDependencies.toList(),
+    contentModuleDependencies = contentModuleDependencies.toList(),
+  ).assertValid()
 }
