@@ -171,8 +171,13 @@ internal class PluginCreator private constructor(
       pluginCreator.resolveDocumentAndValidateBean(
         document, descriptorResource.filePath, descriptorResource.fileName, pathResolver,
         validateDescriptor = true,
-        // An inline content module has no filesystem path of its own to derive a resource root from,
-        // so it resolves its includes against the artifact its containing descriptor came from.
+        // An inline content module has no filesystem path of its own, and - unlike a file-based
+        // descriptor - IntelliJ's own loader does not give it XInclude support either: embedded module
+        // content is parsed with a null XIncludeLoader (PluginDescriptorLoader.loadPluginSubDescriptors).
+        // ResourceRootSource.ContainingDescriptor exists only to keep the PARSER CHOICE inherited from
+        // the parent (see shouldUsePlatformParser); it must not also grant a resource root, or an
+        // <xi:include> the IDE would reject gets silently resolved here instead. See
+        // PARSER_POC_INLINE_MODULE_XINCLUDE.md.
         resourceRootSource = ResourceRootSource.ContainingDescriptor
       )
       return pluginCreator
@@ -217,8 +222,10 @@ internal class PluginCreator private constructor(
    * See [resolveResourceRoot].
    *
    * `null` for a descriptor that has neither a usable filesystem path of its own nor a parent to
-   * inherit one from; `<xi:include>` is then unsupported for it, and encountering one fails the parse
-   * rather than resolving against a guessed-wrong root.
+   * inherit one from, and also, deliberately, for an inline content module ([ResourceRootSource.ContainingDescriptor]):
+   * `<xi:include>` is then unsupported for it, matching IntelliJ's own loader, which parses embedded
+   * module content with a null `XIncludeLoader`. Encountering an include with no resource root fails
+   * the parse rather than resolving against a guessed-wrong root or one the real IDE would not honour.
    */
   internal var resourceRoot: Path? = null
     private set
@@ -510,12 +517,18 @@ internal class PluginCreator private constructor(
    * (`<module name="...">CDATA</module>`), which has no filesystem path at all: `DescriptorResource`
    * synthesises [documentPath] from a URI fragment into a bare, parentless single-segment path naming
    * no real file, so absolutising it would silently root the plugin at the current working directory.
-   * Such a module inherits the containing descriptor's already-resolved root, which is the artifact its
-   * CDATA came from.
+   *
+   * Such a module gets `null`, not the parent's root, and that is deliberate rather than a gap: in
+   * IntelliJ's own loader, embedded module descriptor content is parsed with a null `XIncludeLoader`
+   * (`PluginDescriptorLoader.loadPluginSubDescriptors`), so `<xi:include>` is unsupported there too. A
+   * resource root inherited from the containing descriptor would let this module resolve an include the
+   * real IDE would reject - a false-negative compatibility result. See PARSER_POC_INLINE_MODULE_XINCLUDE.md.
+   * (The *parser choice* - JAXB vs. platform - is a separate axis and is still inherited via
+   * [shouldUsePlatformParser]; only resource-root/XInclude capability is withheld here.)
    */
   private fun resolveResourceRoot(documentPath: Path, resourceRootSource: ResourceRootSource): Path? {
     if (resourceRootSource == ResourceRootSource.ContainingDescriptor) {
-      return parentPlugin?.resourceRoot
+      return null
     }
     val parent = documentPath.toAbsolutePath().parent ?: return parentPlugin?.resourceRoot
     return if (parent.fileName?.toString() == IdePluginManager.META_INF) parent.parent else parent
@@ -528,7 +541,11 @@ internal class PluginCreator private constructor(
     /** Derived from the descriptor's own path within its artifact. */
     OwnDocumentPath,
 
-    /** Inherited from the containing descriptor, for a descriptor that has no path of its own. */
+    /**
+     * An inline content module: no resource root at all, by design - it has no path of its own, and
+     * IntelliJ's own loader gives embedded module content no XInclude support either. See
+     * [resolveResourceRoot].
+     */
     ContainingDescriptor
   }
 
