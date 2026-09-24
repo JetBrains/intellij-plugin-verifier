@@ -134,11 +134,38 @@ class PlatformParserSelectionRuleTest {
   }
 
   @Test
-  fun `an inline module inherits the containing descriptor's resource root`() {
-    // It has no filesystem path of its own to derive one from, so without inheritance it would have no
-    // resource root at all and could not resolve a single <xi:include>.
+  fun `an inline module gets no resource root, unlike a content module inheriting a filesystem path`() {
+    // Unlike the parser choice, XInclude capability is not inherited: an inline module has no
+    // filesystem path of its own, and IntelliJ's own loader parses embedded module content with a null
+    // XIncludeLoader too - so this module must have none either, not the parent's.
     val parent = createPlugin(pluginXml(sinceBuild = "241.0", untilBuild = "263.*"))
-    assertEquals(parent.resourceRoot, inlineModuleOf(parent).resourceRoot)
+    assertEquals(null, inlineModuleOf(parent).resourceRoot)
+  }
+
+  @Test
+  fun `an xi-include inside an inline module is rejected, not silently resolved against the parent's artifact`() {
+    // Behavioral parity test replacing the old (wrong) "inherits the containing descriptor's resource
+    // root" assertion: see PARSER_POC_INLINE_MODULE_XINCLUDE.md. Giving the module a live resource root
+    // would let this include resolve here even though IntelliJ's real loader - which parses embedded
+    // module content with a null XIncludeLoader - could never resolve it, a false-negative compatibility
+    // result.
+    val parent = createPlugin(pluginXml(sinceBuild = "241.0", untilBuild = "263.*"))
+    val inlineModuleXml = """
+      <idea-plugin>
+        <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="sibling.xml"/>
+      </idea-plugin>
+    """.trimIndent()
+    val module = PluginCreator.createPlugin(
+      DescriptorResource(inlineModuleXml.byteInputStream(), URI("$PLUGIN_URI#modules/some.module"), URI(PLUGIN_URI)),
+      parent,
+      document(inlineModuleXml),
+      NOT_FOUND_RESOLVER,
+      AnyProblemToWarningPluginCreationResultResolver
+    )
+    assertTrue(
+      "an unresolvable <xi:include> in inline module content must be reported as a problem, not resolved",
+      module.resolvedProblems.isNotEmpty()
+    )
   }
 
   // --- helpers ----------------------------------------------------------------------------------
