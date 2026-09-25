@@ -53,10 +53,10 @@ private val LOG = LoggerFactory.getLogger(PlatformPluginDescriptorParser::class.
  *    build at all - see [RawPluginDescriptor], which has no icon field) through the platform's own
  *    `Logger.error(...)`, whose default (non-IDE) implementation throws `AssertionError` - an
  *    `Error`, not an `Exception`. Since plugin-verifier's job is running against arbitrary -
- *    sometimes broken or adversarial - third-party plugins, [parse] wraps the whole call (XInclude
- *    resolution included) in a broad `catch (Throwable)`, mirroring
- *    [PluginDescriptorParser.readDocumentIntoXmlBean]'s existing pattern but widened past `Exception`
- *    specifically to still contain that `AssertionError` case.
+ *    sometimes broken or adversarial - third-party plugins, [parse] contains ordinary parser
+ *    exceptions. It deliberately does not catch arbitrary [Throwable] instances: JVM-fatal errors and
+ *    linkage failures must escape. The one non-[Exception] fallback handled explicitly is the default
+ *    logger's [AssertionError], and only when its stack identifies `DefaultLogger.error`.
  *
  * 3. KNOWN GAP: [RawPluginDescriptor] has no `eap` field at all - the library's `readProduct()` only
  *    reads code/release-date/release-version/`optional` (`optional` maps to the top-level
@@ -115,16 +115,14 @@ internal class PlatformPluginDescriptorParser {
       val xml = serialize(document)
       val xIncludeLoader = resourceRoot?.let { ResourceResolverXIncludeLoader(resourceResolver, it) }
       parsePluginXml(xml, pluginFileName, readerContext, xIncludeLoader).build()
-    } catch (e: Throwable) {
-      // Broad catch by design: see class doc, point 2. The library throws plain RuntimeException /
-      // XMLStreamException, not our PluginProblem hierarchy, for many malformed-input / unresolved-
-      // include cases - and, for any `idea-plugin` child element it doesn't recognize (e.g. `<icon>`,
-      // which this parser build has no support for at all), it goes through the platform's own
-      // `Logger.error(...)`, whose default (non-IDE) implementation throws `AssertionError` - an
-      // `Error`, not an `Exception`. Catching only `Exception` here let that escape uncaught, which
-      // took down the whole verifier worker process instead of just failing this one plugin.
+    } catch (e: Exception) {
       validationContext += e.toConditionalIncludeProblem(document, descriptorPath)
         ?: UnableToReadDescriptor(descriptorPath, e.localizedMessage)
+      LOG.info("Unable to read plugin descriptor $descriptorPath of $pluginFileName via platform parser", e)
+      null
+    } catch (e: AssertionError) {
+      if (!e.isDefaultLoggerError()) throw e
+      validationContext += UnableToReadDescriptor(descriptorPath, e.localizedMessage)
       LOG.info("Unable to read plugin descriptor $descriptorPath of $pluginFileName via platform parser", e)
       null
     }
@@ -136,6 +134,9 @@ internal class PlatformPluginDescriptorParser {
     return out.toByteArray()
   }
 }
+
+private fun AssertionError.isDefaultLoggerError(): Boolean =
+  stackTrace.any { it.className == "com.intellij.openapi.diagnostic.DefaultLogger" && it.methodName == "error" }
 
 /**
  * Suffix of the message the library's `XmlReader.checkConditionalIncludeIsSupported` builds when it

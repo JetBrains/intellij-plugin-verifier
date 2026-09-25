@@ -39,7 +39,8 @@ internal class PluginCreator private constructor(
   private val problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver(),
   /**
    * Version of the IDE this descriptor is bundled in, or `null` for a plugin being verified rather than
-   * loaded as part of an IDE. See [shouldUsePlatformParser], which falls back to it.
+   * loaded as part of an IDE. See [shouldUsePlatformParser], where it takes precedence over a bundled
+   * descriptor's own compatibility declaration.
    */
   private val containingIdeVersion: IdeVersion? = null
 ) {
@@ -434,11 +435,16 @@ internal class PluginCreator private constructor(
   /**
    * Whether this descriptor should be parsed by the platform parser rather than the JAXB pipeline.
    *
+   * Nested descriptors inherit their enclosing plugin's choice. A top-level descriptor loaded through
+   * a bundled API is parsed according to the containing IDE version, matching the parser that the real
+   * IDE ships, regardless of the descriptor's own compatibility declaration. Only standalone plugins
+   * are selected from their declared compatibility range.
+   *
    * The platform parser rejects `includeIf`/`includeUnless` (see
    * [com.jetbrains.plugin.structure.intellij.problems.ConditionalIncludeNotSupported]), which the JAXB
-   * path still honours. Handing a plugin to it is therefore only safe once the plugin itself cannot be
-   * relying on those attributes - and what settles that is the plugin's declared compatibility
-   * *interval* overlapping the range of IDEs the attributes no longer exist in,
+   * path still honours. Handing a standalone plugin to it is therefore only safe once the plugin itself
+   * cannot be relying on those attributes - and what settles that is the plugin's declared compatibility
+   * *interval* overlapping the range of IDEs where the attributes no longer exist,
    * `[CONDITIONAL_INCLUDE_REMOVAL_BASELINE, infinity)`.
    *
    * Overlap with a half-open upper interval only ever constrains the upper bound, so the decision is
@@ -468,6 +474,9 @@ internal class PluginCreator private constructor(
    */
   internal fun shouldUsePlatformParser(document: Document): Boolean {
     parentPlugin?.let { return it.usedPlatformParser }
+    containingIdeVersion?.let {
+      return it.baselineVersion >= CONDITIONAL_INCLUDE_REMOVAL_BASELINE
+    }
 
     val ideaVersion = document.rootElement.getChild(IDEA_VERSION_ELEMENT)
     val untilBuild = ideaVersion?.getAttributeValue(UNTIL_BUILD_ATTRIBUTE)
@@ -480,11 +489,7 @@ internal class PluginCreator private constructor(
     if (sinceBuild != null) {
       return sinceBuild.baselineVersion >= UNBOUNDED_UNTIL_SINCE_FLOOR
     }
-    // Declares nothing and has no parent to inherit from - which is every descriptor loaded as part of
-    // an IDE rather than as a plugin under verification. Its compatibility is not its own to declare:
-    // it ships with the IDE, so the IDE's version is the only meaningful answer, and using it is what
-    // keeps a bundled plugin and its module descriptors on the same parser.
-    return containingIdeVersion?.let { it.baselineVersion >= CONDITIONAL_INCLUDE_REMOVAL_BASELINE } ?: false
+    return false
   }
 
   /**
@@ -657,10 +662,9 @@ internal class PluginCreator private constructor(
     plugin.underlyingDocument = originalDocument
     try {
       rawDescriptorToPluginConverter.convert(raw, originalDocument, parentPlugin, ::registerProblem, plugin)
-    } catch (e: Throwable) {
-      // See this method's doc for why this try/catch exists. Catches Throwable, not just Exception:
-      // the platform parser's own Logger.error(...) throws AssertionError (an Error) for elements it
-      // doesn't recognize - see PlatformPluginDescriptorParser.parse's matching catch for why.
+    } catch (e: Exception) {
+      // Contain descriptor/conversion failures, but let JVM-fatal errors and linkage failures escape.
+      // Platform-logger AssertionError handling belongs at the parser boundary.
       LOG.info("Unable to convert plugin descriptor $descriptorPath of $pluginFileName via platform parser", e)
       registerProblem(UnableToReadDescriptor(descriptorPath, e.localizedMessage))
       return false
