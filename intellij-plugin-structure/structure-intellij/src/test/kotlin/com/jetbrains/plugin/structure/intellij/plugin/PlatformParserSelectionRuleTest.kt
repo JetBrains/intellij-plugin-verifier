@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorReso
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -25,6 +26,25 @@ import java.nio.file.Path
  * tests keep the rule itself honest in the meantime.
  */
 class PlatformParserSelectionRuleTest {
+
+  // --- bundled descriptors: the containing IDE is authoritative -------------------------------
+
+  @Test
+  fun `a bundled descriptor in 263 uses the platform parser despite an until build of 262`() {
+    assertTrue(bundledSelectsPlatformParser("263.100", sinceBuild = "241.0", untilBuild = "262.*"))
+  }
+
+  @Test
+  fun `a bundled descriptor in 262 uses JAXB despite a range beginning or ending in 263`() {
+    assertFalse(bundledSelectsPlatformParser("262.2500", sinceBuild = "263.0", untilBuild = "263.*"))
+    assertFalse(bundledSelectsPlatformParser("262.2500", sinceBuild = "263.0", untilBuild = null))
+  }
+
+  @Test
+  fun `a malformed bundled range cannot override the containing IDE`() {
+    assertTrue(bundledSelectsPlatformParser("263.SNAPSHOT", "broken", "also-broken"))
+    assertFalse(bundledSelectsPlatformParser("262.2500", "broken", "also-broken"))
+  }
 
   // --- until-build drives the decision -------------------------------------------------------
 
@@ -128,6 +148,27 @@ class PlatformParserSelectionRuleTest {
   }
 
   @Test
+  fun `a nested descriptor inherits before considering its own containing IDE or range`() {
+    val platformParent = createPlugin(pluginXml(sinceBuild = "241.0", untilBuild = "263.*"))
+    val platformChild = createPlugin(
+      pluginXml(sinceBuild = "241.0", untilBuild = "241.*"),
+      parent = platformParent,
+      containingIdeVersion = IdeVersion.createIdeVersion("262.2500")
+    )
+    assertTrue(platformChild.shouldUsePlatformParser(document(pluginXml("241.0", "241.*"))))
+    assertTrue(platformChild.usedPlatformParser)
+
+    val jaxbParent = createPlugin(pluginXml(sinceBuild = "241.0", untilBuild = "262.*"))
+    val jaxbChild = createPlugin(
+      pluginXml(sinceBuild = "263.0", untilBuild = "263.*"),
+      parent = jaxbParent,
+      containingIdeVersion = IdeVersion.createIdeVersion("263.100")
+    )
+    assertFalse(jaxbChild.shouldUsePlatformParser(document(pluginXml("263.0", "263.*"))))
+    assertFalse(jaxbChild.usedPlatformParser)
+  }
+
+  @Test
   fun `an inline module inherits the containing descriptor's choice`() {
     val parent = createPlugin(pluginXml(sinceBuild = "241.0", untilBuild = "263.*"))
     assertEquals(parent.usedPlatformParser, inlineModuleOf(parent).usedPlatformParser)
@@ -197,6 +238,19 @@ class PlatformParserSelectionRuleTest {
     return creator.shouldUsePlatformParser(document(pluginXml(ideaVersion)))
   }
 
+  private fun bundledSelectsPlatformParser(
+    ideVersion: String,
+    sinceBuild: String?,
+    untilBuild: String?
+  ): Boolean {
+    val xml = pluginXml(sinceBuild, untilBuild)
+    val creator = createPlugin(
+      pluginXml(ideaVersion = null),
+      containingIdeVersion = IdeVersion.createIdeVersion(ideVersion)
+    )
+    return creator.shouldUsePlatformParser(document(xml))
+  }
+
   private fun ideaVersion(sinceBuild: String?, untilBuild: String?): String {
     val since = sinceBuild?.let { """ since-build="$it"""" } ?: ""
     val until = untilBuild?.let { """ until-build="$it"""" } ?: ""
@@ -217,9 +271,14 @@ class PlatformParserSelectionRuleTest {
 
   private fun document(xml: String) = xml.byteInputStream().use { JDOMUtil.loadDocument(it) }
 
-  private fun createPlugin(pluginXml: String): PluginCreator = PluginCreator.createPlugin(
-    "plugin.jar", "plugin.xml", null, false,
-    document(pluginXml), Path.of("META-INF", "plugin.xml"), NOT_FOUND_RESOLVER
+  private fun createPlugin(
+    pluginXml: String,
+    parent: PluginCreator? = null,
+    containingIdeVersion: IdeVersion? = null
+  ): PluginCreator = PluginCreator.createPlugin(
+    "plugin.jar", "plugin.xml", parent, false,
+    document(pluginXml), Path.of("META-INF", "plugin.xml"), NOT_FOUND_RESOLVER,
+    AnyProblemToWarningPluginCreationResultResolver, containingIdeVersion
   )
 
   private companion object {

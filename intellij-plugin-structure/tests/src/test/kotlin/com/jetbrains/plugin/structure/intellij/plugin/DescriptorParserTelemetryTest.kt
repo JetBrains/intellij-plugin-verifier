@@ -98,9 +98,36 @@ class DescriptorParserTelemetryTest {
     assertEquals("jaxb", bundledPluginParser("262.2500"))
   }
 
-  private fun bundledModuleParser(ideVersion: String): Any? {
+  @Test
+  fun `a bundled plugin range cannot override its IDE version`() {
+    assertEquals("platform", bundledPluginParser("263.100", pluginXml("262.*")))
+    assertEquals("jaxb", bundledPluginParser("262.2500", pluginXml("263.*")))
+  }
+
+  @Test
+  fun `a top-level bundled module range cannot override its IDE version`() {
+    val oldRange = """
+      <idea-plugin>
+        <id>intellij.example.module</id>
+        <idea-version since-build="241.0" until-build="262.*"/>
+      </idea-plugin>
+    """.trimIndent()
+    val newRange = """
+      <idea-plugin>
+        <id>intellij.example.module</id>
+        <idea-version since-build="263.0" until-build="263.*"/>
+      </idea-plugin>
+    """.trimIndent()
+    assertEquals("platform", bundledModuleParser("263.100", oldRange))
+    assertEquals("jaxb", bundledModuleParser("262.2500", newRange))
+  }
+
+  private fun bundledModuleParser(
+    ideVersion: String,
+    descriptor: String = "<idea-plugin><id>intellij.example.module</id></idea-plugin>"
+  ): Any? {
     val jar = buildZipFile(temporaryFolder.newFolder().toPath().resolve("modules.jar")) {
-      file("intellij.example.module.xml", "<idea-plugin><id>intellij.example.module</id></idea-plugin>")
+      file("intellij.example.module.xml", descriptor)
     }
     val result = manager().createBundledModule(
       jar, IdeVersion.createIdeVersion(ideVersion), "intellij.example.module.xml",
@@ -110,12 +137,15 @@ class DescriptorParserTelemetryTest {
     return (result as PluginCreationSuccess).telemetry[PLUGIN_DESCRIPTOR_PARSER]
   }
 
-  private fun bundledPluginParser(ideVersion: String): Any? {
+  private fun bundledPluginParser(
+    ideVersion: String,
+    descriptor: String = "<idea-plugin><id>com.example.bundled</id><name>Bundled</name></idea-plugin>"
+  ): Any? {
     val jar = buildZipFile(temporaryFolder.newFolder().toPath().resolve("bundled.jar")) {
       dir("META-INF") {
         // No <idea-version> at all - the shape of an IDE-internal plugin such as
         // intellij.idea.ultimate.customization.
-        file("plugin.xml", "<idea-plugin><id>com.example.bundled</id><name>Bundled</name></idea-plugin>")
+        file("plugin.xml", descriptor)
       }
     }
     val result = manager().createBundledPlugin(

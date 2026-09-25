@@ -10,8 +10,8 @@ import org.slf4j.LoggerFactory
 private val LOG = LoggerFactory.getLogger("com.jetbrains.plugin.structure.intellij.plugin.PlatformParserLogging")
 
 /**
- * Routes the platform parser library's own `com.intellij.openapi.diagnostic.Logger` to SLF4J, so that
- * the diagnostics it logs stay diagnostics instead of failing the plugin being parsed.
+ * Routes only the platform parser library's own `com.intellij.openapi.diagnostic.Logger` category to
+ * SLF4J, so that the diagnostics it logs stay diagnostics instead of failing the plugin being parsed.
  *
  * ### Why this is needed
  *
@@ -27,39 +27,44 @@ private val LOG = LoggerFactory.getLogger("com.jetbrains.plugin.structure.intell
  * Outside an IDE there is no implementation installed, and `Logger`'s default one throws
  * `AssertionError` from `error(...)`. That turned every one of those cases into a failed plugin - which
  * is not the library's behaviour, just an artefact of hosting it in a plain JVM. Installing a logging
- * implementation restores the intended semantics; the broad `catch (Throwable)` in
- * [PlatformPluginDescriptorParser.parse] stays as the backstop for the cases the library really does
- * throw on.
+ * implementation for that category restores the intended semantics.
  *
  * ### Why it is guarded
  *
  * `Logger.setFactory` is process-global, and `structure-intellij` is a published library that may well
  * be embedded in something that has its own opinion - an IDE, most obviously, but also any host that
  * installs a factory of its own. So the factory is installed only when nothing has claimed it yet, and
- * only once. A host that has already set one keeps it, and one that sets it later wins outright.
+ * only once. The installed factory delegates every category except the parser's back to the previous
+ * factory, preserving the semantics of JPS and all other IntelliJ utility code. A host that has
+ * already set a factory keeps it, and one that sets it later wins outright.
  */
 internal object PlatformParserLogging {
-  private val installed = java.util.concurrent.atomic.AtomicBoolean(false)
+  private const val PLATFORM_PARSER_LOGGER_CATEGORY = "com.intellij.platform.pluginSystem.parser.impl.PluginParser"
+
+  @Volatile
+  private var installed = false
 
   /**
    * Installs the bridge if no other `Logger.Factory` is in place. Idempotent and safe to call from any
    * thread; cheap enough to call before every parse.
    */
+  @Synchronized
   fun install() {
-    if (!installed.compareAndSet(false, true)) {
-      return
+    if (installed) return
+
+    if (Logger.isInitialized()) {
+      LOG.debug("A com.intellij.openapi.diagnostic.Logger factory is already installed; leaving it in place")
+    } else {
+      val delegate = Logger.getFactory()
+      Logger.setFactory(Logger.Factory { category ->
+        if (category.removePrefix("#") == PLATFORM_PARSER_LOGGER_CATEGORY) {
+          Slf4jBackedLogger(LoggerFactory.getLogger(category))
+        } else {
+          delegate.getLoggerInstance(category)
+        }
+      })
     }
-    try {
-      if (Logger.isInitialized()) {
-        LOG.debug("A com.intellij.openapi.diagnostic.Logger factory is already installed; leaving it in place")
-        return
-      }
-      Logger.setFactory(Logger.Factory { category -> Slf4jBackedLogger(LoggerFactory.getLogger(category)) })
-    } catch (e: Throwable) {
-      // Never let logging setup be the thing that fails a plugin parse. Worst case we are back to the
-      // default factory, i.e. to the behaviour this class exists to correct.
-      LOG.info("Unable to install a com.intellij.openapi.diagnostic.Logger factory for the platform parser", e)
-    }
+    installed = true
   }
 
   /**
