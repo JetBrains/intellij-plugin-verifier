@@ -1,7 +1,7 @@
 package com.jetbrains.plugin.structure.mocks.validation
 
 import com.jetbrains.plugin.structure.intellij.plugin.*
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Companion.MandatoryV1Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.SimpleProblemRegistrar
 import com.jetbrains.plugin.structure.mocks.idePlugin

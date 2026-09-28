@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.MandatoryV1Dependency
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -85,7 +86,7 @@ class MockIdePluginDslTest {
 
   @Test
   fun `accepts prebuilt plugin dependencies`() {
-    val mandatoryDependency = DependsPluginDependency.MandatoryV1Dependency("com.jetbrains.platform")
+    val mandatoryDependency = MandatoryV1Dependency("com.jetbrains.platform")
     val optionalDependency = DependsPluginDependency("com.jetbrains.kotlin", isOptional = true)
 
     val plugin = idePlugin("com.example.somePlugin") {
