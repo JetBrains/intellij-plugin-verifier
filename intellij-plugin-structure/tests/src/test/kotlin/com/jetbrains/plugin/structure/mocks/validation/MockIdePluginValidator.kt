@@ -4,6 +4,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.verifiers.ProblemRegistrar
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.SimpleProblemRegistrar
+import com.jetbrains.plugin.structure.mocks.validation.DuplicateModuleNameProblem.Property.CONTENT_MODULES
+import com.jetbrains.plugin.structure.mocks.validation.DuplicateModuleNameProblem.Property.MODULES_DESCRIPTORS
 
 class MockIdePluginValidator {
   fun validate(plugin: MockIdePlugin, problemRegistrar: ProblemRegistrar) {
@@ -34,10 +36,10 @@ class MockIdePluginValidator {
     val duplicateDescriptorNames = plugin.modulesDescriptors.map { it.name }.duplicates()
     val duplicateContentModuleNames = plugin.contentModules.map { it.name }.duplicates()
     if (duplicateDescriptorNames.isNotEmpty()) {
-      problemRegistrar.registerProblem(DuplicateModuleNameProblem(duplicateDescriptorNames, "modulesDescriptors"))
+      problemRegistrar.registerProblem(DuplicateModuleNameProblem(duplicateDescriptorNames, MODULES_DESCRIPTORS))
     }
     if (duplicateContentModuleNames.isNotEmpty()) {
-      problemRegistrar.registerProblem(DuplicateModuleNameProblem(duplicateContentModuleNames, "contentModules"))
+      problemRegistrar.registerProblem(DuplicateModuleNameProblem(duplicateContentModuleNames, CONTENT_MODULES))
     }
   }
 

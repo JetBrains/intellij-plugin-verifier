@@ -29,6 +29,13 @@ class ModuleIdentifierMismatchProblem(
 
 class DuplicateModuleNameProblem(
   val duplicateNames: List<String> = emptyList(),
-  val propertyName: String,
-  message: String = "Duplicate module names found in '$propertyName' ($duplicateNames)."
-) : DependentPropertyProblem(message)
+  val property: Property,
+  message: String = "Duplicate module names found in '$property' ($duplicateNames)."
+) : DependentPropertyProblem(message) {
+  enum class Property(private val propertyName: String) {
+    MODULES_DESCRIPTORS("modulesDescriptors"),
+    CONTENT_MODULES("contentModules");
+
+    override fun toString() = propertyName
+  }
+}

@@ -1,6 +1,7 @@
 package com.jetbrains.plugin.structure.mocks.validation
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
+import com.jetbrains.plugin.structure.mocks.validation.DuplicateModuleNameProblem.Property.MODULES_DESCRIPTORS
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Test
@@ -47,7 +48,7 @@ class DependentPropertyProblemTest {
   fun `duplicate module name problem diagnostic message`() {
     val problem = DuplicateModuleNameProblem(
       duplicateNames = listOf("foo"),
-      propertyName = "modulesDescriptors"
+      property = MODULES_DESCRIPTORS
     )
     assertEquals(PluginProblem.Level.ERROR, problem.level)
     assertEquals("Duplicate module names found in 'modulesDescriptors' ([foo]).", problem.message)

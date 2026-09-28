@@ -5,6 +5,8 @@ import com.jetbrains.plugin.structure.mocks.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.SimpleProblemRegistrar
 import com.jetbrains.plugin.structure.mocks.idePlugin
+import com.jetbrains.plugin.structure.mocks.validation.DuplicateModuleNameProblem.Property.CONTENT_MODULES
+import com.jetbrains.plugin.structure.mocks.validation.DuplicateModuleNameProblem.Property.MODULES_DESCRIPTORS
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -96,7 +98,7 @@ class MockIdePluginValidatorTest {
       listOf("mod.one"),
       problemRegistrar.problems.filterIsInstance<DuplicateModuleNameProblem>().single().duplicateNames
     )
-    assertEquals("contentModules", problemRegistrar.problems.filterIsInstance<DuplicateModuleNameProblem>().single().propertyName)
+    assertEquals(CONTENT_MODULES, problemRegistrar.problems.filterIsInstance<DuplicateModuleNameProblem>().single().property)
   }
 
   @Test
@@ -111,8 +113,8 @@ class MockIdePluginValidatorTest {
 
     assertEquals(2, problemRegistrar.problems.size)
     val problems = problemRegistrar.problems.filterIsInstance<DuplicateModuleNameProblem>()
-    assertEquals(listOf("mod.one"), problems.single { it.propertyName == "modulesDescriptors" }.duplicateNames)
-    assertEquals(listOf("mod.one"), problems.single { it.propertyName == "contentModules" }.duplicateNames)
+    assertEquals(listOf("mod.one"), problems.single { it.property == MODULES_DESCRIPTORS }.duplicateNames)
+    assertEquals(listOf("mod.one"), problems.single { it.property == CONTENT_MODULES }.duplicateNames)
   }
 
   @Test
@@ -130,7 +132,7 @@ class MockIdePluginValidatorTest {
     assertEquals(1, problems.size)
     val duplicateContentModuleNameProblem = problems.first()
 
-    assertEquals("modulesDescriptors", duplicateContentModuleNameProblem.propertyName)
+    assertEquals(MODULES_DESCRIPTORS, duplicateContentModuleNameProblem.property)
     assertEquals(listOf("mod.one"), duplicateContentModuleNameProblem.duplicateNames)
   }
 
