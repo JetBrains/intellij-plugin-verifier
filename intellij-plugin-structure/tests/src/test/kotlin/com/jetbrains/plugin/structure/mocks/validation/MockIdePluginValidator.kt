@@ -13,6 +13,7 @@ class MockIdePluginValidator {
   fun validate(plugin: IdePlugin, problemRegistrar: ProblemRegistrar) {
     validateModuleCounts(plugin, problemRegistrar)
     validateModuleIdentifiers(plugin, problemRegistrar)
+    validateDuplicateModuleNames(plugin, problemRegistrar)
   }
 
   private fun validateModuleCounts(plugin: IdePlugin, problemRegistrar: ProblemRegistrar) {
@@ -22,12 +23,29 @@ class MockIdePluginValidator {
   }
 
   private fun validateModuleIdentifiers(plugin: IdePlugin, problemRegistrar: ProblemRegistrar) {
-    val descriptorIdentifiers = plugin.modulesDescriptors.map { it.name }.sorted()
-    val contentModuleIdentifiers = plugin.contentModules.map { it.name }.sorted()
+    val descriptorIdentifiers = plugin.modulesDescriptors.map { it.name }.distinct().sorted()
+    val contentModuleIdentifiers = plugin.contentModules.map { it.name }.distinct().sorted()
     if (descriptorIdentifiers != contentModuleIdentifiers) {
       problemRegistrar.registerProblem(ModuleIdentifierMismatchProblem(descriptorIdentifiers, contentModuleIdentifiers))
     }
   }
+
+  private fun validateDuplicateModuleNames(plugin: IdePlugin, problemRegistrar: ProblemRegistrar) {
+    val duplicateDescriptorNames = plugin.modulesDescriptors.map { it.name }.duplicates()
+    val duplicateContentModuleNames = plugin.contentModules.map { it.name }.duplicates()
+    if (duplicateDescriptorNames.isNotEmpty()) {
+      problemRegistrar.registerProblem(DuplicateModuleNameProblem(duplicateDescriptorNames, "modulesDescriptors"))
+    }
+    if (duplicateContentModuleNames.isNotEmpty()) {
+      problemRegistrar.registerProblem(DuplicateModuleNameProblem(duplicateContentModuleNames, "contentModules"))
+    }
+  }
+
+  private fun List<String>.duplicates(): List<String> = groupingBy { it }
+    .eachCount()
+    .filterValues { it > 1 }
+    .keys
+    .sorted()
 
   companion object {
     fun MockIdePlugin.assertValid(): MockIdePlugin {

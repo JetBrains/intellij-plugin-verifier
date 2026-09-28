@@ -26,3 +26,9 @@ class ModuleIdentifierMismatchProblem(
     "The module identifiers in 'modulesDescriptors' do not match the identifiers in 'contentModules'."
   }
 ) : DependentPropertyProblem(message)
+
+class DuplicateModuleNameProblem(
+  val duplicateNames: List<String> = emptyList(),
+  val propertyName: String,
+  message: String = "Duplicate module names found in '$propertyName' ($duplicateNames)."
+) : DependentPropertyProblem(message)

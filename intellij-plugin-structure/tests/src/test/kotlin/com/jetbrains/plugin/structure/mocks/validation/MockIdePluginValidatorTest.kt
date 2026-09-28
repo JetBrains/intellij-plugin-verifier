@@ -71,7 +71,7 @@ class MockIdePluginValidatorTest {
   }
 
   @Test
-  fun `module count mismatch with same unique identifiers reports ModuleCountMismatchProblem`() {
+  fun `module count mismatch with duplicate content module name reports both problems`() {
     // Both have identifier set {"mod.one"}, but count is 1 vs 2 due to duplicate content modules
     val contentModules = listOf(
       createMockModule("mod.one"),
@@ -88,11 +88,52 @@ class MockIdePluginValidatorTest {
 
     val problemRegistrar = SimpleProblemRegistrar()
     validator.validate(plugin, problemRegistrar)
-    assertEquals(1, problemRegistrar.problems.size)
-    val problem = problemRegistrar.problems[0] as ModuleCountMismatchProblem
+    assertEquals(2, problemRegistrar.problems.size)
+    val problem = problemRegistrar.problems.filterIsInstance<ModuleCountMismatchProblem>().single()
     assertEquals(1, problem.descriptorCount)
     assertEquals(2, problem.contentModuleCount)
+    assertEquals(
+      listOf("mod.one"),
+      problemRegistrar.problems.filterIsInstance<DuplicateModuleNameProblem>().single().duplicateNames
+    )
+    assertEquals("contentModules", problemRegistrar.problems.filterIsInstance<DuplicateModuleNameProblem>().single().propertyName)
   }
+
+  @Test
+  fun `duplicate descriptor and content module names report separate problems`() {
+    val plugin = MockIdePlugin(
+      contentModules = listOf(createMockModule("mod.one"), createMockModule("mod.one")),
+      modulesDescriptors = listOf(createMockModuleDescriptor("mod.one"), createMockModuleDescriptor("mod.one"))
+    )
+
+    val problemRegistrar = SimpleProblemRegistrar()
+    validator.validate(plugin, problemRegistrar)
+
+    assertEquals(2, problemRegistrar.problems.size)
+    val problems = problemRegistrar.problems.filterIsInstance<DuplicateModuleNameProblem>()
+    assertEquals(listOf("mod.one"), problems.single { it.propertyName == "modulesDescriptors" }.duplicateNames)
+    assertEquals(listOf("mod.one"), problems.single { it.propertyName == "contentModules" }.duplicateNames)
+  }
+
+  @Test
+  fun `duplicate module descriptor names but unique content modules names`() {
+    val plugin = MockIdePlugin(
+      modulesDescriptors = listOf(createMockModuleDescriptor("mod.one"), createMockModuleDescriptor("mod.one")),
+      contentModules = listOf(createMockModule("mod.one"))
+    )
+
+    val problemRegistrar = SimpleProblemRegistrar()
+    validator.validate(plugin, problemRegistrar)
+
+    assertEquals(2, problemRegistrar.problems.size)
+    val problems = problemRegistrar.problems.filterIsInstance<DuplicateModuleNameProblem>()
+    assertEquals(1, problems.size)
+    val duplicateContentModuleNameProblem = problems.first()
+
+    assertEquals("modulesDescriptors", duplicateContentModuleNameProblem.propertyName)
+    assertEquals(listOf("mod.one"), duplicateContentModuleNameProblem.duplicateNames)
+  }
+
 
   @Test
   fun `module identifier mismatch with equal count reports ModuleIdentifierMismatchProblem`() {
@@ -108,8 +149,8 @@ class MockIdePluginValidatorTest {
     validator.validate(plugin, problemRegistrar)
     assertEquals(1, problemRegistrar.problems.size)
     val problem = problemRegistrar.problems[0] as ModuleIdentifierMismatchProblem
-    assertEquals(setOf("module.beta"), problem.descriptorIdentifiers)
-    assertEquals(setOf("module.alpha"), problem.contentModuleIdentifiers)
+    assertEquals(listOf("module.beta"), problem.descriptorIdentifiers)
+    assertEquals(listOf("module.alpha"), problem.contentModuleIdentifiers)
   }
 
   @Test

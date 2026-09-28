@@ -42,4 +42,14 @@ class DependentPropertyProblemTest {
     assertEquals(PluginProblem.Level.ERROR, problem.level)
     assertEquals("The module identifiers in 'modulesDescriptors' ([foo]) do not match the identifiers in 'contentModules' ([bar]).", problem.message)
   }
+
+  @Test
+  fun `duplicate module name problem diagnostic message`() {
+    val problem = DuplicateModuleNameProblem(
+      duplicateNames = listOf("foo"),
+      propertyName = "modulesDescriptors"
+    )
+    assertEquals(PluginProblem.Level.ERROR, problem.level)
+    assertEquals("Duplicate module names found in 'modulesDescriptors' ([foo]).", problem.message)
+  }
 }
