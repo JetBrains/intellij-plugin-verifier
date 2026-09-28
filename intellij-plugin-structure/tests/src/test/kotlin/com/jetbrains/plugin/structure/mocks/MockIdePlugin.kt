@@ -3,7 +3,6 @@ package com.jetbrains.plugin.structure.mocks
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.intellij.plugin.*
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.MandatoryV1Dependency
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.validation.MockIdePluginValidator.Companion.assertValid
 import org.jdom2.Document

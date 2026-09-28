@@ -22,8 +22,8 @@ class MockIdePluginValidator {
   }
 
   private fun validateModuleIdentifiers(plugin: IdePlugin, problemRegistrar: ProblemRegistrar) {
-    val descriptorIdentifiers = plugin.modulesDescriptors.map { it.name }.toSet()
-    val contentModuleIdentifiers = plugin.contentModules.map { it.name }.toSet()
+    val descriptorIdentifiers = plugin.modulesDescriptors.map { it.name }.sorted()
+    val contentModuleIdentifiers = plugin.contentModules.map { it.name }.sorted()
     if (descriptorIdentifiers != contentModuleIdentifiers) {
       problemRegistrar.registerProblem(ModuleIdentifierMismatchProblem(descriptorIdentifiers, contentModuleIdentifiers))
     }

@@ -36,8 +36,8 @@ class DependentPropertyProblemTest {
   @Test
   fun `module identifier mismatch problem diagnostic message`() {
     val problem = ModuleIdentifierMismatchProblem(
-      descriptorIdentifiers = setOf("foo"),
-      contentModuleIdentifiers = setOf("bar")
+      descriptorIdentifiers = listOf("foo"),
+      contentModuleIdentifiers = listOf("bar")
     )
     assertEquals(PluginProblem.Level.ERROR, problem.level)
     assertEquals("The module identifiers in 'modulesDescriptors' ([foo]) do not match the identifiers in 'contentModules' ([bar]).", problem.message)

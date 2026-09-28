@@ -18,8 +18,8 @@ class ModuleCountMismatchProblem(
 ) : DependentPropertyProblem(message)
 
 class ModuleIdentifierMismatchProblem(
-  val descriptorIdentifiers: Set<String>? = null,
-  val contentModuleIdentifiers: Set<String>? = null,
+  val descriptorIdentifiers: List<String>? = null,
+  val contentModuleIdentifiers: List<String>? = null,
   message: String = if (descriptorIdentifiers != null && contentModuleIdentifiers != null) {
     "The module identifiers in 'modulesDescriptors' ($descriptorIdentifiers) do not match the identifiers in 'contentModules' ($contentModuleIdentifiers)."
   } else {

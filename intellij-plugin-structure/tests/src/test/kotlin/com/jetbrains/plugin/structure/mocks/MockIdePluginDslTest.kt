@@ -4,7 +4,6 @@ import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.MandatoryV1Dependency
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
