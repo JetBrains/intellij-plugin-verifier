@@ -93,13 +93,12 @@ internal class PluginCreator private constructor(
 
     private val themeLoader = PluginThemeLoader()
     private val descriptorParser = PluginDescriptorParser()
-    private val beanValidator = PluginBeanValidator()
+    private val descriptorValidator = PluginDescriptorValidator()
     private val beanToPluginConverter = PluginBeanToIdePluginConverter()
 
     // Alternative pipeline backed by JetBrains' own plugin-system-parser-impl, selected once per
     // plugin - see shouldUsePlatformParser and resolveDocumentAndValidateBean below.
     private val platformDescriptorParser = PlatformPluginDescriptorParser()
-    private val platformDescriptorValidator = PlatformDescriptorValidator()
     private val rawDescriptorToPluginConverter = RawPluginDescriptorToIdePluginConverter()
     private val legacyIntelliJIdeaPluginVerifier = LegacyIntelliJIdeaPluginVerifier()
     private val projectAndApplicationListenerAvailabilityVerifier = ProjectAndApplicationListenerAvailabilityVerifier()
@@ -582,7 +581,7 @@ internal class PluginCreator private constructor(
     }
     val (document, bean) = parsingResult
 
-    beanValidator.validate(bean, validationContext, validateDescriptor)
+    descriptorValidator.validate(PluginBeanView(bean), validationContext, validateDescriptor)
     val validationResult = validationContext.getResult {
       newInvalidPlugin(bean, document)
     }
@@ -635,15 +634,16 @@ internal class PluginCreator private constructor(
     validateDescriptor: Boolean,
     validationContext: ValidationContext
   ): Boolean {
-    val raw = platformDescriptorParser.parse(
+    val parseResult = platformDescriptorParser.parse(
       originalDocument, resourceRoot, pathResolver, descriptorPath, pluginFileName, validationContext
     )
-    if (raw == null) {
+    if (parseResult == null) {
       validationContext.problems.forEach { registerProblem(it) }
       return false
     }
+    val raw = parseResult.descriptor
 
-    platformDescriptorValidator.validate(raw, originalDocument, validationContext, validateDescriptor)
+    descriptorValidator.validate(parseResult.view, validationContext, validateDescriptor)
     val validationResult = validationContext.getResult {
       newInvalidPlugin(raw, originalDocument)
     }
@@ -661,7 +661,7 @@ internal class PluginCreator private constructor(
     // point 4, on why that's a known, currently-cosmetic gap.
     plugin.underlyingDocument = originalDocument
     try {
-      rawDescriptorToPluginConverter.convert(raw, originalDocument, parentPlugin, ::registerProblem, plugin)
+      rawDescriptorToPluginConverter.convert(raw, parseResult.view, originalDocument, parentPlugin, ::registerProblem, plugin)
     } catch (e: Exception) {
       // Contain descriptor/conversion failures, but let JVM-fatal errors and linkage failures escape.
       // Platform-logger AssertionError handling belongs at the parser boundary.

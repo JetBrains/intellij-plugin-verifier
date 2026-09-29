@@ -4,6 +4,8 @@ import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.utils.CompatibilityUtils
 import com.jetbrains.plugin.structure.intellij.beans.IdeaVersionBean
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
+import com.jetbrains.plugin.structure.intellij.plugin.PluginBeanView
+import com.jetbrains.plugin.structure.intellij.plugin.ValidatableDescriptor
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.IdeVersionImpl
@@ -12,7 +14,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersionImpl
 private const val BUILD_NUMBER = "__BUILD_NUMBER__"
 private const val SNAPSHOT = "SNAPSHOT"
 
-internal const val SINCE_BASELINE_LOWER_BOUND = 130
+private const val SINCE_BASELINE_LOWER_BOUND = 130
 private const val UNTIL_BASELINE_LOWER_BOUND = 130
 
 private const val SUSPICIOUS_UNTIL_BASELINE_LOWER_BOUND = 281
@@ -25,15 +27,21 @@ class PluginSinceUntilRangeVerifier {
     plugin: PluginBean,
     descriptorPath: String,
     problemRegistrar: ProblemRegistrar
+  ) = verify(PluginBeanView(plugin), descriptorPath, problemRegistrar)
+
+  fun verify(
+    descriptor: ValidatableDescriptor,
+    descriptorPath: String,
+    problemRegistrar: ProblemRegistrar
   ) = with(problemRegistrar) {
-    val versionBean = plugin.ideaVersion
-    if (versionBean == null) {
+    val ideaVersion = descriptor.ideaVersion
+    if (ideaVersion == null) {
       registerProblem(PropertyNotSpecified("idea-version", descriptorPath))
       return
     }
 
-    verifySinceBuild(versionBean.sinceBuild, descriptorPath)
-    verifyUntilBuild(versionBean.untilBuild, descriptorPath)
+    verifySinceBuild(ideaVersion.sinceBuild, descriptorPath)
+    verifyUntilBuild(ideaVersion.untilBuild, descriptorPath)
   }
 
   private fun ProblemRegistrar.verifySinceBuild(sinceBuild: String?, descriptorPath: String) {
@@ -62,15 +70,7 @@ class PluginSinceUntilRangeVerifier {
 
 }
 
-/**
- * Shared by [PluginSinceUntilRangeVerifier] (JAXB path) and
- * [com.jetbrains.plugin.structure.intellij.plugin.PlatformDescriptorValidator] (platform-parser path),
- * for the same reason as [verifyIdeBuildComponentsRanges] below - and with a sharper edge here, because
- * [com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.shouldUsePlatformParser] selects on
- * `until-build`: leaving this check on the JAXB path alone would route precisely the descriptors with a
- * far-future or magic `until-build` to the pipeline that never looks at it.
- */
-internal fun ProblemRegistrar.verifyUntilBuild(untilBuild: String?, descriptorPath: String) {
+private fun ProblemRegistrar.verifyUntilBuild(untilBuild: String?, descriptorPath: String) {
   if (untilBuild == null) {
     return
   }
@@ -138,12 +138,7 @@ private fun IdeVersion.isJustASingleComponent(): Boolean {
   return meaningfulComponents.size == 1
 }
 
-/**
- * Shared by [PluginSinceUntilRangeVerifier] (JAXB path) and
- * [com.jetbrains.plugin.structure.intellij.plugin.PlatformDescriptorValidator] (platform-parser path)
- * so the two descriptor pipelines cannot drift apart on build-number component validation.
- */
-internal fun ProblemRegistrar.verifyIdeBuildComponentsRanges(
+private fun ProblemRegistrar.verifyIdeBuildComponentsRanges(
   ideVersion: IdeVersion,
   baselineLowerBound: Int,
   attributeName: String,

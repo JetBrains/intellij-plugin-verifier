@@ -13,6 +13,9 @@ import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import com.jetbrains.plugin.structure.intellij.problems.ConditionalIncludeNotSupported
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.xinclude.ResourceResolverXIncludeLoader
+import com.jetbrains.plugin.structure.intellij.xinclude.RecordingXIncludeLoader
+import com.jetbrains.plugin.structure.intellij.xinclude.XIncludeLoadAttempt
+import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import org.jdom2.Document
 import org.jdom2.output.XMLOutputter
 import org.slf4j.LoggerFactory
@@ -58,11 +61,11 @@ private val LOG = LoggerFactory.getLogger(PlatformPluginDescriptorParser::class.
  *    linkage failures must escape. The one non-[Exception] fallback handled explicitly is the default
  *    logger's [AssertionError], and only when its stack identifies `DefaultLogger.error`.
  *
- * 3. KNOWN GAP: [RawPluginDescriptor] has no `eap` field at all - the library's `readProduct()` only
- *    reads code/release-date/release-version/`optional` (`optional` maps to the top-level
- *    `isLicenseOptional`, not a nested product-descriptor field). A plugin declaring
- *    `<product-descriptor eap="true">` will silently lose that flag through this path. See
- *    RawPluginDescriptorToIdePluginConverter for where this surfaces.
+ * 3. [RawPluginDescriptor] deliberately drops some lexical information (`product-descriptor@eap`,
+ *    whether `depends@optional="false"` was explicit, and raw product version/date strings). The
+ *    [XIncludeLoader] is wrapped by [RecordingXIncludeLoader], allowing [PlatformDescriptorView]
+ *    to recover those values from exactly the root/include documents the platform parser consumed,
+ *    without performing a second resource-resolution pass.
  *
  * 4. Consequence of point 1: [PluginCreator.plugin]'s `underlyingDocument` is set to the ORIGINAL,
  *    unresolved [Document] on this path (still containing `<xi:include>` elements) - it no longer
@@ -97,7 +100,8 @@ internal class PlatformPluginDescriptorParser {
    *   guessed-wrong root.
    * @param resourceResolver the same composite resolver chain the JAXB path drives
    *   [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder] with.
-   * @return the parsed descriptor, or `null` if parsing (including XInclude resolution) failed - in
+   * @return the parsed descriptor plus its [PlatformDescriptorView] for validation, or `null` if parsing
+   *   (including XInclude resolution) failed - in
    *   which case a problem has already been registered on [validationContext] (mirroring
    *   [PluginDescriptorParser.ParseResult.InvalidBean]).
    */
@@ -108,13 +112,22 @@ internal class PlatformPluginDescriptorParser {
     descriptorPath: String,
     pluginFileName: String,
     validationContext: ValidationContext
-  ): RawPluginDescriptor? {
+  ): PlatformPluginDescriptorParseResult? {
     return try {
       // Makes the library's own Logger.error(...) diagnostics stay diagnostics - see its class doc.
       PlatformParserLogging.install()
       val xml = serialize(document)
-      val xIncludeLoader = resourceRoot?.let { ResourceResolverXIncludeLoader(resourceResolver, it) }
-      parsePluginXml(xml, pluginFileName, readerContext, xIncludeLoader).build()
+      val xIncludeLoader = resourceRoot
+        ?.let { ResourceResolverXIncludeLoader(resourceResolver, it) }
+        ?.let { RecordingXIncludeLoader(it) }
+      val raw = parsePluginXml(xml, pluginFileName, readerContext, xIncludeLoader).build()
+      val sourceDocuments = buildList {
+        add(document)
+        xIncludeLoader?.attempts.orEmpty()
+          .filterIsInstance<XIncludeLoadAttempt.Loaded>()
+          .mapNotNullTo(this) { loadIncludedDocument(it) }
+      }
+      PlatformPluginDescriptorParseResult(raw, PlatformDescriptorView(raw, sourceDocuments))
     } catch (e: Exception) {
       validationContext += e.toConditionalIncludeProblem(document, descriptorPath)
         ?: UnableToReadDescriptor(descriptorPath, e.localizedMessage)
@@ -133,7 +146,23 @@ internal class PlatformPluginDescriptorParser {
     XMLOutputter().output(document, out)
     return out.toByteArray()
   }
+
+  private fun loadIncludedDocument(loaded: XIncludeLoadAttempt.Loaded): Document? {
+    return try {
+      JDOMUtil.loadDocument(loaded.bytes.inputStream())
+    } catch (e: Exception) {
+      // The platform parser already accepted this input. Failure of this supplemental, verifier-only
+      // view must not change its loading verdict; it only means lexical checks cannot inspect it.
+      LOG.warn("Unable to retain loaded XInclude '{}' from {} for descriptor validation", loaded.path, loaded.diagnosticLocation, e)
+      null
+    }
+  }
 }
+
+internal data class PlatformPluginDescriptorParseResult(
+  val descriptor: RawPluginDescriptor,
+  val view: PlatformDescriptorView
+)
 
 private fun AssertionError.isDefaultLoggerError(): Boolean =
   stackTrace.any { it.className == "com.intellij.openapi.diagnostic.DefaultLogger" && it.methodName == "error" }
