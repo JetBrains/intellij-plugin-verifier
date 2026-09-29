@@ -3,6 +3,8 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.base.problems.PropertyWithDefaultValue
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
+import com.jetbrains.plugin.structure.intellij.plugin.PluginBeanView
+import com.jetbrains.plugin.structure.intellij.plugin.ValidatableDescriptor
 import com.jetbrains.plugin.structure.intellij.problems.ForbiddenPluginIdPrefix
 import com.jetbrains.plugin.structure.intellij.problems.TemplateWordInPluginId
 
@@ -17,17 +19,10 @@ val PRODUCT_ID_RESTRICTED_WORDS = listOf(
 class PluginIdVerifier {
 
   fun verify(plugin: PluginBean, descriptorPath: String, problemRegistrar: ProblemRegistrar) =
-    verify(plugin.id, descriptorPath, problemRegistrar)
+    verify(PluginBeanView(plugin), descriptorPath, problemRegistrar)
 
-  /**
-   * The `id` is all this verifier ever needed off the descriptor, so it is taken directly - which lets
-   * both descriptor pipelines share it, [PluginBeanValidator][com.jetbrains.plugin.structure.intellij.plugin.PluginBeanValidator]
-   * through the overload above and
-   * [PlatformDescriptorValidator][com.jetbrains.plugin.structure.intellij.plugin.PlatformDescriptorValidator]
-   * directly.
-   */
-  fun verify(id: String?, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
-    if (id == null) return
+  fun verify(descriptor: ValidatableDescriptor, descriptorPath: String, problemRegistrar: ProblemRegistrar) {
+    val id = descriptor.id ?: return
 
     when {
       id.isBlank() -> {
