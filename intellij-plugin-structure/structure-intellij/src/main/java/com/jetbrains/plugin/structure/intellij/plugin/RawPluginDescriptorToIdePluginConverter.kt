@@ -44,8 +44,6 @@ private val LOG = LoggerFactory.getLogger(RawPluginDescriptorToIdePluginConverte
  * an `<extensionPoints>` entry - [qualify] below reimplements that.
  *
  * Known, accepted gaps for this POC (see also PlatformPluginDescriptorParser's class doc):
- *  - `<product-descriptor eap="...">` has no home on [RawPluginDescriptor] at all - hardcoded to
- *    `false` below. See [readProductDescriptor].
  *  - [ServiceElement.open] has no field on [IdePluginContentDescriptor.ServiceDescriptor] - dropped.
  *  - [ComponentElement.headlessImplementationClass]/`loadForDefaultProject`/`overrides`/`options`
  *    likewise have no home on [IdePluginContentDescriptor.ComponentConfig] - dropped.
@@ -61,6 +59,7 @@ internal class RawPluginDescriptorToIdePluginConverter {
 
   fun convert(
     raw: RawPluginDescriptor,
+    view: ValidatableDescriptor,
     document: Document,
     parentPlugin: PluginCreator?,
     problemRegistrar: ProblemRegistrar,
@@ -90,7 +89,7 @@ internal class RawPluginDescriptorToIdePluginConverter {
       incompatibleWith += raw.incompatibleWith
 
       readVendor(raw)
-      readProductDescriptor(raw)
+      readProductDescriptor(raw, view.productDescriptor)
 
       changeNotes = raw.changeNotes
       description = raw.description
@@ -124,12 +123,16 @@ internal class RawPluginDescriptorToIdePluginConverter {
   }
 
   /**
-   * KNOWN GAP: no `eap` field exists on [RawPluginDescriptor] (confirmed against
+   * No `eap` field exists on [RawPluginDescriptor] (confirmed against
    * intellij-community's `XmlReader.readProduct()`, which only reads code/release-date/
    * release-version/`optional` - `optional` maps to the top-level [RawPluginDescriptor.isLicenseOptional],
-   * not a nested field). A plugin declaring `<product-descriptor eap="true">` loses that flag here.
+   * not a nested field), so it is taken from the lexical [PlatformDescriptorView] captured alongside
+   * the platform parse.
    */
-  private fun IdePluginImpl.readProductDescriptor(raw: RawPluginDescriptor) {
+  private fun IdePluginImpl.readProductDescriptor(
+    raw: RawPluginDescriptor,
+    productDescriptorView: ValidatableDescriptor.ProductDescriptorView?
+  ) {
     val code = raw.productCode
     val releaseDate = raw.releaseDate
     if (code != null && releaseDate != null) {
@@ -137,7 +140,7 @@ internal class RawPluginDescriptorToIdePluginConverter {
         code,
         releaseDate,
         ProductReleaseVersion(raw.releaseVersion),
-        eap = false, // see class/method doc - not modeled upstream, cannot be recovered here
+        eap = productDescriptorView?.eap == "true",
         optional = raw.isLicenseOptional
       )
     }
