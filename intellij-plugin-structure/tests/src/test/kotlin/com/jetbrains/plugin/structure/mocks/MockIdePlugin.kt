@@ -4,6 +4,7 @@ import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
 import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.mocks.validation.MockIdePluginValidator.Companion.assertValid
 import org.jdom2.Document
 import org.jdom2.Element
 import java.nio.file.Path
@@ -20,8 +21,6 @@ data class MockIdePlugin(
   override val changeNotes: String? = null,
   override val icons: List<PluginIcon> = emptyList(),
   override val productDescriptor: ProductDescriptor? = null,
-  override val dependencies: List<PluginDependency> = emptyList(),
-  // FIXME [dependencies] should be built from these three
   override val dependsList: List<DependsPluginDependency> = emptyList(),
   override val pluginMainModuleDependencies: List<PluginMainModuleDependency> = emptyList(),
   override val contentModuleDependencies: List<ContentModuleDependency> = emptyList(),
@@ -46,6 +45,12 @@ data class MockIdePlugin(
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
 ) : IdePlugin {
 
+  @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
+  override val dependencies: List<PluginDependency>
+    get() = dependsList.map { it.asPluginDependency() } +
+      contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) } +
+      pluginMainModuleDependencies.map { PluginV2Dependency(it.pluginId) }
+
   override val useIdeClassLoader = false
   override val isImplementationDetail = false
   override val moduleVisibility: ModuleVisibility = ModuleVisibility.PRIVATE
@@ -57,4 +62,51 @@ data class MockIdePlugin(
 
   override fun isCompatibleWithIde(ideVersion: IdeVersion) =
     sinceBuild <= ideVersion && (untilBuild == null || ideVersion <= untilBuild)
+}
+
+fun idePlugin(id: String, configure: MockIdePluginBuilder.() -> Unit = {}): MockIdePlugin {
+  return MockIdePluginBuilder(id).apply(configure).build()
+}
+
+class MockIdePluginBuilder(private val id: String) {
+  private val dependsList = mutableListOf<DependsPluginDependency>()
+  private val pluginMainModuleDependencies = mutableListOf<PluginMainModuleDependency>()
+  private val contentModuleDependencies = mutableListOf<ContentModuleDependency>()
+
+  fun depends(pluginId: String) {
+    dependsList += MandatoryV1Dependency(pluginId)
+  }
+
+  fun depends(plugin: MockIdePlugin) {
+    depends(plugin.requireId())
+  }
+
+  fun depends(dependency: DependsPluginDependency) {
+    dependsList += dependency
+  }
+
+  fun optionalDepends(pluginId: String) {
+    dependsList += DependsPluginDependency(pluginId, true)
+  }
+
+  fun optionalDepends(plugin: MockIdePlugin) {
+    optionalDepends(plugin.requireId())
+  }
+
+  fun pluginDependency(pluginId: String) {
+    pluginMainModuleDependencies += PluginMainModuleDependency(pluginId)
+  }
+
+  fun moduleDependency(moduleName: String, namespace: String = "jetbrains") {
+    contentModuleDependencies += ContentModuleDependency(moduleName, namespace)
+  }
+
+  private fun MockIdePlugin.requireId() = requireNotNull(pluginId) { "Plugin ID is required to declare a dependency" }
+
+  fun build() = MockIdePlugin(
+    pluginId = id,
+    dependsList = dependsList.toList(),
+    pluginMainModuleDependencies = pluginMainModuleDependencies.toList(),
+    contentModuleDependencies = contentModuleDependencies.toList(),
+  ).assertValid()
 }

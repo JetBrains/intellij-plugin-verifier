@@ -14,13 +14,10 @@ import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent.Plugin
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent.PluginAlias
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.Classpath
+import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.mocks.MockIde
-import com.jetbrains.plugin.structure.mocks.MockIdePlugin
-import com.jetbrains.plugin.structure.mocks.MockProductInfoBasedIde
+import com.jetbrains.plugin.structure.mocks.*
 import net.bytebuddy.ByteBuddy
 import org.junit.Assert.*
 import org.junit.Before
@@ -94,8 +91,8 @@ class DependencyFilteringResolutionTest {
       pluginAliases = setOf(
         "com.intellij.modules.java",
       ),
-      dependencies = listOf(
-        ModuleV2Dependency("com.intellij.modules.lang")
+      contentModuleDependencies = listOf(
+        ContentModuleDependency("com.intellij.modules.lang", "jetbrains")
       )
     )
 
@@ -110,19 +107,10 @@ class DependencyFilteringResolutionTest {
   fun `plugin dependency-based resolvers are resolved`() {
     val ideVersion = IdeVersion.createIdeVersion("IU-243.12818.47")
 
-    val plugin = MockIdePlugin(
-      pluginId = "com.example.somePlugin",
-      dependencies = listOf(
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.platform",
-          /* isOptional = */ false,
-          /* isModule = */ true
-        ),
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false,
-          /* isModule = */ true
-        ),
-      )
-    )
+    val plugin = idePlugin("com.example.somePlugin") {
+      depends("com.intellij.modules.platform")
+      depends("com.intellij.modules.json")
+    }
 
     val productInfo = ProductInfo(
       name = "IntelliJ IDEA",
@@ -170,15 +158,9 @@ class DependencyFilteringResolutionTest {
     val plugin = MockIdePlugin(
       pluginId = "com.example.somePlugin",
       vendor = "JetBrains",
-      dependencies = listOf(
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.lang",
-          /* isOptional = */ false,
-          /* isModule = */ true
-        ),
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false,
-          /* isModule = */ true
-        ),
+      dependsList = listOf(
+        MandatoryV1Dependency("com.intellij.modules.lang"),
+        MandatoryV1Dependency("com.intellij.modules.json"),
       )
     )
 
@@ -225,15 +207,9 @@ class DependencyFilteringResolutionTest {
     val plugin = MockIdePlugin(
       pluginId = "com.example.somePlugin",
       vendor = "JetBrains",
-      dependencies = listOf(
-        PluginDependencyImpl(/* id = */ "com.intellij.java",
-          /* isOptional = */ false,
-          /* isModule = */ false
-        ),
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false,
-          /* isModule = */ true
-        ),
+      dependsList = listOf(
+        MandatoryV1Dependency("com.intellij.java"),
+        MandatoryV1Dependency("com.intellij.modules.json"),
       )
     )
 
@@ -281,15 +257,9 @@ class DependencyFilteringResolutionTest {
     val plugin = MockIdePlugin(
       pluginId = "com.example.somePlugin",
       vendor = "JetBrains",
-      dependencies = listOf(
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.lang",
-          /* isOptional = */ false,
-          /* isModule = */ true
-        ),
-        PluginDependencyImpl(/* id = */ "com.intellij.modules.json",
-          /* isOptional = */ false,
-          /* isModule = */ true
-        ),
+      dependsList = listOf(
+        MandatoryV1Dependency("com.intellij.modules.lang"),
+        MandatoryV1Dependency("com.intellij.modules.json"),
       )
     )
 

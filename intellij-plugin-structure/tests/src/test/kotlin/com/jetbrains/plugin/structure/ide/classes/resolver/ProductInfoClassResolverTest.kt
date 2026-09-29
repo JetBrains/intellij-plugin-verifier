@@ -13,6 +13,7 @@ import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.MockProductInfoAwareIde
+import com.jetbrains.plugin.structure.mocks.idePlugin
 import org.intellij.lang.annotations.Language
 import org.junit.Assert.*
 import org.junit.Before
@@ -123,7 +124,7 @@ class ProductInfoClassResolverTest {
     }
 
     val resolvers = expectedPlugins.mapNotNull {
-      resolver.getResolver(MockIdePlugin(pluginId = it))
+      resolver.getResolver(idePlugin(it))
     }
     assertEquals(expectedPlugins.size, resolvers.size)
   }

@@ -4,12 +4,16 @@
 
 package com.jetbrains.plugin.structure.intellij.verifiers
 
-import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
 import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleLoadingRule
+import com.jetbrains.plugin.structure.intellij.plugin.PluginMainModuleDependency
 import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
 import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
 import com.jetbrains.plugin.structure.jar.PLUGIN_XML
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
+import com.jetbrains.plugin.structure.mocks.idePlugin
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -28,7 +32,9 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `only one dependency on com_intellij_modules_platform`() {
-    val plugin = MockIdePlugin(dependencies = listOf(PluginV1Dependency.Mandatory("com.intellij.modules.platform")))
+    val plugin = idePlugin("com.example.platform") {
+      depends("com.intellij.modules.platform")
+    }
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
 
     assertEquals(0, problems.size)
@@ -36,7 +42,9 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `only one dependency on a plugin`() {
-    val plugin = MockIdePlugin(dependencies = listOf(PluginV1Dependency.Mandatory("JavaScript")))
+    val plugin = idePlugin("com.example.javascript") {
+      depends("JavaScript")
+    }
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
 
     assertEquals(1, problems.size)
@@ -47,7 +55,9 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `dependency just on com_intellij_modules_lang`() {
-    val plugin = MockIdePlugin(dependencies = listOf(PluginV1Dependency.Mandatory("com.intellij.modules.lang")))
+    val plugin = idePlugin("com.example.lang") {
+      depends("com.intellij.modules.lang")
+    }
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
 
     assertEquals(0, problems.size)
@@ -55,7 +65,9 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `dependency just on com_intellij_modules_ultimate`() {
-    val plugin = MockIdePlugin(dependencies = listOf(PluginV1Dependency.Mandatory("com.intellij.modules.ultimate")))
+    val plugin = idePlugin("com.example.ultimate") {
+      depends("com.intellij.modules.ultimate")
+    }
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
 
     assertEquals(0, problems.size)
@@ -63,7 +75,9 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
 
   @Test
   fun `dependency just on com_intellij_java`() {
-    val plugin = MockIdePlugin(dependencies = listOf(PluginV1Dependency.Mandatory("com.intellij.java")))
+    val plugin = idePlugin("com.example.java") {
+      depends("com.intellij.java")
+    }
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
 
     assertEquals(0, problems.size)
@@ -74,7 +88,6 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
     val plugin = MockIdePlugin(
       pluginId = "com.intellij.classic.ui",
       incompatibleWith = listOf("com.intellij.jetbrains.client"),
-      dependencies = listOf(ModuleV2Dependency("intellij.platform.monolith")),
       contentModuleDependencies = listOf(ContentModuleDependency("intellij.platform.monolith", "jetbrains"))
     )
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
@@ -86,9 +99,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
     val plugin = MockIdePlugin(
       pluginId = "com.intellij.classic.ui",
       incompatibleWith = listOf("com.intellij.jetbrains.client"),
-      // using legacy class for dependency
-      dependencies = listOf(PluginV2Dependency ("intellij.platform.monolith")),
-      contentModuleDependencies = listOf(ContentModuleDependency("intellij.platform.monolith", "jetbrains"))
+      pluginMainModuleDependencies = listOf(PluginMainModuleDependency("intellij.platform.monolith"))
     )
     verifier.verify(plugin, PLUGIN_XML, problemRegistrar)
     assertEquals(0, problems.size)
@@ -101,9 +112,6 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
     val contentModuleDescriptor = ModuleDescriptor(contentModule, contentModuleMetadata)
     val plugin = MockIdePlugin(
       pluginId = "somePlugin",
-      dependencies = emptyList(),
-      pluginMainModuleDependencies = emptyList(),
-      contentModuleDependencies = emptyList(),
       contentModules = listOf(contentModuleMetadata),
       modulesDescriptors = listOf(contentModuleDescriptor)
     )

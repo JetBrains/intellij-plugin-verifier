@@ -1,6 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
-import com.jetbrains.plugin.structure.mocks.MockIdePlugin
+import com.jetbrains.plugin.structure.mocks.idePlugin
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -20,7 +20,7 @@ class InlineDeclaredModuleV2DependencyTest {
    */
   @Test
   fun `created inline dependency is consistent`() {
-    val tomlPlugin = MockIdePlugin(pluginId = "org.toml.lang")
+    val tomlPlugin = idePlugin("org.toml.lang")
     val contentModuleContent = """
     <idea-plugin>
       <dependencies>
@@ -51,7 +51,7 @@ class InlineDeclaredModuleV2DependencyTest {
 
   @Test
   fun `create inline dependency on a module`() {
-    val thymeleafPlugin = MockIdePlugin(pluginId = "com.intellij.thymeleaf")
+    val thymeleafPlugin = idePlugin("com.intellij.thymeleaf")
     val contentModuleContent = """
       <idea-plugin package="com.intellij.thymeleaf.spring">
         <dependencies>

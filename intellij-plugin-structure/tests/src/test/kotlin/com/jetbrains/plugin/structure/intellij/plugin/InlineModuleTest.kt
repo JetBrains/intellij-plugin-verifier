@@ -12,8 +12,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTre
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
-import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.SimplePluginCreatorResultResolver
+import com.jetbrains.plugin.structure.mocks.idePlugin
 import org.intellij.lang.annotations.Language
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -83,15 +83,14 @@ class InlineModuleTest {
     }.plugin
 
     val idePlugins = listOf(
-      MockIdePlugin(pluginId = "com.intellij.modules.lang"),
-      MockIdePlugin(
-        pluginId = "com.intellij.modules.idea.community",
+      idePlugin("com.intellij.modules.lang"),
+      idePlugin("com.intellij.modules.idea.community") {
         // fictional dependency that will become a transitive one
-        dependencies = listOf(PluginDependencyImpl("com.intellij.transitiveDependency", false, false))
-      ),
-      MockIdePlugin(pluginId = "com.intellij.modules.structuralsearch"),
+        depends("com.intellij.transitiveDependency")
+      },
+      idePlugin("com.intellij.modules.structuralsearch"),
       // fictional plugin that poses as a transitional dependency
-      MockIdePlugin(pluginId = "com.intellij.transitiveDependency")
+      idePlugin("com.intellij.transitiveDependency")
     )
     val ideVersionStr = "IU-242.10180.25"
     val ide = MockIde(IdeVersion.createIdeVersion(ideVersionStr), temporaryFolder.newFolder(ideVersionStr).toPath(), idePlugins)
@@ -119,8 +118,8 @@ class InlineModuleTest {
     }.plugin
 
     val idePlugins = listOf(
-      MockIdePlugin(pluginId = "com.intellij.modules.lang"),
-      MockIdePlugin(pluginId = "com.intellij.modules.structuralsearch"),
+      idePlugin("com.intellij.modules.lang"),
+      idePlugin("com.intellij.modules.structuralsearch"),
     )
     val ideVersionStr = "IU-242.10180.25"
     val ide = MockIde(IdeVersion.createIdeVersion(ideVersionStr), temporaryFolder.newFolder(ideVersionStr).toPath(), idePlugins)
