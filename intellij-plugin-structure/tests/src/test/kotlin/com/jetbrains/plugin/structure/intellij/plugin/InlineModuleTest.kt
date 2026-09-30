@@ -57,7 +57,9 @@ class InlineModuleTest {
 
     val modules = plugin.modulesDescriptors
     assertEquals(1, modules.size)
-    val structureSearchModule = modules.first().module
+    val structureSearchModuleDescriptor = modules.first()
+    assertEquals(InlineModuleDescriptor::class, structureSearchModuleDescriptor::class)
+    val structureSearchModule = structureSearchModuleDescriptor.module
     with(structureSearchModule.dependencies) {
       assertEquals(1, size)
       assertEquals("com.intellij.modules.structuralsearch", first().id)

@@ -14,7 +14,7 @@ import org.junit.Test
 class MockIdePluginValidatorTest {
   private val validator = MockIdePluginValidator()
 
-  private fun createMockModule(name: String): Module {
+  private fun createMockModule(name: String): Module.InlineModule {
     return Module.InlineModule(
       name = name,
       namespace = null,
@@ -26,7 +26,7 @@ class MockIdePluginValidatorTest {
 
   private fun createMockModuleDescriptor(name: String): ModuleDescriptor {
     val moduleDef = createMockModule(name)
-    return ModuleDescriptor(idePlugin(name), moduleDef)
+    return ModuleDescriptor.of(idePlugin(name), moduleDef)
   }
 
   @Test

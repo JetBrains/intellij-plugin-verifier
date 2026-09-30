@@ -133,4 +133,27 @@ interface IdePlugin : Plugin {
   val hasDotNetPart: Boolean
 
   fun isCompatibleWithIde(ideVersion: IdeVersion): Boolean
+
+  /**
+   * Reconstructs the original mixed list of dependencies from particular properties from V1 and V2
+   * plugin model.
+   */
+  fun reconstructDependencies(): List<PluginDependency> =
+    dependsList.map { it.asPluginDependency() } +
+      contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) } +
+      pluginMainModuleDependencies.map { PluginV2Dependency(it.pluginId) }
+
+  /**
+   * Reconstructs the original mixed list of dependencies from particular properties from V1 and V2
+   * plugin model. Include plugin content module dependencies, too.
+   */
+  fun reconstructAllDependencies(): List<PluginDependency> {
+    val directDependencies =  dependsList.map { it.asPluginDependency() } +
+      contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) } +
+      pluginMainModuleDependencies.map { PluginV2Dependency(it.pluginId) }
+    val nestedDependencies = modulesDescriptors.flatMap {
+      it.resolvedDependencies
+    }
+    return directDependencies + nestedDependencies
+  }
 }

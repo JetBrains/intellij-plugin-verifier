@@ -7,15 +7,8 @@ package com.jetbrains.plugin.structure.intellij.plugin.module
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.isJar
 import com.jetbrains.plugin.structure.base.utils.toSystemIndependentName
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
-import com.jetbrains.plugin.structure.intellij.plugin.InlineDeclaredModuleV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.ModuleFromDescriptorLoader
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorProblem
@@ -28,28 +21,29 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
 
   override fun getModuleDescriptor(
     pluginArtifactPath: Path,
-    pluginCreator: PluginCreator,
+    contentModulesOwner: PluginCreator,
     module: IdePlugin,
     moduleCreator: PluginCreator,
     moduleReference: InlineModule
   ): ModuleDescriptor {
-    pluginCreator.plugin.dependencies += getDependencies(pluginCreator.plugin, module, moduleReference)
+    val resolvedDependencies = getDependencies(contentModulesOwner, module, moduleReference)
     return ModuleDescriptor.of(
       module,
-      moduleReference
+      moduleReference,
+      resolvedDependencies
     )
   }
 
   override fun getModuleCreator(
     moduleReference: InlineModule,
     pluginArtifactPath: Path,
-    pluginCreator: PluginCreator,
+    contentModulesOwner: PluginCreator,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
     val moduleDescriptorResource =
-      getModuleDescriptorResource(moduleReference, pluginArtifactPath, pluginCreator.descriptorPath)
-    return moduleLoader.loadPlugin(ModuleFromDescriptorLoader.Context(moduleReference.name, moduleDescriptorResource, pluginCreator, resourceResolver))
+      getModuleDescriptorResource(moduleReference, pluginArtifactPath, contentModulesOwner.descriptorPath)
+    return moduleLoader.loadPlugin(ModuleFromDescriptorLoader.Context(moduleReference.name, moduleDescriptorResource, contentModulesOwner, resourceResolver))
   }
 
   override fun getProblem(
@@ -75,26 +69,39 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
   }
 
   override fun getDependencies(
-    moduleOwner: IdePluginImpl,
+    contentModulesOwner: PluginCreator,
     module: IdePlugin,
     moduleReference: InlineModule
-  ): MutableList<PluginDependency> {
-    return mutableListOf<PluginDependency>().also { dependencies ->
-      module.forEachDependencyNotIn(moduleOwner) {
-        dependencies += when (it) {
-          is PluginV2Dependency -> InlineDeclaredModuleV2Dependency.onPlugin(
-            it.id,
-            moduleReference.loadingRule,
-            moduleOwner,
-            moduleReference)
-          is ModuleV2Dependency -> InlineDeclaredModuleV2Dependency.onModule(
-            it.id,
-            moduleReference.loadingRule,
-            moduleOwner,
-            moduleReference)
-          else -> it
+  ): List<PluginDependency> = getDependencies(contentModulesOwner.plugin, module, moduleReference)
+
+  fun getDependencies(
+    contentModulesOwner: IdePlugin,
+    contentModule: IdePlugin,
+    contentModuleReference: InlineModule
+  ): List<PluginDependency> {
+    return contentModule.mapDependency { it }
+      .filter { moduleDep ->
+        contentModulesOwner.dependencies.none { pluginDep -> pluginDep.id == moduleDep.id }
+      }
+      .map {
+        when (it) {
+          is Dependency.PluginV1Dependency -> it.dependency.asPluginDependency()
+          is Dependency.PluginV2Dependency ->
+            InlineDeclaredModuleV2Dependency.onPlugin(
+              it.id,
+              contentModuleReference.loadingRule,
+              contentModulesOwner,
+              contentModuleReference
+            )
+
+          is Dependency.ModuleV2Dependency ->
+            InlineDeclaredModuleV2Dependency.onModule(
+              it.id,
+              contentModuleReference.loadingRule,
+              contentModulesOwner,
+              contentModuleReference
+            )
         }
       }
-    }
   }
 }

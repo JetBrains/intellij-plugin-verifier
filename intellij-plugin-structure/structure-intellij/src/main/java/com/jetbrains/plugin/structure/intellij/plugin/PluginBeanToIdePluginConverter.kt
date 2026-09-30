@@ -124,8 +124,6 @@ internal class PluginBeanToIdePluginConverter {
   private fun IdePluginImpl.readV1Dependencies(bean: PluginBean) {
     bean.dependenciesV1.forEach {
       addDepends(DependsPluginDependency(it.dependencyId, it.isOptional, it.configFile))
-      // add to the legacy all-aggregating list of dependencies
-      dependencies += it.asV1Dependency()
     }
   }
 
@@ -136,11 +134,9 @@ internal class PluginBeanToIdePluginConverter {
     bean.contentModuleDependencies.forEach { dep ->
       addContentModuleDependency(ContentModuleDependency(dep.moduleName, dep.resolveNamespace(parentPlugin)))
     }
-    dependencies += bean.contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) }
     bean.pluginMainModuleDependencies.forEach {
       addPluginMainModuleDependency(PluginMainModuleDependency(it.dependencyId))
     }
-    dependencies += bean.pluginMainModuleDependencies.map { PluginV2Dependency(it.dependencyId) }
   }
 
   private fun readActions(rootElement: Element, idePlugin: IdePluginImpl) {

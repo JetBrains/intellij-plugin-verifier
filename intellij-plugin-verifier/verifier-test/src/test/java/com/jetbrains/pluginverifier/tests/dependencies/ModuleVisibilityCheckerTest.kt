@@ -5,13 +5,7 @@
 package com.jetbrains.pluginverifier.tests.dependencies
 
 import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.Module
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleLoadingRule
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleVisibility
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
@@ -201,7 +195,7 @@ class ModuleVisibilityCheckerTest {
    */
   private fun pluginWithPrivateModule(pluginId: String, namespace: String): MockIdePlugin {
     val modulePlugin = MockIdePlugin(pluginId = pluginId) // moduleVisibility defaults to PRIVATE in MockIdePlugin
-    val descriptor = ModuleDescriptor(
+    val descriptor = ModuleDescriptor.of(
       module = modulePlugin,
       moduleDefinition = Module.FileBasedModule(pluginId, namespace, namespace, ModuleLoadingRule.REQUIRED, "$pluginId.xml")
     )

@@ -6,22 +6,57 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 /**
  * Represents a plugin content module with metadata and type-safe parsed content module descriptor.
- * @param module content module descriptor in a resolved type-safe form.
- * @param moduleDefinition content module metadata such as loading rules, namespaces and path to descriptor.
  */
-data class ModuleDescriptor(
-  val module: IdePlugin,
-  val moduleDefinition: Module
-) {
-  val name = moduleDefinition.name
+sealed class ModuleDescriptor {
+  /**
+   * Content module descriptor in a resolved type-safe form.
+   */
+  abstract val module: IdePlugin
+
+  /**
+   * Content module metadata such as loading rules, namespaces and path to descriptor.
+   */
+  abstract val moduleDefinition: Module
+
+  /**
+   * Resolved dependencies of the content module.
+   * These dependencies are different from the dependencies declared in the module descriptor.
+   *
+   * - They are filtered for duplicates in occurring in the main plugin module (the `plugin.xml`).
+   * - They might have specific subtypes, such as [InlineDeclaredModuleV2Dependency] or similar.
+   * - The optionality is resolved according to the specific declaration in the `plugin.xml`.
+   *   For example, the following content module is loaded as optional (implicit `loading="required"`)
+   *   ```
+   *   <content>
+   *         <module name="intellij.v2.module"/>
+   *   </content>
+   *   ```
+   *   The dependencies in such module are resolved as optional.
+   */
+  abstract val resolvedDependencies: List<PluginDependency>
+
+  val name get() = moduleDefinition.name
 
   companion object {
     fun of(
       module: IdePlugin,
-      moduleDefinition: Module
-    ): ModuleDescriptor =
-      ModuleDescriptor(module, moduleDefinition)
+      moduleDefinition: Module,
+      resolvedDependencies: List<PluginDependency> = emptyList()
+    ): ModuleDescriptor = when (moduleDefinition) {
+      is Module.InlineModule -> InlineModuleDescriptor(module, moduleDefinition, resolvedDependencies)
+      is Module.FileBasedModule -> FileBasedModuleDescriptor(module, moduleDefinition, resolvedDependencies)
+    }
   }
 }
 
-val ModuleDescriptor.dependencies: List<PluginDependency> get() = module.dependencies
+data class InlineModuleDescriptor(
+  override val module: IdePlugin,
+  override val moduleDefinition: Module.InlineModule,
+  override val resolvedDependencies: List<PluginDependency>
+) : ModuleDescriptor()
+
+data class FileBasedModuleDescriptor(
+  override val module: IdePlugin,
+  override val moduleDefinition: Module.FileBasedModule,
+  override val resolvedDependencies: List<PluginDependency>
+) : ModuleDescriptor()
