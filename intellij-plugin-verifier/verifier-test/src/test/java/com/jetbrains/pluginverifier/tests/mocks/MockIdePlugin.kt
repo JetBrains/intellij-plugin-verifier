@@ -31,19 +31,17 @@ data class MockIdePlugin(
   override val appContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
   override val projectContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
   override val moduleContainerDescriptor: IdePluginContentDescriptor = MutableIdePluginContentDescriptor(),
+  override val dependsList: List<DependsPluginDependency> = emptyList(),
+  override val pluginMainModuleDependencies: List<PluginMainModuleDependency> = emptyList(),
+  override val contentModuleDependencies: List<ContentModuleDependency> = emptyList(),
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList(),
   override val modulesDescriptors: List<ModuleDescriptor> = emptyList(),
   override val contentModules: List<Module> = emptyList(),
   @Deprecated("See IdePlugin::isV2")
   override val isV2: Boolean = false,
   override val hasPackagePrefix: Boolean = false,
-  override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit
-) : IdePlugin {
-
-  // FIXME [dependencies] should be built from these three
-  override val dependsList: List<DependsPluginDependency> = emptyList()
-  override val pluginMainModuleDependencies: List<PluginMainModuleDependency> = emptyList()
-  override val contentModuleDependencies: List<ContentModuleDependency> = emptyList()
+  override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit,
+  ) : IdePlugin {
 
   override val classpath: Classpath = Classpath.EMPTY
   override val useIdeClassLoader = false
