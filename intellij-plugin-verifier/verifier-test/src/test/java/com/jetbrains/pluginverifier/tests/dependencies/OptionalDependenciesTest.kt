@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.tests.dependencies
 
+import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
@@ -63,30 +64,30 @@ class OptionalDependenciesTest {
     val missingOptionalPluginDescriptor = MockIdePlugin()
 
     //Plugin descriptor corresponding to "optionalPlugin.xml".
-    val otherOptionalPluginId = PluginDependencyImpl("otherOptionalPluginId", true, false)
-    val missingOptionalPluginId = PluginDependencyImpl("missingOptionalPluginId", true, false)
-    val optionalMandatoryPluginId = PluginDependencyImpl("optionalMandatoryPluginId", false, false)
-    val missingMandatoryPluginId = PluginDependencyImpl("missingMandatoryPluginId", false, false)
-    val duplicatedMandatoryDependencyId = PluginDependencyImpl("duplicatedMandatoryDependencyId", false, false)
+    val otherOptionalPluginDep = DependsPluginDependency("otherOptionalPluginId", true)
+    val missingOptionalPluginDep = DependsPluginDependency("missingOptionalPluginId", true)
+    val optionalMandatoryPluginDep = DependsPluginDependency("optionalMandatoryPluginId", false)
+    val missingMandatoryPluginDep = DependsPluginDependency("missingMandatoryPluginId", false)
+    val duplicatedMandatoryDependencyDep = DependsPluginDependency("duplicatedMandatoryDependencyId", false)
 
     val optionalPluginDescriptor = MockIdePlugin(
-      dependencies = listOf(
-        optionalMandatoryPluginId,
-        otherOptionalPluginId,
+      dependsList = listOf(
+        optionalMandatoryPluginDep,
+        otherOptionalPluginDep,
 
-        missingMandatoryPluginId,
-        missingOptionalPluginId,
+        missingMandatoryPluginDep,
+        missingOptionalPluginDep,
 
-        duplicatedMandatoryDependencyId
+        duplicatedMandatoryDependencyDep
       ),
       optionalDescriptors = listOf(
         OptionalPluginDescriptor(
-          otherOptionalPluginId,
+          otherOptionalPluginDep.asPluginDependency(),
           otherOptionalPluginDescriptor,
           "otherOptionalPlugin.xml"
         ),
         OptionalPluginDescriptor(
-          missingOptionalPluginId,
+          missingOptionalPluginDep.asPluginDependency(),
           missingOptionalPluginDescriptor,
           "missingOptionalPlugin.xml"
         )
@@ -94,18 +95,18 @@ class OptionalDependenciesTest {
     )
 
     //Plugin descriptor corresponding to "plugin.xml"
-    val optionalPluginId = PluginDependencyImpl("optionalPluginId", true, false)
+    val optionalPluginDep = DependsPluginDependency("optionalPluginId", true)
 
     val somePluginDescriptor = MockIdePlugin(
       pluginId = "someId",
       pluginVersion = "1.0",
-      dependencies = listOf(
-        optionalPluginId,
-        duplicatedMandatoryDependencyId
+      dependsList = listOf(
+        optionalPluginDep,
+        duplicatedMandatoryDependencyDep
       ),
       optionalDescriptors = listOf(
         OptionalPluginDescriptor(
-          optionalPluginId,
+          optionalPluginDep.asPluginDependency(),
           optionalPluginDescriptor,
           "optionalPlugin.xml"
         )
