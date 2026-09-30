@@ -72,11 +72,16 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
     contentModulesOwner: PluginCreator,
     module: IdePlugin,
     moduleReference: InlineModule
+  ): List<PluginDependency> = getDependencies(contentModulesOwner.plugin, module, moduleReference)
+
+  fun getDependencies(
+    contentModulesOwner: IdePlugin,
+    contentModule: IdePlugin,
+    contentModuleReference: InlineModule
   ): List<PluginDependency> {
-    val contentModulesOwnerPlugin = contentModulesOwner.plugin
-    return module.mapDependency { it }
+    return contentModule.mapDependency { it }
       .filter { moduleDep ->
-        contentModulesOwnerPlugin.dependencies.none { pluginDep -> pluginDep.id == moduleDep.id }
+        contentModulesOwner.dependencies.none { pluginDep -> pluginDep.id == moduleDep.id }
       }
       .map {
         when (it) {
@@ -84,17 +89,17 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
           is Dependency.PluginV2Dependency ->
             InlineDeclaredModuleV2Dependency.onPlugin(
               it.id,
-              moduleReference.loadingRule,
-              contentModulesOwnerPlugin,
-              moduleReference
+              contentModuleReference.loadingRule,
+              contentModulesOwner,
+              contentModuleReference
             )
 
           is Dependency.ModuleV2Dependency ->
             InlineDeclaredModuleV2Dependency.onModule(
               it.id,
-              moduleReference.loadingRule,
-              contentModulesOwnerPlugin,
-              moduleReference
+              contentModuleReference.loadingRule,
+              contentModulesOwner,
+              contentModuleReference
             )
         }
       }

@@ -4,12 +4,8 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.module
 
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
-import com.jetbrains.plugin.structure.intellij.plugin.InlineDeclaredModuleV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleLoadingRule
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.ModuleFromDescriptorLoader
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -28,7 +24,7 @@ class InlineModuleDescriptorResolverTest {
   fun `inline content module has dependency on a module`() {
     val thymeleafSpringElPlugin = IdePluginImpl().apply {
       hasPackagePrefix = true
-      dependencies += ModuleV2Dependency("intellij.spring.el")
+      addContentModuleDependency(ContentModuleDependency("intellij.spring.el", "jetbrains"))
     }
 
     val thymeleafSpringElPluginXml = """
@@ -83,7 +79,7 @@ class InlineModuleDescriptorResolverTest {
   @Test
   fun `inline content module has dependency on a plugin`() {
     val intellijTomJsonPlugin = IdePluginImpl().apply {
-      dependencies += PluginV2Dependency("com.intellij.modules.json")
+      addPluginMainModuleDependency(PluginMainModuleDependency("com.intellij.modules.json"))
     }
 
     val intellijTomJsonPluginXml = """
