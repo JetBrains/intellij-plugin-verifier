@@ -106,6 +106,7 @@ class IdePluginImpl : IdePlugin, StructurallyValidated {
 
   fun addPluginMainModuleDependency(pluginMainModuleDependency: PluginMainModuleDependency) = _pluginMainModuleDependencies.add(pluginMainModuleDependency)
 
+  @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
   override val dependencies: MutableList<PluginDependency> = arrayListOf()
 
   override val incompatibleWith: MutableList<String> = arrayListOf()

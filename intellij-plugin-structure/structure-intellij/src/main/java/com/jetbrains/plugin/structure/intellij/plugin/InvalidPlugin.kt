@@ -38,6 +38,7 @@ class InvalidPlugin(override val underlyingDocument: Document) : IdePlugin, Stru
   override val dependsList: List<DependsPluginDependency> = emptyList()
   override val pluginMainModuleDependencies: List<PluginMainModuleDependency> = emptyList()
   override val contentModuleDependencies: List<ContentModuleDependency> = emptyList()
+  @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
   override val dependencies: List<PluginDependency> = emptyList()
   override val incompatibleWith: List<String> = emptyList()
   override val pluginAliases: Set<String> = emptySet()
