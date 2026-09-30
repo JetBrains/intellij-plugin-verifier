@@ -45,8 +45,10 @@ class IdeModule(override val pluginId: String,
   fun addPluginMainModuleDependency(pluginMainModuleDependency: PluginMainModuleDependency) = _pluginMainModuleDependencies.add(pluginMainModuleDependency)
 
   override val contentModules: List<Module> = emptyList()
+
   @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
-  override val dependencies = mutableListOf<PluginDependency>()
+  override val dependencies: List<PluginDependency>
+    get() = reconstructDependencies()
 
   private val _pluginAliases: MutableSet<String> = mutableSetOf()
   override val pluginAliases: Set<String> get() = _pluginAliases
@@ -114,7 +116,6 @@ class IdeModule(override val pluginId: String,
         plugin.contentModuleDependencies.forEach { addContentModuleDependency(it) }
         plugin.pluginMainModuleDependencies.forEach { addPluginMainModuleDependency(it) }
         moduleVisibility = plugin.moduleVisibility
-        dependencies += plugin.dependencies
         _pluginAliases.addAll(plugin.pluginAliases)
         _definedModules.addAll(plugin.definedModules)
 
