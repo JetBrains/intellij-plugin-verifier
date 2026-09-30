@@ -5,6 +5,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency.Co
 import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import com.jetbrains.plugin.structure.mocks.SimpleProblemRegistrar
 import com.jetbrains.plugin.structure.mocks.idePlugin
+import com.jetbrains.plugin.structure.mocks.validation.DuplicateModuleNameProblem.Property.CONTENT_MODULES
+import com.jetbrains.plugin.structure.mocks.validation.DuplicateModuleNameProblem.Property.MODULES_DESCRIPTORS
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

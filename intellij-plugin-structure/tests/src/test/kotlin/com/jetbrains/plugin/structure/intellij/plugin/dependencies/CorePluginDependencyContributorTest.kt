@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
+import com.jetbrains.plugin.structure.intellij.plugin.DependencyModificationReason.IDE
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
@@ -13,7 +14,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
-import kotlin.collections.none
 
 private const val CORE_PLUGIN_ID = "com.intellij"
 
@@ -55,7 +55,7 @@ class CorePluginDependencyContributorTest {
       modifiedDependencies.any { it.dependency.id == CORE_PLUGIN_ID }
     )
     assertEquals(
-      DependencyModificationReason.IDE,
+      IDE,
       modifiedDependencies.first { it.dependency.id == CORE_PLUGIN_ID }.reason
     )
   }
@@ -93,7 +93,7 @@ class CorePluginDependencyContributorTest {
 
     assertEquals(1, modifiedDependencies.size)
     assertEquals(CORE_PLUGIN_ID, modifiedDependencies.first().dependency.id)
-    assertEquals(DependencyModificationReason.IDE, modifiedDependencies.first().reason)
+    assertEquals(IDE, modifiedDependencies.first().reason)
   }
 
   @Test

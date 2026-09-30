@@ -86,14 +86,6 @@ class MockIdePluginBuilder(private val id: String) {
     dependsList += dependency
   }
 
-  fun depends(plugin: MockIdePlugin) {
-    depends(plugin.requireId())
-  }
-
-  fun depends(dependency: DependsPluginDependency) {
-    dependsList += dependency
-  }
-
   fun optionalDepends(pluginId: String) {
     dependsList += DependsPluginDependency(pluginId, true)
   }
