@@ -6,12 +6,8 @@ package com.jetbrains.plugin.structure.intellij.plugin.module
 
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.isFile
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.Module.FileBasedModule
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.JarOrDirectoryPluginLoader
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
@@ -23,12 +19,12 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOr
 
   override fun getModuleDescriptor(
     pluginArtifactPath: Path,
-    pluginCreator: PluginCreator,
+    contentModulesOwner: PluginCreator,
     module: IdePlugin,
     moduleCreator: PluginCreator,
     moduleReference: FileBasedModule
   ): ModuleDescriptor {
-    pluginCreator.plugin.dependencies += getDependencies(pluginCreator.plugin, module, moduleReference)
+    contentModulesOwner.plugin.dependencies += getDependencies(contentModulesOwner.plugin, module, moduleReference)
     return ModuleDescriptor(
       module,
       moduleReference
@@ -38,7 +34,7 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOr
   override fun getModuleCreator(
     moduleReference: FileBasedModule,
     pluginArtifactPath: Path,
-    pluginCreator: PluginCreator,
+    contentModulesOwner: PluginCreator,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
@@ -49,7 +45,7 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOr
       moduleReference.configFile,
       false,
       resourceResolver,
-      pluginCreator,
+      contentModulesOwner,
       problemResolver
     ))
   }
