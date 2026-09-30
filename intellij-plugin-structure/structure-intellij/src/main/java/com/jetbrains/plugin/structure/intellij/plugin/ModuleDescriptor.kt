@@ -9,19 +9,31 @@ package com.jetbrains.plugin.structure.intellij.plugin
  * @param module content module descriptor in a resolved type-safe form.
  * @param moduleDefinition content module metadata such as loading rules, namespaces and path to descriptor.
  */
-data class ModuleDescriptor(
-  val module: IdePlugin,
-  val moduleDefinition: Module
-) {
-  val name = moduleDefinition.name
+sealed class ModuleDescriptor {
+  abstract val module: IdePlugin
+  abstract val moduleDefinition: Module
+
+  val name get() = moduleDefinition.name
 
   companion object {
     fun of(
       module: IdePlugin,
       moduleDefinition: Module
-    ): ModuleDescriptor =
-      ModuleDescriptor(module, moduleDefinition)
+    ): ModuleDescriptor = when (moduleDefinition) {
+      is Module.InlineModule -> InlineModuleDescriptor(module, moduleDefinition)
+      is Module.FileBasedModule -> FileBasedModuleDescriptor(module, moduleDefinition)
+    }
   }
 }
+
+data class InlineModuleDescriptor(
+  override val module: IdePlugin,
+  override val moduleDefinition: Module.InlineModule
+) : ModuleDescriptor()
+
+data class FileBasedModuleDescriptor(
+  override val module: IdePlugin,
+  override val moduleDefinition: Module.FileBasedModule
+) : ModuleDescriptor()
 
 val ModuleDescriptor.dependencies: List<PluginDependency> get() = module.dependencies
