@@ -4,23 +4,16 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
 
-class DependencyConsistencyTest {
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
+class DependencyConsistencyTest : DependenciesTestBase() {
 
   private lateinit var plugin: IdePlugin
 
@@ -194,48 +187,4 @@ class DependencyConsistencyTest {
     )
   }
 
-  private data class ModuleDescriptorSource(
-    val archive: String,
-    val module: String,
-    val xml: String,
-  )
-
-  private fun buildPluginWithResult(
-    pluginDescriptor: String,
-    moduleDescriptorSources: List<ModuleDescriptorSource> = emptyList(),
-  ): PluginCreationResult<IdePlugin> {
-    val pluginFile = buildZipFile(temporaryFolder.newFile("plugin.zip").toPath()) {
-      dir("plugin") {
-        dir("lib") {
-          zip("plugin.jar") {
-            dir("META-INF") {
-              file("plugin.xml", pluginDescriptor)
-            }
-          }
-          moduleDescriptorSources
-            .groupBy(ModuleDescriptorSource::archive)
-            .forEach { (archiveName, descriptors) ->
-              zip(archiveName) {
-                descriptors.forEach { descriptor ->
-                  file("${descriptor.module}.xml", descriptor.xml)
-                }
-              }
-            }
-        }
-      }
-    }
-    return IdePluginManager.createManager().createPlugin(pluginFile, validateDescriptor = true)
-  }
-
-  private fun buildPlugin(
-    pluginDescriptor: String,
-    moduleDescriptorSources: List<ModuleDescriptorSource> = emptyList(),
-  ): IdePlugin {
-    val result = buildPluginWithResult(pluginDescriptor, moduleDescriptorSources)
-    if (result is PluginCreationSuccess) {
-      return result.plugin
-    }
-    fail("Expected successful plugin creation, but got $result")
-    throw AssertionError("Expected successful plugin creation")
-  }
 }
