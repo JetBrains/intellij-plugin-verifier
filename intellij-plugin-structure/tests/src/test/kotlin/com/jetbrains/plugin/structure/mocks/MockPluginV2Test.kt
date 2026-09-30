@@ -4,21 +4,12 @@ import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
-import com.jetbrains.plugin.structure.classes.resolvers.DirectoryFileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.plugin.ClassSearchContext
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
-import com.jetbrains.plugin.structure.intellij.plugin.Module
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies
 import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
@@ -211,7 +202,7 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
 
     val moduleDependencies = modulesDescriptors
       .find { it.name == "intellij.v2.module" }!!
-      .dependencies
+      .resolvedDependencies
 
     assertThat(
       moduleDependencies.map { it.id }, `is`(
@@ -221,7 +212,16 @@ class MockPluginsV2Test(fileSystemType: FileSystemType) : IdePluginManagerTest(f
       )
     )
 
-    assertThat(moduleDependencies.map { it.isOptional }, `is`(listOf(false, false)))
+    val remoteRunContentModule = moduleDependencies.first {
+      it.id == "intellij.clouds.docker.remoteRun"
+    }
+    assertTrue("The dependency on a content module in an optional plugin should be optional",
+               remoteRunContentModule.isOptional)
+    val copyrightContentModule = moduleDependencies.first {
+      it.id == "com.intellij.copyright"
+    }
+    assertTrue("The dependency on a content module in an optional plugin should be optional",
+               copyrightContentModule.isOptional)
 
     assertTrue(plugin.dependencies.filter { it.isOptional }.map { it.id }.contains("intellij.clouds.docker.remoteRun"))
     assertTrue(plugin.dependencies.filter { it.isOptional }.map { it.id }.contains("com.intellij.copyright"))

@@ -21,8 +21,17 @@ sealed class ModuleDescriptor {
   /**
    * Resolved dependencies of the content module.
    * These dependencies are different from the dependencies declared in the module descriptor.
-   * They are filtered for duplicates in occurring in the main plugin module (the `plugin.xml`).
-   * Additionally, they might have specific subtypes, such as [InlineDeclaredModuleV2Dependency] or similar.
+   *
+   * - They are filtered for duplicates in occurring in the main plugin module (the `plugin.xml`).
+   * - They might have specific subtypes, such as [InlineDeclaredModuleV2Dependency] or similar.
+   * - The optionality is resolved according to the specific declaration in the `plugin.xml`.
+   *   For example, the following content module is loaded as optional (implicit `loading="required"`)
+   *   ```
+   *   <content>
+   *         <module name="intellij.v2.module"/>
+   *   </content>
+   *   ```
+   *   The dependencies in such module are resolved as optional.
    */
   abstract val resolvedDependencies: List<PluginDependency>
 
@@ -51,5 +60,3 @@ data class FileBasedModuleDescriptor(
   override val moduleDefinition: Module.FileBasedModule,
   override val resolvedDependencies: List<PluginDependency>
 ) : ModuleDescriptor()
-
-val ModuleDescriptor.dependencies: List<PluginDependency> get() = module.dependencies
