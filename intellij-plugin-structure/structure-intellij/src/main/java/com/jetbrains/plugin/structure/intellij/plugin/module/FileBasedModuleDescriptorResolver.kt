@@ -27,10 +27,13 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOr
     moduleCreator: PluginCreator,
     moduleReference: FileBasedModule
   ): ModuleDescriptor {
-    contentModulesOwner.plugin.dependencies += getDependencies(contentModulesOwner, module, moduleReference)
+    val resolvedDependencies = getDependencies(contentModulesOwner, module, moduleReference)
+    // FIXME remove the duplicate data
+    contentModulesOwner.plugin.dependencies += resolvedDependencies
     return ModuleDescriptor.of(
       module,
-      moduleReference
+      moduleReference,
+      resolvedDependencies
     )
   }
 
