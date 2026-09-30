@@ -27,8 +27,6 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
     moduleReference: InlineModule
   ): ModuleDescriptor {
     val resolvedDependencies = getDependencies(contentModulesOwner, module, moduleReference)
-    // FIXME remove the duplicate data
-    contentModulesOwner.plugin.dependencies += resolvedDependencies
     return ModuleDescriptor.of(
       module,
       moduleReference,
