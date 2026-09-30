@@ -73,22 +73,29 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
     moduleReference: InlineModule
   ): List<PluginDependency> {
     val contentModulesOwnerPlugin = contentModulesOwner.plugin
-    return mutableListOf<PluginDependency>().also { dependencies ->
-      module.forEachDependencyNotIn(contentModulesOwnerPlugin) {
-        dependencies += when (it) {
-          is PluginV2Dependency -> InlineDeclaredModuleV2Dependency.onPlugin(
-            it.id,
-            moduleReference.loadingRule,
-            contentModulesOwnerPlugin,
-            moduleReference)
-          is ModuleV2Dependency -> InlineDeclaredModuleV2Dependency.onModule(
-            it.id,
-            moduleReference.loadingRule,
-            contentModulesOwnerPlugin,
-            moduleReference)
-          else -> it
+    return module.mapDependency { it }
+      .filter { moduleDep ->
+        contentModulesOwnerPlugin.dependencies.none { pluginDep -> pluginDep.id == moduleDep.id }
+      }
+      .map {
+        when (it) {
+          is Dependency.PluginV1Dependency -> it.dependency.asPluginDependency()
+          is Dependency.PluginV2Dependency ->
+            InlineDeclaredModuleV2Dependency.onPlugin(
+              it.id,
+              moduleReference.loadingRule,
+              contentModulesOwnerPlugin,
+              moduleReference
+            )
+
+          is Dependency.ModuleV2Dependency ->
+            InlineDeclaredModuleV2Dependency.onModule(
+              it.id,
+              moduleReference.loadingRule,
+              contentModulesOwnerPlugin,
+              moduleReference
+            )
         }
       }
-    }
   }
 }

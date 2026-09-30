@@ -10,6 +10,9 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.PluginProblem.Level.ERROR
 import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.module.ModuleDescriptorResolver.Dependency.ModuleV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.module.ModuleDescriptorResolver.Dependency.PluginV1Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.module.ModuleDescriptorResolver.Dependency.PluginV2Dependency
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import java.nio.file.Path
@@ -76,4 +79,26 @@ internal abstract class ModuleDescriptorResolver<M : Module> {
       is PluginCreationFail -> this.errorsAndWarnings.filter { it.level === ERROR }
     }
 
+  protected fun <R> IdePlugin.mapDependency(transform: (Dependency) -> R): List<R> {
+    val v1 = this.dependsList.map { PluginV1Dependency(it) }
+    val v2Plugin = this.pluginMainModuleDependencies.map { PluginV2Dependency(it) }
+    val v2ContentModule = this.contentModuleDependencies.map { ModuleV2Dependency(it) }
+
+    val allDeps = v1 + v2Plugin + v2ContentModule
+    return allDeps.map(transform)
+  }
+
+  protected sealed class Dependency {
+    abstract val id: String
+
+    data class PluginV1Dependency(val dependency: DependsPluginDependency) : Dependency() {
+      override val id: String = dependency.pluginId
+    }
+    data class ModuleV2Dependency(val dependency: ContentModuleDependency) : Dependency() {
+      override val id: String = dependency.moduleName
+    }
+    data class PluginV2Dependency(val dependency: PluginMainModuleDependency) : Dependency() {
+      override val id: String = dependency.pluginId
+    }
+  }
 }
