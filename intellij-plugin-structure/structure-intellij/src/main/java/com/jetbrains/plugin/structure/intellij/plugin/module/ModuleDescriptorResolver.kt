@@ -62,7 +62,7 @@ internal abstract class ModuleDescriptorResolver<M : Module> {
     moduleReference: M
   ): ModuleDescriptor
 
-  abstract fun getDependencies(moduleOwner: IdePluginImpl, module: IdePlugin, moduleReference: M): List<PluginDependency>
+  protected abstract fun getDependencies(contentModulesOwner: PluginCreator, module: IdePlugin, moduleReference: M): List<PluginDependency>
 
   protected fun IdePlugin.forEachDependencyNotIn(plugin: IdePlugin, dependencyHandler: (PluginDependency) -> Unit) {
     return dependencies

@@ -26,7 +26,7 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
     moduleCreator: PluginCreator,
     moduleReference: InlineModule
   ): ModuleDescriptor {
-    contentModulesOwner.plugin.dependencies += getDependencies(contentModulesOwner.plugin, module, moduleReference)
+    contentModulesOwner.plugin.dependencies += getDependencies(contentModulesOwner, module, moduleReference)
     return ModuleDescriptor.of(
       module,
       moduleReference
@@ -68,22 +68,23 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
   }
 
   override fun getDependencies(
-    moduleOwner: IdePluginImpl,
+    contentModulesOwner: PluginCreator,
     module: IdePlugin,
     moduleReference: InlineModule
-  ): MutableList<PluginDependency> {
+  ): List<PluginDependency> {
+    val contentModulesOwnerPlugin = contentModulesOwner.plugin
     return mutableListOf<PluginDependency>().also { dependencies ->
-      module.forEachDependencyNotIn(moduleOwner) {
+      module.forEachDependencyNotIn(contentModulesOwnerPlugin) {
         dependencies += when (it) {
           is PluginV2Dependency -> InlineDeclaredModuleV2Dependency.onPlugin(
             it.id,
             moduleReference.loadingRule,
-            moduleOwner,
+            contentModulesOwnerPlugin,
             moduleReference)
           is ModuleV2Dependency -> InlineDeclaredModuleV2Dependency.onModule(
             it.id,
             moduleReference.loadingRule,
-            moduleOwner,
+            contentModulesOwnerPlugin,
             moduleReference)
           else -> it
         }
