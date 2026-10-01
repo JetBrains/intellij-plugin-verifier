@@ -4,10 +4,10 @@
 
 package com.jetbrains.pluginverifier.tests.dependencies
 
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
@@ -64,11 +64,11 @@ class OptionalDependenciesTest {
     val missingOptionalPluginDescriptor = MockIdePlugin()
 
     //Plugin descriptor corresponding to "optionalPlugin.xml".
-    val otherOptionalPluginDep = DependsPluginDependency("otherOptionalPluginId", true)
-    val missingOptionalPluginDep = DependsPluginDependency("missingOptionalPluginId", true)
-    val optionalMandatoryPluginDep = DependsPluginDependency("optionalMandatoryPluginId", false)
-    val missingMandatoryPluginDep = DependsPluginDependency("missingMandatoryPluginId", false)
-    val duplicatedMandatoryDependencyDep = DependsPluginDependency("duplicatedMandatoryDependencyId", false)
+    val otherOptionalPluginDep = OptionalV1Dependency("otherOptionalPluginId")
+    val missingOptionalPluginDep = OptionalV1Dependency("missingOptionalPluginId")
+    val optionalMandatoryPluginDep = MandatoryV1Dependency("optionalMandatoryPluginId")
+    val missingMandatoryPluginDep = MandatoryV1Dependency("missingMandatoryPluginId")
+    val duplicatedMandatoryDependencyDep = MandatoryV1Dependency("duplicatedMandatoryDependencyId")
 
     val optionalPluginDescriptor = MockIdePlugin(
       dependsList = listOf(
@@ -95,7 +95,7 @@ class OptionalDependenciesTest {
     )
 
     //Plugin descriptor corresponding to "plugin.xml"
-    val optionalPluginDep = DependsPluginDependency("optionalPluginId", true)
+    val optionalPluginDep = OptionalV1Dependency("optionalPluginId")
 
     val somePluginDescriptor = MockIdePlugin(
       pluginId = "someId",
@@ -154,7 +154,8 @@ class OptionalDependenciesTest {
     assertEquals(somePluginNode, dependenciesGraph.verifiedPlugin)
     assertEquals(setOf(somePluginNode, optionalPluginNode, optionalMandatoryPluginNode, otherOptionalPluginNode, duplicatedMandatoryPluginNode), dependenciesGraph.vertices.toSet())
 
-    dependenciesGraph.assertContainsEdge(DependencyEdge(somePluginNode, optionalPluginNode, PluginDependencyImpl("optionalPluginId", true, false)))
+    dependenciesGraph.assertContainsEdge(
+      DependencyEdge(somePluginNode, optionalPluginNode, PluginV1Dependency.Optional("optionalPluginId")))
 
     //Mandatory dependency "optionalMandatoryPluginId" of file "optionalPlugin.xml" becomes optional.
     dependenciesGraph.assertContainsEdge(DependencyEdge(somePluginNode, optionalMandatoryPluginNode, PluginDependencyImpl("optionalMandatoryPluginId", true, false)))
@@ -162,7 +163,7 @@ class OptionalDependenciesTest {
     dependenciesGraph.assertContainsEdge(DependencyEdge(somePluginNode, otherOptionalPluginNode, PluginDependencyImpl("otherOptionalPluginId", true, false)))
 
     //Mandatory dependency "duplicatedMandatoryDependencyId" stays mandatory, even though it is optional via "optionalPlugin.xml".
-    dependenciesGraph.assertContainsEdge(DependencyEdge(somePluginNode, duplicatedMandatoryPluginNode, PluginDependencyImpl("duplicatedMandatoryDependencyId", false, false)))
+    dependenciesGraph.assertContainsEdge(DependencyEdge(somePluginNode, duplicatedMandatoryPluginNode, PluginV1Dependency.Mandatory("duplicatedMandatoryDependencyId")))
 
     assertEquals(4, dependenciesGraph.edges.size)
 
