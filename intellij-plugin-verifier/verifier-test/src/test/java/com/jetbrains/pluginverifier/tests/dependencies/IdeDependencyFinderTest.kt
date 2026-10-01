@@ -31,6 +31,8 @@ import java.io.Closeable
 
 private val MOCK_IDE_MODULE_ID = "intellij.module.one"
 
+private const val EXTERNAL_MODULE_ID = INTELLIJ_LEGACY_MODULES_PREFIX + "externalModule"
+
 class IdeDependencyFinderTest {
   @JvmField
   @Rule
@@ -55,7 +57,7 @@ class IdeDependencyFinderTest {
     `test` -> `somePlugin`
 
     `myPlugin` -> `test`
-    `myPlugin` -> `externalModule` (defined in external plugin `externalPlugin` which is impossible to download)
+    `myPlugin` -> `com.intellij.modules.externalModule` (defined in external plugin `externalPlugin` which is impossible to download)
     `myPlugin` -> `com.intellij.modules.platform` (default module)
 
     Should find dependencies on `test`, `somePlugin`,
@@ -109,7 +111,7 @@ class IdeDependencyFinderTest {
       )
     )
 
-    val externalModuleDependency = MandatoryLegacyModuleV1Dependency(INTELLIJ_LEGACY_MODULES_PREFIX + "externalModule")
+    val externalModuleDependency = MandatoryLegacyModuleV1Dependency(EXTERNAL_MODULE_ID)
     val startPlugin = MockIdePlugin(
       pluginId = "myPlugin",
       pluginVersion = "1.0",
@@ -175,7 +177,7 @@ class IdeDependencyFinderTest {
     val pluginRepository = object : MockPluginRepositoryAdapter() {
       override fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?) =
         when (moduleId) {
-          "externalModule" -> listOf(createMockPluginInfo("externalPlugin", "1.0"))
+          EXTERNAL_MODULE_ID -> listOf(createMockPluginInfo("externalPlugin", "1.0"))
           MOCK_IDE_MODULE_ID -> listOf(createMockPluginInfo(MOCK_IDE_MODULE_ID, "1.0"))
           else -> emptyList()
         }
