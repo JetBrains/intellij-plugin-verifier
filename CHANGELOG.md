@@ -6,6 +6,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Expose plugin name validation as public API: `validatePluginName` (common length and symbols checks), `validateIntelliJPluginName` and `validateTeamcityPluginDisplayName`.
+
 ### Changed
 
 ### Fixed

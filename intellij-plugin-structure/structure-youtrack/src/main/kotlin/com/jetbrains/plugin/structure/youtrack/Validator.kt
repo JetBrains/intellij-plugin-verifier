@@ -55,8 +55,7 @@ private fun validateTitle(title: String?, problems: MutableList<PluginProblem>) 
       problems.add(ManifestPropertyNotSpecified(YouTrackAppFields.Manifest.TITLE))
     }
     else -> {
-      validatePropertyLength(DESCRIPTOR_NAME, YouTrackAppFields.Manifest.TITLE, title, MAX_NAME_LENGTH, problems)
-      validatePluginNameIsCorrect(descriptor = DESCRIPTOR_NAME, name = title, problems = problems)
+      validatePluginName(DESCRIPTOR_NAME, YouTrackAppFields.Manifest.TITLE, title, problems)
     }
   }
 }
