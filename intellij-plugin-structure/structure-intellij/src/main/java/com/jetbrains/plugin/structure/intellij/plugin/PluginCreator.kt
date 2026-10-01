@@ -228,7 +228,7 @@ internal class PluginCreator private constructor(
   }
 
   private fun validatePlugin(plugin: IdePluginImpl) {
-    val dependencies = plugin.dependencies
+    val dependencies = plugin.reconstructAllDependencies(removeDuplicates = false)
     dependencies.map { it.id }
       .groupingBy { it }
       .eachCount()

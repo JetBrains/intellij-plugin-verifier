@@ -137,23 +137,35 @@ interface IdePlugin : Plugin {
   /**
    * Reconstructs the original mixed list of dependencies from particular properties from V1 and V2
    * plugin model.
+   * @param removeDuplicates if the duplicate dependencies should be merged.
    */
-  fun reconstructDependencies(): List<PluginDependency> =
-    dependsList.map { it.asPluginDependency() } +
-      contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) } +
-      pluginMainModuleDependencies.map { PluginV2Dependency(it.pluginId) }
+  fun reconstructDependencies(removeDuplicates: Boolean = true): List<PluginDependency> {
+    val v1Deps = dependsList.map { it.asPluginDependency() }
+    val v2ContentModuleDeps = contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) }
+    val v2PluginDeps = pluginMainModuleDependencies.map { PluginV2Dependency(it.pluginId) }
+
+    val allDeps = v1Deps + v2ContentModuleDeps + v2PluginDeps
+
+    return if (removeDuplicates) allDeps.deduplicate() else allDeps
+  }
 
   /**
    * Reconstructs the original mixed list of dependencies from particular properties from V1 and V2
    * plugin model. Include plugin content module dependencies, too.
+   * @param removeDuplicates if the duplicate dependencies should be merged.
    */
-  fun reconstructAllDependencies(): List<PluginDependency> {
-    val directDependencies =  dependsList.map { it.asPluginDependency() } +
-      contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) } +
-      pluginMainModuleDependencies.map { PluginV2Dependency(it.pluginId) }
+  fun reconstructAllDependencies(removeDuplicates: Boolean = true): List<PluginDependency> {
+    val directDependencies = reconstructDependencies(removeDuplicates)
     val nestedDependencies = modulesDescriptors.flatMap {
       it.resolvedDependencies
     }
-    return directDependencies + nestedDependencies
+    val allDeps = directDependencies + nestedDependencies
+
+    return if (removeDuplicates) allDeps.deduplicate() else allDeps
   }
 }
+
+private fun List<PluginDependency>.deduplicate(): List<PluginDependency> =
+  groupBy(PluginDependency::id)
+    // mandatory dependencies are preferred to optional ones in case of duplicates
+    .map { (_, duplicates) -> duplicates.firstOrNull { !it.isOptional } ?: duplicates.first() }

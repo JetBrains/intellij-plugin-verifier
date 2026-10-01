@@ -82,7 +82,11 @@ class ReachabilityGraph(private val graph: TypeGraph) {
   }
 }
 
-
+/**
+ * Builds a graph that identifies classes reachable from the main plugin and missing optional plugins.
+ *
+ *
+ */
 fun buildClassReachabilityGraph(
   idePlugin: IdePlugin,
   pluginResolver: Resolver,
@@ -100,7 +104,11 @@ fun buildClassReachabilityGraph(
   for (missingOptionalDependency in missingOptionalDependencies) {
     val optionalPlugin = idePlugin.optionalDescriptors.find { it.dependency == missingOptionalDependency.dependency }?.optionalPlugin
     val modules = idePlugin.modulesDescriptors
-      .filter { it.resolvedDependencies.map { it.id }.contains(missingOptionalDependency.dependency.id) }
+      .filter { moduleDescriptor ->
+        // Declared dependencies must be used instead of resolved dependencies because the latter omit dependencies
+        // already declared by the main plugin descriptor
+        moduleDescriptor.module.dependencies.any { it.id == missingOptionalDependency.dependency.id }
+      }
       .map { it.module }
     (if (optionalPlugin != null) modules + optionalPlugin else modules).forEach {
       val optionalClasses = PluginXmlUtil.getAllClassesReferencedFromXml(it)

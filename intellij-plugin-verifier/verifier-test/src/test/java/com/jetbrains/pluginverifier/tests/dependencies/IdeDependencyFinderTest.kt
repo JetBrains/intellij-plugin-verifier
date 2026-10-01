@@ -6,8 +6,8 @@ package com.jetbrains.pluginverifier.tests.dependencies
 
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesLocations
+import com.jetbrains.plugin.structure.intellij.plugin.INTELLIJ_LEGACY_MODULES_PREFIX
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraphBuilder
@@ -21,11 +21,7 @@ import com.jetbrains.pluginverifier.plugin.SizeLimitedPluginDetailsCache
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.files.FileLock
 import com.jetbrains.pluginverifier.repository.files.IdleFileLock
-import com.jetbrains.pluginverifier.tests.mocks.MockDependencyFinder
-import com.jetbrains.pluginverifier.tests.mocks.MockIde
-import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
-import com.jetbrains.pluginverifier.tests.mocks.MockPluginRepositoryAdapter
-import com.jetbrains.pluginverifier.tests.mocks.createMockPluginInfo
+import com.jetbrains.pluginverifier.tests.mocks.*
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -34,6 +30,8 @@ import org.junit.rules.TemporaryFolder
 import java.io.Closeable
 
 private val MOCK_IDE_MODULE_ID = "intellij.module.one"
+
+private const val EXTERNAL_MODULE_ID = INTELLIJ_LEGACY_MODULES_PREFIX + "externalModule"
 
 class IdeDependencyFinderTest {
   @JvmField
@@ -55,11 +53,11 @@ class IdeDependencyFinderTest {
     /*
     Given following dependencies between plugins:
 
-    `test` -> `someModule` (defined in `moduleContainer`)
+    `test` -> `com.intellij.modules.someModule` (defined in `moduleContainer`)
     `test` -> `somePlugin`
 
     `myPlugin` -> `test`
-    `myPlugin` -> `externalModule` (defined in external plugin `externalPlugin` which is impossible to download)
+    `myPlugin` -> `com.intellij.modules.externalModule` (defined in external plugin `externalPlugin` which is impossible to download)
     `myPlugin` -> `com.intellij.modules.platform` (default module)
 
     Should find dependencies on `test`, `somePlugin`,
@@ -68,10 +66,14 @@ class IdeDependencyFinderTest {
     Dependency on `com.intellij.modules.platform` must not be indicated.
     Dependency resolution on `externalPlugin` must fail.
      */
+    val someModuleId = "${INTELLIJ_LEGACY_MODULES_PREFIX}someModule"
+
     val testPlugin = MockIdePlugin(
       pluginId = "test",
       pluginVersion = "1.0",
-      dependencies = listOf(PluginDependencyImpl("someModule", false, true), PluginDependencyImpl("somePlugin", false, false))
+      dependsList = listOf(
+        MandatoryLegacyModuleV1Dependency(someModuleId),
+        MandatoryV1Dependency("somePlugin"))
     )
     val somePlugin = MockIdePlugin(
       pluginId = "somePlugin",
@@ -80,7 +82,7 @@ class IdeDependencyFinderTest {
     val moduleContainer = MockIdePlugin(
       pluginId = "moduleContainer",
       pluginVersion = "1.0",
-      pluginAliases = setOf("someModule")
+      pluginAliases = setOf(someModuleId)
     )
 
     val ideVersion = IdeVersion.createIdeVersion("IU-144")
@@ -109,15 +111,15 @@ class IdeDependencyFinderTest {
       )
     )
 
-    val externalModuleDependency = PluginDependencyImpl("externalModule", false, true)
+    val externalModuleDependency = MandatoryLegacyModuleV1Dependency(EXTERNAL_MODULE_ID)
     val startPlugin = MockIdePlugin(
       pluginId = "myPlugin",
       pluginVersion = "1.0",
-      dependencies = listOf(
-        PluginDependencyImpl("test", true, false),
+      dependsList = listOf(
+        OptionalV1Dependency("test"),
         externalModuleDependency,
-        PluginDependencyImpl("com.intellij.modules.platform", false, true),
-        PluginDependencyImpl(MOCK_IDE_MODULE_ID, false, true)
+        MandatoryLegacyModuleV1Dependency("com.intellij.modules.platform"),
+        MandatoryV1Dependency(MOCK_IDE_MODULE_ID)
       )
     )
 
@@ -128,7 +130,7 @@ class IdeDependencyFinderTest {
     val deps = dependenciesGraph.vertices.map { it.id }
     assertEquals(setOf("myPlugin", "test", "moduleContainer", "somePlugin", "com.intellij", MOCK_IDE_MODULE_ID), deps.toSet())
 
-    assertEquals(setOf(MissingDependency(externalModuleDependency, "Failed to fetch plugin.")), dependenciesGraph.getDirectMissingDependencies())
+    assertEquals(setOf(MissingDependency(externalModuleDependency.asPluginDependency(), "Failed to fetch plugin.")), dependenciesGraph.getDirectMissingDependencies())
   }
 
   @Test
@@ -136,9 +138,9 @@ class IdeDependencyFinderTest {
     val startPlugin = MockIdePlugin(
       pluginId = "myPlugin",
       pluginVersion = "1.0",
-      dependencies = listOf(
-        PluginDependencyImpl("com.intellij.modules.os.mac", false, true),
-        PluginDependencyImpl("com.intellij.modules.arch.arm64", false, true)
+      dependsList = listOf(
+        MandatoryLegacyModuleV1Dependency("com.intellij.modules.os.mac"),
+        MandatoryLegacyModuleV1Dependency("com.intellij.modules.arch.arm64")
       )
     )
 
@@ -156,9 +158,9 @@ class IdeDependencyFinderTest {
     val startPlugin = MockIdePlugin(
       pluginId = "myPlugin",
       pluginVersion = "1.0",
-      dependencies = listOf(
-        PluginDependencyImpl("com.intellij.modules.os.mac", false, true),
-        PluginDependencyImpl("com.intellij.modules.arch.arm64", false, true)
+      dependsList = listOf(
+        MandatoryLegacyModuleV1Dependency("com.intellij.modules.os.mac"),
+        MandatoryLegacyModuleV1Dependency("com.intellij.modules.arch.arm64")
       )
     )
 
@@ -175,7 +177,7 @@ class IdeDependencyFinderTest {
     val pluginRepository = object : MockPluginRepositoryAdapter() {
       override fun getPluginsDeclaringModule(moduleId: String, ideVersion: IdeVersion?) =
         when (moduleId) {
-          "externalModule" -> listOf(createMockPluginInfo("externalPlugin", "1.0"))
+          EXTERNAL_MODULE_ID -> listOf(createMockPluginInfo("externalPlugin", "1.0"))
           MOCK_IDE_MODULE_ID -> listOf(createMockPluginInfo(MOCK_IDE_MODULE_ID, "1.0"))
           else -> emptyList()
         }
