@@ -64,11 +64,13 @@ class IdeDependencyFinderTest {
     Dependency on `com.intellij.modules.platform` must not be indicated.
     Dependency resolution on `externalPlugin` must fail.
      */
+    val someModuleId = "${INTELLIJ_LEGACY_MODULES_PREFIX}someModule"
+
     val testPlugin = MockIdePlugin(
       pluginId = "test",
       pluginVersion = "1.0",
       dependsList = listOf(
-        MandatoryLegacyModuleV1Dependency("${INTELLIJ_LEGACY_MODULES_PREFIX}someModule"),
+        MandatoryLegacyModuleV1Dependency(someModuleId),
         MandatoryV1Dependency("somePlugin"))
     )
     val somePlugin = MockIdePlugin(
@@ -78,7 +80,7 @@ class IdeDependencyFinderTest {
     val moduleContainer = MockIdePlugin(
       pluginId = "moduleContainer",
       pluginVersion = "1.0",
-      pluginAliases = setOf("someModule")
+      pluginAliases = setOf(someModuleId)
     )
 
     val ideVersion = IdeVersion.createIdeVersion("IU-144")
