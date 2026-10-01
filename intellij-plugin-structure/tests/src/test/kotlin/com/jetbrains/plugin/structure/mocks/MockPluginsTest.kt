@@ -5,13 +5,7 @@ import com.jetbrains.plugin.structure.base.problems.PluginDescriptorIsNotFound
 import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.classes.resolvers.AbstractJarResolver
-import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
-import com.jetbrains.plugin.structure.classes.resolvers.DirectoryFileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.JarOrZipFileOrigin
-import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
-import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.intellij.classes.locator.CompileServerExtensionKey
 import com.jetbrains.plugin.structure.intellij.classes.locator.PluginFileOrigin
 import com.jetbrains.plugin.structure.intellij.classes.plugin.IdePluginClassesFinder
@@ -21,12 +15,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil.getAllClassesReferencedFromXml
-import com.jetbrains.plugin.structure.intellij.problems.DuplicatedDependencyWarning
-import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyDescriptorResolutionProblem
-import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsMultipleFiles
-import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsSingleJarInRoot
-import com.jetbrains.plugin.structure.intellij.problems.PluginZipContainsUnknownFile
-import com.jetbrains.plugin.structure.intellij.problems.UnexpectedPluginZipStructure
+import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import com.jetbrains.plugin.structure.rules.FileSystemType
@@ -816,7 +805,7 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
   }
 
   private fun checkDependenciesAndModules(plugin: IdePlugin) {
-    assertEquals(9, plugin.dependencies.size.toLong())
+    assertEquals(8, plugin.dependencies.size.toLong())
     //check plugin and module dependencies
     val expectedDependencies = listOf(
       PluginV1Dependency.Optional("JUnit"),
@@ -826,7 +815,6 @@ class MockPluginsTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fil
       PluginV1Dependency.Optional("missingDependency"),
       PluginV1Dependency.Mandatory("mandatoryDependency"),
       PluginV1Dependency.Mandatory("com.intellij.modules.mandatoryDependency"),
-      PluginV1Dependency.Mandatory("duplicatedDependencyId"),
       PluginV1Dependency.Mandatory("duplicatedDependencyId"),
     )
     assertEquals(expectedDependencies, plugin.dependencies)
