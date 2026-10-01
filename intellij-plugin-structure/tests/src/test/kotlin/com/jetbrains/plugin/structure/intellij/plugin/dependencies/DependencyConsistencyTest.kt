@@ -5,9 +5,8 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.mocks.MockIdePlugin
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -77,7 +76,7 @@ class DependencyConsistencyTest : DependenciesTestBase() {
       mapOf(
         (ModuleV2Dependency::class to "direct.module") to 1,
         (ModuleV2Dependency::class to "first.module") to 1,
-        (PluginV2Dependency::class to "duplicate.plugin") to 2,
+        (PluginV2Dependency::class to "duplicate.plugin") to 1,
         (PluginV2Dependency::class to "second.plugin") to 1,
       ),
       plugin.dependencies.groupingBy { it::class to it.id }.eachCount(),
@@ -98,6 +97,20 @@ class DependencyConsistencyTest : DependenciesTestBase() {
   }
 
   @Test
+  fun `mandatory dependency takes precedence over optional duplicate`() {
+    val plugin = MockIdePlugin(
+      dependsList = listOf(
+        DependsPluginDependency("duplicate.plugin", isOptional = true),
+        DependsPluginDependency("duplicate.plugin", isOptional = false),
+      ),
+    )
+    val expectedDependencies = listOf(PluginV1Dependency.Mandatory("duplicate.plugin"))
+
+    assertEquals(expectedDependencies, plugin.reconstructDependencies())
+    assertEquals(expectedDependencies, plugin.reconstructAllDependencies())
+  }
+
+  @Test
   fun `reconstructAllDependencies contains all dependencies and equals deprecated dependencies`() {
     val reconstructedDependencies = plugin.reconstructAllDependencies()
 
@@ -106,7 +119,7 @@ class DependencyConsistencyTest : DependenciesTestBase() {
       mapOf(
         (ModuleV2Dependency::class to "direct.module") to 1,
         (ModuleV2Dependency::class to "first.module") to 1,
-        (PluginV2Dependency::class to "duplicate.plugin") to 2,
+        (PluginV2Dependency::class to "duplicate.plugin") to 1,
         (PluginV2Dependency::class to "second.plugin") to 1,
       ),
       reconstructedDependencies.groupingBy { it::class to it.id }.eachCount(),

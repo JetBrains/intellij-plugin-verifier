@@ -138,10 +138,11 @@ interface IdePlugin : Plugin {
    * Reconstructs the original mixed list of dependencies from particular properties from V1 and V2
    * plugin model.
    */
-  fun reconstructDependencies(): List<PluginDependency> =
-    dependsList.map { it.asPluginDependency() } +
-      contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) } +
-      pluginMainModuleDependencies.map { PluginV2Dependency(it.pluginId) }
+   fun reconstructDependencies(): List<PluginDependency> = deduplicateDependencies(
+     dependsList.map { it.asPluginDependency() } +
+       contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) } +
+       pluginMainModuleDependencies.map { PluginV2Dependency(it.pluginId) },
+   )
 
   /**
    * Reconstructs the original mixed list of dependencies from particular properties from V1 and V2
@@ -154,6 +155,12 @@ interface IdePlugin : Plugin {
     val nestedDependencies = modulesDescriptors.flatMap {
       it.resolvedDependencies
     }
-    return directDependencies + nestedDependencies
+    return deduplicateDependencies(directDependencies + nestedDependencies)
   }
 }
+
+private fun deduplicateDependencies(dependencies: List<PluginDependency>): List<PluginDependency> =
+  dependencies
+    .groupBy(PluginDependency::id)
+    // mandatory dependencies are preferred to optional ones in case of duplicates
+    .map { (_, duplicates) -> duplicates.firstOrNull { !it.isOptional } ?: duplicates.first() }
