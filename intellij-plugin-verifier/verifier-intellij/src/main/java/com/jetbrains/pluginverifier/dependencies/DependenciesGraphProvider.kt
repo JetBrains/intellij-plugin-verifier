@@ -24,8 +24,8 @@ class DependenciesGraphProvider {
   fun getDependenciesGraph(dependencyTreeResolution: DependencyTreeResolution): DependenciesGraph {
     val verifiedPlugin = newDependencyNode(dependencyTreeResolution.dependencyRoot)
     val transitiveDependencyVertices = dependencyTreeResolution.getTransitiveDependencyVertices()
-    val vertices = transitiveDependencyVertices + verifiedPlugin
     val edges = dependencyTreeResolution.getEdges()
+    val vertices = transitiveDependencyVertices + verifiedPlugin + edges.flatMap { listOf(it.from, it.to) }
     val missingDependencies = dependencyTreeResolution.getMissingDependencies()
 
     return DependenciesGraph(verifiedPlugin, vertices, edges, missingDependencies)
@@ -49,8 +49,8 @@ class DependenciesGraphProvider {
         require(from is PluginAware && dependency is PluginAware) // Invariant by the pluginDependency getter returning non-null
 
         edges += DependencyEdge(
-          newDependencyNode(from.plugin),
-          newDependencyNode(dependency.plugin),
+          newDependencyNode(from),
+          newDependencyNode(dependency),
           dependenciesCache.computeIfAbsent(pluginDependency, Function.identity())
         )
       }
@@ -63,6 +63,7 @@ class DependenciesGraphProvider {
 
     fun intern(dependencyNode: DependencyNode): DependencyNode = when (dependencyNode) {
       is DependencyNode.PluginDependency -> cache.merge(dependencyNode, dependencyNode, DependencyNode::mergeAliasesIntoFirst)!! // merge function never returns null
+      is DependencyNode.ModuleDependency -> dependencyNode
       is DependencyNode.IdAndVersionDependency -> dependencyNode
     }
   }
@@ -78,6 +79,7 @@ class DependenciesGraphProvider {
   }
 
   private fun Dependency.Module.getVertices(): List<DependencyNode> {
+    if (isContentModule()) return listOf(newDependencyNode(this))
     val vertices = mutableListOf<DependencyNode>()
     vertices += newDependencyNode(plugin)
     if (id != plugin.id) {
@@ -91,6 +93,16 @@ class DependenciesGraphProvider {
   }
 
   private fun newDependencyNode(plugin: IdePlugin) = normalizer.intern(DependencyNode.PluginDependency(plugin))
+
+  private fun Dependency.Module.isContentModule(): Boolean = plugin.modulesDescriptors.any { it.name == id }
+
+  private fun newDependencyNode(dependency: Dependency): DependencyNode = when (dependency) {
+    is Dependency.Module -> if (dependency.isContentModule()) {
+      normalizer.intern(DependencyNode.ModuleDependency(dependency.plugin, dependency.id))
+    } else newDependencyNode(dependency.plugin)
+    is Dependency.Plugin -> newDependencyNode(dependency.plugin)
+    Dependency.None -> error("Cannot report an unresolved dependency node")
+  }
 
   private fun newDependencyNode(alias: String, plugin: IdePlugin) = normalizer.intern(dependencyNode(alias, plugin))
 }

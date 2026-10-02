@@ -114,6 +114,13 @@ sealed class DependencyNode {
     }
   }
 
+  data class ModuleDependency(override val plugin: IdePlugin, val moduleName: String) : DependencyNode(), PluginAware {
+    override val id: String get() = moduleName
+    override val version: String get() = plugin.pluginVersion ?: UNKNOWN_VERSION
+
+    override fun toString() = "${plugin.id}/$moduleName:$version"
+  }
+
   data class IdAndVersionDependency(override val id: String, override val version: String) : DependencyNode() {
     override fun toString() = "$id:$version"
   }

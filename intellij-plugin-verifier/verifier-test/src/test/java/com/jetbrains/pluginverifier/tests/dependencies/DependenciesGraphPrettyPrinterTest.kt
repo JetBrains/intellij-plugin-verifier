@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.dependencies.presentation.ResolvedDependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.dependencies.toResolved
 import org.junit.Assert
@@ -97,6 +98,7 @@ class DependenciesGraphPrettyPrinterTest {
     }.toMap()
     val dependenciesGraph = DependenciesGraph(startVertex, vertices, edges, missingDeps)
     val prettyPresentation = ResolvedDependenciesGraphPrettyPrinter(dependenciesGraph.toResolved()).prettyPresentation().trim()
+    Assert.assertEquals(DependenciesGraphPrettyPrinter(dependenciesGraph).prettyPresentation().trim(), prettyPresentation)
 
     Assert.assertEquals(
       """
@@ -113,5 +115,53 @@ start:1.0
 \--- (optional) e:1.0
 """.trim(), prettyPresentation
     )
+  }
+
+  @Test
+  fun `module-only report shows ownership sibling and transitive paths`() {
+    val graph = modularDependenciesFixture(repeatMainDependencies = false).graph
+
+    assertPrettyPresentation(graph, """
+owner:1.0
++--- owner/owner.core:1.0 [declaring module owner.core]
+|    \--- com.intellij:261.1 (aliased com.intellij.modules.platform) [declaring module com.intellij.modules.platform]
+\--- owner/owner.extra:1.0 [declaring module owner.extra]
+     +--- bundled:2.0
+     |    \--- transitive:3.0
+     \--- owner/owner.core:1.0 (*) [declaring module owner.core]
+""".trim())
+  }
+
+  @Test
+  fun `report retains module paths when main descriptor repeats their dependencies`() {
+    val graph = modularDependenciesFixture(repeatMainDependencies = true).graph
+
+    assertPrettyPresentation(graph, """
+owner:1.0
++--- bundled:2.0
+|    \--- transitive:3.0
++--- com.intellij:261.1 (aliased com.intellij.modules.platform) [declaring module com.intellij.modules.platform]
++--- owner/owner.core:1.0 [declaring module owner.core]
+|    \--- com.intellij:261.1 (*) [declaring module com.intellij.modules.platform]
+\--- owner/owner.extra:1.0 [declaring module owner.extra]
+     +--- bundled:2.0 (*)
+     \--- owner/owner.core:1.0 (*) [declaring module owner.core]
+""".trim())
+  }
+
+  @Test
+  fun `legacy aliases and product modules keep their plugin-only report presentation`() {
+    assertPrettyPresentation(legacyDependenciesGraph(), """
+legacy:1.0
++--- com.intellij:261.1 (aliased com.intellij.modules.platform) [declaring module com.intellij.modules.platform]
+\--- com.intellij.modules.product:261.1 (aliased com.intellij.modules.product) [product module]
+""".trim())
+  }
+
+  private fun assertPrettyPresentation(graph: DependenciesGraph, expected: String) {
+    val fatPresentation = DependenciesGraphPrettyPrinter(graph).prettyPresentation()
+    val resolvedPresentation = ResolvedDependenciesGraphPrettyPrinter(graph.toResolved()).prettyPresentation()
+    Assert.assertEquals(expected, fatPresentation)
+    Assert.assertEquals(fatPresentation, resolvedPresentation)
   }
 }

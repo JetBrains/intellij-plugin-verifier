@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier.dependencies
 
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.pluginverifier.PluginVerifierBatchContext
 import java.util.function.Function
@@ -25,14 +26,15 @@ data class ResolvedDependencyNode(
   val id: String,
   val version: String,
   val aliases: Set<String> = emptySet(),
-  val isProductModule: Boolean = false
+  val isProductModule: Boolean = false,
+  val moduleOwnerId: String? = null
 ) {
   // Deliberately omits [aliases]: platform nodes carry hundreds of module aliases and this string
   // is emitted once per referencing edge in dependency reports, multiplying report size by orders of magnitude.
   // Use [toStringWithAliases] where the full presentation is wanted (e.g. a node's first occurrence in a report).
-  override fun toString() = "$id:$version"
+  override fun toString() = (moduleOwnerId?.let { "$it/" } ?: "") + "$id:$version"
 
-  fun toStringWithAliases() = "$id:$version" + if (aliases.isNotEmpty()) " (aliased ${aliases.joinToString(" ")})" else ""
+  fun toStringWithAliases() = toString() + if (aliases.isNotEmpty()) " (aliased ${aliases.joinToString(" ")})" else ""
 }
 
 /**
@@ -100,7 +102,8 @@ fun DependenciesGraph.toResolved(batchContext: PluginVerifierBatchContext? = nul
       ?.takeIf { it.isNotEmpty() }
       ?.mapTo(HashSet()) { it.dedup() }
       ?: emptySet()
-    ResolvedDependencyNode(node.id.dedup(), node.version.dedup(), aliases, isProductModule).dedup()
+    val moduleOwnerId = (node as? DependencyNode.ModuleDependency)?.plugin?.id?.dedup()
+    ResolvedDependencyNode(node.id.dedup(), node.version.dedup(), aliases, isProductModule, moduleOwnerId).dedup()
   }
 
   val resolvedEdges = java.util.Set.copyOf(edges.map { edge ->
