@@ -62,6 +62,10 @@ data class MockIdePlugin(
     sinceBuild <= ideVersion && (untilBuild == null || ideVersion <= untilBuild)
 }
 
+fun contentModule(id: String, configure: MockIdePluginBuilder.() -> Unit = {}): MockIdePlugin {
+  return idePlugin(id, configure)
+}
+
 fun idePlugin(id: String, configure: MockIdePluginBuilder.() -> Unit = {}): MockIdePlugin {
   return MockIdePluginBuilder(id).apply(configure).build()
 }
