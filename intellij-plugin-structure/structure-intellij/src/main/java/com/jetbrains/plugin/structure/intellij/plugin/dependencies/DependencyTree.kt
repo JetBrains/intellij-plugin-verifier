@@ -45,10 +45,8 @@ class DependencyTree(
     val dependencyResolutionContext = ResolutionContext(missingDependencyListener, dependenciesModifier)
     val dependencyGraph = getDependencyGraph(plugin, dependencyResolutionContext)
 
-    val transitiveDependencies = mutableSetOf<Dependency>()
-    dependencyGraph.forEachAdjacency { _, dependencies ->
-      transitiveDependencies += dependencies
-    }
+    val transitiveDependencies = dependencyGraph.collectDependencies(NodeId.ofPlugin(plugin))
+      .resolveDuplicateDependencies(dependencyResolutionContext)
 
     return DefaultDependencyTreeResolution(plugin, transitiveDependencies, missingDependencies, dependencyGraph)
   }
@@ -98,7 +96,7 @@ class DependencyTree(
       graph = graph,
       visitedPlugins = LinkedHashSet(),
       resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1,
-      missingDependencies = missingDependencies, context = context,
+      missingDependencies = missingDependencies, context = context, classpathExpandedPlugins = mutableSetOf(),
     )
     return graph
   }
@@ -109,7 +107,7 @@ class DependencyTree(
    * @param plugin the plugin whose dependencies are being resolved.
    * @param nodeId the graph node identity of [plugin], used as the "from" key when adding edges.
    * @param graph the dependency graph being built.
-   * @param visitedPlugins tracks already-visited plugins to prevent infinite recursion on cycles.
+   * @param visitedPlugins tracks already-expanded node identities to prevent infinite recursion on cycles.
    * @param resolutionDepth current recursion depth, used for debug log indentation.
    * @param dependencyIndex index of this dependency in the parent's dependency list, or -1 for the root.
    * @param parentDependencyIndex the [dependencyIndex] of the parent, used for debug log indentation.
@@ -121,72 +119,68 @@ class DependencyTree(
     plugin: IdePlugin,
     nodeId: NodeId,
     graph: DependencyGraph,
-    visitedPlugins: MutableSet<IdePlugin>,
+    visitedPlugins: MutableSet<NodeId>,
     resolutionDepth: Int,
     dependencyIndex: Int,
     parentDependencyIndex: Int,
     missingDependencies: MissingDependencies,
     context: ResolutionContext,
+    classpathExpandedPlugins: MutableSet<IdePlugin>,
+    classpathExpansionActive: Boolean = true,
   ): Unit =
     with(plugin) {
-      if (!visitedPlugins.add(plugin)) {
-        // Already visited and resolved/resolving dependencies, recursive SOE prevention
-        return@with
-      }
-      val dependencies = context.dependenciesModifier.apply(this, pluginProvider).map { it.dependency }
+      val expandGraph = visitedPlugins.add(nodeId)
+      val expandClasspath = classpathExpansionActive && classpathExpandedPlugins.add(plugin)
+      if (!expandGraph && !expandClasspath) return@with
       val pluginId = pluginId ?: return@with
-      val number = if (dependencyIndex < 0) "" else "" + (dependencyIndex + 1) + ") "
+      val modules = modulesDescriptors.associateBy { it.name }
+      for (descriptor in modules.values) {
+        val moduleDependency = Module(plugin, descriptor.name).intern()
+        if (moduleDependency.nodeId != nodeId) graph.addOwnershipEdge(nodeId, moduleDependency)
+      }
+      val modifications = context.dependenciesModifier.apply(this, pluginProvider)
+      val classpathTargets = mutableListOf<Dependency>()
       val indent = getIndent(resolutionDepth, parentDependencyIndex)
-      if (dependencies.isEmpty()) {
-        debugLog(indent, "${number}No dependencies for '{}'", pluginId)
-      } else {
-        debugLog(
-          indent,
-          "${number}Resolving {} ${"dependency".pluralize(dependencies.size)} for '{}': {}",
-          dependencies.size,
-          pluginId,
-          dependencies.joinToString { it.id })
-
-        val nestedIndent = getNestedDependencyIndent(indent, number)
-        dependencies.forEachIndexed { i, dep ->
-          if (ignore(plugin, dep)) {
-            debugLog(nestedIndent, i + 1, "Ignoring '{}'", dep)
-          } else if (graph.contains(nodeId, hasId(dep))) {
-            // TODO log if a dependency might be provided by another plugin with different plugin
-            debugLog(nestedIndent, i + 1, "Resolved cached dependency '{}'", dep.id)
-          } else if (dep in missingDependencies) {
-            debugLog(nestedIndent, i + 1, "Skipping dependency '{}' as it is already marked missing", dep.id)
-          } else {
-            when (val dependencyPlugin = resolve(dep)) {
-              is Module,
-              is Plugin -> {
-                val resolved = dependencyPlugin as PluginAware
-                if (!dependencyPlugin.matches(pluginId)) {
-                  graph.addEdge(nodeId, dependencyPlugin)
-                  getDependencyGraph(
-                    resolved.plugin,
-                    dependencyPlugin.nodeId!!, // It could only be null in case of `None`
-                    graph,
-                    visitedPlugins,
-                    resolutionDepth + 1,
-                    i,
-                    dependencyIndex,
-                    missingDependencies,
-                    context,
-                  )
-                }
+      val number = if (dependencyIndex < 0) "" else "${dependencyIndex + 1}) "
+      debugLog(indent, "${number}Resolving {} ${"dependency".pluralize(modifications.size)} for '{}': {}",
+        modifications.size, nodeId, modifications.joinToString { it.dependency.id })
+      val nestedIndent = getNestedDependencyIndent(indent, number)
+      for ((i, modification) in modifications.withIndex()) {
+        for (contribution in modification.contributions) {
+          val dep = contribution.dependency
+          val source = contribution.sourceModuleName?.takeIf { it in modules }
+            ?.let { NodeId(pluginId, it) } ?: nodeId
+          val sibling = modules[dep.id]?.takeIf { dep.isModule }
+          if (!dependencyFilter(dep)) continue
+          if (sibling != null) {
+            graph.addEdge(source, Module(plugin, sibling.name).intern())
+            continue
+          }
+          if (ignore(plugin, dep) || dep in missingDependencies) continue
+          when (val dependencyPlugin = resolve(dep)) {
+            is Module, is Plugin -> {
+              val resolved = dependencyPlugin as PluginAware
+              if (resolved.plugin.pluginId == pluginId) continue
+              val includeInClasspath = expandClasspath && classpathTargets.none {
+                val contentModule = it is Module &&
+                  it.plugin.modulesDescriptors.any { descriptor -> descriptor.name == it.id } &&
+                  !ideModulePredicate.matches(it.id, it.plugin)
+                it.matches(dep.id) && !(contentModule && dependencyPlugin is Plugin)
               }
-
-              is None -> {
-                context.notifyMissingDependency(plugin, dep)
-                missingDependencies += dep
-                debugLog(
-                  nestedIndent,
-                  numericIndex = i + 1,
-                  "Skipping dependency '{}' as it is not available",
-                  dep.id
-                )
-              }
+              if (includeInClasspath) classpathTargets += dependencyPlugin
+              graph.addEdge(source, dependencyPlugin, includeInClasspath)
+              debugLog(nestedIndent, i + 1, "Resolved '{}' from '{}' (classpath: {})",
+                dep.id, source, includeInClasspath)
+              getDependencyGraph(
+                resolved.plugin, dependencyPlugin.nodeId!!, graph, visitedPlugins,
+                resolutionDepth + 1, i, dependencyIndex, missingDependencies, context, classpathExpandedPlugins,
+                classpathExpansionActive = includeInClasspath
+              )
+            }
+            is None -> {
+              context.notifyMissingDependency(plugin, dep)
+              missingDependencies += dep
+              debugLog(nestedIndent, i + 1, "Skipping dependency '{}' as it is not available", dep.id)
             }
           }
         }
@@ -253,26 +247,21 @@ class DependencyTree(
     }
 
   private fun DependencyGraph.collectDependencies(nodeId: NodeId): Set<Dependency> {
-    return mutableSetOf<Dependency>().apply {
-      collectDependencies(nodeId, this)
-    }
-  }
-
-  private fun DependencyGraph.collectDependencies(
-    nodeId: NodeId,
-    dependencies: MutableSet<Dependency>,
-    layer: Int = 0
-  ) {
-    for (dependency in this[nodeId]) {
-      val depNodeId = dependency.nodeId
-      if (depNodeId != null) {
-        val dep = (if (layer == 0) dependency else dependency.asTransitive()).intern()
-        if (dep !in dependencies) {
-          dependencies += dep
-          collectDependencies(depNodeId, dependencies, layer + 1)
-        }
+    val dependencies = linkedSetOf<Dependency>()
+    val pending = ArrayDeque<Pair<NodeId, Int>>()
+    val visited = mutableSetOf<Pair<NodeId, Int>>()
+    pending.add(nodeId to 0)
+    while (pending.isNotEmpty()) {
+      val (from, layer) = pending.removeFirst()
+      if (!visited.add(from to layer)) continue
+      for (dependency in getClasspathDependencies(from)) {
+        val target = dependency.nodeId ?: continue
+        val internal = isOwnershipEdge(from, target) || from.pluginId == target.pluginId
+        if (!internal) dependencies += (if (layer == 0) dependency else dependency.asTransitive()).intern()
+        pending.add(target to if (internal) layer else (layer + 1).coerceAtMost(2))
       }
     }
+    return dependencies
   }
 
   private val pluginCache: Cache<PluginId, PluginProvision.Found> = Caffeine.newBuilder()
@@ -358,8 +347,6 @@ class DependencyTree(
     }
   }
 
-  private fun hasId(dependency: PluginDependency) = { dep: Dependency -> dep.matches(dependency.id) }
-
   private fun debugLog(indent: String, message: String, vararg params: Any) {
     debugLog(indent, numericIndex = 0, message, *params)
   }
@@ -384,6 +371,8 @@ class DependencyTree(
   internal class DependencyGraph {
     private val nodeIndex = hashMapOf<NodeId, Dependency>()
     private val adjacency = linkedMapOf<NodeId, MutableList<Dependency>>()
+    private val ownershipEdges = mutableSetOf<Pair<NodeId, NodeId>>()
+    private val classpathEdges = mutableSetOf<Pair<NodeId, NodeId>>()
 
     constructor(rootPlugin: Dependency) {
       val nodeId = requireNotNull(rootPlugin.nodeId) { "Root plugin must be a Plugin or Module" }
@@ -392,12 +381,25 @@ class DependencyTree(
 
     operator fun get(from: NodeId): List<Dependency> = adjacency[from] ?: emptyList()
 
-    fun addEdge(from: NodeId, to: Dependency) {
+    fun getClasspathDependencies(from: NodeId): List<Dependency> = this[from].filter {
+      from to it.nodeId in classpathEdges
+    }
+
+    fun addOwnershipEdge(from: NodeId, to: Dependency) {
+      ownershipEdges += from to requireNotNull(to.nodeId)
+      addEdge(from, to)
+    }
+
+    fun isOwnershipEdge(from: NodeId, to: NodeId): Boolean = from to to in ownershipEdges
+
+    fun addEdge(from: NodeId, to: Dependency, includeInClasspath: Boolean = true) {
       val toNodeId = to.nodeId
       if (toNodeId != null) {
         nodeIndex.putIfAbsent(toNodeId, to)
+        if (includeInClasspath) classpathEdges += from to toNodeId
       }
-      adjacency.getOrPut(from) { mutableListOf() } += to
+      val targets = adjacency.getOrPut(from) { mutableListOf() }
+      if (targets.none { it.nodeId == toNodeId }) targets += to
     }
 
     fun contains(from: NodeId, toIdPredicate: (Dependency) -> Boolean): Boolean {

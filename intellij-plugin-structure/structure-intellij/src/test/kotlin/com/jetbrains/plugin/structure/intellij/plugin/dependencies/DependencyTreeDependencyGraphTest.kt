@@ -8,6 +8,8 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -50,6 +52,59 @@ class DependencyTreeDependencyGraphTest {
       it.matches(alphaPluginId)
     }
     assertTrue(somePluginDependsOnAlpha)
+  }
+
+  @Test
+  fun `graph iteration preserves plugin and module node identities for a shared owner`() {
+    val rootPlugin = mockk<IdePlugin>()
+    every { rootPlugin.pluginId } returns "com.example.Root"
+    val ownerPlugin = mockk<IdePlugin>()
+    every { ownerPlugin.pluginId } returns "com.example.Owner"
+    val externalPlugin = mockk<IdePlugin>()
+    every { externalPlugin.pluginId } returns "com.example.External"
+
+    val root = Dependency.Plugin(rootPlugin)
+    val owner = Dependency.Plugin(ownerPlugin)
+    val core = Dependency.Module(ownerPlugin, "com.example.Owner.core")
+    val extras = Dependency.Module(ownerPlugin, "com.example.Owner.extras")
+    val external = Dependency.Plugin(externalPlugin)
+    val graph = DependencyTree.DependencyGraph(root)
+    graph.addEdge(root.nodeId, owner)
+    graph.addEdge(root.nodeId, core)
+    graph.addEdge(root.nodeId, extras)
+    graph.addEdge(owner.nodeId, core)
+    graph.addEdge(owner.nodeId, extras)
+    graph.addEdge(owner.nodeId, external)
+    graph.addEdge(core.nodeId, extras)
+    graph.addEdge(core.nodeId, external)
+    graph.addEdge(extras.nodeId, core)
+    graph.addEdge(extras.nodeId, external)
+
+    val adjacency = linkedMapOf<Dependency, List<Dependency>>()
+    graph.forEachAdjacency { from, dependencies ->
+      adjacency[from] = dependencies
+    }
+    assertEquals(mapOf(
+      root to listOf(owner, core, extras),
+      owner to listOf(core, extras, external),
+      core to listOf(extras, external),
+      extras to listOf(core, external)
+    ), adjacency)
+    assertSame(owner, adjacency.keys.single { it.nodeId == owner.nodeId })
+    assertSame(core, adjacency.keys.single { it.nodeId == core.nodeId })
+    assertSame(extras, adjacency.keys.single { it.nodeId == extras.nodeId })
+    assertEquals(listOf(core, extras, external), graph[owner.nodeId])
+    assertEquals(listOf(extras, external), graph[core.nodeId])
+    assertEquals(listOf(core, external), graph[extras.nodeId])
+    assertTrue(graph.contains(core.nodeId) { it.nodeId == extras.nodeId })
+    assertFalse(graph.contains(core.nodeId) { it.nodeId == owner.nodeId })
+
+    val resolution = DefaultDependencyTreeResolution(rootPlugin, emptySet(), emptyMap(), graph)
+    val iteratedEdges = mutableListOf<Pair<Dependency, Dependency>>()
+    resolution.forEach { from, to -> iteratedEdges += from to to }
+    assertEquals(adjacency.flatMap { (from, dependencies) -> dependencies.map { from to it } }, iteratedEdges)
+    assertEquals(setOf(root.nodeId, owner.nodeId, core.nodeId, extras.nodeId), iteratedEdges.map { it.first.nodeId }.toSet())
+    assertEquals(setOf(owner.nodeId, core.nodeId, extras.nodeId, external.nodeId), iteratedEdges.map { it.second.nodeId }.toSet())
   }
 
   // FIXME Duplicate from com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.getPluginId
