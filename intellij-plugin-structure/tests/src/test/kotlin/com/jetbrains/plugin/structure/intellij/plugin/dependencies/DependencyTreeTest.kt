@@ -6,10 +6,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeMo
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy.LegacyPluginDependencyContributor
 import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.plugin.structure.mocks.MandatoryV1Dependency
-import com.jetbrains.plugin.structure.mocks.MockIde
-import com.jetbrains.plugin.structure.mocks.MockIdePlugin
-import com.jetbrains.plugin.structure.mocks.idePlugin
+import com.jetbrains.plugin.structure.mocks.*
 import com.jetbrains.plugin.structure.mocks.validation.MockIdePluginValidator.Companion.assertValid
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
@@ -298,31 +295,36 @@ class DependencyTreeTest {
   }
 
   @Test
-  fun `plugin with content modules reaches out to transitive dependencies`() {
+  fun `plugin with content modules includes transitive dependencies of direct plugin dependencies`() {
     val someBundledIdePlugin = dozenOfPlugins.first()
 
-    val coreModule = idePlugin("core") {
+    val coreContentModule = contentModule("com.example.Modular.core") {
       depends("com.intellij.modules.platform")
     }
-    val extrasModule = idePlugin("extras") {
-      moduleDependency("core")
+    val coreContentModuleDefinition = InlineModule("com.example.Modular.core", null, "com.example", ModuleLoadingRule.REQUIRED, "")
+    val coreContentModuleDescriptor = ModuleDescriptor.of(
+      coreContentModule,
+      coreContentModuleDefinition,
+      resolvedDependencies = coreContentModule.reconstructDependencies(),
+    )
+
+    val extrasContentModule = contentModule("com.example.Modular.extras") {
+      moduleDependency("com.example.Modular.core")
       depends(someBundledIdePlugin)
     }
+    val extrasContentModuleDefinition = InlineModule("com.example.Modular.extras", null, "com.example", ModuleLoadingRule.REQUIRED, "")
+    val extrasContentModuleDescriptor = ModuleDescriptor.of(
+      extrasContentModule,
+      extrasContentModuleDefinition,
+      resolvedDependencies = extrasContentModule.reconstructDependencies(),
+    )
 
     val pluginWithContentModules = MockIdePlugin(
       pluginId = "com.example.Modular",
-      // FIXME add contentModules property
+      contentModules = listOf(coreContentModuleDefinition, extrasContentModuleDefinition),
       modulesDescriptors = listOf(
-        ModuleDescriptor.of(
-          coreModule,
-          InlineModule("core", null, "com.example", ModuleLoadingRule.REQUIRED, ""),
-          resolvedDependencies = coreModule.reconstructDependencies(),
-        ),
-        ModuleDescriptor.of(
-          extrasModule,
-          InlineModule("extras", null, "com.example", ModuleLoadingRule.REQUIRED, ""),
-          resolvedDependencies = extrasModule.reconstructDependencies(),
-        ),
+        coreContentModuleDescriptor,
+        extrasContentModuleDescriptor,
       ),
       dependsList = listOf(
         MandatoryV1Dependency("com.intellij.modules.platform"),
@@ -331,7 +333,7 @@ class DependencyTreeTest {
       contentModuleDependencies = listOf(
         ContentModuleDependency("core", "com.example"),
       ),
-    )
+    ).assertValid()
 
     val dependencyTree = DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
 
@@ -345,6 +347,7 @@ class DependencyTreeTest {
       Dependency.Plugin(ijPlugin, isTransitive = true)
     ) + ijPluginDependencies
 
+    assertEquals(13, transitiveDependencies.size)
     assertSetsEqual(expectedDependencies, transitiveDependencies)
 
     val dependencyTreeString = dependencyTree.toString(pluginWithContentModules).toString()
