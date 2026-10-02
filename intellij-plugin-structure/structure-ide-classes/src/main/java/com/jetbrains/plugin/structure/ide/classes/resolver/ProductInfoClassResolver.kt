@@ -5,7 +5,6 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.BinaryClassName
-import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.classes.resolvers.*
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver.ReadMode.FULL
 import com.jetbrains.plugin.structure.ide.*
@@ -228,13 +227,12 @@ class ProductInfoClassResolver private constructor(
     fun of(ide: Ide, readMode: ReadMode = FULL): ProductInfoClassResolver = of(ide, IdeResolverConfiguration(readMode))
 
     @Throws(InvalidIdeException::class)
-    private fun assertProductInfoPresent(idePath: Path) {
-      if (!idePath.containsProductInfoJson()) {
-        throw InvalidIdeException(idePath, "The '$PRODUCT_INFO_JSON' file is not available.")
-      }
+    private fun requireProductInfoJson(idePath: Path): Path {
+      return resolveProductInfoJsonPath(idePath)
+        ?: throw InvalidIdeException(idePath, "The '$PRODUCT_INFO_JSON' file is not available.")
     }
 
-    fun supports(idePath: Path): Boolean = idePath.containsProductInfoJson()
+    fun supports(idePath: Path): Boolean = resolveProductInfoJsonPath(idePath) != null
       && isAtLeastVersion(idePath, "242")
 
     private fun isAtLeastVersion(idePath: Path, expectedVersion: String): Boolean {
@@ -248,21 +246,14 @@ class ProductInfoClassResolver private constructor(
     @Throws(InvalidIdeException::class)
     private fun parseProductInfo(ide: Ide): ProductInfo {
       val idePath = ide.idePath
-      assertProductInfoPresent(idePath)
+      val productInfoJson = requireProductInfoJson(idePath)
       val productInfoParser = ProductInfoParser()
       try {
-        return productInfoParser.parse(idePath.productInfoJson)
+        return productInfoParser.parse(productInfoJson)
       } catch (e: ProductInfoParseException) {
         throw InvalidIdeException(idePath, e)
       }
     }
-
-    private fun Path.containsProductInfoJson(): Boolean = resolve(PRODUCT_INFO_JSON).exists()
-
-    private val Path.productInfoJson: Path
-      get() {
-        return resolve(PRODUCT_INFO_JSON)
-      }
   }
 
   private class LayoutComponentResolver(
