@@ -10,7 +10,6 @@ import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import com.jetbrains.pluginverifier.runSeveralVerifiers
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.tasks.sortWithBigPluginsInFront
-import com.jetbrains.pluginverifier.tasks.twoTargets.TwoTargetsVerificationResults
 import com.jetbrains.pluginverifier.verifiers.filter.DynamicallyLoadedFilter
 
 /**
@@ -21,7 +20,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task {
   override fun execute(
     reportage: PluginVerificationReportage,
     pluginDetailsCache: PluginDetailsCache
-  ): TwoTargetsVerificationResults {
+  ): CheckTrunkApiVerificationResults {
     with(parameters) {
       val classFilters = listOf(DynamicallyLoadedFilter())
 
@@ -49,7 +48,7 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task {
       val sortedVerifiers = verifiers.sortWithBigPluginsInFront()
       val results = runSeveralVerifiers(reportage, sortedVerifiers)
 
-      return TwoTargetsVerificationResults(
+      return CheckTrunkApiVerificationResults(
         releaseVerificationTarget,
         results.filter { it.verificationTarget == releaseVerificationTarget },
         trunkVerificationTarget,

@@ -4,9 +4,7 @@ on:
   push:
     branches: [master]
     paths: [ 'plugins-verifier-service/**', '.github/workflows/plugins-verifier-service.yml' ]
-  # Trigger the workflow on any pull request
-  pull_request:
-    paths: [ 'plugins-verifier-service/**', '.github/workflows/plugins-verifier-service.yml' ]
+  # Pull requests are covered by pull-request-tests.yml.
 
 jobs:
 
