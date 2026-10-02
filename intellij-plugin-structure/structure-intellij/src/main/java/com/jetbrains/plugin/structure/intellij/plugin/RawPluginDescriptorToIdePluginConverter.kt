@@ -151,7 +151,6 @@ internal class RawPluginDescriptorToIdePluginConverter {
     raw.depends.forEach {
       val pluginId = it.pluginId ?: return@forEach
       addDepends(DependsPluginDependency(pluginId, it.isOptional, it.configFile))
-      dependencies += if (it.isOptional) PluginV1Dependency.Optional(pluginId) else PluginV1Dependency.Mandatory(pluginId)
     }
   }
 
@@ -161,11 +160,9 @@ internal class RawPluginDescriptorToIdePluginConverter {
       when (dependency) {
         is DependenciesElement.ModuleDependency -> {
           addContentModuleDependency(ContentModuleDependency(dependency.moduleName, dependency.resolveNamespace(parentPlugin)))
-          dependencies += ModuleV2Dependency(dependency.moduleName)
         }
         is DependenciesElement.PluginDependency -> {
           addPluginMainModuleDependency(PluginMainModuleDependency(dependency.pluginId))
-          dependencies += PluginV2Dependency(dependency.pluginId)
         }
       }
     }
