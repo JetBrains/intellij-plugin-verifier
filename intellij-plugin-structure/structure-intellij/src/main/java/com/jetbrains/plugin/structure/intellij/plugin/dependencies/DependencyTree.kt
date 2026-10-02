@@ -94,7 +94,7 @@ class DependencyTree(
       plugin = plugin,
       nodeId = rootDependency.nodeId,
       graph = graph,
-      visitedPlugins = LinkedHashSet(),
+      visitedNodes = LinkedHashSet(),
       resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1,
       missingDependencies = missingDependencies, context = context, classpathExpandedPlugins = mutableSetOf(),
     )
@@ -107,7 +107,7 @@ class DependencyTree(
    * @param plugin the plugin whose dependencies are being resolved.
    * @param nodeId the graph node identity of [plugin], used as the "from" key when adding edges.
    * @param graph the dependency graph being built.
-   * @param visitedPlugins tracks already-expanded node identities to prevent infinite recursion on cycles.
+   * @param visitedNodes tracks already-expanded node identities to prevent infinite recursion on cycles.
    * @param resolutionDepth current recursion depth, used for debug log indentation.
    * @param dependencyIndex index of this dependency in the parent's dependency list, or -1 for the root.
    * @param parentDependencyIndex the [dependencyIndex] of the parent, used for debug log indentation.
@@ -119,7 +119,7 @@ class DependencyTree(
     plugin: IdePlugin,
     nodeId: NodeId,
     graph: DependencyGraph,
-    visitedPlugins: MutableSet<NodeId>,
+    visitedNodes: MutableSet<NodeId>,
     resolutionDepth: Int,
     dependencyIndex: Int,
     parentDependencyIndex: Int,
@@ -129,7 +129,7 @@ class DependencyTree(
     classpathExpansionActive: Boolean = true,
   ): Unit =
     with(plugin) {
-      val expandGraph = visitedPlugins.add(nodeId)
+      val expandGraph = visitedNodes.add(nodeId)
       val expandClasspath = classpathExpansionActive && classpathExpandedPlugins.add(plugin)
       if (!expandGraph && !expandClasspath) return@with
       val pluginId = pluginId ?: return@with
@@ -172,7 +172,7 @@ class DependencyTree(
               debugLog(nestedIndent, i + 1, "Resolved '{}' from '{}' (classpath: {})",
                 dep.id, source, includeInClasspath)
               getDependencyGraph(
-                resolved.plugin, dependencyPlugin.nodeId!!, graph, visitedPlugins,
+                resolved.plugin, dependencyPlugin.nodeId!!, graph, visitedNodes,
                 resolutionDepth + 1, i, dependencyIndex, missingDependencies, context, classpathExpandedPlugins,
                 classpathExpansionActive = includeInClasspath
               )
