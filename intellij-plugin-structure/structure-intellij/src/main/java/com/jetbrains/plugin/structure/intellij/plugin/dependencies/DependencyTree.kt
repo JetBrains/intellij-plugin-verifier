@@ -133,11 +133,17 @@ class DependencyTree(
       val expandClasspath = classpathExpansionActive && classpathExpandedPlugins.add(plugin)
       if (!expandGraph && !expandClasspath) return@with
       val pluginId = pluginId ?: return@with
-      val modules = modulesDescriptors.associateBy { it.name }
-      for (descriptor in modules.values) {
+      // Index content-module descriptors by name for source and sibling dependency lookups below.
+      val contentModules = modulesDescriptors.associateBy { it.name }
+
+      // Content-module ownership is implicit; no dependency declaration is needed. Avoid self-edges.
+      for (descriptor in contentModules.values) {
         val moduleDependency = Module(plugin, descriptor.name).intern()
-        if (moduleDependency.nodeId != nodeId) graph.addOwnershipEdge(nodeId, moduleDependency)
+        if (moduleDependency.nodeId != nodeId) {
+          graph.addOwnershipEdge(nodeId, moduleDependency)
+        }
       }
+
       val modifications = context.dependenciesModifier.apply(this, pluginProvider)
       val classpathTargets = mutableListOf<Dependency>()
       val indent = getIndent(resolutionDepth, parentDependencyIndex)
@@ -148,9 +154,9 @@ class DependencyTree(
       for ((i, modification) in modifications.withIndex()) {
         for (contribution in modification.contributions) {
           val dep = contribution.dependency
-          val source = contribution.sourceModuleName?.takeIf { it in modules }
+          val source = contribution.sourceModuleName?.takeIf { it in contentModules }
             ?.let { NodeId(pluginId, it) } ?: nodeId
-          val sibling = modules[dep.id]?.takeIf { dep.isModule }
+          val sibling = contentModules[dep.id]?.takeIf { dep.isModule }
           if (!dependencyFilter(dep)) continue
           if (sibling != null) {
             graph.addEdge(source, Module(plugin, sibling.name).intern())
