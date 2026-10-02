@@ -14,7 +14,13 @@ enum class DependencyModificationReason {
   CONTENT_MODULE
 }
 
-data class DependencyModification(val dependency: PluginDependency, val reason: DependencyModificationReason)
+data class DependencyContribution(val sourceModuleName: String?, val dependency: PluginDependency)
+
+data class DependencyModification(
+  val dependency: PluginDependency,
+  val reason: DependencyModificationReason,
+  val contributions: List<DependencyContribution> = listOf(DependencyContribution(null, dependency))
+)
 
 fun interface DependenciesModifier {
   fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<DependencyModification>
@@ -34,7 +40,19 @@ internal interface DependencyModificationsAware {
 
 internal fun IdePlugin.getDependencyModifications(): List<DependencyModification> {
   return (this as? DependencyModificationsAware)?.dependencyModifications
-    ?: dependencies.withInferredModificationReasons()
+    ?: dependencies.withInferredModificationReasons().map { modification ->
+      modification.copy(contributions = getDependencyContributions(modification.dependency))
+    }
+}
+
+internal fun IdePlugin.getDependencyContributions(dependency: PluginDependency): List<DependencyContribution> {
+  if (modulesDescriptors.isEmpty()) return listOf(DependencyContribution(null, dependency))
+  val declarations = reconstructDependencies().filter { it.id == dependency.id }
+    .map { DependencyContribution(null, it) } + modulesDescriptors.flatMap { descriptor ->
+    descriptor.declaredDependencies.filter { it.id == dependency.id }
+      .map { DependencyContribution(descriptor.name, it) }
+  }
+  return declarations.ifEmpty { listOf(DependencyContribution(null, dependency)) }
 }
 
 internal fun List<PluginDependency>.withInferredModificationReasons(): List<DependencyModification> = map {

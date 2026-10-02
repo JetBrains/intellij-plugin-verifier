@@ -7,5 +7,5 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 object PassThruDependenciesModifier : DependenciesModifier {
   override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<DependencyModification> =
-    plugin.dependencies.withInferredModificationReasons()
+    plugin.getDependencyModifications()
 }

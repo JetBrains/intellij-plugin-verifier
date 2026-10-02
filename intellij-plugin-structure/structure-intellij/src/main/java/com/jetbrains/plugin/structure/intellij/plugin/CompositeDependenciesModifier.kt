@@ -39,17 +39,7 @@ class CompositeDependenciesModifier(
   }
 
   private fun getInitialDependencyModifications(plugin: IdePlugin): List<DependencyModification> =
-    plugin.dependencies.map {
-      DependencyModification(it, it.inferredModificationReason())
-    }
-
-  private fun PluginDependency.inferredModificationReason(): DependencyModificationReason {
-    return if (this is ModuleV2Dependency) {
-      DependencyModificationReason.CONTENT_MODULE
-    } else {
-      DependencyModificationReason.PLUGIN
-    }
-  }
+    plugin.getDependencyModifications()
 
   private fun mergeDependencyModifications(
     current: List<DependencyModification>,
@@ -76,7 +66,14 @@ class CompositeDependenciesModifier(
   }
 
   private fun DependencyModification.withHighestPriorityReason(other: DependencyModification): DependencyModification {
-    return if (reason >= other.reason) this else other
+    val preferred = if (reason >= other.reason) this else other
+    val sources = contributions.map { it.sourceModuleName }.toSet()
+    val retained = other.contributions.filterNot {
+      it.sourceModuleName == null && sources.isNotEmpty() && null !in sources
+    }
+    return preferred.copy(contributions = (contributions + retained).distinctBy {
+      Triple(it.sourceModuleName, it.dependency.id, it.dependency.isOptional)
+    })
   }
 
   /**

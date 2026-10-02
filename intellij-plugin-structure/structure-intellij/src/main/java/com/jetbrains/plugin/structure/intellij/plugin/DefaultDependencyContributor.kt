@@ -20,7 +20,12 @@ class DefaultDependencyContributor(private val includeContentModuleDependencies:
     } else {
       plugin.reconstructDependencies()
     }
-    return dependencies.map(::toDependencyModification)
+    return dependencies.map { dependency ->
+      val modification = toDependencyModification(dependency)
+      if (includeContentModuleDependencies) {
+        modification.copy(contributions = plugin.getDependencyContributions(dependency))
+      } else modification
+    }
   }
 
   private fun toDependencyModification(dependency: PluginDependency): DependencyModification {
