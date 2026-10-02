@@ -20,8 +20,9 @@ val IdePlugin.id: String
 val Dependency.id: String
   get() {
     return when (this) {
-      is Dependency.Module -> this.plugin.id
       is Dependency.Plugin -> this.plugin.id
+      is Dependency.Module -> this.plugin.id
+      is Dependency.ContentModuleDeclaration -> this.plugin.id
       Dependency.None -> null
     } ?: UNKNOWN_DEPENDENCY_ID
   }
@@ -29,8 +30,9 @@ val Dependency.id: String
 val Dependency.pluginDependency: PluginDependency?
   get() {
     return when (this) {
-      is Dependency.Module -> PluginDependencyImpl(id, false, true)
       is Dependency.Plugin -> PluginDependencyImpl(id, false, false)
+      is Dependency.Module -> PluginDependencyImpl(id, false, true)
+      is Dependency.ContentModuleDeclaration -> PluginDependencyImpl(id, false, true)
       Dependency.None -> null
     }
   }

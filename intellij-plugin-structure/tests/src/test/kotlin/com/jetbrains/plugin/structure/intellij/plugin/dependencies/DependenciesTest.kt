@@ -1395,6 +1395,7 @@ class DependenciesTest {
       when (it) {
         is Dependency.Plugin -> DependencyEntry(it.plugin.id, transitive = it.isTransitive)
         is Dependency.Module -> DependencyEntry(it.id, it.plugin.id, transitive = it.isTransitive)
+        is Dependency.ContentModuleDeclaration -> DependencyEntry(it.id, it.plugin.id)
         Dependency.None -> null
       }
     }.toSet()

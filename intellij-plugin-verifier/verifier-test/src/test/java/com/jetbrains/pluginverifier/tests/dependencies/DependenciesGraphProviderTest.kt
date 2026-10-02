@@ -34,6 +34,13 @@ class DependenciesGraphProviderTest {
     val resolution
       = dependencyTree.getDependencyTreeResolution(plugin, dependenciesModifier)
 
+    val ownershipEdges = mutableSetOf<Pair<Dependency, Dependency>>()
+    resolution.forEach { from, to -> ownershipEdges += from to to }
+    assertEquals(setOf(
+      Dependency.Plugin(plugin) to Dependency.ContentModuleDeclaration(plugin, "main"),
+      Dependency.Plugin(plugin) to Dependency.ContentModuleDeclaration(plugin, "extra")
+    ), ownershipEdges)
+
     val graph = DependenciesGraphProvider().getDependenciesGraph(resolution)
     val root = DependencyNode.PluginDependency(plugin)
     val mainNode = DependencyNode.ModuleDependency(plugin, "main")
@@ -47,6 +54,9 @@ class DependenciesGraphProviderTest {
       DependencyEdge(root, mainNode, PluginDependencyImpl("main", false, true)),
       DependencyEdge(root, extraNode, PluginDependencyImpl("extra", false, true))
     ), graph.edges)
+    assertEquals(graph.edges, graph.getEdgesFrom(root).toSet())
+    assertTrue(graph.getEdgesFrom(mainNode).isEmpty())
+    assertTrue(graph.getEdgesFrom(extraNode).isEmpty())
     assertTrue(graph.missingDependencies.isEmpty())
   }
 

@@ -7,10 +7,7 @@ package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertSame
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 
 class DependencyTreeDependencyGraphTest {
@@ -52,6 +49,39 @@ class DependencyTreeDependencyGraphTest {
       it.matches(alphaPluginId)
     }
     assertTrue(somePluginDependsOnAlpha)
+  }
+
+  @Test
+  fun `ownership declarations and resolved sibling references share node identities`() {
+    val plugin = mockk<IdePlugin>()
+    every { plugin.pluginId } returns "owner"
+    val externalPlugin = mockk<IdePlugin>()
+    every { externalPlugin.pluginId } returns "external"
+    val root = Dependency.Plugin(plugin)
+    val main = Dependency.ContentModuleDeclaration(plugin, "main")
+    val extra = Dependency.ContentModuleDeclaration(plugin, "extra")
+    val mainReference = Dependency.Module(plugin, "main")
+    val external = Dependency.Plugin(externalPlugin)
+    val graph = DependencyTree.DependencyGraph(root)
+
+    graph.addOwnershipEdge(root.nodeId, main)
+    graph.addOwnershipEdge(root.nodeId, extra)
+    graph.addEdge(root.nodeId, mainReference)
+    graph.addEdge(extra.nodeId, mainReference)
+    graph.addEdge(main.nodeId, external)
+
+    assertEquals(listOf(main, extra), graph[root.nodeId])
+    assertEquals(listOf(mainReference), graph[extra.nodeId])
+    assertEquals(listOf(external), graph[main.nodeId])
+    assertTrue(graph.isOwnershipEdge(root.nodeId, main.nodeId))
+    assertTrue(graph.isOwnershipEdge(root.nodeId, extra.nodeId))
+    assertFalse(graph.isOwnershipEdge(extra.nodeId, main.nodeId))
+    assertTrue(graph.contains(root.nodeId) { it.matches("main") })
+
+    val edges = mutableListOf<Pair<Dependency, Dependency>>()
+    val resolution = DefaultDependencyTreeResolution(plugin, emptySet(), emptyMap(), graph)
+    resolution.forEach { from, to -> edges += from to to }
+    assertEquals(listOf(root to main, root to extra, extra to mainReference, main to external), edges)
   }
 
   @Test
@@ -111,6 +141,7 @@ class DependencyTreeDependencyGraphTest {
   private val Dependency.id: String
     get() {
       return when (this) {
+        is Dependency.ContentModuleDeclaration -> this.plugin.pluginId ?: this.plugin.pluginName
         is Dependency.Module -> this.plugin.pluginId ?: this.plugin.pluginName
         is Dependency.Plugin -> this.plugin.pluginId ?: this.plugin.pluginName
         Dependency.None -> null

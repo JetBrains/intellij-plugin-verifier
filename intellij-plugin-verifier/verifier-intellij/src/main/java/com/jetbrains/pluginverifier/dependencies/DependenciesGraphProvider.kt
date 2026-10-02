@@ -36,6 +36,7 @@ class DependenciesGraphProvider {
       when (it) {
         is Dependency.Module -> it.getVertices()
         is Dependency.Plugin -> setOf(newDependencyNode(it.plugin))
+        is Dependency.ContentModuleDeclaration -> setOf(newDependencyNode(it))
         Dependency.None -> emptySet()
       }
     }
@@ -97,10 +98,11 @@ class DependenciesGraphProvider {
   private fun Dependency.Module.isContentModule(): Boolean = plugin.modulesDescriptors.any { it.name == id }
 
   private fun newDependencyNode(dependency: Dependency): DependencyNode = when (dependency) {
+    is Dependency.Plugin -> newDependencyNode(dependency.plugin)
     is Dependency.Module -> if (dependency.isContentModule()) {
       normalizer.intern(DependencyNode.ModuleDependency(dependency.plugin, dependency.id))
     } else newDependencyNode(dependency.plugin)
-    is Dependency.Plugin -> newDependencyNode(dependency.plugin)
+    is Dependency.ContentModuleDeclaration -> normalizer.intern(DependencyNode.ModuleDependency(dependency.plugin, dependency.id))
     Dependency.None -> error("Cannot report an unresolved dependency node")
   }
 

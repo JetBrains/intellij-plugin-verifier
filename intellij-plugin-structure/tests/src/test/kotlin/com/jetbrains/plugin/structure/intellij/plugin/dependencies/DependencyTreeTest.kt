@@ -8,9 +8,7 @@ import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPlugi
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.*
 import com.jetbrains.plugin.structure.mocks.validation.MockIdePluginValidator.Companion.assertValid
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -375,9 +373,9 @@ class DependencyTreeTest {
 
     val dependencyTreeString = dependencyTree.toString(pluginWithContentModules).toString()
     val expectedDependencyTreeString = """
-      * Module 'com.example.Modular.core' provided by plugin 'com.example.Modular'
+      * Content module 'com.example.Modular.core' declared by plugin 'com.example.Modular'
         * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij'
-      * Module 'com.example.Modular.extras' provided by plugin 'com.example.Modular'
+      * Content module 'com.example.Modular.extras' declared by plugin 'com.example.Modular'
         * Module 'com.example.Modular.core' provided by plugin 'com.example.Modular' (already visited)
         * Plugin dependency: 'plugin1'
           * Plugin dependency: 'ij'
@@ -437,7 +435,7 @@ class DependencyTreeTest {
 
     val dependencyTreeString = dependencyTree.toString(pluginWithContentModules).toString()
     val expectedDependencyTreeString = """
-      * Module 'com.example.thirdPartyModularPlugin.core' provided by plugin 'com.example.thirdPartyModularPlugin'
+      * Content module 'com.example.thirdPartyModularPlugin.core' declared by plugin 'com.example.thirdPartyModularPlugin'
         * Module '$CORE_CONTENT_MODULE_IN_A_BUNDLED_PLUGIN' provided by plugin 'com.intellij.bundledModularPlugin'
           * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij'
         * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij' (already visited)
@@ -538,6 +536,14 @@ class DependencyTreeTest {
     val platformNode = Dependency.Module(platformPlugin, "com.intellij.modules.platform").nodeId
     val bundledNode = NodeId.ofPlugin(someBundledIdePlugin)
     val ijNode = NodeId.ofPlugin(ijPlugin)
+    val edges = mutableListOf<Pair<Dependency, Dependency>>()
+    resolution.forEach { from, to -> edges += from to to }
+    assertEquals(setOf(
+      Dependency.ContentModuleDeclaration(plugin, coreModule.pluginId!!),
+      Dependency.ContentModuleDeclaration(plugin, extrasModule.pluginId!!)
+    ), edges.filter { it.first.nodeId == rootNode }.map { it.second }.toSet())
+    assertEquals(Dependency.Module(plugin, coreModule.pluginId!!),
+      edges.single { it.first.nodeId == extrasNode && it.second.nodeId == coreNode }.second)
     val expectedEdges = mapOf(
       rootNode to setOf(coreNode, extrasNode),
       coreNode to setOf(platformNode),
@@ -585,11 +591,11 @@ class DependencyTreeTest {
     ), resolution.graphEdges())
 
     val expectedDependencyTreeString = """
-      * Module '$coreModuleId' provided by plugin 'com.example.Cyclic'
+      * Content module '$coreModuleId' declared by plugin 'com.example.Cyclic'
         * Module '$extrasModuleId' provided by plugin 'com.example.Cyclic'
           * Module '$coreModuleId' provided by plugin 'com.example.Cyclic' (already visited)
         * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij'
-      * Module '$extrasModuleId' provided by plugin 'com.example.Cyclic' (already visited)
+      * Content module '$extrasModuleId' declared by plugin 'com.example.Cyclic' (already visited)
 
     """.trimIndent()
     assertEquals(expectedDependencyTreeString, dependencyTree.toString(plugin).toString())

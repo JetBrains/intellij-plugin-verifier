@@ -136,9 +136,9 @@ class DependencyTree(
       // Index content-module descriptors by name for source and sibling dependency lookups below.
       val contentModules = modulesDescriptors.associateBy { it.name }
 
-      // Content-module ownership is implicit; no dependency declaration is needed. Avoid self-edges.
+      // <content><module> establishes ownership without an explicit <dependencies> entry. Avoid self-edges.
       for (descriptor in contentModules.values) {
-        val moduleDependency = Module(plugin, descriptor.name).intern()
+        val moduleDependency = ContentModuleDeclaration(plugin, descriptor.name).intern()
         if (moduleDependency.nodeId != nodeId) {
           graph.addOwnershipEdge(nodeId, moduleDependency)
         }
@@ -164,7 +164,7 @@ class DependencyTree(
           }
           if (ignore(plugin, dep) || dep in missingDependencies) continue
           when (val dependencyPlugin = resolve(dep)) {
-            is Module, is Plugin -> {
+              is Plugin, is Module, is ContentModuleDeclaration -> {
               val resolved = dependencyPlugin as PluginAware
               if (resolved.plugin.pluginId == pluginId) continue
               val includeInClasspath = expandClasspath && classpathTargets.none {
@@ -249,6 +249,7 @@ class DependencyTree(
     get() = when (this) {
       is Plugin -> id
       is Module -> id
+      is ContentModuleDeclaration -> id
       None -> null
     }
 
@@ -313,6 +314,7 @@ class DependencyTree(
         unique[depId] = when (dependency) {
           is Plugin -> dependency.copy(isTransitive = false)
           is Module -> dependency.copy(isTransitive = false)
+          is ContentModuleDeclaration -> dependency
           is None -> None
         }.intern()
       } else {
@@ -347,6 +349,7 @@ class DependencyTree(
 
   private fun Dependency.asTransitive(): Dependency {
     return when (this) {
+      is ContentModuleDeclaration -> this
       is Module -> copy(isTransitive = true)
       is Plugin -> copy(isTransitive = true)
       is None -> this

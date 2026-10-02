@@ -33,6 +33,21 @@ sealed class Dependency {
 
   abstract val nodeId: NodeId?
 
+  /**
+   * A `<content><module name="..."/></content>` declaration in the owning [plugin]'s main descriptor.
+   * Represents the owne rship dependency from the main plugin module to the content module [id],
+   * rather than a resolved module reference declared in `<dependencies>`.
+   */
+  data class ContentModuleDeclaration(override val plugin: IdePlugin, val id: PluginId) : Dependency(), PluginAware {
+    override fun matches(id: PluginId) = this.id == id
+
+    override val isTransitive = false
+
+    override val nodeId: NodeId get() = NodeId(plugin.pluginId!!, id)
+
+    override fun toString() = "Content module '$id' declared by plugin '${plugin.pluginId}'"
+  }
+
   data class Module(override val plugin: IdePlugin, val id: PluginId, override val isTransitive: Boolean = false) : Dependency(), PluginAware {
     override fun matches(id: PluginId) = plugin.pluginId == id || plugin.hasDefinedModuleWithId(id)
 
