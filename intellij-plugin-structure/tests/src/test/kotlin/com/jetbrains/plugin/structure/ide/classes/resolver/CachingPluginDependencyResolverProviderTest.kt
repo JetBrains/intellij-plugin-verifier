@@ -5,20 +5,28 @@
 package com.jetbrains.plugin.structure.ide.classes.resolver
 
 import com.jetbrains.plugin.structure.base.BinaryClassName
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.CharSequenceComparator
 import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.createEmptyClass
 import com.jetbrains.plugin.structure.base.utils.newTemporaryFile
+import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.Classpath
 import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
+import com.jetbrains.plugin.structure.intellij.plugin.DefaultDependencyContributor
 import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.NodeId
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.*
 import net.bytebuddy.ByteBuddy
@@ -509,6 +517,190 @@ class CachingPluginDependencyResolverProviderTest {
     val pluginResolver = resolverProvider.getResolver(alphaPlugin)
     assertTrue(pluginResolver.containsClass("com/intellij/json/JsonNamesValidator"))
     assertTrue(pluginResolver.containsClass("com/intellij/json/JsonBundle"))
+  }
+
+  @Test
+  fun `repeated main and module-only declarations resolve the same external classes without leaking local classes`() {
+    val bundledClass = "com/example/bundled/BundledAction"
+    val transitiveClass = "com/example/transitive/TransitiveAction"
+    val transitivePlugin = buildClassPlugin("com.example.Transitive", transitiveClass)
+    val bundledPlugin = buildClassPlugin("com.example.Bundled", bundledClass, dependency(transitivePlugin.pluginId!!))
+    val ide = MockIde(
+      IdeVersion.createIdeVersion("IU-243.12818.47"), ideRoot,
+      bundledPlugins = listOf(ideaCorePlugin, bundledPlugin, transitivePlugin)
+    )
+    val contributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
+    val expectedDependencies = setOf(
+      Dependency.Module(ideaCorePlugin, "com.intellij.modules.platform", isTransitive = false),
+      Dependency.Plugin(bundledPlugin, isTransitive = false),
+      Dependency.Plugin(transitivePlugin, isTransitive = true)
+    )
+    val expectedClasses = expectedIdeaCoreClasses.map { it.toString() }.toSet() + setOf(bundledClass, transitiveClass)
+    val dependenciesByLayout = listOf(true, false).map { repeatMainDependencies ->
+      val plugin = buildModularClassPlugin(repeatMainDependencies)
+      val coreId = "com.example.Modular.core"
+      val extraId = "com.example.Modular.extra"
+      assertEquals("Both local modules must be parsed", setOf(coreId, extraId), plugin.modulesDescriptors.map { it.name }.toSet())
+      assertEquals("The owner classpath must contain the root and both content module JARs",
+        setOf("main.jar", "core.jar", "extra.jar"), plugin.classpath.entries.map { it.path.fileName.toString() }.toSet())
+      assertTrue(plugin.dependsList.isEmpty())
+      if (repeatMainDependencies) {
+        assertEquals(listOf("com.example.Bundled"), plugin.pluginMainModuleDependencies.map { it.pluginId })
+        assertEquals(listOf("com.intellij.modules.platform"), plugin.contentModuleDependencies.map { it.moduleName })
+      } else {
+        assertTrue(plugin.pluginMainModuleDependencies.isEmpty())
+        assertTrue(plugin.contentModuleDependencies.isEmpty())
+      }
+      val coreDescriptor = plugin.modulesDescriptors.single { it.name == coreId }
+      val extraDescriptor = plugin.modulesDescriptors.single { it.name == extraId }
+      assertEquals(listOf("com.intellij.modules.platform"), coreDescriptor.declaredDependencies.map { it.id })
+      assertEquals("Extra declares its sibling and bundled dependency", setOf(coreId, "com.example.Bundled"),
+        extraDescriptor.declaredDependencies.map { it.id }.toSet())
+      assertEquals(if (repeatMainDependencies) emptyList<String>() else listOf("com.intellij.modules.platform"),
+        coreDescriptor.resolvedDependencies.map { it.id })
+      assertEquals("Only main-descriptor duplicates are filtered",
+        if (repeatMainDependencies) setOf(coreId) else setOf(coreId, "com.example.Bundled"),
+        extraDescriptor.resolvedDependencies.map { it.id }.toSet())
+
+      val resolverProvider = CachingPluginDependencyResolverProvider(
+        ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX, dependenciesModifier = contributor
+      )
+      val resolver = resolverProvider.getResolver(plugin)
+      assertTrue(resolver is CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver)
+      resolver as CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver
+      resolver.use {
+        val externalResolverNames = setOf("com.intellij", "com.example.Bundled", "com.example.Transitive")
+        assertTrue("Repeated declarations must not multiply external resolvers: $resolver",
+          resolver.toString().startsWith("${plugin.pluginId} with 3 resolvers: "))
+        externalResolverNames.forEach { name ->
+          assertTrue("External resolver for $name is required", resolver.containsResolverName(name))
+          assertTrue(resolverProvider.pluginResolverCacheContains(name))
+        }
+        listOf(plugin.pluginId!!, coreId, extraId).forEach { name ->
+          assertFalse("Local ownership and sibling nodes must not create external resolvers for $name", resolver.containsResolverName(name))
+          assertFalse(resolverProvider.pluginResolverCacheContains(name))
+        }
+        assertFalse("Platform alias must not create another resolver", resolver.containsResolverName("com.intellij.modules.platform"))
+        listOf("com/intellij/openapi/graph/builder/actions/SelectionNodeModeAction", bundledClass, transitiveClass).forEach { className ->
+          val result = resolver.resolveClass(className)
+          assertTrue("External class $className must resolve, but got $result", result is ResolutionResult.Found)
+          assertEquals(className, (result as ResolutionResult.Found).value.name)
+        }
+        assertEquals("Only external classes belong in the dependency resolver",
+          expectedClasses, resolver.allClassNames.map { it.toString() }.toSet())
+        listOf("com/example/modular/RootAction", "com/example/modular/CoreAction", "com/example/modular/ExtraAction").forEach { className ->
+          assertFalse("Local class $className must not leak into external dependencies", resolver.containsClass(className))
+          assertEquals(ResolutionResult.NotFound, resolver.resolveClass(className))
+        }
+
+        val resolution = resolver.dependencyTreeResolution
+        assertTrue(resolution.missingDependencies.isEmpty())
+        assertEquals("Exactly three flattened external dependencies are required", 3, resolution.transitiveDependencies.size)
+        assertEquals("Flattening must preserve direct and transitive classification", expectedDependencies, resolution.transitiveDependencies.toSet())
+        assertEquals("Both dependency APIs must expose the same flattened collection", expectedDependencies,
+          DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX).getTransitiveDependencies(plugin, dependenciesModifier = contributor))
+
+        val rootNode = NodeId.ofPlugin(plugin)
+        val coreNode = NodeId(rootNode.pluginId, coreId)
+        val extraNode = NodeId(rootNode.pluginId, extraId)
+        val platformNode = Dependency.Module(ideaCorePlugin, "com.intellij.modules.platform").nodeId
+        val bundledNode = NodeId.ofPlugin(bundledPlugin)
+        val transitiveNode = NodeId.ofPlugin(transitivePlugin)
+        val edges = linkedMapOf<NodeId, MutableSet<NodeId>>()
+        resolution.forEach { from, to ->
+          edges.getOrPut(requireNotNull(from.nodeId)) { linkedSetOf() } += requireNotNull(to.nodeId)
+        }
+        val rootDependencies = setOf(coreNode, extraNode) +
+          if (repeatMainDependencies) setOf(platformNode, bundledNode) else emptySet()
+        assertEquals("Local graph nodes and their declaration sources must survive flattening", mapOf(
+          rootNode to rootDependencies,
+          coreNode to setOf(platformNode),
+          extraNode to setOf(coreNode, bundledNode),
+          bundledNode to setOf(transitiveNode)
+        ), edges)
+        resolution.transitiveDependencies.toSet()
+      }
+    }
+    assertEquals("Repeated-main and module-only layouts must have identical external dependencies and classification",
+      dependenciesByLayout[0], dependenciesByLayout[1])
+  }
+
+  private fun buildClassPlugin(id: String, className: String, dependsList: List<DependsPluginDependency> = emptyList()): MockIdePlugin {
+    val pluginFile = buildZipFile(temporaryFolder.newTemporaryFile("$id/plugin.jar")) {
+      dirs(className.substringBeforeLast('/')) {
+        file("${className.substringAfterLast('/')}.class", createEmptyClass(className))
+      }
+    }
+    return MockIdePlugin(
+      pluginId = id,
+      originalFile = pluginFile,
+      dependsList = dependsList,
+      classpath = Classpath.of(listOf(pluginFile))
+    )
+  }
+
+  private fun buildModularClassPlugin(repeatMainDependencies: Boolean): IdePlugin {
+    val layout = if (repeatMainDependencies) "repeated-main" else "module-only"
+    val mainDependencies = if (repeatMainDependencies) """
+      <dependencies>
+        <module name="com.intellij.modules.platform"/>
+        <plugin id="com.example.Bundled"/>
+      </dependencies>
+    """.trimIndent() else ""
+    val pluginRoot = buildDirectory(temporaryFolder.newFolder(layout).toPath()) {
+      dir("lib") {
+        zip("main.jar") {
+          dir("META-INF") {
+            file("plugin.xml", """
+              <idea-plugin>
+                <id>com.example.Modular</id>
+                <name>Modular class resolution fixture</name>
+                <version>1.0</version>
+                <vendor>JetBrains</vendor>
+                <description>A fixture verifying external class resolution for local content modules.</description>
+                <idea-version since-build="243.0"/>
+                $mainDependencies
+                <content>
+                  <module name="com.example.Modular.core" loading="required"/>
+                  <module name="com.example.Modular.extra" loading="required"/>
+                </content>
+              </idea-plugin>
+            """.trimIndent())
+          }
+          dirs("com/example/modular") {
+            file("RootAction.class", createEmptyClass("com/example/modular/RootAction"))
+          }
+        }
+        zip("core.jar") {
+          file("com.example.Modular.core.xml", """
+            <idea-plugin>
+              <dependencies>
+                <module name="com.intellij.modules.platform"/>
+              </dependencies>
+            </idea-plugin>
+          """.trimIndent())
+          dirs("com/example/modular") {
+            file("CoreAction.class", createEmptyClass("com/example/modular/CoreAction"))
+          }
+        }
+        zip("extra.jar") {
+          file("com.example.Modular.extra.xml", """
+            <idea-plugin>
+              <dependencies>
+                <module name="com.example.Modular.core"/>
+                <plugin id="com.example.Bundled"/>
+              </dependencies>
+            </idea-plugin>
+          """.trimIndent())
+          dirs("com/example/modular") {
+            file("ExtraAction.class", createEmptyClass("com/example/modular/ExtraAction"))
+          }
+        }
+      }
+    }
+    val result = IdePluginManager.createManager().createPlugin(pluginRoot, validateDescriptor = true)
+    assertTrue("Expected a successfully parsed $layout plugin, but got $result", result is PluginCreationSuccess)
+    return (result as PluginCreationSuccess).plugin
   }
 
   private fun dependency(id: String): List<DependsPluginDependency> {
