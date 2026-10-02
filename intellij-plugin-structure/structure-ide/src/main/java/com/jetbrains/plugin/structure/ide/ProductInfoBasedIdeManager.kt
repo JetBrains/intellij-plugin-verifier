@@ -54,7 +54,9 @@ class ProductInfoBasedIdeManager(
     }
 
     val pluginCollectionProviders = createPluginCollectionProviders(idePath, ideVersion, productInfo)
-    return ProductInfoBasedIde.of(idePath, ideVersion, productInfo, pluginCollectionProviders)
+    // TODO: Conditional for creating inflatable IDE
+    return InflatableProductInfoBasedIde.of(idePath, ideVersion, productInfo, pluginCollectionProviders)
+//    return ProductInfoBasedIde.of(idePath, ideVersion, productInfo, pluginCollectionProviders)
   }
 
   private fun createIdeVersion(productInfo: ProductInfo): IdeVersion {
