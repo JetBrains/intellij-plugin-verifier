@@ -47,9 +47,7 @@ data class MockIdePlugin(
 
   @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
   override val dependencies: List<PluginDependency>
-    get() = dependsList.map { it.asPluginDependency() } +
-      contentModuleDependencies.map { ModuleV2Dependency(it.moduleName) } +
-      pluginMainModuleDependencies.map { PluginV2Dependency(it.pluginId) }
+    get() = reconstructDependencies()
 
   override val useIdeClassLoader = false
   override val isImplementationDetail = false

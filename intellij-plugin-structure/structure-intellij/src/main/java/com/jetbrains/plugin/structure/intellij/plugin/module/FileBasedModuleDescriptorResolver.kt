@@ -7,7 +7,6 @@ package com.jetbrains.plugin.structure.intellij.plugin.module
 import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.utils.isFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginImpl
 import com.jetbrains.plugin.structure.intellij.plugin.Module.FileBasedModule
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
@@ -23,22 +22,23 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOr
 
   override fun getModuleDescriptor(
     pluginArtifactPath: Path,
-    pluginCreator: PluginCreator,
+    contentModulesOwner: PluginCreator,
     module: IdePlugin,
     moduleCreator: PluginCreator,
     moduleReference: FileBasedModule
   ): ModuleDescriptor {
-    pluginCreator.plugin.dependencies += getDependencies(pluginCreator.plugin, module, moduleReference)
-    return ModuleDescriptor(
+    val resolvedDependencies = getDependencies(contentModulesOwner, module, moduleReference)
+    return ModuleDescriptor.of(
       module,
-      moduleReference
+      moduleReference,
+      resolvedDependencies
     )
   }
 
   override fun getModuleCreator(
     moduleReference: FileBasedModule,
     pluginArtifactPath: Path,
-    pluginCreator: PluginCreator,
+    contentModulesOwner: PluginCreator,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver
   ): PluginCreator {
@@ -49,7 +49,7 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOr
       moduleReference.configFile,
       false,
       resourceResolver,
-      pluginCreator,
+      contentModulesOwner,
       problemResolver
     ))
   }
@@ -59,12 +59,12 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOr
   }
 
   override fun getDependencies(
-    moduleOwner: IdePluginImpl,
+    contentModulesOwner: PluginCreator,
     module: IdePlugin,
     moduleReference: FileBasedModule
   ): List<PluginDependency> {
     return mutableListOf<PluginDependency>().also { dependencies ->
-      module.forEachDependencyNotIn(moduleOwner) {
+      module.forEachDependencyNotIn(contentModulesOwner.plugin) {
         dependencies += if (moduleReference.loadingRule.required) it else it.asOptional()
       }
     }

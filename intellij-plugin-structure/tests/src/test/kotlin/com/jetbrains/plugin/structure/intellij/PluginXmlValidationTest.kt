@@ -7,27 +7,10 @@ import com.jetbrains.plugin.structure.base.problems.PluginProblem
 import com.jetbrains.plugin.structure.base.problems.isInstance
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
-import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.archConstraints
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.enums.CpuArch
 import com.jetbrains.plugin.structure.intellij.plugin.enums.OS
-import com.jetbrains.plugin.structure.intellij.plugin.osConstraints
-import com.jetbrains.plugin.structure.intellij.problems.DependencyConstraintsDuplicates
-import com.jetbrains.plugin.structure.intellij.problems.ModuleDescriptorResolutionProblem
-import com.jetbrains.plugin.structure.intellij.problems.NoDependencies
-import com.jetbrains.plugin.structure.intellij.problems.NoModuleDependencies
-import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileIsEmpty
-import com.jetbrains.plugin.structure.intellij.problems.OptionalDependencyConfigFileNotSpecified
-import com.jetbrains.plugin.structure.intellij.problems.ProhibitedModuleExposed
-import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch
-import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat
-import com.jetbrains.plugin.structure.intellij.problems.ServiceExtensionPointPreloadNotSupported
-import com.jetbrains.plugin.structure.intellij.problems.UndeclaredKotlinK2CompatibilityMode
+import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 import org.junit.Assert.*
 import org.junit.Rule
@@ -493,11 +476,11 @@ class PluginXmlValidationTest {
       assertEquals(1, size)
       val intellijMlLlmPrivacy = first()
       assertEquals("intellij.ml.llm.privacy", intellijMlLlmPrivacy.name)
-      val privacyDeps = intellijMlLlmPrivacy.dependencies
+      val privacyDeps = intellijMlLlmPrivacy.resolvedDependencies
       assertEquals(1, privacyDeps.size)
       val platformVcsImpl = privacyDeps.first()
-      assertTrue(platformVcsImpl is ModuleV2Dependency)
-      platformVcsImpl as ModuleV2Dependency
+      assertTrue(platformVcsImpl is InlineDeclaredModuleV2Dependency.Module)
+      platformVcsImpl as InlineDeclaredModuleV2Dependency.Module
       assertEquals("intellij.platform.vcs.impl", platformVcsImpl.id)
     }
 
@@ -605,19 +588,109 @@ class PluginXmlValidationTest {
   }
 
   @Test
-  fun `content dependencies in plugin that declares multiple modules are resolved`() {
+  fun `content dependencies in plugin that declares multiple optional modules are resolved`() {
     val pluginCreationSuccess = buildCorrectPlugin {
       dir("META-INF") {
         file("plugin.xml", classpath("/descriptors/ml-llm/plugin-modules-in-cdata.xml"))
       }
     }
     val modules = pluginCreationSuccess.plugin.modulesDescriptors
-    val llmCoreDeps = modules.first { it.name == "intellij.ml.llm.core" }.dependencies
+    val llmCoreDeps = modules.first { it.name == "intellij.ml.llm.core" }.resolvedDependencies
     assertEquals(4, llmCoreDeps.size)
-    assertTrue(llmCoreDeps.contains(ModuleV2Dependency("intellij.ml.llm.privacy")))
-    assertTrue(llmCoreDeps.contains(ModuleV2Dependency("intellij.libraries.ktor.client")))
-    assertTrue(llmCoreDeps.contains(PluginV2Dependency("com.intellij.platform.ide.provisioner")))
-    assertTrue(llmCoreDeps.contains(PluginV2Dependency("com.intellij.llmInstaller")))
+
+    assertTrue(
+      llmCoreDeps.contains(
+        InlineDeclaredModuleV2Dependency.Plugin(
+          "com.intellij.platform.ide.provisioner",
+          contentModuleOwnerId = "com.intellij.ml.llm",
+          dependerContentModuleId = "intellij.ml.llm.core",
+          // content modules are declared implicitly as loading="required"
+          isOptional = true
+        )
+      )
+    )
+    assertTrue(
+      llmCoreDeps.contains(
+        InlineDeclaredModuleV2Dependency.Plugin(
+          "com.intellij.llmInstaller",
+          contentModuleOwnerId = "com.intellij.ml.llm",
+          dependerContentModuleId = "intellij.ml.llm.core",
+            // content modules are declared implicitly as loading="required"
+          isOptional = true
+        )
+      )
+    )
+    assertTrue(
+      llmCoreDeps.contains(
+        InlineDeclaredModuleV2Dependency.Module(
+          "intellij.ml.llm.privacy",
+          contentModuleOwnerId = "com.intellij.ml.llm",
+          dependerContentModuleId = "intellij.ml.llm.core",
+          // content modules are declared implicitly as loading="required"
+          isOptional = true
+        )
+      )
+    )
+    assertTrue(
+      llmCoreDeps.contains(
+        InlineDeclaredModuleV2Dependency.Module(
+          "intellij.libraries.ktor.client",
+          contentModuleOwnerId = "com.intellij.ml.llm",
+          dependerContentModuleId = "intellij.ml.llm.core",
+          // content modules are declared implicitly as loading="required"
+          isOptional = true
+        )
+      )
+    )
+  }
+
+  @Test
+  fun `content dependencies in plugin that declares multiple mandatory modules are resolved`() {
+    val pluginCreationSuccess = buildCorrectPlugin {
+      dir("META-INF") {
+        file("plugin.xml", classpath("/descriptors/ml-llm/plugin-modules-in-cdata-loading-required.xml"))
+      }
+    }
+    val modules = pluginCreationSuccess.plugin.modulesDescriptors
+    val llmCoreDeps = modules.first { it.name == "intellij.ml.llm.core" }.resolvedDependencies
+    assertEquals(4, llmCoreDeps.size)
+
+    assertTrue(
+      llmCoreDeps.contains(
+        InlineDeclaredModuleV2Dependency.Plugin(
+          "com.intellij.platform.ide.provisioner",
+          contentModuleOwnerId = "com.intellij.ml.llm",
+          dependerContentModuleId = "intellij.ml.llm.core"
+        )
+      )
+    )
+    assertTrue(
+      llmCoreDeps.contains(
+        InlineDeclaredModuleV2Dependency.Plugin(
+          "com.intellij.llmInstaller",
+          contentModuleOwnerId = "com.intellij.ml.llm",
+          dependerContentModuleId = "intellij.ml.llm.core"
+        )
+      )
+    )
+    assertTrue(
+      llmCoreDeps.contains(
+        InlineDeclaredModuleV2Dependency.Module(
+          "intellij.ml.llm.privacy",
+          contentModuleOwnerId = "com.intellij.ml.llm",
+          dependerContentModuleId = "intellij.ml.llm.core"
+        )
+      )
+    )
+    assertTrue(
+      llmCoreDeps.contains(
+        InlineDeclaredModuleV2Dependency.Module(
+          "intellij.libraries.ktor.client",
+          contentModuleOwnerId = "com.intellij.ml.llm",
+          dependerContentModuleId = "intellij.ml.llm.core"
+        )
+      )
+    )
   }
 
   @Test

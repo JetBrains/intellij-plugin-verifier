@@ -36,6 +36,7 @@ class ContentModuleDescriptorResolutionTest {
 
     val moduleDescriptor = plugin.modulesDescriptors.single()
     assertEquals("example.module", moduleDescriptor.name)
+    assertTrue(moduleDescriptor is FileBasedModuleDescriptor)
     /*
     The module is loaded via the plugin `lib` directory, hence it is aware of the whole plugin classpath.
     Resolving it directly from its own JAR would leave the classpath empty.
