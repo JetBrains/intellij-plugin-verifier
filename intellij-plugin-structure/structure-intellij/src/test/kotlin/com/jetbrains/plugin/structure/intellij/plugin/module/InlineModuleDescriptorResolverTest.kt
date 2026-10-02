@@ -7,8 +7,15 @@ package com.jetbrains.plugin.structure.intellij.plugin.module
 import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.Module.InlineModule
 import com.jetbrains.plugin.structure.intellij.plugin.loaders.ModuleFromDescriptorLoader
+import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
+import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
+import com.jetbrains.plugin.structure.base.problems.UnableToReadDescriptor
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.net.URI
+import java.nio.file.Path
 
 class InlineModuleDescriptorResolverTest {
   /**
@@ -118,5 +125,28 @@ class InlineModuleDescriptorResolverTest {
         ), single()
       )
     }
+  }
+
+  @Test
+  fun `malformed inline module descriptor is reported as unreadable`() {
+    val descriptorResource = DescriptorResource(
+      "<idea-plugin>".byteInputStream(),
+      URI("file:///plugin/META-INF/plugin.xml#modules/broken")
+    )
+    val resourceResolver = object : ResourceResolver {
+      override fun resolveResource(relativePath: String, basePath: Path) = ResourceResolver.Result.NotFound
+    }
+
+    val pluginCreator = ModuleFromDescriptorLoader().loadPlugin(
+      ModuleFromDescriptorLoader.Context(
+        moduleId = "broken",
+        descriptorResource = descriptorResource,
+        resourceResolver = resourceResolver
+      )
+    )
+
+    val result = pluginCreator.pluginCreationResult
+    assertTrue(result is PluginCreationFail)
+    assertTrue((result as PluginCreationFail<*>).errorsAndWarnings.single() is UnableToReadDescriptor)
   }
 }

@@ -5,7 +5,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.problems.*
-import com.jetbrains.plugin.structure.intellij.beans.*
 import com.jetbrains.plugin.structure.intellij.problems.*
 import com.jetbrains.plugin.structure.intellij.verifiers.*
 import java.time.LocalDate
@@ -25,29 +24,34 @@ private val PLUGIN_NAME_RESTRICTED_WORDS = setOf(
   "WebStorm", "Rider", "ReSharper", "TeamCity", "YouTrack", "RubyMine", "IntelliJ"
 )
 
-class PluginBeanValidator {
+/**
+ * Validates a plugin descriptor through its [ValidatableDescriptor] view - [PluginBeanView] on the JAXB
+ * path, [PlatformDescriptorView] on the platform-parser path. Both pipelines share this one validator so
+ * that the pipeline chosen by [PluginCreator.shouldUsePlatformParser] cannot change which checks apply.
+ */
+class PluginDescriptorValidator {
   private val pluginIdVerifier = PluginIdVerifier()
   private val pluginSinceUntilRangeVerifier = PluginSinceUntilRangeVerifier()
   private val pluginProductReleaseVersionVerifier = ProductReleaseVersionVerifier()
 
-  fun validate(pluginBean: PluginBean, validationContext: ValidationContext, validateDescriptor: Boolean) {
-    validationContext.validate(pluginBean, validateDescriptor)
+  fun validate(descriptor: ValidatableDescriptor, validationContext: ValidationContext, validateDescriptor: Boolean) {
+    validationContext.validate(descriptor, validateDescriptor)
   }
 
-  private fun ValidationContext.validate(bean: PluginBean, validateDescriptor: Boolean) {
+  private fun ValidationContext.validate(descriptor: ValidatableDescriptor, validateDescriptor: Boolean) {
     if (validateDescriptor) {
-      validateBeanUrl(bean.url)
-      validateId(bean)
-      validateName(bean.name)
-      validateVersion(bean.pluginVersion)
-      validateDescription(bean.description)
-      validateChangeNotes(bean.changeNotes)
-      validateVendor(bean.vendor)
-      pluginSinceUntilRangeVerifier.verify(bean, descriptorPath, ::registerProblem)
-      validateProductDescriptor(bean, bean.productDescriptor)
+      validateUrl(descriptor.url)
+      validateId(descriptor)
+      validateName(descriptor.name)
+      validateVersion(descriptor.version)
+      validateDescription(descriptor.description)
+      validateChangeNotes(descriptor.changeNotes)
+      validateVendor(descriptor.vendor)
+      pluginSinceUntilRangeVerifier.verify(descriptor, descriptorPath, ::registerProblem)
+      validateProductDescriptor(descriptor)
     }
-    validateDependencies(bean.dependencies)
-    validateModules(bean)
+    validateDependencies(descriptor)
+    validateModules(descriptor)
   }
 
   private fun ValidationContext.validatePropertyLength(propertyName: String, propertyValue: String, maxLength: Int) {
@@ -56,8 +60,8 @@ class PluginBeanValidator {
     }
   }
 
-  private fun ValidationContext.validateId(plugin: PluginBean) {
-    pluginIdVerifier.verify(plugin, descriptorPath, ::registerProblem)
+  private fun ValidationContext.validateId(descriptor: ValidatableDescriptor) {
+    pluginIdVerifier.verify(descriptor, descriptorPath, ::registerProblem)
   }
 
   private fun ValidationContext.validateName(name: String?) {
@@ -79,9 +83,9 @@ class PluginBeanValidator {
     }
   }
 
-  private fun ValidationContext.validateBeanUrl(beanUrl: String?) {
-    if (beanUrl != null) {
-      validatePropertyLength("plugin url", beanUrl, MAX_PROPERTY_LENGTH)
+  private fun ValidationContext.validateUrl(url: String?) {
+    if (url != null) {
+      validatePropertyLength("plugin url", url, MAX_PROPERTY_LENGTH)
     }
   }
 
@@ -116,41 +120,43 @@ class PluginBeanValidator {
     validatePropertyLength("<change-notes>", changeNotes, MAX_LONG_PROPERTY_LENGTH)
   }
 
-  private fun ValidationContext.validateVendor(vendorBean: PluginVendorBean?) {
-    if (vendorBean == null) {
+  private fun ValidationContext.validateVendor(vendor: ValidatableDescriptor.VendorView?) {
+    if (vendor == null) {
       registerProblem(PropertyNotSpecified("vendor", descriptorPath))
       return
     }
 
-    if (vendorBean.name.isNullOrBlank()) {
+    val name = vendor.name
+    if (name.isNullOrBlank()) {
       registerProblem(VendorCannotBeEmpty(descriptorPath))
       return
     }
 
-    if ("YourCompany" == vendorBean.name) {
-      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR, vendorBean.name))
+    if ("YourCompany" == name) {
+      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR, name))
     }
-    validatePropertyLength("vendor", vendorBean.name, MAX_PROPERTY_LENGTH)
+    validatePropertyLength("vendor", name, MAX_PROPERTY_LENGTH)
 
-    if ("https://www.yourcompany.com" == vendorBean.url) {
-      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_URL, vendorBean.url))
+    val url = vendor.url
+    if ("https://www.yourcompany.com" == url) {
+      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_URL, url))
     }
-    validatePropertyLength("vendor url", vendorBean.url, MAX_PROPERTY_LENGTH)
+    url?.let { validatePropertyLength("vendor url", it, MAX_PROPERTY_LENGTH) }
 
-    if ("support@yourcompany.com" == vendorBean.email) {
-      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL, vendorBean.email))
+    val email = vendor.email
+    if ("support@yourcompany.com" == email) {
+      registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.VENDOR_EMAIL, email))
     }
-    validatePropertyLength("vendor email", vendorBean.email, MAX_PROPERTY_LENGTH)
+    email?.let { validatePropertyLength("vendor email", it, MAX_PROPERTY_LENGTH) }
   }
 
-  private fun ValidationContext.validateProductDescriptor(plugin: PluginBean, productDescriptor: ProductDescriptorBean?) {
-    if (productDescriptor != null) {
-      validateProductCode(productDescriptor.code)
-      validateReleaseDate(productDescriptor.releaseDate)
-      pluginProductReleaseVersionVerifier.verify(plugin, descriptorPath, ::registerProblem)
-      productDescriptor.eap?.let { validateEapFlag(it) }
-      productDescriptor.optional?.let { validateOptionalFlag(it) }
-    }
+  private fun ValidationContext.validateProductDescriptor(descriptor: ValidatableDescriptor) {
+    val productDescriptor = descriptor.productDescriptor ?: return
+    validateProductCode(productDescriptor.code)
+    validateReleaseDate(productDescriptor.releaseDate)
+    pluginProductReleaseVersionVerifier.verify(descriptor, descriptorPath, ::registerProblem)
+    productDescriptor.eap?.let { validateEapFlag(it) }
+    productDescriptor.optional?.let { validateOptionalFlag(it) }
   }
 
   private fun ValidationContext.validateProductCode(productCode: String?) {
@@ -186,25 +192,27 @@ class PluginBeanValidator {
     }
   }
 
-  private fun ValidationContext.validateDependencies(dependencies: List<PluginDependencyBean>) {
-    for (dependencyBean in dependencies) {
-      if (dependencyBean.dependencyId.isNullOrBlank() || dependencyBean.dependencyId.contains("\n")) {
-        registerProblem(InvalidDependencyId(descriptorPath, dependencyBean.dependencyId))
-      } else if (dependencyBean.optional == true) {
-        if (dependencyBean.configFile == null) {
-          registerProblem(OptionalDependencyConfigFileNotSpecified(dependencyBean.dependencyId))
-        } else if (dependencyBean.configFile.isBlank()) {
-          registerProblem(OptionalDependencyConfigFileIsEmpty(dependencyBean.dependencyId, descriptorPath))
+  private fun ValidationContext.validateDependencies(descriptor: ValidatableDescriptor) {
+    for (dependency in descriptor.dependencies) {
+      val id = dependency.pluginId
+      val configFile = dependency.configFile
+      if (id.isNullOrBlank() || id.contains("\n")) {
+        registerProblem(InvalidDependencyId(descriptorPath, id.orEmpty()))
+      } else if (dependency.optional == true) {
+        if (configFile == null) {
+          registerProblem(OptionalDependencyConfigFileNotSpecified(id))
+        } else if (configFile.isBlank()) {
+          registerProblem(OptionalDependencyConfigFileIsEmpty(id, descriptorPath))
         }
-      } else if (dependencyBean.optional == false) {
-        registerProblem(SuperfluousNonOptionalDependencyDeclaration(dependencyBean.dependencyId))
+      } else if (dependency.optional == false) {
+        registerProblem(SuperfluousNonOptionalDependencyDeclaration(id))
       }
     }
-    ReusedDescriptorVerifier(descriptorPath).verify(dependencies, ::registerProblem)
+    ReusedDescriptorVerifier(descriptorPath).verify(descriptor, ::registerProblem)
   }
 
-  private fun ValidationContext.validateModules(bean: PluginBean) {
-    if (bean.pluginAliases?.any { it.isEmpty() } == true) {
+  private fun ValidationContext.validateModules(descriptor: ValidatableDescriptor) {
+    if (descriptor.pluginAliases.any { it.isEmpty() }) {
       registerProblem(InvalidModuleBean(descriptorPath)) // TODO rename
     }
   }

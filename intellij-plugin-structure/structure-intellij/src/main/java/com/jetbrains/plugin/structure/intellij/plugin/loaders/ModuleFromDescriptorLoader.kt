@@ -13,6 +13,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorReso
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
+import org.jdom2.JDOMException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.io.IOException
@@ -21,27 +22,32 @@ private val LOG: Logger = LoggerFactory.getLogger(ModuleFromDescriptorLoader::cl
 
 internal class ModuleFromDescriptorLoader : PluginLoader<ModuleFromDescriptorLoader.Context> {
   override fun loadPlugin(pluginLoadingContext: Context): PluginCreator = with(pluginLoadingContext) {
-    return descriptorResource.inputStream.use {
-      try {
-        val problemResolver = AnyProblemToWarningPluginCreationResultResolver
-        val descriptorXml = JDOMUtil.loadDocument(it)
-        createPlugin(
-          descriptorResource,
-          parentPlugin,
-          descriptorXml,
-          resourceResolver,
-          problemResolver
-        ).also {
-          logPluginCreationWarnings(moduleId, it)
-        }
-      } catch (e: IOException) {
-        with(descriptorResource) {
-          LOG.warn("Unable to read descriptor stream (source: '$uri')", e)
-          val problem = UnableToReadDescriptor(fileName, e.localizedMessage)
-          createInvalidPlugin(artifactFileName, fileName, problem)
-        }
-      }
+    val descriptorXml = try {
+      descriptorResource.inputStream.use { JDOMUtil.loadDocument(it) }
+    } catch (e: IOException) {
+      return unreadableDescriptor(e)
+    } catch (e: JDOMException) {
+      // An inline module's descriptor is arbitrary text taken straight from the containing
+      // plugin.xml, so malformed XML must invalidate this module rather than the whole plugin.
+      return unreadableDescriptor(e)
     }
+
+    val problemResolver = AnyProblemToWarningPluginCreationResultResolver
+    return createPlugin(
+      descriptorResource,
+      parentPlugin,
+      descriptorXml,
+      resourceResolver,
+      problemResolver
+    ).also {
+      logPluginCreationWarnings(moduleId, it)
+    }
+  }
+
+  private fun Context.unreadableDescriptor(e: Exception): PluginCreator = with(descriptorResource) {
+    LOG.warn("Unable to read descriptor stream (source: '$uri')", e)
+    val problem = UnableToReadDescriptor(fileName, e.localizedMessage)
+    createInvalidPlugin(artifactFileName, fileName, problem)
   }
 
   private fun logPluginCreationWarnings(pluginId: String, pluginCreator: PluginCreator) {
