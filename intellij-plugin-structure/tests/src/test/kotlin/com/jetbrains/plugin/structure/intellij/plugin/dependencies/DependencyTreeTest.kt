@@ -447,6 +447,61 @@ class DependencyTreeTest {
   }
 
   @Test
+  fun `single core content module resolves bundled core and transitive-only target`() {
+    val target = idePlugin("com.example.TransitiveOnlyTarget")
+    val bundledCore = contentModule("com.intellij.bundledPlugin.core") {
+      depends(target)
+    }
+    val bundledPlugin = modularPlugin("com.intellij.bundledPlugin", bundledCore)
+    val consumerCore = contentModule("com.example.Consumer.core") {
+      moduleDependency(bundledCore.pluginId!!, "com.example")
+    }
+    val consumer = modularPlugin("com.example.Consumer", consumerCore)
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, listOf(bundledPlugin, target))
+    val contributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
+
+    for (owner in listOf(consumer, bundledPlugin)) {
+      assertEquals(1, owner.contentModules.size)
+      assertEquals(1, owner.modulesDescriptors.size)
+      assertTrue(owner.dependsList.isEmpty())
+      assertTrue(owner.pluginMainModuleDependencies.isEmpty())
+      assertTrue(owner.contentModuleDependencies.isEmpty())
+      assertTrue(owner.pluginAliases.isEmpty())
+    }
+    val provision = ide.query(PluginQuery.Builder.of(bundledCore.pluginId!!).inContentModuleId().build())
+    assertTrue(provision is PluginProvision.Found)
+    provision as PluginProvision.Found
+    assertEquals(bundledPlugin, provision.plugin)
+    assertEquals(PluginProvision.Source.CONTENT_MODULE_ID, provision.source)
+
+    val consumerNode = NodeId.ofPlugin(consumer)
+    val consumerCoreNode = NodeId(consumerNode.pluginId, consumerCore.pluginId!!)
+    val bundledCoreNode = NodeId(bundledPlugin.pluginId!!, bundledCore.pluginId!!)
+    val expectedEdges = mapOf(
+      consumerNode to setOf(consumerCoreNode),
+      consumerCoreNode to setOf(bundledCoreNode),
+      bundledCoreNode to setOf(NodeId.ofPlugin(target))
+    )
+    val expectedDependencies = setOf(
+      Dependency.Module(bundledPlugin, bundledCore.pluginId!!, isTransitive = false),
+      Dependency.Plugin(target, isTransitive = true)
+    )
+
+    for (dependencyTree in listOf(DependencyTree(ide), DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX))) {
+      val missingDependencies = MissingDependencyCollector()
+      val dependencies = dependencyTree.getTransitiveDependencies(consumer, missingDependencies, contributor)
+      assertSetsEqual(expectedDependencies, dependencies)
+      assertTrue(missingDependencies.isEmpty())
+
+      val resolution = dependencyTree.getDependencyTreeResolution(consumer, contributor)
+      assertEquals(expectedDependencies.size, resolution.transitiveDependencies.size)
+      assertSetsEqual(expectedDependencies, resolution.transitiveDependencies.toSet())
+      assertTrue(resolution.missingDependencies.isEmpty())
+      assertEquals(expectedEdges, resolution.graphEdges())
+    }
+  }
+
+  @Test
   fun `module-only dependencies retain graph sources and flattened directness`() {
     val someBundledIdePlugin = dozenOfPlugins.first()
     val coreModule = contentModule("com.example.ModuleOnly.core") {

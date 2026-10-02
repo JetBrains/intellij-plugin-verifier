@@ -625,6 +625,128 @@ class CachingPluginDependencyResolverProviderTest {
       dependenciesByLayout[0], dependenciesByLayout[1])
   }
 
+  @Test
+  fun `parsed single-core plugins resolve bundled content module and its transitive-only classes`() {
+    val coreId = "com.example.Consumer.core"
+    val bundledCoreId = "com.intellij.bundledPlugin.core"
+    val rootClass = "com/example/consumer/RootAction"
+    val coreClass = "com/example/consumer/CoreAction"
+    val bundledClass = "com/example/bundled/CoreAction"
+    val bundledRootClass = "com/example/bundled/RootAction"
+    val transitiveClass = "com/example/unique/TransitiveAction"
+    val target = buildClassPlugin("com.example.UniqueTarget", transitiveClass)
+    val bundled = buildSingleCoreClassPlugin("com.intellij.bundledPlugin", bundledCoreId,
+      "<plugin id=\"${target.pluginId}\"/>", bundledRootClass, bundledClass)
+    val consumer = buildSingleCoreClassPlugin("com.example.Consumer", coreId,
+      "<module name=\"$bundledCoreId\"/>", rootClass, coreClass)
+    listOf(consumer, bundled).forEach { plugin ->
+      assertEquals(1, plugin.modulesDescriptors.size)
+      assertEquals(1, plugin.contentModules.size)
+      assertTrue(plugin.pluginAliases.isEmpty())
+      assertTrue(plugin.modulesDescriptors.single().module.pluginAliases.isEmpty())
+      assertTrue(plugin.dependsList.isEmpty())
+      assertTrue(plugin.pluginMainModuleDependencies.isEmpty())
+      assertTrue(plugin.contentModuleDependencies.isEmpty())
+      assertEquals(setOf("main.jar", "core.jar"), plugin.classpath.entries.map { it.path.fileName.toString() }.toSet())
+    }
+    val consumerCore = consumer.modulesDescriptors.single()
+    val bundledCore = bundled.modulesDescriptors.single()
+    assertEquals(coreId, consumerCore.name)
+    assertEquals(bundledCoreId, bundledCore.name)
+    assertEquals(listOf(bundledCoreId), consumerCore.declaredDependencies.map { it.id })
+    assertEquals(listOf(bundledCoreId), consumerCore.module.contentModuleDependencies.map { it.moduleName })
+    assertEquals(listOf(target.pluginId), bundledCore.declaredDependencies.map { it.id })
+    assertEquals(listOf(target.pluginId), bundledCore.module.pluginMainModuleDependencies.map { it.pluginId })
+    assertEquals(consumerCore.declaredDependencies, consumerCore.resolvedDependencies)
+    assertEquals(bundledCore.declaredDependencies, bundledCore.resolvedDependencies)
+
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-243.12818.47"), ideRoot, bundledPlugins = listOf(bundled, target))
+    val contributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
+    val provider = CachingPluginDependencyResolverProvider(ide, dependenciesModifier = contributor)
+    val resolver = provider.getResolver(consumer)
+    assertTrue(resolver is CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver)
+    resolver as CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver
+    resolver.use {
+      assertTrue("Exactly two external owner resolvers are required: $resolver",
+        resolver.toString().startsWith("${consumer.pluginId} with 2 resolvers: "))
+      listOf(bundled.pluginId!!, target.pluginId!!).forEach { id ->
+        assertTrue(resolver.containsResolverName(id))
+        assertTrue(provider.pluginResolverCacheContains(id))
+      }
+      listOf(consumer.pluginId!!, coreId, bundledCoreId).forEach { id ->
+        assertFalse(resolver.containsResolverName(id))
+      }
+      listOf(consumer.pluginId!!, coreId).forEach { id ->
+        assertFalse(provider.pluginResolverCacheContains(id))
+      }
+      assertTrue("The existing owner-classpath cache entry for the content module is retained",
+        provider.pluginResolverCacheContains(bundledCoreId))
+      listOf(bundledClass, transitiveClass).forEach { className ->
+        val result = resolver.resolveClass(className)
+        assertTrue("Expected $className to resolve, got $result", result is ResolutionResult.Found)
+        assertEquals(className, (result as ResolutionResult.Found).value.name)
+      }
+      assertEquals("The bundled owner's whole classpath is retained",
+        setOf(bundledRootClass, bundledClass, transitiveClass), resolver.allClassNames.map { it.toString() }.toSet())
+      listOf(rootClass, coreClass).forEach { className ->
+        assertFalse(resolver.containsClass(className))
+        assertEquals(ResolutionResult.NotFound, resolver.resolveClass(className))
+      }
+      val resolution = resolver.dependencyTreeResolution
+      assertTrue(resolution.missingDependencies.isEmpty())
+      val expected = setOf(Dependency.Module(bundled, bundledCoreId, isTransitive = false),
+        Dependency.Plugin(target, isTransitive = true))
+      assertEquals(expected, resolution.transitiveDependencies.toSet())
+      assertEquals(expected, DependencyTree(ide).getTransitiveDependencies(consumer, dependenciesModifier = contributor))
+      val rootNode = NodeId.ofPlugin(consumer)
+      val coreNode = NodeId(rootNode.pluginId, coreId)
+      val bundledNode = Dependency.Module(bundled, bundledCoreId).nodeId
+      val edges = linkedMapOf<NodeId, MutableSet<NodeId>>()
+      resolution.forEach { from, to ->
+        edges.getOrPut(requireNotNull(from.nodeId)) { linkedSetOf() } += requireNotNull(to.nodeId)
+      }
+      assertEquals(mapOf(rootNode to setOf(coreNode), coreNode to setOf(bundledNode),
+        bundledNode to setOf(NodeId.ofPlugin(target))), edges)
+    }
+  }
+
+  private fun buildSingleCoreClassPlugin(id: String, moduleId: String, moduleDependency: String,
+                                       rootClass: String, coreClass: String): IdePlugin {
+    val pluginRoot = buildDirectory(temporaryFolder.newFolder(id).toPath()) {
+      dir("lib") {
+        zip("main.jar") {
+          dir("META-INF") {
+            file("plugin.xml", """
+              <idea-plugin>
+                <id>$id</id>
+                <name>Single-core class resolution fixture</name>
+                <version>1.0</version>
+                <vendor>JetBrains</vendor>
+                <description>A fixture verifying bundled content module class resolution.</description>
+                <idea-version since-build="243.0"/>
+                <content><module name="$moduleId" loading="required"/></content>
+              </idea-plugin>
+            """.trimIndent())
+          }
+          dirs(rootClass.substringBeforeLast('/')) {
+            file("${rootClass.substringAfterLast('/')}.class", createEmptyClass(rootClass))
+          }
+        }
+        zip("core.jar") {
+          file("$moduleId.xml", """
+            <idea-plugin><dependencies>$moduleDependency</dependencies></idea-plugin>
+          """.trimIndent())
+          dirs(coreClass.substringBeforeLast('/')) {
+            file("${coreClass.substringAfterLast('/')}.class", createEmptyClass(coreClass))
+          }
+        }
+      }
+    }
+    val result = IdePluginManager.createManager().createPlugin(pluginRoot, validateDescriptor = true)
+    assertTrue("Expected a successfully parsed $id plugin, but got $result", result is PluginCreationSuccess)
+    return (result as PluginCreationSuccess).plugin
+  }
+
   private fun buildClassPlugin(id: String, className: String, dependsList: List<DependsPluginDependency> = emptyList()): MockIdePlugin {
     val pluginFile = buildZipFile(temporaryFolder.newTemporaryFile("$id/plugin.jar")) {
       dirs(className.substringBeforeLast('/')) {
