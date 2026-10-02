@@ -35,16 +35,20 @@ sealed class ModuleDescriptor {
    */
   abstract val resolvedDependencies: List<PluginDependency>
 
+  /** Loading-rule-normalized declarations before main-descriptor duplicate filtering. */
+  abstract val declaredDependencies: List<PluginDependency>
+
   val name get() = moduleDefinition.name
 
   companion object {
     fun of(
       module: IdePlugin,
       moduleDefinition: Module,
-      resolvedDependencies: List<PluginDependency> = emptyList()
+      resolvedDependencies: List<PluginDependency> = emptyList(),
+      declaredDependencies: List<PluginDependency> = resolvedDependencies
     ): ModuleDescriptor = when (moduleDefinition) {
-      is Module.InlineModule -> InlineModuleDescriptor(module, moduleDefinition, resolvedDependencies)
-      is Module.FileBasedModule -> FileBasedModuleDescriptor(module, moduleDefinition, resolvedDependencies)
+      is Module.InlineModule -> InlineModuleDescriptor(module, moduleDefinition, resolvedDependencies, declaredDependencies)
+      is Module.FileBasedModule -> FileBasedModuleDescriptor(module, moduleDefinition, resolvedDependencies, declaredDependencies)
     }
   }
 }
@@ -52,11 +56,13 @@ sealed class ModuleDescriptor {
 data class InlineModuleDescriptor(
   override val module: IdePlugin,
   override val moduleDefinition: Module.InlineModule,
-  override val resolvedDependencies: List<PluginDependency>
+  override val resolvedDependencies: List<PluginDependency>,
+  override val declaredDependencies: List<PluginDependency> = resolvedDependencies
 ) : ModuleDescriptor()
 
 data class FileBasedModuleDescriptor(
   override val module: IdePlugin,
   override val moduleDefinition: Module.FileBasedModule,
-  override val resolvedDependencies: List<PluginDependency>
+  override val resolvedDependencies: List<PluginDependency>,
+  override val declaredDependencies: List<PluginDependency> = resolvedDependencies
 ) : ModuleDescriptor()
