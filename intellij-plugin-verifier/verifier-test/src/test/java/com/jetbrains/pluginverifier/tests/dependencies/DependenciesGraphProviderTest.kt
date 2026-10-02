@@ -4,40 +4,52 @@
 
 package com.jetbrains.pluginverifier.tests.dependencies
 
-import com.jetbrains.plugin.structure.intellij.plugin.DefaultDependencyContributor
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.Module
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleLoadingRule
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.plugin.PluginV1Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
-import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.DependenciesGraphProvider
-import com.jetbrains.pluginverifier.dependencies.DependencyEdge
-import com.jetbrains.pluginverifier.dependencies.DependencyNode
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
-import com.jetbrains.pluginverifier.dependencies.ResolvedDependencyNode
-import com.jetbrains.pluginverifier.dependencies.ResolvedPluginDependency
-import com.jetbrains.pluginverifier.dependencies.toResolved
+import com.jetbrains.pluginverifier.dependencies.*
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertSame
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Test
 
 class DependenciesGraphProviderTest {
+  @Test
+  fun `content modules without dependencies retain ownership edges`() {
+    val main = contentModuleDescriptor("main", emptyList(), emptyList())
+    val extra = contentModuleDescriptor("extra", emptyList(), emptyList())
+    val plugin = MockIdePlugin(
+      pluginId = "owner",
+      pluginVersion = "1.0",
+      contentModules = listOf(main.moduleDefinition, extra.moduleDefinition),
+      modulesDescriptors = listOf(main, extra)
+    )
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-261.1"))
+    val dependencyTree = DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX)
+    val dependenciesModifier = DefaultDependencyContributor(includeContentModuleDependencies = true)
+    val resolution
+      = dependencyTree.getDependencyTreeResolution(plugin, dependenciesModifier)
+
+    val graph = DependenciesGraphProvider().getDependenciesGraph(resolution)
+    val root = DependencyNode.PluginDependency(plugin)
+    val mainNode = DependencyNode.ModuleDependency(plugin, "main")
+    val extraNode = DependencyNode.ModuleDependency(plugin, "extra")
+
+    assertTrue(plugin.reconstructDependencies().isEmpty())
+    assertTrue(resolution.transitiveDependencies.isEmpty())
+    assertEquals(root, graph.verifiedPlugin)
+    assertEquals(setOf(root, mainNode, extraNode), graph.vertices)
+    assertEquals(setOf(
+      DependencyEdge(root, mainNode, PluginDependencyImpl("main", false, true)),
+      DependencyEdge(root, extraNode, PluginDependencyImpl("extra", false, true))
+    ), graph.edges)
+    assertTrue(graph.missingDependencies.isEmpty())
+  }
+
   @Test
   fun `module declarations repeated in main descriptor retain their reporting edges`() {
     val fixture = modularDependenciesFixture(repeatMainDependencies = true)
