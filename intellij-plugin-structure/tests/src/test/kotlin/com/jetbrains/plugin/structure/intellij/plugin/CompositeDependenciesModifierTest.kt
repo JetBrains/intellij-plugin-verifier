@@ -155,7 +155,7 @@ class CompositeDependenciesModifierTest {
 
   @Test
   fun `required module declaration does not strengthen optional main dependency`() {
-    val plugin = pluginWithSharedDependencies(optionalMain = true)
+    val plugin = pluginWithOptionalSharedV1Dependency()
 
     val modifiedDependencies = CompositeDependenciesModifier(
       DefaultDependencyContributor(true), PassThruDependenciesModifier
@@ -271,47 +271,106 @@ class CompositeDependenciesModifierTest {
     })
   }
 
-  private fun pluginWithSharedDependencies(optionalMain: Boolean = false): IdePlugin = IdePluginImpl().apply {
-    pluginId = "com.example.plugin"
-    if (optionalMain) {
-      addDepends(DependsPluginDependency("shared.plugin", isOptional = true))
-    } else {
-      addPluginMainModuleDependency(PluginMainModuleDependency("shared.plugin"))
-    }
-    addContentModuleDependency(ContentModuleDependency("shared.module", "jetbrains"))
+  /**
+   * Creates a plugin whose main descriptor, required file-based module, and optional inline module declare
+   * `shared.plugin` and `shared.module`. Both content modules also declare `module.only.plugin`.
+   * The main descriptor declares `shared.plugin` as a mandatory V2 plugin dependency.
+   * Only the module-only dependency is resolved in the content modules, preserving shared declarations
+   * for tests of dependency contributions without changing the merged dependencies.
+   */
+  private fun pluginWithSharedDependencies(): IdePlugin {
     val requiredModule = Module.FileBasedModule(
       "example.required", null, "jetbrains", ModuleLoadingRule.REQUIRED, "example.required.xml"
     )
     val optionalModule = Module.InlineModule(
       "example.optional", null, "jetbrains", ModuleLoadingRule.OPTIONAL, "<idea-plugin/>"
     )
-    contentModules += listOf(requiredModule, optionalModule)
-    modulesDescriptors += ModuleDescriptor.of(
-      idePlugin("example.required") {
-        pluginDependency("shared.plugin")
-        moduleDependency("shared.module")
-        pluginDependency("module.only.plugin")
-      },
-      requiredModule,
-      resolvedDependencies = listOf(PluginV2Dependency("module.only.plugin")),
-      declaredDependencies = listOf(
-        PluginV2Dependency("shared.plugin"),
-        ModuleV2Dependency("shared.module"),
-        PluginV2Dependency("module.only.plugin")
+    return MockIdePlugin(
+      pluginId = "com.example.plugin",
+      pluginMainModuleDependencies = listOf(PluginMainModuleDependency("shared.plugin")),
+      contentModuleDependencies = listOf(ContentModuleDependency("shared.module", "jetbrains")),
+      contentModules = listOf(requiredModule, optionalModule),
+      modulesDescriptors = listOf(
+        ModuleDescriptor.of(
+          idePlugin("example.required") {
+            pluginDependency("shared.plugin")
+            moduleDependency("shared.module")
+            pluginDependency("module.only.plugin")
+          },
+          requiredModule,
+          resolvedDependencies = listOf(PluginV2Dependency("module.only.plugin")),
+          declaredDependencies = listOf(
+            PluginV2Dependency("shared.plugin"),
+            ModuleV2Dependency("shared.module"),
+            PluginV2Dependency("module.only.plugin")
+          )
+        ),
+        ModuleDescriptor.of(
+          idePlugin("example.optional") {
+            pluginDependency("shared.plugin")
+            moduleDependency("shared.module")
+            pluginDependency("module.only.plugin")
+          },
+          optionalModule,
+          resolvedDependencies = listOf(inlinePluginDependency("module.only.plugin")),
+          declaredDependencies = listOf(
+            inlinePluginDependency("shared.plugin"),
+            InlineDeclaredModuleV2Dependency.Module("shared.module", true, "com.example.plugin", "example.optional"),
+            inlinePluginDependency("module.only.plugin")
+          )
+        )
       )
     )
-    modulesDescriptors += ModuleDescriptor.of(
-      idePlugin("example.optional") {
-        pluginDependency("shared.plugin")
-        moduleDependency("shared.module")
-        pluginDependency("module.only.plugin")
-      },
-      optionalModule,
-      resolvedDependencies = listOf(inlinePluginDependency("module.only.plugin")),
-      declaredDependencies = listOf(
-        inlinePluginDependency("shared.plugin"),
-        InlineDeclaredModuleV2Dependency.Module("shared.module", true, "com.example.plugin", "example.optional"),
-        inlinePluginDependency("module.only.plugin")
+  }
+
+  /**
+   * Creates a plugin whose main descriptor declares `shared.plugin` as an optional V1 dependency,
+   * without a V2 plugin dependency in the main descriptor. The required file-based module and optional
+   * inline module also declare `shared.plugin`, while all three descriptors declare `shared.module`.
+   * Both content modules declare `module.only.plugin`, which is their only resolved dependency,
+   * so the required module's shared declaration does not strengthen the optional main dependency.
+   */
+  private fun pluginWithOptionalSharedV1Dependency(): IdePlugin {
+    val requiredModule = Module.FileBasedModule(
+      "example.required", null, "jetbrains", ModuleLoadingRule.REQUIRED, "example.required.xml"
+    )
+    val optionalModule = Module.InlineModule(
+      "example.optional", null, "jetbrains", ModuleLoadingRule.OPTIONAL, "<idea-plugin/>"
+    )
+    return MockIdePlugin(
+      pluginId = "com.example.plugin",
+      dependsList = listOf(DependsPluginDependency("shared.plugin", isOptional = true)),
+      contentModuleDependencies = listOf(ContentModuleDependency("shared.module", "jetbrains")),
+      contentModules = listOf(requiredModule, optionalModule),
+      modulesDescriptors = listOf(
+        ModuleDescriptor.of(
+          idePlugin("example.required") {
+            pluginDependency("shared.plugin")
+            moduleDependency("shared.module")
+            pluginDependency("module.only.plugin")
+          },
+          requiredModule,
+          resolvedDependencies = listOf(PluginV2Dependency("module.only.plugin")),
+          declaredDependencies = listOf(
+            PluginV2Dependency("shared.plugin"),
+            ModuleV2Dependency("shared.module"),
+            PluginV2Dependency("module.only.plugin")
+          )
+        ),
+        ModuleDescriptor.of(
+          idePlugin("example.optional") {
+            pluginDependency("shared.plugin")
+            moduleDependency("shared.module")
+            pluginDependency("module.only.plugin")
+          },
+          optionalModule,
+          resolvedDependencies = listOf(inlinePluginDependency("module.only.plugin")),
+          declaredDependencies = listOf(
+            inlinePluginDependency("shared.plugin"),
+            InlineDeclaredModuleV2Dependency.Module("shared.module", true, "com.example.plugin", "example.optional"),
+            inlinePluginDependency("module.only.plugin")
+          )
+        )
       )
     )
   }
