@@ -39,10 +39,13 @@ internal interface DependencyModificationsAware {
 }
 
 internal fun IdePlugin.getDependencyModifications(): List<DependencyModification> {
-  return (this as? DependencyModificationsAware)?.dependencyModifications
-    ?: dependencies.withInferredModificationReasons().map { modification ->
+  return if (this is DependencyModificationsAware) {
+    dependencyModifications
+  } else {
+    dependencies.withInferredModificationReasons().map { modification ->
       modification.copy(contributions = getDependencyContributions(modification.dependency))
     }
+  }
 }
 
 internal fun IdePlugin.getDependencyContributions(dependency: PluginDependency): List<DependencyContribution> {
