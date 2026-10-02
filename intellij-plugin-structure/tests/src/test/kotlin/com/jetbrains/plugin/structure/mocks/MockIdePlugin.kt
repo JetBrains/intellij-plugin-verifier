@@ -47,7 +47,7 @@ data class MockIdePlugin(
 
   @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
   override val dependencies: List<PluginDependency>
-    get() = reconstructDependencies()
+    get() = reconstructAllDependencies()
 
   override val useIdeClassLoader = false
   override val isImplementationDetail = false
