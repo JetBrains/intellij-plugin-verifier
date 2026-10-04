@@ -121,6 +121,18 @@ sealed class DependencyNode {
     override fun toString() = "${plugin.id}/$moduleName:$version"
   }
 
+  /**
+   * Represents a `<content><module>` ownership declaration in [owner]'s main descriptor,
+   * rather than a resolved [ModuleDependency] reference.
+   */
+  data class ContentModuleDeclaration(val name: String, val owner: IdePlugin) : DependencyNode(), PluginAware {
+    override val id: String get() = name
+    override val version: String get() = owner.pluginVersion ?: UNKNOWN_VERSION
+    override val plugin: IdePlugin = owner
+
+    override fun toString() = "${owner.id}/$name:$version"
+  }
+
   data class IdAndVersionDependency(override val id: String, override val version: String) : DependencyNode() {
     override fun toString() = "$id:$version"
   }

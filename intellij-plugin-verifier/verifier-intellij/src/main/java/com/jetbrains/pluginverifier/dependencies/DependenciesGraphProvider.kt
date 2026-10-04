@@ -65,6 +65,7 @@ class DependenciesGraphProvider {
     fun intern(dependencyNode: DependencyNode): DependencyNode = when (dependencyNode) {
       is DependencyNode.PluginDependency -> cache.merge(dependencyNode, dependencyNode, DependencyNode::mergeAliasesIntoFirst)!! // merge function never returns null
       is DependencyNode.ModuleDependency -> dependencyNode
+      is DependencyNode.ContentModuleDeclaration -> dependencyNode
       is DependencyNode.IdAndVersionDependency -> dependencyNode
     }
   }
@@ -102,7 +103,7 @@ class DependenciesGraphProvider {
     is Dependency.Module -> if (dependency.isContentModule()) {
       normalizer.intern(DependencyNode.ModuleDependency(dependency.plugin, dependency.id))
     } else newDependencyNode(dependency.plugin)
-    is Dependency.ContentModuleDeclaration -> normalizer.intern(DependencyNode.ModuleDependency(dependency.plugin, dependency.id))
+    is Dependency.ContentModuleDeclaration -> normalizer.intern(DependencyNode.ContentModuleDeclaration(dependency.id, dependency.plugin))
     Dependency.None -> error("Cannot report an unresolved dependency node")
   }
 

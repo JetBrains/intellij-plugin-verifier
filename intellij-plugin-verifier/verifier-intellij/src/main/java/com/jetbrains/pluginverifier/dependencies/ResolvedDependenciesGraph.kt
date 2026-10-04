@@ -27,7 +27,8 @@ data class ResolvedDependencyNode(
   val version: String,
   val aliases: Set<String> = emptySet(),
   val isProductModule: Boolean = false,
-  val moduleOwnerId: String? = null
+  val moduleOwnerId: String? = null,
+  val isContentModuleDeclaration: Boolean = false
 ) {
   // Deliberately omits [aliases]: platform nodes carry hundreds of module aliases and this string
   // is emitted once per referencing edge in dependency reports, multiplying report size by orders of magnitude.
@@ -102,8 +103,15 @@ fun DependenciesGraph.toResolved(batchContext: PluginVerifierBatchContext? = nul
       ?.takeIf { it.isNotEmpty() }
       ?.mapTo(HashSet()) { it.dedup() }
       ?: emptySet()
-    val moduleOwnerId = (node as? DependencyNode.ModuleDependency)?.plugin?.id?.dedup()
-    ResolvedDependencyNode(node.id.dedup(), node.version.dedup(), aliases, isProductModule, moduleOwnerId).dedup()
+    val moduleOwnerId = when (node) {
+      is DependencyNode.ModuleDependency -> node.plugin.id.dedup()
+      is DependencyNode.ContentModuleDeclaration -> node.owner.id.dedup()
+      else -> null
+    }
+    ResolvedDependencyNode(
+      node.id.dedup(), node.version.dedup(), aliases, isProductModule, moduleOwnerId,
+      isContentModuleDeclaration = node is DependencyNode.ContentModuleDeclaration
+    ).dedup()
   }
 
   val resolvedEdges = java.util.Set.copyOf(edges.map { edge ->

@@ -7,14 +7,10 @@ package com.jetbrains.pluginverifier.tests.dependencies
 import com.jetbrains.plugin.structure.ide.PluginIdAndVersion
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.DependencyEdge
-import com.jetbrains.pluginverifier.dependencies.DependencyNode
+import com.jetbrains.pluginverifier.dependencies.*
 import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
-import com.jetbrains.pluginverifier.dependencies.MissingDependency
 import com.jetbrains.pluginverifier.dependencies.presentation.DependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.dependencies.presentation.ResolvedDependenciesGraphPrettyPrinter
-import com.jetbrains.pluginverifier.dependencies.toResolved
 import org.junit.Assert
 import org.junit.Test
 
@@ -128,7 +124,7 @@ owner:1.0
 \--- owner/owner.extra:1.0 [declaring module owner.extra]
      +--- bundled:2.0
      |    \--- transitive:3.0
-     \--- owner/owner.core:1.0 (*) [declaring module owner.core]
+     \--- owner/owner.core:1.0 [declaring module owner.core]
 """.trim())
   }
 
@@ -145,7 +141,7 @@ owner:1.0
 |    \--- com.intellij:261.1 (*) [declaring module com.intellij.modules.platform]
 \--- owner/owner.extra:1.0 [declaring module owner.extra]
      +--- bundled:2.0 (*)
-     \--- owner/owner.core:1.0 (*) [declaring module owner.core]
+     \--- owner/owner.core:1.0 [declaring module owner.core]
 """.trim())
   }
 

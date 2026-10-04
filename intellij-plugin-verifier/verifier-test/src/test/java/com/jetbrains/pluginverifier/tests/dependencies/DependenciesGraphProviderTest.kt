@@ -43,8 +43,8 @@ class DependenciesGraphProviderTest {
 
     val graph = DependenciesGraphProvider().getDependenciesGraph(resolution)
     val root = DependencyNode.PluginDependency(plugin)
-    val mainNode = DependencyNode.ModuleDependency(plugin, "main")
-    val extraNode = DependencyNode.ModuleDependency(plugin, "extra")
+    val mainNode = DependencyNode.ContentModuleDeclaration("main", plugin)
+    val extraNode = DependencyNode.ContentModuleDeclaration("extra", plugin)
 
     assertTrue(plugin.reconstructDependencies().isEmpty())
     assertTrue(resolution.transitiveDependencies.isEmpty())
@@ -58,6 +58,57 @@ class DependenciesGraphProviderTest {
     assertTrue(graph.getEdgesFrom(mainNode).isEmpty())
     assertTrue(graph.getEdgesFrom(extraNode).isEmpty())
     assertTrue(graph.missingDependencies.isEmpty())
+  }
+
+  @Test
+  fun `content module declaration identity includes its owner and differs from a module reference`() {
+    val firstOwner = MockIdePlugin(pluginId = "first", pluginVersion = "1.0")
+    val secondOwner = MockIdePlugin(pluginId = "second", pluginVersion = "1.0")
+    val first = DependencyNode.ContentModuleDeclaration("shared", firstOwner)
+    val firstAgain = DependencyNode.ContentModuleDeclaration("shared", firstOwner)
+
+    assertSame(firstOwner, first.owner)
+    assertEquals("shared", first.id)
+    assertEquals("1.0", first.version)
+    assertEquals("first/shared:1.0", first.toString())
+    assertEquals(first.toString(), first.toStringWithAliases())
+    assertEquals(first, firstAgain)
+    assertEquals(first.hashCode(), firstAgain.hashCode())
+    assertNotEquals(first, DependencyNode.ContentModuleDeclaration("shared", secondOwner))
+    assertNotEquals(first, DependencyNode.ContentModuleDeclaration("other", firstOwner))
+    assertNotEquals(first, DependencyNode.ModuleDependency(firstOwner, "shared"))
+    assertNotEquals(first, DependencyNode.PluginDependency(firstOwner))
+    assertEquals("unknown version", DependencyNode.ContentModuleDeclaration("shared", MockIdePlugin(pluginId = "unversioned")).version)
+  }
+
+  @Test
+  fun `transitive content module declarations retain their type and owner without edges`() {
+    val plugin = MockIdePlugin(pluginId = "root", pluginVersion = "1.0")
+    val firstOwner = MockIdePlugin(pluginId = "first", pluginVersion = "1.0")
+    val secondOwner = MockIdePlugin(pluginId = "second", pluginVersion = "1.0")
+    val resolution = object : DependencyTreeResolution {
+      override val dependencyRoot = plugin
+      override val missingDependencies = emptyMap<IdePlugin, Set<PluginDependency>>()
+      override val transitiveDependencies = listOf(
+        Dependency.ContentModuleDeclaration(firstOwner, "shared"),
+        Dependency.ContentModuleDeclaration(secondOwner, "shared")
+      )
+
+      override fun forEach(action: (Dependency, Dependency) -> Unit) = Unit
+    }
+    val graph = DependenciesGraphProvider().getDependenciesGraph(resolution)
+
+    assertEquals(setOf(
+      DependencyNode.PluginDependency(plugin),
+      DependencyNode.ContentModuleDeclaration("shared", firstOwner),
+      DependencyNode.ContentModuleDeclaration("shared", secondOwner)
+    ), graph.vertices)
+    assertTrue(graph.edges.isEmpty())
+    assertEquals(setOf(
+      ResolvedDependencyNode("root", "1.0"),
+      ResolvedDependencyNode("shared", "1.0", moduleOwnerId = "first", isContentModuleDeclaration = true),
+      ResolvedDependencyNode("shared", "1.0", moduleOwnerId = "second", isContentModuleDeclaration = true)
+    ), graph.toResolved().vertices)
   }
 
   @Test
@@ -147,8 +198,9 @@ class DependenciesGraphProviderTest {
   private fun assertModularGraph(fixture: ModularDependenciesFixture, repeatMainDependencies: Boolean) {
     val graph = fixture.graph
     val root = DependencyNode.PluginDependency(fixture.plugin)
-    val core = DependencyNode.ModuleDependency(fixture.plugin, "owner.core")
-    val extra = DependencyNode.ModuleDependency(fixture.plugin, "owner.extra")
+    val core = DependencyNode.ContentModuleDeclaration("owner.core", fixture.plugin)
+    val extra = DependencyNode.ContentModuleDeclaration("owner.extra", fixture.plugin)
+    val coreReference = DependencyNode.ModuleDependency(fixture.plugin, "owner.core")
     val platform = DependencyNode.PluginDependency(fixture.platform)
     val bundled = DependencyNode.PluginDependency(fixture.bundled)
     val transitive = DependencyNode.PluginDependency(fixture.transitive)
@@ -156,7 +208,7 @@ class DependenciesGraphProviderTest {
       DependencyEdge(root, core, PluginDependencyImpl("owner.core", false, true)),
       DependencyEdge(root, extra, PluginDependencyImpl("owner.extra", false, true)),
       DependencyEdge(core, platform, PluginDependencyImpl("com.intellij.modules.platform", false, true)),
-      DependencyEdge(extra, core, PluginDependencyImpl("owner.core", false, true)),
+      DependencyEdge(extra, coreReference, PluginDependencyImpl("owner.core", false, true)),
       DependencyEdge(extra, bundled, PluginDependencyImpl("bundled", false, false)),
       DependencyEdge(bundled, transitive, PluginDependencyImpl("transitive", false, false))
     )
@@ -172,12 +224,13 @@ class DependenciesGraphProviderTest {
     ), fixture.resolution.transitiveDependencies.toSet())
     assertTrue(fixture.resolution.missingDependencies.isEmpty())
     assertEquals(root, graph.verifiedPlugin)
-    assertEquals(setOf(root, core, extra, platform, bundled, transitive), graph.vertices)
+    assertEquals(setOf(root, core, extra, coreReference, platform, bundled, transitive), graph.vertices)
     assertEquals(expectedEdges, graph.edges)
     assertTrue(graph.missingDependencies.isEmpty())
-    assertEquals(setOf(core, extra), graph.vertices.filterIsInstance<DependencyNode.ModuleDependency>().toSet())
-    graph.vertices.filterIsInstance<DependencyNode.ModuleDependency>().forEach {
-      assertSame(fixture.plugin, it.plugin)
+    assertEquals(setOf(coreReference), graph.vertices.filterIsInstance<DependencyNode.ModuleDependency>().toSet())
+    assertEquals(setOf(core, extra), graph.vertices.filterIsInstance<DependencyNode.ContentModuleDeclaration>().toSet())
+    graph.vertices.filterIsInstance<DependencyNode.ContentModuleDeclaration>().forEach {
+      assertSame(fixture.plugin, it.owner)
       assertEquals("1.0", it.version)
     }
     assertEquals(setOf("com.intellij.modules.platform"), (graph.vertices.single { it == platform } as DependencyNode.PluginDependency).aliases)
@@ -189,8 +242,9 @@ class DependenciesGraphProviderTest {
     val resolved = graph.toResolved()
     assertEquals(setOf(
       ResolvedDependencyNode("owner", "1.0"),
+      ResolvedDependencyNode("owner.core", "1.0", moduleOwnerId = "owner", isContentModuleDeclaration = true),
+      ResolvedDependencyNode("owner.extra", "1.0", moduleOwnerId = "owner", isContentModuleDeclaration = true),
       ResolvedDependencyNode("owner.core", "1.0", moduleOwnerId = "owner"),
-      ResolvedDependencyNode("owner.extra", "1.0", moduleOwnerId = "owner"),
       ResolvedDependencyNode("com.intellij", "261.1", setOf("com.intellij.modules.platform")),
       ResolvedDependencyNode("bundled", "2.0"),
       ResolvedDependencyNode("transitive", "3.0")
