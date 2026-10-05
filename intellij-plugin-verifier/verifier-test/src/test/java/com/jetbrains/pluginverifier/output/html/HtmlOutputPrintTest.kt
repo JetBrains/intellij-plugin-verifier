@@ -133,6 +133,7 @@ private val HTML_HEADER = """
           <html>
             <head>
               <title>Verification result 232.0</title>
+              <meta charset="UTF-8"/>
               <script src="https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.min.js" type="text/javascript">
               </script>
               <script src="https://code.jquery.com/ui/1.9.2/jquery-ui.min.js" type="text/javascript">

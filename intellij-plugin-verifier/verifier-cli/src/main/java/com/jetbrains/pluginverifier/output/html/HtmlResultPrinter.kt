@@ -46,6 +46,7 @@ class HtmlResultPrinter(
     html {
       head {
         title("Verification result $verificationTarget")
+        closedTag("meta", mapOf("charset" to "UTF-8"))
         script(src = "https://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.9.1.min.js", type = "text/javascript")
         script(src = "https://code.jquery.com/ui/1.9.2/jquery-ui.min.js", type = "text/javascript")
         link(rel = "stylesheet", href = "https://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css", type = "text/css")
