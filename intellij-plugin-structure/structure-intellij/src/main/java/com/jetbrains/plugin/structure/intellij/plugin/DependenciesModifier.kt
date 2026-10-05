@@ -94,7 +94,7 @@ internal fun IdePlugin.getDependencyContributions(dependency: PluginDependency):
 internal fun List<PluginDependency>.withInferredModificationReasons(): List<DependencyModification> = map {
   DependencyModification(
     it, when (it) {
-    is ModuleV2Dependency -> CONTENT_MODULE
+    is ModuleV2Dependency, is InlineDeclaredModuleV2Dependency.Module -> CONTENT_MODULE
     else -> PLUGIN
   }
   )

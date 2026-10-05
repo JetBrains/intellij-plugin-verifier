@@ -113,6 +113,48 @@ class DependenciesModifierTest {
   }
 
   @Test
+  fun `pass-through infers inline dependency reasons and preserves module sources and optionality`() {
+    for (loadingRule in listOf(ModuleLoadingRule.REQUIRED, ModuleLoadingRule.OPTIONAL)) {
+      val module = Module.InlineModule(
+        "example.inline", null, "jetbrains", loadingRule, "<idea-plugin/>"
+      )
+      val pluginDependency = InlineDeclaredModuleV2Dependency.Plugin(
+        "com.example.language", !loadingRule.required, "com.example.editor", module.name
+      )
+      val moduleDependency = InlineDeclaredModuleV2Dependency.Module(
+        "example.language.api", !loadingRule.required, "com.example.editor", module.name
+      )
+      val plugin = idePlugin("com.example.editor").copy(
+        contentModules = listOf(module),
+        modulesDescriptors = listOf(
+          ModuleDescriptor.of(
+            idePlugin(module.name),
+            module,
+            resolvedDependencies = listOf(pluginDependency, moduleDependency),
+            declaredDependencies = listOf(pluginDependency, moduleDependency)
+          )
+        )
+      )
+      val expected = listOf(
+        DependencyModification(
+          pluginDependency, PLUGIN, listOf(ContentModuleDependencyContribution(module.name, pluginDependency))
+        ),
+        DependencyModification(
+          moduleDependency, CONTENT_MODULE, listOf(ContentModuleDependencyContribution(module.name, moduleDependency))
+        )
+      )
+
+      assertEquals(expected, DefaultDependencyContributor(includeContentModuleDependencies = true).apply(plugin, ide))
+      assertEquals(expected, PassThruDependenciesModifier.apply(plugin, ide))
+      assertEquals(expected, CompositeDependenciesModifier(emptyList()).apply(plugin, ide))
+      assertEquals(
+        expected,
+        CompositeDependenciesModifier(PassThruDependenciesModifier, PassThruDependenciesModifier).apply(plugin, ide)
+      )
+    }
+  }
+
+  @Test
   fun `including content modules adds dependencies and retains required and optional declaration sources`() {
     val requiredModule = Module.FileBasedModule(
       "example.required", null, "jetbrains", ModuleLoadingRule.REQUIRED, "example.required.xml"
