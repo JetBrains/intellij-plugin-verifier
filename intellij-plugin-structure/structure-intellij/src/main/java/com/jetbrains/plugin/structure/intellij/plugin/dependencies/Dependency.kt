@@ -33,12 +33,14 @@ sealed class Dependency {
 
   abstract val nodeId: NodeId?
 
+  sealed class Resolved : Dependency(), PluginAware
+
   /**
    * A `<content><module name="..."/></content>` declaration in the owning [plugin]'s main descriptor.
    * Represents the owne rship dependency from the main plugin module to the content module [id],
    * rather than a resolved module reference declared in `<dependencies>`.
    */
-  data class ContentModuleDeclaration(override val plugin: IdePlugin, val id: PluginId) : Dependency(), PluginAware {
+  data class ContentModuleDeclaration(override val plugin: IdePlugin, val id: PluginId) : Resolved() {
     override fun matches(id: PluginId) = this.id == id
 
     override val isTransitive = false
@@ -48,7 +50,7 @@ sealed class Dependency {
     override fun toString() = "Content module '$id' declared by plugin '${plugin.pluginId}'"
   }
 
-  data class Module(override val plugin: IdePlugin, val id: PluginId, override val isTransitive: Boolean = false) : Dependency(), PluginAware {
+  data class Module(override val plugin: IdePlugin, val id: PluginId, override val isTransitive: Boolean = false) : Resolved() {
     override fun matches(id: PluginId) = plugin.pluginId == id || plugin.hasDefinedModuleWithId(id)
 
     override val nodeId: NodeId get() = NodeId(plugin.pluginId!!, id)
@@ -57,7 +59,7 @@ sealed class Dependency {
       "${if (isTransitive) "Transitive " else ""}Module '$id' provided by plugin '${plugin.pluginId}'"
   }
 
-  data class Plugin(override val plugin: IdePlugin, override val isTransitive: Boolean = false) : Dependency(), PluginAware {
+  data class Plugin(override val plugin: IdePlugin, override val isTransitive: Boolean = false) : Resolved() {
     override fun matches(id: PluginId) = plugin.pluginId == id
 
     override val nodeId: NodeId get() = NodeId(plugin.pluginId!!, null)

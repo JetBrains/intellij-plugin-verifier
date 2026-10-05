@@ -6,7 +6,10 @@ package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies.*
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTreeResolution
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.pluginDependency
 import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
@@ -47,7 +50,7 @@ class DependenciesGraphProvider {
     val dependenciesCache = HashMap<PluginDependency, PluginDependency>()
     forEach { from, dependency ->
       dependency.pluginDependency?.let { pluginDependency ->
-        require(from is PluginAware && dependency is PluginAware) // Invariant by the pluginDependency getter returning non-null
+        require(from is Dependency.Resolved && dependency is Dependency.Resolved) // Invariant by the pluginDependency getter returning non-null
 
         edges += DependencyEdge(
           newDependencyNode(from),
@@ -98,13 +101,12 @@ class DependenciesGraphProvider {
 
   private fun Dependency.Module.isContentModule(): Boolean = plugin.modulesDescriptors.any { it.name == id }
 
-  private fun newDependencyNode(dependency: Dependency): DependencyNode = when (dependency) {
+  private fun newDependencyNode(dependency: Dependency.Resolved): DependencyNode = when (dependency) {
     is Dependency.Plugin -> newDependencyNode(dependency.plugin)
     is Dependency.Module -> if (dependency.isContentModule()) {
       normalizer.intern(DependencyNode.ModuleDependency(dependency.plugin, dependency.id))
     } else newDependencyNode(dependency.plugin)
     is Dependency.ContentModuleDeclaration -> normalizer.intern(DependencyNode.ContentModuleDeclaration(dependency.id, dependency.plugin))
-    Dependency.None -> error("Cannot report an unresolved dependency node")
   }
 
   private fun newDependencyNode(alias: String, plugin: IdePlugin) = normalizer.intern(dependencyNode(alias, plugin))
