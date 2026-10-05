@@ -40,12 +40,15 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
     }
     visitedNodes.add(currentNode)
 
-    val childrenLines = arrayListOf<List<String>>()
+    data class ChildPresentation(val lines: List<String>, val isContentModule: Boolean = false)
+
+    val childrenLines = arrayListOf<ChildPresentation>()
 
     dependenciesGraph.missingDependencies
       .getOrDefault(currentNode, emptySet())
       .sortedBy { it.dependency.id }.mapTo(childrenLines) { missingDependency ->
-        listOf("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}")
+        ChildPresentation(
+          listOf("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}"))
       }
 
     val directEdges = dependenciesGraph.getEdgesFrom(currentNode)
@@ -77,7 +80,10 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
         }
       }
       val tailLines = childLines.drop(1)
-      childrenLines.add(listOf(headerLine) + tailLines)
+      childrenLines.add(ChildPresentation(
+        lines = listOf(headerLine) + tailLines,
+        isContentModule = edge.to is DependencyNode.ContentModuleDeclaration
+      ))
     }
 
     val result = arrayListOf<String>()
@@ -90,15 +96,17 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
 
       if (headingChildren.isNotEmpty()) {
         for (headingChild in headingChildren) {
-          val firstLine = headingChild.first().let { "+--- $it" }
-          val tailLines = headingChild.drop(1).map { "|    $it" }
+          val connector = if (headingChild.isContentModule) "◆---" else "+---"
+          val firstLine = headingChild.lines.first().let { "$connector $it" }
+          val tailLines = headingChild.lines.drop(1).map { "|    $it" }
           result += firstLine
           result += tailLines
         }
       }
 
-      result += lastChild.first().let { "\\--- $it" }
-      result += lastChild.drop(1).map { "     $it" }
+      val connector = if (lastChild.isContentModule) "◆---" else "\\---"
+      result += lastChild.lines.first().let { "$connector $it" }
+      result += lastChild.lines.drop(1).map { "     $it" }
     }
 
     return result

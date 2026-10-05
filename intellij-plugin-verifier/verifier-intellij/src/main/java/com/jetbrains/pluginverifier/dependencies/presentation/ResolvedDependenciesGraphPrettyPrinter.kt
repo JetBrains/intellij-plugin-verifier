@@ -62,7 +62,12 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
 
     for (edge in directEdges) {
       val isLastChild = ++childIndex == childrenCount
-      result.append('\n').append(childrenPrefix).append(if (isLastChild) "\\--- " else "+--- ")
+      val connector = when {
+        edge.to.isContentModuleDeclaration -> "◆--- "
+        isLastChild -> "\\--- "
+        else -> "+--- "
+      }
+      result.append('\n').append(childrenPrefix).append(connector)
       if (edge.dependency.isOptional) {
         result.append("(optional) ")
       }

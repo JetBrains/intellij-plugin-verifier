@@ -120,8 +120,8 @@ start:1.0
     assertPrettyPresentation(
       graph, """
         owner:1.0
-        +--- owner:1.0/owner.core [declared as a content module]
-        \--- owner:1.0/owner.extras [declared as a content module]
+        ◆--- owner:1.0/owner.core [declared as a content module]
+        ◆--- owner:1.0/owner.extras [declared as a content module]
              \--- owner:1.0/owner.core [content module declared in owner:1.0]
       """.trimIndent()
     )
@@ -134,9 +134,31 @@ start:1.0
     assertPrettyPresentation(
       graph, """
       owner:1.0
-      \--- owner:1.0/owner.core [declared as a content module]
+      ◆--- owner:1.0/owner.core [declared as a content module]
       """.trimIndent()
     )
+  }
+
+  @Test
+  fun `nested plugin composition keeps ordinary dependency connectors and indentation`() {
+    val graph = simpleModularDependenciesFixture().graph
+    val consumer = dependencyNode("consumer", "2.0")
+    val other = dependencyNode("z", "3.0")
+    val nestedGraph = graph.copy(
+      verifiedPlugin = consumer,
+      vertices = graph.vertices + consumer + other,
+      edges = graph.edges + setOf(
+        DependencyEdge(consumer, graph.verifiedPlugin, PluginDependencyImpl("owner", false, false)),
+        DependencyEdge(consumer, other, PluginDependencyImpl("z", false, false))
+      )
+    )
+
+    assertPrettyPresentation(nestedGraph, """
+consumer:2.0
++--- owner:1.0
+|    ◆--- owner:1.0/owner.core [declared as a content module]
+\--- z:3.0
+""".trim())
   }
 
   @Test
@@ -145,9 +167,9 @@ start:1.0
 
     assertPrettyPresentation(graph, """
       owner:1.0
-      +--- owner:1.0/owner.core [declared as a content module]
+      ◆--- owner:1.0/owner.core [declared as a content module]
       |    \--- com.intellij:261.1 (aliased com.intellij.modules.platform) [declaring module com.intellij.modules.platform]
-      \--- owner:1.0/owner.extra [declared as a content module]
+      ◆--- owner:1.0/owner.extra [declared as a content module]
            +--- bundled:2.0
            |    \--- transitive:3.0
            \--- owner:1.0/owner.core [content module declared in owner:1.0]
@@ -163,9 +185,9 @@ owner:1.0
 +--- bundled:2.0
 |    \--- transitive:3.0
 +--- com.intellij:261.1 (aliased com.intellij.modules.platform) [declaring module com.intellij.modules.platform]
-+--- owner:1.0/owner.core [declared as a content module]
+◆--- owner:1.0/owner.core [declared as a content module]
 |    \--- com.intellij:261.1 (*) [declaring module com.intellij.modules.platform]
-\--- owner:1.0/owner.extra [declared as a content module]
+◆--- owner:1.0/owner.extra [declared as a content module]
      +--- bundled:2.0 (*)
      \--- owner:1.0/owner.core [content module declared in owner:1.0]
 """.trim())
