@@ -6,11 +6,7 @@ package com.jetbrains.pluginverifier.response
 
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
-import com.jetbrains.pluginverifier.dependencies.ResolvedDependenciesGraph
-import com.jetbrains.pluginverifier.dependencies.ResolvedDependencyEdge
-import com.jetbrains.pluginverifier.dependencies.ResolvedDependencyNode
-import com.jetbrains.pluginverifier.dependencies.ResolvedMissingDependency
-import com.jetbrains.pluginverifier.dependencies.ResolvedPluginDependency
+import com.jetbrains.pluginverifier.dependencies.*
 import com.jetbrains.pluginverifier.dymamic.DynamicPluginStatus
 import com.jetbrains.pluginverifier.ide.AvailableIde
 import com.jetbrains.pluginverifier.results.location.*
@@ -127,7 +123,13 @@ private fun ResolvedDependencyEdge.convert(): DependenciesGraphDto.DependencyEdg
     dependency.convert()
   )
 
-private fun ResolvedDependencyNode.convert(): DependenciesGraphDto.DependencyNodeDto = DependenciesGraphDto.DependencyNodeDto(id, version)
+/**
+ * Exports content-module node IDs as `providerId/moduleName`; ordinary plugin IDs remain unchanged.
+ */
+private fun ResolvedDependencyNode.convert(): DependenciesGraphDto.DependencyNodeDto {
+  val pluginOrModuleId = if (moduleOwnerId != null) "$moduleOwnerId/$id" else id
+  return DependenciesGraphDto.DependencyNodeDto(pluginOrModuleId, version)
+}
 
 private fun ResolvedMissingDependency.convert(): DependenciesGraphDto.MissingDependencyDto =
   DependenciesGraphDto.MissingDependencyDto(
