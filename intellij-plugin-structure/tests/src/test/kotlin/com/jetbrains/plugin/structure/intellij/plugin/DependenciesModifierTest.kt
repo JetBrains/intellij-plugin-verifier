@@ -66,6 +66,30 @@ class DependenciesModifierTest {
   }
 
   @Test
+  fun `core contributor preserves declared dependencies and adds an implicit IDE dependency`() {
+    val plugin = idePlugin("com.example.editor") {
+      depends("com.example.platform")
+    }
+    val declaredDependency = PluginV1Dependency.Mandatory("com.example.platform")
+    val coreDependency = PluginV1Dependency.Mandatory("com.intellij")
+
+    val modifications = CorePluginDependencyContributor(ide).apply(plugin, ide)
+
+    assertEquals(
+      listOf(
+        DependencyModification(declaredDependency, PLUGIN),
+        DependencyModification(
+          coreDependency,
+          IDE,
+          contributions = listOf(DependencyContribution(null, coreDependency))
+        )
+      ),
+      modifications
+    )
+    assertEquals(listOf(declaredDependency), plugin.dependencies)
+  }
+
+  @Test
   fun `pass-through wraps V1 and V2 declarations with reasons and main-plugin sources`() {
     val plugin = idePlugin("com.example.editor") {
       depends("com.example.platform")
