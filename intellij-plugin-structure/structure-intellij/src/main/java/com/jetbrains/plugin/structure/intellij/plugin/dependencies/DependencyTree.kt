@@ -78,8 +78,7 @@ class DependencyTree(
 
   fun toString(plugin: IdePlugin): CharSequence {
     requireNotNull(plugin.pluginId) { missingId(plugin) }
-    val dependenciesModifier = DefaultDependencyContributor(includeContentModuleDependencies = true)
-    val graph = getDependencyGraph(plugin, ResolutionContext(dependenciesModifier = dependenciesModifier))
+    val graph = getDependencyGraph(plugin, ResolutionContext())
     val visitedNodes = LinkedHashSet<NodeId>()
     val string = StringBuilder()
     graph.toDebugString(NodeId.ofPlugin(plugin), indentSize = 0, visitedNodes, string)
