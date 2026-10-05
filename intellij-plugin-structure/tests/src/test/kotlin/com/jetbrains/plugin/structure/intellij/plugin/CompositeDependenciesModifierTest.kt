@@ -167,9 +167,9 @@ class CompositeDependenciesModifierTest {
     assertEquals(DependencyModificationReason.PLUGIN, sharedDependency.reason)
     assertEquals(
       listOf(
-        DependencyContribution(null, PluginV1Dependency.Optional("shared.plugin")),
-        DependencyContribution("example.required", PluginV2Dependency("shared.plugin")),
-        DependencyContribution("example.optional", inlinePluginDependency("shared.plugin"))
+        PluginMainModuleDependencyContribution(PluginV1Dependency.Optional("shared.plugin")),
+        ContentModuleDependencyContribution("example.required", PluginV2Dependency("shared.plugin")),
+        ContentModuleDependencyContribution("example.optional", inlinePluginDependency("shared.plugin"))
       ),
       sharedDependency.contributions
     )
@@ -183,7 +183,7 @@ class CompositeDependenciesModifierTest {
 
     assertEquals(plugin.reconstructDependencies(), modifiedDependencies.map { it.dependency })
     modifiedDependencies.forEach { modification ->
-      assertEquals(listOf(DependencyContribution(null, modification.dependency)), modification.contributions)
+      assertEquals(listOf(PluginMainModuleDependencyContribution(modification.dependency)), modification.contributions)
     }
   }
 
@@ -221,7 +221,7 @@ class CompositeDependenciesModifierTest {
   fun `composite merges a new module source without changing legacy dependency or reason`() {
     val plugin = pluginWithSharedDependencies()
     val addedDependency = PluginV2Dependency("shared.plugin", isOptional = true)
-    val addedContribution = DependencyContribution("example.additional", addedDependency)
+    val addedContribution = ContentModuleDependencyContribution("example.additional", addedDependency)
     val compositeModifier = CompositeDependenciesModifier(
       DefaultDependencyContributor(true),
       { pluginView, pluginProvider ->
@@ -239,9 +239,9 @@ class CompositeDependenciesModifierTest {
     assertEquals(DependencyModificationReason.PLUGIN, sharedDependency.reason)
     assertEquals(
       listOf(
-        DependencyContribution(null, PluginV2Dependency("shared.plugin")),
-        DependencyContribution("example.required", PluginV2Dependency("shared.plugin")),
-        DependencyContribution("example.optional", inlinePluginDependency("shared.plugin")),
+        PluginMainModuleDependencyContribution(PluginV2Dependency("shared.plugin")),
+        ContentModuleDependencyContribution("example.required", PluginV2Dependency("shared.plugin")),
+        ContentModuleDependencyContribution("example.optional", inlinePluginDependency("shared.plugin")),
         addedContribution
       ),
       sharedDependency.contributions
@@ -383,9 +383,9 @@ class CompositeDependenciesModifierTest {
           ModuleV2Dependency("shared.module"),
           DependencyModificationReason.CONTENT_MODULE,
           listOf(
-            DependencyContribution(null, ModuleV2Dependency("shared.module")),
-            DependencyContribution("example.required", ModuleV2Dependency("shared.module")),
-            DependencyContribution(
+            PluginMainModuleDependencyContribution(ModuleV2Dependency("shared.module")),
+            ContentModuleDependencyContribution("example.required", ModuleV2Dependency("shared.module")),
+            ContentModuleDependencyContribution(
               "example.optional",
               InlineDeclaredModuleV2Dependency.Module("shared.module", true, "com.example.plugin", "example.optional")
             )
@@ -395,17 +395,17 @@ class CompositeDependenciesModifierTest {
           PluginV2Dependency("shared.plugin"),
           DependencyModificationReason.PLUGIN,
           listOf(
-            DependencyContribution(null, PluginV2Dependency("shared.plugin")),
-            DependencyContribution("example.required", PluginV2Dependency("shared.plugin")),
-            DependencyContribution("example.optional", inlinePluginDependency("shared.plugin"))
+            PluginMainModuleDependencyContribution(PluginV2Dependency("shared.plugin")),
+            ContentModuleDependencyContribution("example.required", PluginV2Dependency("shared.plugin")),
+            ContentModuleDependencyContribution("example.optional", inlinePluginDependency("shared.plugin"))
           )
         ),
         DependencyModification(
           PluginV2Dependency("module.only.plugin"),
           DependencyModificationReason.PLUGIN,
           listOf(
-            DependencyContribution("example.required", PluginV2Dependency("module.only.plugin")),
-            DependencyContribution("example.optional", inlinePluginDependency("module.only.plugin"))
+            ContentModuleDependencyContribution("example.required", PluginV2Dependency("module.only.plugin")),
+            ContentModuleDependencyContribution("example.optional", inlinePluginDependency("module.only.plugin"))
           )
         )
       ),

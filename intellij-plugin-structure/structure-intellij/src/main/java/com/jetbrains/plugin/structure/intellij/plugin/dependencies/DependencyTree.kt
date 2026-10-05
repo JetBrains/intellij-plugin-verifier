@@ -154,8 +154,12 @@ class DependencyTree(
       for ((i, modification) in modifications.withIndex()) {
         for (contribution in modification.contributions) {
           val dep = contribution.dependency
-          val source = contribution.sourceModuleName?.takeIf { it in contentModules }
-            ?.let { NodeId(pluginId, it) } ?: nodeId
+          val source = when (contribution) {
+            is ContentModuleDependencyContribution -> contribution.contributingContentModule
+              .takeIf { it in contentModules }
+              ?.let { NodeId(pluginId, it) } ?: nodeId
+            is PluginMainModuleDependencyContribution -> nodeId
+          }
           val sibling = contentModules[dep.id]?.takeIf { dep.isModule }
           if (!dependencyFilter(dep)) continue
           if (sibling != null) {

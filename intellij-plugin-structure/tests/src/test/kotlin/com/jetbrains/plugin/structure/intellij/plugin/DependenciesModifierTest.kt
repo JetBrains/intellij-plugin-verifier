@@ -11,11 +11,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 
-/**
- * Executable examples: a modifier returns the complete dependency list, a modification explains why
- * a dependency is present, and contributions record the declarations behind that dependency.
- * A null contribution source denotes the main plugin rather than a named content module.
- */
 class DependenciesModifierTest {
   @Rule
   @JvmField
@@ -40,15 +35,23 @@ class DependenciesModifierTest {
     val moduleDeclaration = DependencyModification(
       dependency,
       PLUGIN,
-      contributions = listOf(DependencyContribution("example.editor", dependency))
+      contributions = listOf(ContentModuleDependencyContribution("example.editor", dependency))
     )
 
     assertEquals(dependency, mainDeclaration.dependency)
     assertEquals(PLUGIN, mainDeclaration.reason)
-    assertEquals(listOf(DependencyContribution(null, dependency)), mainDeclaration.contributions)
+    assertEquals(listOf(PluginMainModuleDependencyContribution(dependency)), mainDeclaration.contributions)
     assertEquals(dependency, moduleDeclaration.dependency)
     assertEquals(PLUGIN, moduleDeclaration.reason)
-    assertEquals(listOf(DependencyContribution("example.editor", dependency)), moduleDeclaration.contributions)
+    assertEquals(listOf(ContentModuleDependencyContribution("example.editor", dependency)), moduleDeclaration.contributions)
+
+    val sources = (mainDeclaration.contributions + moduleDeclaration.contributions).map {
+      when (it) {
+        is ContentModuleDependencyContribution -> it.contributingContentModule
+        is PluginMainModuleDependencyContribution -> "main plugin"
+      }
+    }
+    assertEquals(listOf("main plugin", "example.editor"), sources)
   }
 
   @Test
@@ -81,7 +84,7 @@ class DependenciesModifierTest {
         DependencyModification(
           coreDependency,
           IDE,
-          contributions = listOf(DependencyContribution(null, coreDependency))
+          contributions = listOf(PluginMainModuleDependencyContribution(coreDependency))
         )
       ),
       modifications
@@ -159,15 +162,15 @@ class DependenciesModifierTest {
           mainDependency,
           PLUGIN,
           contributions = listOf(
-            DependencyContribution(null, mainDependency),
-            DependencyContribution("example.required", requiredDeclaration),
-            DependencyContribution("example.optional", optionalDeclaration)
+            PluginMainModuleDependencyContribution(mainDependency),
+            ContentModuleDependencyContribution("example.required", requiredDeclaration),
+            ContentModuleDependencyContribution("example.optional", optionalDeclaration)
           )
         ),
         DependencyModification(
           moduleOnlyDependency,
           CONTENT_MODULE,
-          contributions = listOf(DependencyContribution("example.optional", moduleOnlyDependency))
+          contributions = listOf(ContentModuleDependencyContribution("example.optional", moduleOnlyDependency))
         )
       ),
       DefaultDependencyContributor(includeContentModuleDependencies = true).apply(plugin, ide)
@@ -241,9 +244,9 @@ class DependenciesModifierTest {
     val plugin = idePlugin("com.example.editor")
     val dependency = ModuleV2Dependency("example.platform.api")
     val optionalDependency = dependency.asOptional()
-    val ideContribution = DependencyContribution(null, dependency)
-    val requiredContribution = DependencyContribution("example.required", dependency)
-    val optionalContribution = DependencyContribution("example.optional", optionalDependency)
+    val ideContribution = PluginMainModuleDependencyContribution(dependency)
+    val requiredContribution = ContentModuleDependencyContribution("example.required", dependency)
+    val optionalContribution = ContentModuleDependencyContribution("example.optional", optionalDependency)
     val modifier = CompositeDependenciesModifier(
       { _, _ -> listOf(DependencyModification(dependency, IDE, listOf(ideContribution))) },
       { pluginView, pluginProvider ->

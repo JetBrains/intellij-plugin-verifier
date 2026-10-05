@@ -14,30 +14,7 @@ enum class DependencyModificationReason {
   CONTENT_MODULE
 }
 
-/**
- * Records the source of one contribution to a [DependencyModification].
- *
- * The source is the plugin's main descriptor or a named content module that declares the dependency,
- * not the plugin or module being depended on. An implicit dependency added by a modifier can also have
- * a main-plugin-level contribution without a corresponding descriptor declaration.
- *
- * [dependency] retains the dependency details at that source, including optionality. These can differ
- * from [DependencyModification.dependency] when several sources contribute to the same dependency ID.
- * Contributions are provenance metadata, not additional dependencies to add to the result.
- *
- * Example: the content module `example.editor` optionally depends on `example.language.api`:
- * ```
- * val contribution = DependencyContribution(
- *   sourceModuleName = "example.editor",
- *   dependency = ModuleV2Dependency("example.language.api").asOptional()
- * )
- * ```
- *
- * @property sourceModuleName name of the contributing content module, or `null` for a main-plugin-level
- *   contribution (also used by default for implicit dependencies).
- * @property dependency dependency supplied by this source, preserving its own declaration details.
- */
-data class DependencyContribution(val sourceModuleName: String?, val dependency: PluginDependency)
+
 
 /**
  * A resulting dependency together with its reason and contribution sources.
@@ -51,18 +28,18 @@ data class DependencyContribution(val sourceModuleName: String?, val dependency:
  * for module dependencies, and [DependencyModificationReason.IDE] for implicit IDE dependencies.
  *
  * [contributions] records the source-level dependencies behind this effective dependency. By default it
- * contains one main-plugin-level contribution using [dependency]; supplying an explicit list replaces that
- * default. Multiple sources can contribute the same dependency ID while retaining different optionality.
+ * contains one [PluginMainModuleDependencyContribution] using [dependency]; supplying an explicit list replaces
+ * that default. Multiple sources can contribute the same dependency ID while retaining different optionality.
  *
  * Example: a mandatory main-plugin dependency is also declared optionally by a content module:
  * ```
  * val dependency = ModuleV2Dependency("example.language.api")
  * val mainOnly = DependencyModification(dependency, DependencyModificationReason.CONTENT_MODULE)
- * // mainOnly.contributions contains DependencyContribution(null, dependency).
+ * // mainOnly.contributions contains PluginMainModuleDependencyContributon(dependency).
  * val shared = mainOnly.copy(
  *   contributions = listOf(
- *     DependencyContribution(null, dependency),
- *     DependencyContribution("example.editor", dependency.asOptional())
+ *     PluginMainModuleDependencyContributon(dependency),
+ *     ContentModuleDependencyContribution("example.editor", dependency.asOptional())
  *   )
  * )
  * // shared.dependency remains mandatory; the module's contribution remains optional.
@@ -75,7 +52,7 @@ data class DependencyContribution(val sourceModuleName: String?, val dependency:
 data class DependencyModification(
   val dependency: PluginDependency,
   val reason: DependencyModificationReason,
-  val contributions: List<DependencyContribution> = listOf(DependencyContribution(null, dependency))
+  val contributions: List<DependencyContribution> = listOf(PluginMainModuleDependencyContribution(dependency))
 )
 
 fun interface DependenciesModifier {
@@ -105,13 +82,13 @@ internal fun IdePlugin.getDependencyModifications(): List<DependencyModification
 }
 
 internal fun IdePlugin.getDependencyContributions(dependency: PluginDependency): List<DependencyContribution> {
-  if (modulesDescriptors.isEmpty()) return listOf(DependencyContribution(null, dependency))
+  if (modulesDescriptors.isEmpty()) return listOf(PluginMainModuleDependencyContribution(dependency))
   val declarations = reconstructDependencies().filter { it.id == dependency.id }
-    .map { DependencyContribution(null, it) } + modulesDescriptors.flatMap { descriptor ->
+    .map { PluginMainModuleDependencyContribution(it) } + modulesDescriptors.flatMap { descriptor ->
     descriptor.declaredDependencies.filter { it.id == dependency.id }
-      .map { DependencyContribution(descriptor.name, it) }
+      .map { ContentModuleDependencyContribution(descriptor.name, it) }
   }
-  return declarations.ifEmpty { listOf(DependencyContribution(null, dependency)) }
+  return declarations.ifEmpty { listOf(PluginMainModuleDependencyContribution(dependency)) }
 }
 
 internal fun List<PluginDependency>.withInferredModificationReasons(): List<DependencyModification> = map {

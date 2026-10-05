@@ -67,12 +67,21 @@ class CompositeDependenciesModifier(
 
   private fun DependencyModification.withHighestPriorityReason(other: DependencyModification): DependencyModification {
     val preferred = if (reason >= other.reason) this else other
-    val sources = contributions.map { it.sourceModuleName }.toSet()
+    val sources = contributions.map {
+      when (it) {
+        is ContentModuleDependencyContribution -> it.contributingContentModule
+        is PluginMainModuleDependencyContribution -> null
+      }
+    }.toSet()
     val retained = other.contributions.filterNot {
-      it.sourceModuleName == null && sources.isNotEmpty() && null !in sources
+      it is PluginMainModuleDependencyContribution && sources.isNotEmpty() && null !in sources
     }
     return preferred.copy(contributions = (contributions + retained).distinctBy {
-      Triple(it.sourceModuleName, it.dependency.id, it.dependency.isOptional)
+      val contributingContentModule = when (it) {
+        is ContentModuleDependencyContribution -> it.contributingContentModule
+        is PluginMainModuleDependencyContribution -> null
+      }
+      Triple(contributingContentModule, it.dependency.id, it.dependency.isOptional)
     })
   }
 
