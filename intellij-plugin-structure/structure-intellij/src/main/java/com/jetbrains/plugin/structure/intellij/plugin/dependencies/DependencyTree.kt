@@ -136,30 +136,18 @@ class DependencyTree(
       // Index content-module descriptors by name for source and sibling dependency lookups below.
       val contentModules = modulesDescriptors.associateBy { it.name }
 
-      // <content><module> establishes ownership without an explicit <dependencies> entry. Avoid self-edges.
-      for (descriptor in contentModules.values) {
-        val moduleDependency = ContentModuleDeclaration(plugin, descriptor.name).intern()
-        if (moduleDependency.nodeId != nodeId) {
-          graph.addOwnershipEdge(nodeId, moduleDependency)
-        }
-      }
+      addContentModuleOwnershipEdges(plugin, nodeId, contentModules.values, graph)
 
       val modifications = context.dependenciesModifier.apply(this, pluginProvider)
       val classpathTargets = mutableListOf<Dependency>()
       val indent = getIndent(resolutionDepth, parentDependencyIndex)
       val number = if (dependencyIndex < 0) "" else "${dependencyIndex + 1}) "
-      debugLog(indent, "${number}Resolving {} ${"dependency".pluralize(modifications.size)} for '{}': {}",
-        modifications.size, nodeId, modifications.joinToString { it.dependency.id })
+      logResolvingDependencies(nodeId, modifications, indent, number)
       val nestedIndent = getNestedDependencyIndent(indent, number)
-      for ((i, modification) in modifications.withIndex()) {
+      modifications.forEachIndexed { i, modification ->
         for (contribution in modification.contributions) {
           val dep = contribution.dependency
-          val source = when (contribution) {
-            is ContentModuleDependencyContribution -> contribution.contributingContentModule
-              .takeIf { it in contentModules }
-              ?.let { NodeId(pluginId, it) } ?: nodeId
-            is PluginMainModuleDependencyContribution -> nodeId
-          }
+          val source = contribution.getSourceNodeId(pluginId, nodeId, contentModules.keys)
           val sibling = contentModules[dep.id]?.takeIf { dep.isModule }
           if (!dependencyFilter(dep)) continue
           if (sibling != null) {
@@ -168,25 +156,22 @@ class DependencyTree(
           }
           if (ignore(plugin, dep) || dep in missingDependencies) continue
           when (val dependencyPlugin = resolve(dep)) {
-              is Plugin, is Module, is ContentModuleDeclaration -> {
+            is Plugin, is Module, is ContentModuleDeclaration -> {
               val resolved = dependencyPlugin as PluginAware
               if (resolved.plugin.pluginId == pluginId) continue
-              val includeInClasspath = expandClasspath && classpathTargets.none {
-                val contentModule = it is Module &&
-                  it.plugin.modulesDescriptors.any { descriptor -> descriptor.name == it.id } &&
-                  !ideModulePredicate.matches(it.id, it.plugin)
-                it.matches(dep.id) && !(contentModule && dependencyPlugin is Plugin)
-              }
+              val includeInClasspath = expandClasspath &&
+                shouldIncludeInClasspath(dep, dependencyPlugin, classpathTargets)
               if (includeInClasspath) classpathTargets += dependencyPlugin
               graph.addEdge(source, dependencyPlugin, includeInClasspath)
               debugLog(nestedIndent, i + 1, "Resolved '{}' from '{}' (classpath: {})",
-                dep.id, source, includeInClasspath)
+                       dep.id, source, includeInClasspath)
               getDependencyGraph(
                 resolved.plugin, dependencyPlugin.nodeId!!, graph, visitedNodes,
                 resolutionDepth + 1, i, dependencyIndex, missingDependencies, context, classpathExpandedPlugins,
                 classpathExpansionActive = includeInClasspath
               )
             }
+
             is None -> {
               context.notifyMissingDependency(plugin, dep)
               missingDependencies += dep
@@ -196,6 +181,53 @@ class DependencyTree(
         }
       }
     }
+
+  private fun addContentModuleOwnershipEdges(
+    plugin: IdePlugin,
+    nodeId: NodeId,
+    contentModules: Collection<ModuleDescriptor>,
+    graph: DependencyGraph
+  ) {
+    // <content><module> establishes ownership without an explicit <dependencies> entry. Avoid self-edges.
+    for (descriptor in contentModules) {
+      val moduleDependency = ContentModuleDeclaration(plugin, descriptor.name).intern()
+      if (moduleDependency.nodeId != nodeId) {
+        graph.addOwnershipEdge(nodeId, moduleDependency)
+      }
+    }
+  }
+
+  private fun DependencyContribution.getSourceNodeId(
+    pluginId: PluginId,
+    nodeId: NodeId,
+    contentModuleNames: Set<String>
+  ): NodeId = when (this) {
+    is ContentModuleDependencyContribution -> contributingContentModule
+      .takeIf { it in contentModuleNames }
+      ?.let { NodeId(pluginId, it) } ?: nodeId
+    is PluginMainModuleDependencyContribution -> nodeId
+  }
+
+  private fun shouldIncludeInClasspath(
+    dependency: PluginDependency,
+    resolvedDependency: Dependency,
+    classpathTargets: List<Dependency>
+  ): Boolean = classpathTargets.none {
+    val contentModule = it is Module &&
+      it.plugin.modulesDescriptors.any { descriptor -> descriptor.name == it.id } &&
+      !ideModulePredicate.matches(it.id, it.plugin)
+    it.matches(dependency.id) && !(contentModule && resolvedDependency is Plugin)
+  }
+
+  private fun logResolvingDependencies(
+    nodeId: NodeId,
+    modifications: List<DependencyModification>,
+    indent: String,
+    number: String
+  ) {
+    debugLog(indent, "${number}Resolving {} ${"dependency".pluralize(modifications.size)} for '{}': {}",
+      modifications.size, nodeId, modifications.joinToString { it.dependency.id })
+  }
 
   // It's OK to keep them all in memory since they're held in memory by:
   // DiGraph
