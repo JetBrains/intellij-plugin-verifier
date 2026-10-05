@@ -147,7 +147,7 @@ class CompositeDependenciesModifierTest {
   fun `default contributor preserves main and module sources for shared dependencies`() {
     val plugin = pluginWithSharedDependencies()
 
-    val modifiedDependencies = DefaultDependencyContributor(true).apply(plugin, ide)
+    val modifiedDependencies = PassThruDependenciesModifier.apply(plugin, ide)
 
     assertSharedContributions(modifiedDependencies)
     assertEquals(plugin.dependencies, modifiedDependencies.map { it.dependency })
@@ -158,7 +158,7 @@ class CompositeDependenciesModifierTest {
     val plugin = pluginWithOptionalSharedV1Dependency()
 
     val modifiedDependencies = CompositeDependenciesModifier(
-      DefaultDependencyContributor(true), PassThruDependenciesModifier
+      PassThruDependenciesModifier
     ).apply(plugin, ide)
 
     assertEquals(plugin.dependencies, modifiedDependencies.map { it.dependency })
@@ -178,9 +178,26 @@ class CompositeDependenciesModifierTest {
   @Test
   fun `default contributor without content modules retains only main sources`() {
     val plugin = pluginWithSharedDependencies()
+    val mainOnly = DependenciesModifier { pluginView, _ ->
+      pluginView.reconstructDependencies().map {
+        val reason = if (it is ModuleV2Dependency) {
+          DependencyModificationReason.CONTENT_MODULE
+        } else {
+          DependencyModificationReason.PLUGIN
+        }
+        DependencyModification(it, reason)
+      }
+    }
 
-    val modifiedDependencies = DefaultDependencyContributor(false).apply(plugin, ide)
+    val modifiedDependencies = mainOnly.apply(plugin, ide)
 
+    assertEquals(
+      listOf(
+        DependencyModification(ModuleV2Dependency("shared.module"), DependencyModificationReason.CONTENT_MODULE),
+        DependencyModification(PluginV2Dependency("shared.plugin"), DependencyModificationReason.PLUGIN)
+      ),
+      modifiedDependencies
+    )
     assertEquals(plugin.reconstructDependencies(), modifiedDependencies.map { it.dependency })
     modifiedDependencies.forEach { modification ->
       assertEquals(listOf(PluginMainModuleDependencyContribution(modification.dependency)), modification.contributions)
@@ -202,7 +219,6 @@ class CompositeDependenciesModifierTest {
     val plugin = pluginWithSharedDependencies()
     val passThroughDependencies = PassThruDependenciesModifier.apply(plugin, ide)
     val compositeModifier = CompositeDependenciesModifier(
-      DefaultDependencyContributor(true),
       PassThruDependenciesModifier,
       CompositeDependenciesModifier(PassThruDependenciesModifier),
       { pluginView, _ ->
@@ -223,7 +239,6 @@ class CompositeDependenciesModifierTest {
     val addedDependency = PluginV2Dependency("shared.plugin", isOptional = true)
     val addedContribution = ContentModuleDependencyContribution("example.additional", addedDependency)
     val compositeModifier = CompositeDependenciesModifier(
-      DefaultDependencyContributor(true),
       { pluginView, pluginProvider ->
         PassThruDependenciesModifier.apply(pluginView, pluginProvider) + DependencyModification(
           addedDependency, DependencyModificationReason.OTHER, listOf(addedContribution)
@@ -252,7 +267,6 @@ class CompositeDependenciesModifierTest {
   fun `composite filtering removes all sources of an id without resurrecting dependencies`() {
     val plugin = pluginWithSharedDependencies()
     val compositeModifier = CompositeDependenciesModifier(
-      DefaultDependencyContributor(true),
       { pluginView, pluginProvider ->
         PassThruDependenciesModifier.apply(pluginView, pluginProvider).filterNot { it.dependency.id == "shared.plugin" }
       },
@@ -263,7 +277,7 @@ class CompositeDependenciesModifierTest {
     val modifiedDependencies = compositeModifier.apply(plugin, ide)
 
     assertEquals(
-      DefaultDependencyContributor(true).apply(plugin, ide).filterNot { it.dependency.id == "shared.plugin" },
+      PassThruDependenciesModifier.apply(plugin, ide).filterNot { it.dependency.id == "shared.plugin" },
       modifiedDependencies
     )
     assertTrue(modifiedDependencies.none { modification ->

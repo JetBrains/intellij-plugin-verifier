@@ -108,8 +108,30 @@ class DependenciesModifierTest {
     )
 
     assertEquals(expected, PassThruDependenciesModifier.apply(plugin, ide))
-    assertEquals(expected, DefaultDependencyContributor(includeContentModuleDependencies = false).apply(plugin, ide))
     assertEquals(expected, CompositeDependenciesModifier(emptyList()).apply(plugin, ide))
+  }
+
+  @Test
+  @Suppress("DEPRECATION")
+  fun `pass-through respects exposed dependencies instead of rebuilding original declarations`() {
+    val original = idePlugin("com.example.editor") {
+      depends("com.example.original")
+    }
+    val exposedDependency = PluginV2Dependency("com.example.injected", isOptional = true)
+    val pluginView = object : IdePlugin by original {
+      @Suppress("OVERRIDE_DEPRECATION")
+      override val dependencies: List<PluginDependency> = listOf(exposedDependency)
+    }
+    val expected = listOf(DependencyModification(exposedDependency, PLUGIN))
+
+    assertEquals(listOf(PluginV1Dependency.Mandatory("com.example.original")), pluginView.reconstructDependencies())
+    assertEquals(expected, PassThruDependenciesModifier.apply(pluginView, ide))
+    assertEquals(expected, CompositeDependenciesModifier(emptyList()).apply(pluginView, ide))
+    assertEquals(
+      expected,
+      CompositeDependenciesModifier(PassThruDependenciesModifier, PassThruDependenciesModifier).apply(pluginView, ide)
+    )
+    assertEquals(listOf(PluginV1Dependency.Mandatory("com.example.original")), original.dependencies)
   }
 
   @Test
@@ -144,7 +166,6 @@ class DependenciesModifierTest {
         )
       )
 
-      assertEquals(expected, DefaultDependencyContributor(includeContentModuleDependencies = true).apply(plugin, ide))
       assertEquals(expected, PassThruDependenciesModifier.apply(plugin, ide))
       assertEquals(expected, CompositeDependenciesModifier(emptyList()).apply(plugin, ide))
       assertEquals(
@@ -193,10 +214,13 @@ class DependenciesModifierTest {
       )
     )
     val mainDependency = PluginV1Dependency.Optional("com.example.language")
+    val mainOnly = DependenciesModifier { pluginView, _ ->
+      pluginView.reconstructDependencies().map { DependencyModification(it, PLUGIN) }
+    }
 
     assertEquals(
       listOf(DependencyModification(mainDependency, PLUGIN)),
-      DefaultDependencyContributor(includeContentModuleDependencies = false).apply(plugin, ide)
+      mainOnly.apply(plugin, ide)
     )
     assertEquals(
       listOf(
@@ -215,7 +239,7 @@ class DependenciesModifierTest {
           contributions = listOf(ContentModuleDependencyContribution("example.optional", moduleOnlyDependency))
         )
       ),
-      DefaultDependencyContributor(includeContentModuleDependencies = true).apply(plugin, ide)
+      PassThruDependenciesModifier.apply(plugin, ide)
     )
   }
 
@@ -254,7 +278,6 @@ class DependenciesModifierTest {
       modifications.filterNot { it.dependency.id == "com.example.git" }
     }
     val modifier = CompositeDependenciesModifier(
-      DefaultDependencyContributor(includeContentModuleDependencies = true),
       CorePluginDependencyContributor(ide),
       removeGit,
       PassThruDependenciesModifier

@@ -48,9 +48,7 @@ class DependenciesGraphProviderTest {
     )
     val ide = MockIde(IdeVersion.createIdeVersion("IU-261.1"))
     val dependencyTree = DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX)
-    val dependenciesModifier = DefaultDependencyContributor(includeContentModuleDependencies = true)
-    val resolution
-      = dependencyTree.getDependencyTreeResolution(plugin, dependenciesModifier)
+    val resolution = dependencyTree.getDependencyTreeResolution(plugin)
 
     val ownershipEdges = mutableSetOf<Pair<Dependency, Dependency>>()
     resolution.forEach { from, to -> ownershipEdges += from to to }
@@ -308,9 +306,7 @@ internal fun simpleModularDependenciesFixture(): SimpleModularDependenciesFixtur
     modulesDescriptors = listOf(core)
   )
   val ide = MockIde(IdeVersion.createIdeVersion("IU-261.1"))
-  val resolution = DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX).getDependencyTreeResolution(
-    plugin, DefaultDependencyContributor(includeContentModuleDependencies = true)
-  )
+  val resolution = DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX).getDependencyTreeResolution(plugin)
   return SimpleModularDependenciesFixture(plugin, resolution)
 }
 
@@ -331,9 +327,7 @@ internal fun pluginWithCoreAndExtrasModuleWithExtrasDependingOnCoreFixture(): Si
     modulesDescriptors = listOf(core, extras)
   )
   val ide = MockIde(IdeVersion.createIdeVersion("IU-261.1"))
-  val resolution = DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX).getDependencyTreeResolution(
-    plugin, DefaultDependencyContributor(includeContentModuleDependencies = true)
-  )
+  val resolution = DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX).getDependencyTreeResolution(plugin)
   return SimpleModularDependenciesFixture(plugin, resolution)
 }
 
@@ -364,9 +358,7 @@ internal fun modularDependenciesFixture(repeatMainDependencies: Boolean): Modula
     modulesDescriptors = listOf(core, extra)
   )
   val ide = MockIde(IdeVersion.createIdeVersion("IU-261.1"), bundledPlugins = listOf(platform, bundled, transitive))
-  val resolution = DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX).getDependencyTreeResolution(
-    plugin, DefaultDependencyContributor(includeContentModuleDependencies = true)
-  )
+  val resolution = DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX).getDependencyTreeResolution(plugin)
   return ModularDependenciesFixture(plugin, platform, bundled, transitive, resolution)
 }
 

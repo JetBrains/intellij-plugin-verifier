@@ -338,9 +338,8 @@ class DependencyTreeTest {
 
     val dependencyTree = DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
 
-    val dependencyContributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
     val transitiveDependencies = dependencyTree.getTransitiveDependencies(pluginWithContentModules)
-    val resolution = dependencyTree.getDependencyTreeResolution(pluginWithContentModules, dependencyContributor)
+    val resolution = dependencyTree.getDependencyTreeResolution(pluginWithContentModules)
 
     val ijPluginDependencies = tenIjDependencies.map { Dependency.Plugin(it, isTransitive = true) }
 
@@ -352,7 +351,7 @@ class DependencyTreeTest {
 
     assertEquals(13, transitiveDependencies.size)
     assertSetsEqual(expectedDependencies, transitiveDependencies)
-    assertSetsEqual(expectedDependencies, dependencyTree.getTransitiveDependencies(pluginWithContentModules, dependenciesModifier = dependencyContributor))
+    assertSetsEqual(expectedDependencies, dependencyTree.getTransitiveDependencies(pluginWithContentModules))
     assertEquals(13, resolution.transitiveDependencies.size)
     assertSetsEqual(expectedDependencies, resolution.transitiveDependencies.toSet())
 
@@ -421,8 +420,7 @@ class DependencyTreeTest {
 
     val dependencyTree = DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
 
-    val dependencyContributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
-    val transitiveDependencies = dependencyTree.getTransitiveDependencies(pluginWithContentModules, dependenciesModifier = dependencyContributor)
+    val transitiveDependencies = dependencyTree.getTransitiveDependencies(pluginWithContentModules)
 
     val expectedDependencies = setOf(
       Dependency.Module(platformPlugin, "com.intellij.modules.platform", isTransitive = false),
@@ -430,7 +428,7 @@ class DependencyTreeTest {
     )
 
     assertSetsEqual(expectedDependencies, transitiveDependencies)
-    val resolution = dependencyTree.getDependencyTreeResolution(pluginWithContentModules, dependencyContributor)
+    val resolution = dependencyTree.getDependencyTreeResolution(pluginWithContentModules)
     assertSetsEqual(expectedDependencies, resolution.transitiveDependencies.toSet())
 
     val dependencyTreeString = dependencyTree.toString(pluginWithContentModules).toString()
@@ -470,7 +468,6 @@ class DependencyTreeTest {
     }
     val somePlugin = modularPlugin("com.example.SomePlugin", somePluginCoreModule)
     val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, listOf(bundledPlugin, transitiveOnlyTargetPlugin))
-    val contributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
 
     for (owner in listOf(somePlugin, bundledPlugin)) {
       assertEquals(1, owner.contentModules.size)
@@ -501,11 +498,11 @@ class DependencyTreeTest {
 
     val dependencyTree = DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
     val missingDependencies = MissingDependencyCollector()
-    val dependencies = dependencyTree.getTransitiveDependencies(somePlugin, missingDependencies, contributor)
+    val dependencies = dependencyTree.getTransitiveDependencies(somePlugin, missingDependencies)
     assertSetsEqual(expectedDependencies, dependencies)
     assertTrue(missingDependencies.isEmpty())
 
-    val resolution = dependencyTree.getDependencyTreeResolution(somePlugin, contributor)
+    val resolution = dependencyTree.getDependencyTreeResolution(somePlugin)
     assertEquals(expectedDependencies.size, resolution.transitiveDependencies.size)
     assertSetsEqual(expectedDependencies, resolution.transitiveDependencies.toSet())
     assertTrue(resolution.missingDependencies.isEmpty())
@@ -528,9 +525,8 @@ class DependencyTreeTest {
     assertTrue(plugin.contentModuleDependencies.isEmpty())
 
     val dependencyTree = DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
-    val contributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
-    val resolution = dependencyTree.getDependencyTreeResolution(plugin, contributor)
-    val transitiveDependencies = dependencyTree.getTransitiveDependencies(plugin, dependenciesModifier = contributor)
+    val resolution = dependencyTree.getDependencyTreeResolution(plugin)
+    val transitiveDependencies = dependencyTree.getTransitiveDependencies(plugin)
     val expectedDependencies = setOf(
       Dependency.Module(platformPlugin, "com.intellij.modules.platform", isTransitive = false),
       Dependency.Plugin(someBundledIdePlugin, isTransitive = false),
@@ -585,11 +581,10 @@ class DependencyTreeTest {
     ).assertValid()
     val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, listOf(platformPlugin, otherProvider))
     val dependencyTree = DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
-    val contributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
-    val resolution = dependencyTree.getDependencyTreeResolution(plugin, contributor)
+    val resolution = dependencyTree.getDependencyTreeResolution(plugin)
     val expectedDependencies = setOf(Dependency.Module(platformPlugin, "com.intellij.modules.platform", isTransitive = false))
 
-    assertSetsEqual(expectedDependencies, dependencyTree.getTransitiveDependencies(plugin, dependenciesModifier = contributor))
+    assertSetsEqual(expectedDependencies, dependencyTree.getTransitiveDependencies(plugin))
     assertSetsEqual(expectedDependencies, resolution.transitiveDependencies.toSet())
     assertTrue(resolution.missingDependencies.isEmpty())
 
@@ -629,10 +624,9 @@ class DependencyTreeTest {
     val plugin = modularPlugin("com.example.Filtered", coreModule, extrasModule)
     val filteredIds = setOf(coreModule.pluginId!!, bundledPlugin.pluginId!!, missingPluginId)
     val dependencyTree = DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX) { it.id !in filteredIds }
-    val contributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
-    val resolution = dependencyTree.getDependencyTreeResolution(plugin, contributor)
+    val resolution = dependencyTree.getDependencyTreeResolution(plugin)
     val missingDependencies = MissingDependencyCollector()
-    val transitiveDependencies = dependencyTree.getTransitiveDependencies(plugin, missingDependencies, contributor)
+    val transitiveDependencies = dependencyTree.getTransitiveDependencies(plugin, missingDependencies)
     val expectedDependencies = setOf(Dependency.Module(platformPlugin, "com.intellij.modules.platform", isTransitive = false))
 
     assertSetsEqual(expectedDependencies, transitiveDependencies)
@@ -664,10 +658,9 @@ class DependencyTreeTest {
     }
     val plugin = modularPlugin("com.example.Missing", coreModule, extrasModule)
     val dependencyTree = DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
-    val contributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
-    val resolution = dependencyTree.getDependencyTreeResolution(plugin, contributor)
+    val resolution = dependencyTree.getDependencyTreeResolution(plugin)
     val missingDependencies = MissingDependencyCollector()
-    val transitiveDependencies = dependencyTree.getTransitiveDependencies(plugin, missingDependencies, contributor)
+    val transitiveDependencies = dependencyTree.getTransitiveDependencies(plugin, missingDependencies)
     val expectedDependencies = setOf(Dependency.Module(platformPlugin, "com.intellij.modules.platform", isTransitive = false))
     val expectedMissingDependencies = setOf(
       PluginV1Dependency.Mandatory(missingPluginId),
@@ -708,7 +701,6 @@ class DependencyTreeTest {
     ).assertValid()
     val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot,
       listOf(provider, sharedDependency, coreDependency, extrasDependency))
-    val contributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
 
     for (pluginFirst in listOf(true, false)) {
       val plugin = idePlugin("com.example.Consumer.$pluginFirst") {
@@ -717,8 +709,8 @@ class DependencyTreeTest {
         moduleDependency(extrasModule.pluginId!!, "com.example")
       }
       val dependencyTree = DependencyTree(ide)
-      val resolution = dependencyTree.getDependencyTreeResolution(plugin, contributor)
-      val transitiveDependencies = dependencyTree.getTransitiveDependencies(plugin, dependenciesModifier = contributor)
+      val resolution = dependencyTree.getDependencyTreeResolution(plugin)
+      val transitiveDependencies = dependencyTree.getTransitiveDependencies(plugin)
       val expectedDependencies = setOf(
         Dependency.Plugin(provider, isTransitive = false),
         Dependency.Module(provider, coreModule.pluginId!!, isTransitive = false),

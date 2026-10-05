@@ -17,12 +17,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
-import com.jetbrains.plugin.structure.intellij.plugin.Classpath
-import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
-import com.jetbrains.plugin.structure.intellij.plugin.DefaultDependencyContributor
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
@@ -529,7 +524,6 @@ class CachingPluginDependencyResolverProviderTest {
       IdeVersion.createIdeVersion("IU-243.12818.47"), ideRoot,
       bundledPlugins = listOf(ideaCorePlugin, bundledPlugin, transitivePlugin)
     )
-    val contributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
     val expectedDependencies = setOf(
       Dependency.Module(ideaCorePlugin, "com.intellij.modules.platform", isTransitive = false),
       Dependency.Plugin(bundledPlugin, isTransitive = false),
@@ -563,8 +557,7 @@ class CachingPluginDependencyResolverProviderTest {
         extraDescriptor.resolvedDependencies.map { it.id }.toSet())
 
       val resolverProvider = CachingPluginDependencyResolverProvider(
-        ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX, dependenciesModifier = contributor
-      )
+        ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
       val resolver = resolverProvider.getResolver(plugin)
       assertTrue(resolver is CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver)
       resolver as CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver
@@ -598,7 +591,7 @@ class CachingPluginDependencyResolverProviderTest {
         assertEquals("Exactly three flattened external dependencies are required", 3, resolution.transitiveDependencies.size)
         assertEquals("Flattening must preserve direct and transitive classification", expectedDependencies, resolution.transitiveDependencies.toSet())
         assertEquals("Both dependency APIs must expose the same flattened collection", expectedDependencies,
-          DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX).getTransitiveDependencies(plugin, dependenciesModifier = contributor))
+          DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX).getTransitiveDependencies(plugin))
 
         val rootNode = NodeId.ofPlugin(plugin)
         val coreNode = NodeId(rootNode.pluginId, coreId)
@@ -661,8 +654,7 @@ class CachingPluginDependencyResolverProviderTest {
     assertEquals(bundledCore.declaredDependencies, bundledCore.resolvedDependencies)
 
     val ide = MockIde(IdeVersion.createIdeVersion("IU-243.12818.47"), ideRoot, bundledPlugins = listOf(bundled, target))
-    val contributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
-    val provider = CachingPluginDependencyResolverProvider(ide, dependenciesModifier = contributor)
+    val provider = CachingPluginDependencyResolverProvider(ide)
     val resolver = provider.getResolver(consumer)
     assertTrue(resolver is CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver)
     resolver as CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver
@@ -697,7 +689,7 @@ class CachingPluginDependencyResolverProviderTest {
       val expected = setOf(Dependency.Module(bundled, bundledCoreId, isTransitive = false),
         Dependency.Plugin(target, isTransitive = true))
       assertEquals(expected, resolution.transitiveDependencies.toSet())
-      assertEquals(expected, DependencyTree(ide).getTransitiveDependencies(consumer, dependenciesModifier = contributor))
+      assertEquals(expected, DependencyTree(ide).getTransitiveDependencies(consumer))
       val rootNode = NodeId.ofPlugin(consumer)
       val coreNode = NodeId(rootNode.pluginId, coreId)
       val bundledNode = Dependency.Module(bundled, bundledCoreId).nodeId
