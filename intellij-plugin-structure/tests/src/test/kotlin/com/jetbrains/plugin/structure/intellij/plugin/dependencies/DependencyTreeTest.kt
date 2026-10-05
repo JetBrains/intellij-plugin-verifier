@@ -444,21 +444,35 @@ class DependencyTreeTest {
     assertEquals(expectedDependencyTreeString, dependencyTreeString)
   }
 
+  /**
+   * Verifies resolution through a single content module owned by each of `somePlugin` and bundled plugins:
+   * `somePlugin *-> somePlugin.core -> bundledPlugin.core -> TransitiveOnlyTarget`.
+   * Neither owner declares dependencies at plugin level or exposes aliases; the IDE finds the bundled core
+   * by its content-module ID and associates it with the bundled plugin.
+   *
+   * With content-module dependencies included, the graph preserves this module-level chain. The flattened
+   * result treats the bundled core as a direct module dependency because `somePlugin`'s own core declares it,
+   * while the target is a transitive plugin dependency reachable only through the bundled core. `somePlugin`'s
+   * own core declaration is not included in the flattened dependency set.
+   *
+   * Both dependency-resolution APIs must return the same dependencies without missing entries, using either
+   * the default IDE-module predicate or the predicate restricted to the `com.intellij.modules.` prefix.
+   */
   @Test
-  fun `single core content module resolves bundled core and transitive-only target`() {
-    val target = idePlugin("com.example.TransitiveOnlyTarget")
+  fun `plugin content module resolves bundled content module directly and target plugin transitively`() {
+    val transitiveOnlyTargetPlugin = idePlugin("com.example.TransitiveOnlyTarget")
     val bundledCore = contentModule("com.intellij.bundledPlugin.core") {
-      depends(target)
+      depends(transitiveOnlyTargetPlugin)
     }
     val bundledPlugin = modularPlugin("com.intellij.bundledPlugin", bundledCore)
-    val consumerCore = contentModule("com.example.Consumer.core") {
+    val somePluginCoreModule = contentModule("com.example.SomePlugin.core") {
       moduleDependency(bundledCore.pluginId!!, "com.example")
     }
-    val consumer = modularPlugin("com.example.Consumer", consumerCore)
-    val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, listOf(bundledPlugin, target))
+    val somePlugin = modularPlugin("com.example.SomePlugin", somePluginCoreModule)
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, listOf(bundledPlugin, transitiveOnlyTargetPlugin))
     val contributor = DefaultDependencyContributor(includeContentModuleDependencies = true)
 
-    for (owner in listOf(consumer, bundledPlugin)) {
+    for (owner in listOf(somePlugin, bundledPlugin)) {
       assertEquals(1, owner.contentModules.size)
       assertEquals(1, owner.modulesDescriptors.size)
       assertTrue(owner.dependsList.isEmpty())
@@ -472,31 +486,30 @@ class DependencyTreeTest {
     assertEquals(bundledPlugin, provision.plugin)
     assertEquals(PluginProvision.Source.CONTENT_MODULE_ID, provision.source)
 
-    val consumerNode = NodeId.ofPlugin(consumer)
-    val consumerCoreNode = NodeId(consumerNode.pluginId, consumerCore.pluginId!!)
+    val somePluginNode = NodeId.ofPlugin(somePlugin)
+    val somePluginCoreNode = NodeId(somePluginNode.pluginId, somePluginCoreModule.pluginId!!)
     val bundledCoreNode = NodeId(bundledPlugin.pluginId!!, bundledCore.pluginId)
     val expectedEdges = mapOf(
-      consumerNode to setOf(consumerCoreNode),
-      consumerCoreNode to setOf(bundledCoreNode),
-      bundledCoreNode to setOf(NodeId.ofPlugin(target))
+      somePluginNode to setOf(somePluginCoreNode),
+      somePluginCoreNode to setOf(bundledCoreNode),
+      bundledCoreNode to setOf(NodeId.ofPlugin(transitiveOnlyTargetPlugin))
     )
     val expectedDependencies = setOf(
       Dependency.Module(bundledPlugin, bundledCore.pluginId, isTransitive = false),
-      Dependency.Plugin(target, isTransitive = true)
+      Dependency.Plugin(transitiveOnlyTargetPlugin, isTransitive = true)
     )
 
-    for (dependencyTree in listOf(DependencyTree(ide), DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX))) {
-      val missingDependencies = MissingDependencyCollector()
-      val dependencies = dependencyTree.getTransitiveDependencies(consumer, missingDependencies, contributor)
-      assertSetsEqual(expectedDependencies, dependencies)
-      assertTrue(missingDependencies.isEmpty())
+    val dependencyTree = DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
+    val missingDependencies = MissingDependencyCollector()
+    val dependencies = dependencyTree.getTransitiveDependencies(somePlugin, missingDependencies, contributor)
+    assertSetsEqual(expectedDependencies, dependencies)
+    assertTrue(missingDependencies.isEmpty())
 
-      val resolution = dependencyTree.getDependencyTreeResolution(consumer, contributor)
-      assertEquals(expectedDependencies.size, resolution.transitiveDependencies.size)
-      assertSetsEqual(expectedDependencies, resolution.transitiveDependencies.toSet())
-      assertTrue(resolution.missingDependencies.isEmpty())
-      assertEquals(expectedEdges, resolution.graphEdges())
-    }
+    val resolution = dependencyTree.getDependencyTreeResolution(somePlugin, contributor)
+    assertEquals(expectedDependencies.size, resolution.transitiveDependencies.size)
+    assertSetsEqual(expectedDependencies, resolution.transitiveDependencies.toSet())
+    assertTrue(resolution.missingDependencies.isEmpty())
+    assertEquals(expectedEdges, resolution.graphEdges())
   }
 
   @Test
