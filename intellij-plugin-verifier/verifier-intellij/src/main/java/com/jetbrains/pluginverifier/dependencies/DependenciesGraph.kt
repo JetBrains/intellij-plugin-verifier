@@ -118,7 +118,7 @@ sealed class DependencyNode {
     override val id: String get() = moduleName
     override val version: String get() = plugin.pluginVersion ?: UNKNOWN_VERSION
 
-    override fun toString() = "${plugin.id}/$moduleName:$version"
+    override fun toString() = "${plugin.id}:$version/$moduleName"
   }
 
   /**
@@ -130,7 +130,7 @@ sealed class DependencyNode {
     override val version: String get() = owner.pluginVersion ?: UNKNOWN_VERSION
     override val plugin: IdePlugin = owner
 
-    override fun toString() = "${owner.id}/$name:$version"
+    override fun toString() = "${owner.id}:$version/$name"
   }
 
   data class IdAndVersionDependency(override val id: String, override val version: String) : DependencyNode() {

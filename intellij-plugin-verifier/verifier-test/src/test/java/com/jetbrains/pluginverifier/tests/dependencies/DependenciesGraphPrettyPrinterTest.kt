@@ -114,18 +114,44 @@ start:1.0
   }
 
   @Test
+  fun `plugin with two content modules where one depends on another shows dependencies`() {
+    val graph = pluginWithCoreAndExtrasModuleWithExtrasDependingOnCoreFixture().graph
+
+    assertPrettyPresentation(
+      graph, """
+        owner:1.0
+        +--- owner:1.0/owner.core [declared as a content module]
+        \--- owner:1.0/owner.extras [declared as a content module]
+             \--- owner:1.0/owner.core [content module declared in owner:1.0]
+      """.trimIndent()
+    )
+  }
+
+  @Test
+  fun `simple modular fixture report shows its content module ownership edge`() {
+    val graph = simpleModularDependenciesFixture().graph
+
+    assertPrettyPresentation(
+      graph, """
+      owner:1.0
+      \--- owner:1.0/owner.core [declared as a content module]
+      """.trimIndent()
+    )
+  }
+
+  @Test
   fun `module-only report shows ownership sibling and transitive paths`() {
     val graph = modularDependenciesFixture(repeatMainDependencies = false).graph
 
     assertPrettyPresentation(graph, """
-owner:1.0
-+--- owner/owner.core:1.0 [declaring module owner.core]
-|    \--- com.intellij:261.1 (aliased com.intellij.modules.platform) [declaring module com.intellij.modules.platform]
-\--- owner/owner.extra:1.0 [declaring module owner.extra]
-     +--- bundled:2.0
-     |    \--- transitive:3.0
-     \--- owner/owner.core:1.0 [declaring module owner.core]
-""".trim())
+      owner:1.0
+      +--- owner:1.0/owner.core [declared as a content module]
+      |    \--- com.intellij:261.1 (aliased com.intellij.modules.platform) [declaring module com.intellij.modules.platform]
+      \--- owner:1.0/owner.extra [declared as a content module]
+           +--- bundled:2.0
+           |    \--- transitive:3.0
+           \--- owner:1.0/owner.core [content module declared in owner:1.0]
+    """.trimIndent())
   }
 
   @Test
@@ -137,11 +163,11 @@ owner:1.0
 +--- bundled:2.0
 |    \--- transitive:3.0
 +--- com.intellij:261.1 (aliased com.intellij.modules.platform) [declaring module com.intellij.modules.platform]
-+--- owner/owner.core:1.0 [declaring module owner.core]
++--- owner:1.0/owner.core [declared as a content module]
 |    \--- com.intellij:261.1 (*) [declaring module com.intellij.modules.platform]
-\--- owner/owner.extra:1.0 [declaring module owner.extra]
+\--- owner:1.0/owner.extra [declared as a content module]
      +--- bundled:2.0 (*)
-     \--- owner/owner.core:1.0 [declaring module owner.core]
+     \--- owner:1.0/owner.core [content module declared in owner:1.0]
 """.trim())
   }
 

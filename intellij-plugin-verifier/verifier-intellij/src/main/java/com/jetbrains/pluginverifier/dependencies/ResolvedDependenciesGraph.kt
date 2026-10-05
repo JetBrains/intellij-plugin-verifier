@@ -13,7 +13,10 @@ import java.util.function.Function
  * String-only representation of a plugin dependency identifier, used after dependency resolution.
  * Mirrors [com.jetbrains.plugin.structure.intellij.plugin.PluginDependency] but holds no live objects.
  */
-data class ResolvedPluginDependency(val id: String, val isOptional: Boolean, val isModule: Boolean) {
+data class ResolvedPluginDependency(val id: String,
+                                    val isOptional: Boolean,
+                                    val isModule: Boolean,
+                                    val isContentModule: Boolean = false) {
   override fun toString() = if (isOptional) "$id (optional)" else id
 }
 
@@ -33,7 +36,17 @@ data class ResolvedDependencyNode(
   // Deliberately omits [aliases]: platform nodes carry hundreds of module aliases and this string
   // is emitted once per referencing edge in dependency reports, multiplying report size by orders of magnitude.
   // Use [toStringWithAliases] where the full presentation is wanted (e.g. a node's first occurrence in a report).
-  override fun toString() = (moduleOwnerId?.let { "$it/" } ?: "") + "$id:$version"
+  override fun toString(): String {
+    return if (isContentModuleDeclaration) {
+      "$moduleOwnerId:$version/$id"
+    } else {
+      if (moduleOwnerId != null) {
+        "$moduleOwnerId:$version/$id"
+      } else {
+        "$id:$version"
+      }
+    }
+  }
 
   fun toStringWithAliases() = toString() + if (aliases.isNotEmpty()) " (aliased ${aliases.joinToString(" ")})" else ""
 }
@@ -115,17 +128,22 @@ fun DependenciesGraph.toResolved(batchContext: PluginVerifierBatchContext? = nul
   }
 
   val resolvedEdges = java.util.Set.copyOf(edges.map { edge ->
+    val isContentModule = edge.to is DependencyNode.ModuleDependency
+    val dependency = ResolvedPluginDependency(
+      edge.dependency.id.dedup(),
+      edge.dependency.isOptional,
+      edge.dependency.isModule, isContentModule).dedup()
     ResolvedDependencyEdge(
       nodeMap.getValue(edge.from),
       nodeMap.getValue(edge.to),
-      ResolvedPluginDependency(edge.dependency.id.dedup(), edge.dependency.isOptional, edge.dependency.isModule).dedup()
+      dependency
     ).dedup()
   }).dedup()
 
   val resolvedMissingDeps = missingDependencies.entries.associate { (node, missing) ->
     nodeMap.getValue(node) to missing.mapTo(hashSetOf()) { md ->
       ResolvedMissingDependency(
-        ResolvedPluginDependency(md.dependency.id.dedup(), md.dependency.isOptional, md.dependency.isModule).dedup(),
+        ResolvedPluginDependency(md.dependency.id.dedup(), md.dependency.isOptional, md.dependency.isModule, false).dedup(),
         md.missingReason
       ).dedup()
     }.dedup()

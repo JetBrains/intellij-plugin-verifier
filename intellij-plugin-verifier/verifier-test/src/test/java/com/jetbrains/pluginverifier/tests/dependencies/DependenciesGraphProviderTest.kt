@@ -19,6 +19,24 @@ import org.junit.Test
 
 class DependenciesGraphProviderTest {
   @Test
+  fun `simple modular fixture retains its content module ownership edge`() {
+    val fixture = simpleModularDependenciesFixture()
+    val graph = fixture.graph
+    val root = DependencyNode.PluginDependency(fixture.plugin)
+    val core = DependencyNode.ContentModuleDeclaration("owner.core", fixture.plugin)
+    val ownershipEdge = DependencyEdge(root, core, PluginDependencyImpl("owner.core", false, true))
+
+    assertTrue(fixture.plugin.reconstructDependencies().isEmpty())
+    assertTrue(fixture.resolution.transitiveDependencies.isEmpty())
+    assertEquals(root, graph.verifiedPlugin)
+    assertEquals(setOf(root, core), graph.vertices)
+    assertEquals(setOf(ownershipEdge), graph.edges)
+    assertEquals(listOf(ownershipEdge), graph.getEdgesFrom(root))
+    assertTrue(graph.getEdgesFrom(core).isEmpty())
+    assertTrue(graph.missingDependencies.isEmpty())
+  }
+
+  @Test
   fun `content modules without dependencies retain ownership edges`() {
     val main = contentModuleDescriptor("main", emptyList(), emptyList())
     val extra = contentModuleDescriptor("extra", emptyList(), emptyList())
@@ -70,7 +88,7 @@ class DependenciesGraphProviderTest {
     assertSame(firstOwner, first.owner)
     assertEquals("shared", first.id)
     assertEquals("1.0", first.version)
-    assertEquals("first/shared:1.0", first.toString())
+    assertEquals("first:1.0/shared", first.toString())
     assertEquals(first.toString(), first.toStringWithAliases())
     assertEquals(first, firstAgain)
     assertEquals(first.hashCode(), firstAgain.hashCode())
@@ -140,7 +158,7 @@ class DependenciesGraphProviderTest {
 
     assertEquals("shared", first.id)
     assertEquals("1.0", first.version)
-    assertEquals("first/shared:1.0", first.toString())
+    assertEquals("first:1.0/shared", first.toString())
     assertEquals(first, firstAgain)
     assertEquals(first.hashCode(), firstAgain.hashCode())
     assertNotEquals(first, second)
@@ -166,8 +184,8 @@ class DependenciesGraphProviderTest {
     assertEquals(setOf(resolved.verifiedPlugin, resolvedFirst, resolvedSecond), resolved.vertices)
     assertEquals(setOf(resolvedFirst, resolvedSecond), resolved.edges.map { it.to }.toSet())
     assertEquals(2, resolved.edges.size)
-    assertEquals("first/shared:1.0", resolvedFirst.toString())
-    assertEquals("second/shared:1.0", resolvedSecond.toStringWithAliases())
+    assertEquals("first:1.0/shared", resolvedFirst.toString())
+    assertEquals("second:1.0/shared", resolvedSecond.toStringWithAliases())
     assertEquals(setOf("missing.first"), resolved.missingDependencies.getValue(resolvedFirst).map { it.dependency.id }.toSet())
     assertEquals(setOf("missing.second"), resolved.missingDependencies.getValue(resolvedSecond).map { it.dependency.id }.toSet())
     assertNull(ResolvedDependencyNode("shared", "1.0").moduleOwnerId)
@@ -249,9 +267,14 @@ class DependenciesGraphProviderTest {
       ResolvedDependencyNode("bundled", "2.0"),
       ResolvedDependencyNode("transitive", "3.0")
     ), resolved.vertices)
-    assertEquals(graph.edges.map { edge ->
-      Triple(edge.from.toString(), edge.to.toString(), ResolvedPluginDependency(edge.dependency.id, edge.dependency.isOptional, edge.dependency.isModule))
-    }.toSet(), resolved.edges.map { Triple(it.from.toString(), it.to.toString(), it.dependency) }.toSet())
+    val expectedResolvedEdges = graph.edges.map { edge ->
+      val isContentModule = edge.to is DependencyNode.ModuleDependency
+      Triple(edge.from.toString(), edge.to.toString(), ResolvedPluginDependency(edge.dependency.id, edge.dependency.isOptional, edge.dependency.isModule, isContentModule))
+    }.toSet()
+    val actualResolvedEdges = resolved.edges.map { edge ->
+      Triple(edge.from.toString(), edge.to.toString(), edge.dependency)
+    }.toSet()
+    assertEquals(expectedResolvedEdges, actualResolvedEdges)
     assertEquals(graph.edges.size, resolved.edges.size)
   }
 }
@@ -264,6 +287,54 @@ internal data class ModularDependenciesFixture(
   val resolution: DependencyTreeResolution
 ) {
   val graph = DependenciesGraphProvider().getDependenciesGraph(resolution)
+}
+
+internal data class SimpleModularDependenciesFixture(
+  val plugin: MockIdePlugin,
+  val resolution: DependencyTreeResolution
+) {
+  val graph = DependenciesGraphProvider().getDependenciesGraph(resolution)
+}
+
+internal fun simpleModularDependenciesFixture(): SimpleModularDependenciesFixture {
+  val core = contentModuleDescriptor("owner.core",
+                                     declaredDependencies = emptyList(),
+                                     resolvedDependencies = emptyList())
+
+  val plugin = MockIdePlugin(
+    pluginId = "owner",
+    pluginVersion = "1.0",
+    contentModules = listOf(core.moduleDefinition),
+    modulesDescriptors = listOf(core)
+  )
+  val ide = MockIde(IdeVersion.createIdeVersion("IU-261.1"))
+  val resolution = DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX).getDependencyTreeResolution(
+    plugin, DefaultDependencyContributor(includeContentModuleDependencies = true)
+  )
+  return SimpleModularDependenciesFixture(plugin, resolution)
+}
+
+internal fun pluginWithCoreAndExtrasModuleWithExtrasDependingOnCoreFixture(): SimpleModularDependenciesFixture {
+  val core = contentModuleDescriptor("owner.core",
+                                     declaredDependencies = emptyList(),
+                                     resolvedDependencies = emptyList())
+
+  val extraDependencies = listOf(ModuleV2Dependency("owner.core"))
+  val extras = contentModuleDescriptor("owner.extras",
+                                     declaredDependencies = extraDependencies,
+                                     resolvedDependencies = extraDependencies)
+
+  val plugin = MockIdePlugin(
+    pluginId = "owner",
+    pluginVersion = "1.0",
+    contentModules = listOf(core.moduleDefinition, extras.moduleDefinition),
+    modulesDescriptors = listOf(core, extras)
+  )
+  val ide = MockIde(IdeVersion.createIdeVersion("IU-261.1"))
+  val resolution = DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX).getDependencyTreeResolution(
+    plugin, DefaultDependencyContributor(includeContentModuleDependencies = true)
+  )
+  return SimpleModularDependenciesFixture(plugin, resolution)
 }
 
 internal fun modularDependenciesFixture(repeatMainDependencies: Boolean): ModularDependenciesFixture {

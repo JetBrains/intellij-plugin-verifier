@@ -5,6 +5,7 @@
 package com.jetbrains.pluginverifier.dependencies.presentation
 
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
@@ -65,6 +66,12 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
         append(childLines.first())
         if (edge.to is PluginAware && edge.to.plugin is IdeModule) {
           append(" [product module]")
+        } else if (edge.to is DependencyNode.ContentModuleDeclaration) {
+          append(" [declared as a content module]")
+        } else if (edge.to is DependencyNode.ModuleDependency) {
+          val moduleOwner = edge.to.plugin
+          val version = edge.to.version
+          append(" [content module declared in ${moduleOwner.id}:${version}]")
         } else if (edge.dependency.isModule) {
           append(" [declaring module ${edge.dependency.id}]")
         }

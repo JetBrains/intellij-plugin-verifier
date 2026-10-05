@@ -76,6 +76,12 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
       }
       if (to.isProductModule) {
         result.append(" [product module]")
+      } else if (to.isContentModuleDeclaration) {
+        result.append(" [declared as a content module]")
+      } else if(edge.dependency.isContentModule) {
+        val owner = edge.to.moduleOwnerId ?: "unknown owner"
+        val version = to.version
+        result.append(" [content module declared in $owner:$version]")
       } else if (edge.dependency.isModule) {
         result.append(" [declaring module ${edge.dependency.id}]")
       }
