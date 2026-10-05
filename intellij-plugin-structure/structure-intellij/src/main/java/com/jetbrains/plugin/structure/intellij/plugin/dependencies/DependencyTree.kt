@@ -157,8 +157,8 @@ class DependencyTree(
           if (ignore(plugin, dep) || dep in missingDependencies) continue
           when (val dependencyPlugin = resolve(dep)) {
             is Plugin, is Module, is ContentModuleDeclaration -> {
-              val resolved = dependencyPlugin as PluginAware
-              if (resolved.plugin.pluginId == pluginId) continue
+              dependencyPlugin as PluginAware
+              if (dependencyPlugin.plugin.pluginId == pluginId) continue
               val includeInClasspath = expandClasspath &&
                 shouldIncludeInClasspath(dep, dependencyPlugin, classpathTargets)
               if (includeInClasspath) classpathTargets += dependencyPlugin
@@ -166,7 +166,7 @@ class DependencyTree(
               debugLog(nestedIndent, i + 1, "Resolved '{}' from '{}' (classpath: {})",
                        dep.id, source, includeInClasspath)
               getDependencyGraph(
-                resolved.plugin, dependencyPlugin.nodeId!!, graph, visitedNodes,
+                dependencyPlugin.plugin, dependencyPlugin.nodeId!!, graph, visitedNodes,
                 resolutionDepth + 1, i, dependencyIndex, missingDependencies, context, classpathExpandedPlugins,
                 classpathExpansionActive = includeInClasspath
               )
