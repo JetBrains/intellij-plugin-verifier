@@ -564,6 +564,50 @@ class DependencyTreeTest {
   }
 
   @Test
+  fun `composite source removal drops dependency edges without losing retained sources or ownership`() {
+    val sharedDependency = idePlugin("com.example.SharedDependency")
+    val coreModule = contentModule("com.example.FilteredSources.core") {
+      depends(sharedDependency)
+    }
+    val extrasModule = contentModule("com.example.FilteredSources.extras") {
+      depends(sharedDependency)
+    }
+    val plugin = modularPlugin("com.example.FilteredSources", coreModule, extrasModule)
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, listOf(sharedDependency))
+    val dependencyTree = DependencyTree(ide)
+    val removeExtrasSource = DependenciesModifier { pluginView, pluginProvider ->
+      PassThruDependenciesModifier.apply(pluginView, pluginProvider).map { modification ->
+        modification.copy(contributions = modification.contributions.filterNot {
+          it is ContentModuleDependencyContribution && it.contributingContentModule == extrasModule.pluginId
+        })
+      }
+    }
+    val compositeModifier = CompositeDependenciesModifier(
+      PassThruDependenciesModifier,
+      CompositeDependenciesModifier(removeExtrasSource, PassThruDependenciesModifier),
+      PassThruDependenciesModifier
+    )
+
+    val resolution = dependencyTree.getDependencyTreeResolution(plugin, compositeModifier)
+
+    assertSetsEqual(setOf(Dependency.Plugin(sharedDependency)), resolution.transitiveDependencies.toSet())
+    assertTrue(resolution.missingDependencies.isEmpty())
+    val rootNode = NodeId.ofPlugin(plugin)
+    val coreNode = NodeId(rootNode.pluginId, coreModule.pluginId!!)
+    val extrasNode = NodeId(rootNode.pluginId, extrasModule.pluginId!!)
+    assertEquals(mapOf(
+      rootNode to setOf(coreNode, extrasNode),
+      coreNode to setOf(NodeId.ofPlugin(sharedDependency))
+    ), resolution.graphEdges())
+    val ownershipEdges = mutableListOf<Dependency>()
+    resolution.forEach { from, to -> if (from.nodeId == rootNode) ownershipEdges += to }
+    assertEquals(setOf(
+      Dependency.ContentModuleDeclaration(plugin, coreModule.pluginId),
+      Dependency.ContentModuleDeclaration(plugin, extrasModule.pluginId)
+    ), ownershipEdges.toSet())
+  }
+
+  @Test
   fun `sibling cycles resolve against owner descriptors before provider modules`() {
     val coreModuleId = "com.example.Cyclic.core"
     val extrasModuleId = "com.example.Cyclic.extras"

@@ -30,6 +30,10 @@ enum class DependencyModificationReason {
  * [contributions] records the source-level dependencies behind this effective dependency. By default it
  * contains one [PluginMainModuleDependencyContribution] using [dependency]; supplying an explicit list replaces
  * that default. Multiple sources can contribute the same dependency ID while retaining different optionality.
+ * Reconstructing a modification from a raw dependency supplies a new main-only list, not the previous sources.
+ * Carry an existing modification forward, optionally using [copy], to preserve its sources. An explicitly empty
+ * list remains empty in a [CompositeDependenciesModifier]; omitted sources are not restored by later stages.
+ * Mandatory-wins selection applies to effective dependencies, not to the optionality of individual contributions.
  *
  * Example: a mandatory main-plugin dependency is also declared optionally by a content module:
  * ```
@@ -55,6 +59,16 @@ data class DependencyModification(
   val contributions: List<DependencyContribution> = listOf(PluginMainModuleDependencyContribution(dependency))
 )
 
+/**
+ * Produces a complete resulting dependency list, including unchanged dependencies, without mutating the plugin.
+ *
+ * In a [CompositeDependenciesModifier], each invocation receives the preceding stage's modifications through
+ * the plugin view. Returned IDs and contributions are authoritative: omitted IDs and sources are removed.
+ * Duplicate IDs within one output aggregate only that output's contributions, selecting the first mandatory
+ * effective dependency (or the first if all are optional) and the highest-priority reason independently.
+ * Across stages, a returned effective dependency replaces the previous one unless it weakens a mandatory
+ * dependency to optional. The highest-priority reason is preserved for retained IDs.
+ */
 fun interface DependenciesModifier {
   fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<DependencyModification>
 }

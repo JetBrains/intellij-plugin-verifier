@@ -144,6 +144,79 @@ class CompositeDependenciesModifierTest {
   }
 
   @Test
+  fun `mandatory dependencies win over optional duplicates independently of reasons`() {
+    val plugin = MockIdePlugin(pluginId = "com.example.plugin")
+    val mandatoryDependency = PluginV1Dependency.Mandatory("com.example.shared")
+    val optionalDependency = mandatoryDependency.asOptional()
+    for (mandatoryReason in DependencyModificationReason.values()) {
+      for (optionalReason in DependencyModificationReason.values()) {
+        val mandatory = DependencyModification(mandatoryDependency, mandatoryReason)
+        val optional = DependencyModification(optionalDependency, optionalReason)
+        for (output in listOf(listOf(optional, mandatory), listOf(mandatory, optional))) {
+          val modifiedDependencies = CompositeDependenciesModifier(
+            { _, _ -> output }
+          ).apply(plugin, ide)
+
+          assertEquals(
+            "$output",
+            DependencyModification(
+              mandatoryDependency,
+              maxOf(mandatoryReason, optionalReason),
+              output.flatMap { it.contributions }
+            ),
+            modifiedDependencies.single()
+          )
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `mandatory dependencies win across stages independently of reasons`() {
+    val plugin = MockIdePlugin(pluginId = "com.example.plugin")
+    val mandatoryDependency = PluginV1Dependency.Mandatory("com.example.shared")
+    val optionalDependency = mandatoryDependency.asOptional()
+    for (mandatoryReason in DependencyModificationReason.values()) {
+      for (optionalReason in DependencyModificationReason.values()) {
+        val mandatory = DependencyModification(mandatoryDependency, mandatoryReason)
+        val optional = DependencyModification(optionalDependency, optionalReason)
+        for (stages in listOf(listOf(optional, mandatory), listOf(mandatory, optional))) {
+          val modifiedDependencies = CompositeDependenciesModifier(
+            { _, _ -> listOf(stages.first()) },
+            { _, _ -> listOf(stages.last()) }
+          ).apply(plugin, ide)
+
+          assertEquals("$stages", mandatoryDependency, modifiedDependencies.single().dependency)
+          assertEquals(maxOf(mandatoryReason, optionalReason), modifiedDependencies.single().reason)
+          assertEquals(stages.last().contributions, modifiedDependencies.single().contributions)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun `duplicate ids retain first mandatory dependency and first occurrence order`() {
+    val plugin = MockIdePlugin("com.example.plugin")
+    for (isOptional in listOf(false, true)) {
+      val first = PluginV2Dependency("com.example.shared", isOptional)
+      val second = ModuleV2Dependency("com.example.shared", isOptional)
+      val unrelated = DependencyModification(PluginV2Dependency("com.example.unrelated"), DependencyModificationReason.IDE)
+      val output = listOf(
+        DependencyModification(first, DependencyModificationReason.OTHER),
+        unrelated,
+        DependencyModification(second, DependencyModificationReason.CONTENT_MODULE)
+      )
+
+      val modifiedDependencies = CompositeDependenciesModifier(
+        { _, _ -> output }
+      ).apply(plugin, ide)
+
+      assertEquals(listOf(first, unrelated.dependency), modifiedDependencies.map { it.dependency })
+      assertEquals(DependencyModificationReason.CONTENT_MODULE, modifiedDependencies.first().reason)
+    }
+  }
+
+  @Test
   fun `default contributor preserves main and module sources for shared dependencies`() {
     val plugin = pluginWithSharedDependencies()
 
@@ -221,8 +294,10 @@ class CompositeDependenciesModifierTest {
     val compositeModifier = CompositeDependenciesModifier(
       PassThruDependenciesModifier,
       CompositeDependenciesModifier(PassThruDependenciesModifier),
-      { pluginView, _ ->
-        pluginView.dependencies.map { DependencyModification(it, DependencyModificationReason.OTHER) }
+      { pluginView, pluginProvider ->
+        PassThruDependenciesModifier.apply(pluginView, pluginProvider).map {
+          it.copy(reason = DependencyModificationReason.OTHER)
+        }
       },
       PassThruDependenciesModifier
     )
@@ -260,6 +335,119 @@ class CompositeDependenciesModifierTest {
         addedContribution
       ),
       sharedDependency.contributions
+    )
+  }
+
+  @Test
+  fun `equal optionality replacements are independent of historical reason priority`() {
+    val plugin = MockIdePlugin(pluginId = "com.example.plugin")
+    for (isOptional in listOf(false, true)) {
+      val previousDependency = PluginV2Dependency("com.example.shared", isOptional)
+      val incomingDependency = ModuleV2Dependency("com.example.shared", isOptional)
+      for (incomingReason in DependencyModificationReason.values()) {
+        val incoming = DependencyModification(incomingDependency, incomingReason)
+        val modifiedDependencies = CompositeDependenciesModifier(
+          { _, _ -> listOf(DependencyModification(previousDependency, DependencyModificationReason.CONTENT_MODULE)) },
+          { _, _ -> listOf(incoming) },
+          PassThruDependenciesModifier
+        ).apply(plugin, ide)
+
+        assertEquals(
+          listOf(incoming.copy(reason = DependencyModificationReason.CONTENT_MODULE)),
+          modifiedDependencies
+        )
+      }
+    }
+  }
+
+  @Test
+  fun `removing one module source survives pass-through and nested composites`() {
+    val plugin = pluginWithSharedDependencies()
+    val initial = PassThruDependenciesModifier.apply(plugin, ide)
+    val removeOptionalModule = DependenciesModifier { pluginView, pluginProvider ->
+      PassThruDependenciesModifier.apply(pluginView, pluginProvider).map { modification ->
+        modification.copy(contributions = modification.contributions.filterNot {
+          it is ContentModuleDependencyContribution && it.contributingContentModule == "example.optional"
+        })
+      }
+    }
+    val compositeModifier = CompositeDependenciesModifier(
+      PassThruDependenciesModifier,
+      CompositeDependenciesModifier(removeOptionalModule, PassThruDependenciesModifier),
+      PassThruDependenciesModifier,
+      CompositeDependenciesModifier(PassThruDependenciesModifier)
+    )
+
+    val modifiedDependencies = compositeModifier.apply(plugin, ide)
+
+    assertEquals(
+      initial.map { modification -> modification.copy(contributions = modification.contributions.filterNot {
+        it is ContentModuleDependencyContribution && it.contributingContentModule == "example.optional"
+      }) },
+      modifiedDependencies
+    )
+  }
+
+  @Test
+  fun `reconstructing modifications replaces module sources with default main sources`() {
+    val plugin = pluginWithSharedDependencies()
+    val initial = PassThruDependenciesModifier.apply(plugin, ide)
+    val mainOnly = DependenciesModifier { pluginView, _ ->
+      pluginView.dependencies.map { DependencyModification(it, DependencyModificationReason.OTHER) }
+    }
+    val compositeModifier = CompositeDependenciesModifier(
+      mainOnly,
+      PassThruDependenciesModifier,
+      CompositeDependenciesModifier(PassThruDependenciesModifier)
+    )
+
+    val modifiedDependencies = compositeModifier.apply(plugin, ide)
+
+    assertEquals(
+      initial.map { it.copy(contributions = listOf(PluginMainModuleDependencyContribution(it.dependency))) },
+      modifiedDependencies
+    )
+  }
+
+  @Test
+  fun `explicitly empty sources survive pass-through and nested composites`() {
+    val plugin = pluginWithSharedDependencies()
+    val initial = PassThruDependenciesModifier.apply(plugin, ide)
+    val noSources = DependenciesModifier { pluginView, pluginProvider ->
+      PassThruDependenciesModifier.apply(pluginView, pluginProvider).map { it.copy(contributions = emptyList()) }
+    }
+    val compositeModifier = CompositeDependenciesModifier(
+      noSources,
+      PassThruDependenciesModifier,
+      CompositeDependenciesModifier(PassThruDependenciesModifier)
+    )
+
+    val modifiedDependencies = compositeModifier.apply(plugin, ide)
+
+    assertEquals(initial.map { it.copy(contributions = emptyList()) }, modifiedDependencies)
+  }
+
+  @Test
+  fun `duplicate ids aggregate only returned sources including explicit main sources`() {
+    val plugin = pluginWithSharedDependencies()
+    val initial = PassThruDependenciesModifier.apply(plugin, ide).single { it.dependency.id == "module.only.plugin" }
+    val optionalContribution = initial.contributions.last()
+    val mainContribution = PluginMainModuleDependencyContribution(initial.dependency)
+    val output = listOf(
+      DependencyModification(optionalContribution.dependency, DependencyModificationReason.OTHER, listOf(optionalContribution)),
+      DependencyModification(initial.dependency, DependencyModificationReason.IDE, listOf(mainContribution, optionalContribution))
+    )
+    val compositeModifier = CompositeDependenciesModifier(
+      { _, _ -> output },
+      PassThruDependenciesModifier,
+      CompositeDependenciesModifier(PassThruDependenciesModifier)
+    )
+
+    val modifiedDependencies = compositeModifier.apply(plugin, ide)
+
+    assertEquals(
+      listOf(initial.copy(contributions = listOf(optionalContribution, mainContribution))),
+      modifiedDependencies
     )
   }
 

@@ -11,6 +11,20 @@ package com.jetbrains.plugin.structure.intellij.plugin
  * of the previous modifier. This allows for chaining multiple dependency
  * contribution rules.
  *
+ * Within each modifier's output, duplicate dependency IDs keep their first-occurrence order. The first
+ * mandatory effective dependency is selected, or the first dependency if all are optional. Reasons are
+ * merged independently using the highest priority, and only the output's contributions are combined,
+ * deduplicated by source, dependency ID and optionality. Each contribution retains its own dependency.
+ *
+ * Between modifiers, the returned IDs and contribution lists replace the preceding stage's result,
+ * including explicitly empty contribution lists. For retained IDs, the highest-priority reason is preserved.
+ * The returned effective dependency is preferred unless it would replace a mandatory dependency with an
+ * optional one. Equal-optionality replacements are accepted regardless of reason priority.
+ *
+ * To preserve sources, carry existing [DependencyModification]s forward, optionally using [DependencyModification.copy].
+ * Reconstructing modifications from raw dependencies replaces sources with the default main-only contributions.
+ * An empty composite returns the initial modifications unchanged.
+ *
  * Example:
  * ```
  * val composite = CompositeDependenciesModifier(
@@ -47,43 +61,47 @@ class CompositeDependenciesModifier(
   ): List<DependencyModification> {
     val currentByDependencyId = current.withHighestPriorityReasons().associateBy { it.dependency.id }
     return modified
+      .withHighestPriorityReasons()
       .map { dependencyModification ->
         currentByDependencyId[dependencyModification.dependency.id]
           ?.withHighestPriorityReason(dependencyModification)
           ?: dependencyModification
       }
-      .withHighestPriorityReasons()
   }
 
+  /**
+   * Normalizes duplicate dependency IDs within one list, preserving their first-occurrence order.
+   *
+   * Selects the first mandatory effective dependency, or the first dependency if all are optional,
+   * independently of the highest-priority reason. Combines only this list's contributions, deduplicated
+   * by source, dependency ID and optionality, while preserving each contribution's own dependency.
+   * Does not reconcile contributions with a preceding stage's result.
+   */
   private fun List<DependencyModification>.withHighestPriorityReasons(): List<DependencyModification> {
-    val merged = linkedMapOf<String, DependencyModification>()
-    for (dependencyModification in this) {
-      val id = dependencyModification.dependency.id
-      val previous = merged[id]
-      merged[id] = previous?.withHighestPriorityReason(dependencyModification) ?: dependencyModification
+    return groupBy { it.dependency.id }.map { (_, duplicates) ->
+      val preferred = duplicates.firstOrNull { !it.dependency.isOptional } ?: duplicates.first()
+      preferred.copy(
+        reason = duplicates.maxOf { it.reason },
+        contributions = duplicates.flatMap { it.contributions }.distinctContributions()
+      )
     }
-    return merged.values.toList()
   }
 
   private fun DependencyModification.withHighestPriorityReason(other: DependencyModification): DependencyModification {
-    val preferred = if (reason >= other.reason) this else other
-    val sources = contributions.map {
-      when (it) {
-        is ContentModuleDependencyContribution -> it.contributingContentModule
-        is PluginMainModuleDependencyContribution -> null
-      }
-    }.toSet()
-    val retained = other.contributions.filterNot {
-      it is PluginMainModuleDependencyContribution && sources.isNotEmpty() && null !in sources
-    }
-    return preferred.copy(contributions = (contributions + retained).distinctBy {
+    return other.copy(
+      dependency = if (!dependency.isOptional && other.dependency.isOptional) dependency else other.dependency,
+      reason = maxOf(reason, other.reason)
+    )
+  }
+
+  private fun List<DependencyContribution>.distinctContributions(): List<DependencyContribution> =
+    distinctBy {
       val contributingContentModule = when (it) {
         is ContentModuleDependencyContribution -> it.contributingContentModule
         is PluginMainModuleDependencyContribution -> null
       }
       Triple(contributingContentModule, it.dependency.id, it.dependency.isOptional)
-    })
-  }
+    }
 
   /**
    * A lightweight wrapper that presents a plugin with modified dependencies
