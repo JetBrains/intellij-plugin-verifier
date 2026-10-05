@@ -11,7 +11,7 @@ import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultReso
 import com.jetbrains.plugin.structure.intellij.verifiers.ProblemRegistrar
 import org.slf4j.LoggerFactory
 
-private val LOG = LoggerFactory.getLogger(PluginBeanValidator::class.java)
+private val LOG = LoggerFactory.getLogger(PluginDescriptorValidator::class.java)
 
 class ValidationContext(val descriptorPath: String, val problemResolver: PluginCreationResultResolver) : ProblemRegistrar {
   private val _problems = mutableListOf<PluginProblem>()
