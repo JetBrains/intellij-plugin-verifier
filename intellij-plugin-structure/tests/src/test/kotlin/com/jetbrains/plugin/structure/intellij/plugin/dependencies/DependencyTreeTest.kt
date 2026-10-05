@@ -474,14 +474,14 @@ class DependencyTreeTest {
 
     val consumerNode = NodeId.ofPlugin(consumer)
     val consumerCoreNode = NodeId(consumerNode.pluginId, consumerCore.pluginId!!)
-    val bundledCoreNode = NodeId(bundledPlugin.pluginId!!, bundledCore.pluginId!!)
+    val bundledCoreNode = NodeId(bundledPlugin.pluginId!!, bundledCore.pluginId)
     val expectedEdges = mapOf(
       consumerNode to setOf(consumerCoreNode),
       consumerCoreNode to setOf(bundledCoreNode),
       bundledCoreNode to setOf(NodeId.ofPlugin(target))
     )
     val expectedDependencies = setOf(
-      Dependency.Module(bundledPlugin, bundledCore.pluginId!!, isTransitive = false),
+      Dependency.Module(bundledPlugin, bundledCore.pluginId, isTransitive = false),
       Dependency.Plugin(target, isTransitive = true)
     )
 
@@ -539,11 +539,11 @@ class DependencyTreeTest {
     val edges = mutableListOf<Pair<Dependency, Dependency>>()
     resolution.forEach { from, to -> edges += from to to }
     assertEquals(setOf(
-      Dependency.ContentModuleDeclaration(plugin, coreModule.pluginId!!),
-      Dependency.ContentModuleDeclaration(plugin, extrasModule.pluginId!!)
+      Dependency.ContentModuleDeclaration(plugin, coreModule.pluginId),
+      Dependency.ContentModuleDeclaration(plugin, extrasModule.pluginId)
     ), edges.filter { it.first.nodeId == rootNode }.map { it.second }.toSet())
-    assertEquals(Dependency.Module(plugin, coreModule.pluginId!!),
-      edges.single { it.first.nodeId == extrasNode && it.second.nodeId == coreNode }.second)
+    assertEquals(Dependency.Module(plugin, coreModule.pluginId),
+                 edges.single { it.first.nodeId == extrasNode && it.second.nodeId == coreNode }.second)
     val expectedEdges = mapOf(
       rootNode to setOf(coreNode, extrasNode),
       coreNode to setOf(platformNode),
@@ -628,7 +628,7 @@ class DependencyTreeTest {
     assertTrue(resolution.missingDependencies.isEmpty())
 
     val rootNode = NodeId.ofPlugin(plugin)
-    val coreNode = NodeId(rootNode.pluginId, coreModule.pluginId!!)
+    val coreNode = NodeId(rootNode.pluginId, coreModule.pluginId)
     val extrasNode = NodeId(rootNode.pluginId, extrasModule.pluginId!!)
     val platformNode = Dependency.Module(platformPlugin, "com.intellij.modules.platform").nodeId
     assertEquals(mapOf(
@@ -721,8 +721,8 @@ class DependencyTreeTest {
 
       val rootNode = NodeId.ofPlugin(plugin)
       val providerNode = NodeId.ofPlugin(provider)
-      val coreNode = NodeId(providerNode.pluginId, coreModule.pluginId!!)
-      val extrasNode = NodeId(providerNode.pluginId, extrasModule.pluginId!!)
+      val coreNode = NodeId(providerNode.pluginId, coreModule.pluginId)
+      val extrasNode = NodeId(providerNode.pluginId, extrasModule.pluginId)
       val sharedNode = NodeId.ofPlugin(sharedDependency)
       val edges = resolution.graphEdges()
       assertEquals(setOf(providerNode, coreNode, extrasNode), edges[rootNode])
