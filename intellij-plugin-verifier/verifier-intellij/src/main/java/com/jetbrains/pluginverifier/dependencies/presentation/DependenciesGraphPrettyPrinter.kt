@@ -53,7 +53,8 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
 
     val directEdges = dependenciesGraph.getEdgesFrom(currentNode)
       .sortedWith(
-        compareBy<DependencyEdge> { if (it.dependency.isOptional) 1 else -1 }
+        compareBy<DependencyEdge> { it.to !is DependencyNode.ContentModuleDeclaration }
+          .thenBy { if (it.dependency.isOptional) 1 else -1 }
           .thenBy { if (it.dependency.isModule) 1 else -1 }
           .thenBy { it.dependency.id }
           .thenBy { it.to.id }
@@ -85,6 +86,7 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
         isContentModule = edge.to is DependencyNode.ContentModuleDeclaration
       ))
     }
+    childrenLines.sortBy { !it.isContentModule }
 
     val result = arrayListOf<String>()
     // First occurrence carries the aliases; repeated occurrences are printed as plain "id:version (*)".

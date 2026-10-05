@@ -50,9 +50,14 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
           .thenBy { it.to.id }
           .thenBy { it.to.version }
       )
+    val (contentModules, dependencies) = directEdges.partition { it.to.isContentModuleDeclaration }
 
     val childrenCount = missingDependencies.size + directEdges.size
     var childIndex = 0
+
+    for (edge in contentModules) {
+      appendEdge(edge, result, childrenPrefix, ++childIndex == childrenCount)
+    }
 
     for (missingDependency in missingDependencies) {
       val isLastChild = ++childIndex == childrenCount
@@ -60,39 +65,42 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
       result.append("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}")
     }
 
-    for (edge in directEdges) {
-      val isLastChild = ++childIndex == childrenCount
-      val connector = when {
-        edge.to.isContentModuleDeclaration -> "◆--- "
-        isLastChild -> "\\--- "
-        else -> "+--- "
-      }
-      result.append('\n').append(childrenPrefix).append(connector)
-      if (edge.dependency.isOptional) {
-        result.append("(optional) ")
-      }
-      val to = edge.to
-      val alreadyVisited = to in visitedNodes
-      if (alreadyVisited) {
-        result.append("$to (*)")
-      } else {
-        visitedNodes.add(to)
-        result.append(to.toStringWithAliases())
-      }
-      if (to.isProductModule) {
-        result.append(" [product module]")
-      } else if (to.isContentModuleDeclaration) {
-        result.append(" [declared as a content module]")
-      } else if(edge.dependency.isContentModule) {
-        val owner = edge.to.moduleOwnerId ?: "unknown owner"
-        val version = to.version
-        result.append(" [content module declared in $owner:$version]")
-      } else if (edge.dependency.isModule) {
-        result.append(" [declaring module ${edge.dependency.id}]")
-      }
-      if (!alreadyVisited) {
-        appendChildren(to, result, childrenPrefix + if (isLastChild) "     " else "|    ")
-      }
+    for (edge in dependencies) {
+      appendEdge(edge, result, childrenPrefix, ++childIndex == childrenCount)
+    }
+  }
+
+  private fun appendEdge(edge: ResolvedDependencyEdge, result: StringBuilder, childrenPrefix: String, isLastChild: Boolean) {
+    val connector = when {
+      edge.to.isContentModuleDeclaration -> "◆--- "
+      isLastChild -> "\\--- "
+      else -> "+--- "
+    }
+    result.append('\n').append(childrenPrefix).append(connector)
+    if (edge.dependency.isOptional) {
+      result.append("(optional) ")
+    }
+    val to = edge.to
+    val alreadyVisited = to in visitedNodes
+    if (alreadyVisited) {
+      result.append("$to (*)")
+    } else {
+      visitedNodes.add(to)
+      result.append(to.toStringWithAliases())
+    }
+    if (to.isProductModule) {
+      result.append(" [product module]")
+    } else if (to.isContentModuleDeclaration) {
+      result.append(" [declared as a content module]")
+    } else if(edge.dependency.isContentModule) {
+      val owner = edge.to.moduleOwnerId ?: "unknown owner"
+      val version = to.version
+      result.append(" [content module declared in $owner:$version]")
+    } else if (edge.dependency.isModule) {
+      result.append(" [declaring module ${edge.dependency.id}]")
+    }
+    if (!alreadyVisited) {
+      appendChildren(to, result, childrenPrefix + if (isLastChild) "     " else "|    ")
     }
   }
 }

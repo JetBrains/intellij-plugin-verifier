@@ -182,14 +182,46 @@ consumer:2.0
 
     assertPrettyPresentation(graph, """
 owner:1.0
-+--- bundled:2.0
-|    \--- transitive:3.0
-+--- com.intellij:261.1 (aliased com.intellij.modules.platform) [declaring module com.intellij.modules.platform]
 ◆--- owner:1.0/owner.core [declared as a content module]
-|    \--- com.intellij:261.1 (*) [declaring module com.intellij.modules.platform]
+|    \--- com.intellij:261.1 (aliased com.intellij.modules.platform) [declaring module com.intellij.modules.platform]
 ◆--- owner:1.0/owner.extra [declared as a content module]
-     +--- bundled:2.0 (*)
-     \--- owner:1.0/owner.core [content module declared in owner:1.0]
+|    +--- bundled:2.0
+|    |    \--- transitive:3.0
+|    \--- owner:1.0/owner.core [content module declared in owner:1.0]
++--- bundled:2.0 (*)
+\--- com.intellij:261.1 (*) [declaring module com.intellij.modules.platform]
+""".trim())
+  }
+
+  @Test
+  fun `nested content modules precede missing and resolved dependencies`() {
+    val graph = simpleModularDependenciesFixture().graph
+    val owner = graph.verifiedPlugin
+    val consumer = dependencyNode("consumer", "2.0")
+    val required = dependencyNode("a", "1.0")
+    val optional = dependencyNode("b", "1.0")
+    val nestedGraph = graph.copy(
+      verifiedPlugin = consumer,
+      vertices = graph.vertices + consumer + required + optional,
+      edges = graph.edges + setOf(
+        DependencyEdge(consumer, owner, PluginDependencyImpl("owner", false, false)),
+        DependencyEdge(owner, required, PluginDependencyImpl("a", false, false)),
+        DependencyEdge(owner, optional, PluginDependencyImpl("b", true, false))
+      ),
+      missingDependencies = mapOf(owner to setOf(
+        MissingDependency(PluginDependencyImpl("z.missing", true, false), "not found"),
+        MissingDependency(PluginDependencyImpl("a.missing", false, false), "not found")
+      ))
+    )
+
+    assertPrettyPresentation(nestedGraph, """
+consumer:2.0
+\--- owner:1.0
+     ◆--- owner:1.0/owner.core [declared as a content module]
+     +--- (failed) a.missing: not found
+     +--- (failed) z.missing (optional): not found
+     +--- a:1.0
+     \--- (optional) b:1.0
 """.trim())
   }
 
