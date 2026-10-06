@@ -6,9 +6,12 @@ package com.jetbrains.pluginverifier.tests.dependencies
 
 import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
 import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.DependenciesGraphProvider
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
 import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.dependencyNode
 import com.jetbrains.pluginverifier.dependencies.ModuleVisibilityChecker
@@ -24,6 +27,7 @@ import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.results.problems.ModuleVisibilityProblem
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
+import com.jetbrains.pluginverifier.tests.mocks.SimpleCompatibilityProblemRegistrar
 import com.jetbrains.pluginverifier.tests.mocks.createPluginArchiveManager
 import com.jetbrains.pluginverifier.verifiers.PluginVerificationContext
 import com.jetbrains.pluginverifier.verifiers.ProblemRegistrar
@@ -189,17 +193,59 @@ class ModuleVisibilityCheckerTest {
     )
   }
 
+  @Test
+  fun `checkEdges reports a visibility problem for a private dependency declared only by a content module of the verified plugin`() {
+    // The verified plugin `root` declares no dependencies in its main descriptor;
+    // only its content module `root.m` depends on the private module of plugin.b.
+    val rootModuleDependencies = listOf(ModuleV2Dependency("plugin.b"))
+    val rootModule = Module.FileBasedModule("root.m", "com.example.root", "com.example.root", ModuleLoadingRule.REQUIRED, "root.m.xml")
+    val rootModuleDescriptor = ModuleDescriptor.of(
+      module = MockIdePlugin(pluginId = "root.m", pluginVersion = "1.0"),
+      moduleDefinition = rootModule,
+      resolvedDependencies = rootModuleDependencies
+    )
+    val root = MockIdePlugin(
+      pluginId = "root",
+      pluginVersion = "1.0",
+      contentModules = listOf(rootModule),
+      modulesDescriptors = listOf(rootModuleDescriptor)
+    )
+
+    // plugin.b keeps its content module `plugin.b` PRIVATE.
+    val bundledPluginB = pluginWithPrivateModule("plugin.b", "com.example.b")
+
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-261.1"), bundledPlugins = listOf(bundledPluginB))
+    val resolution = DependencyTree(ide, HAS_COM_INTELLIJ_MODULE_PREFIX).getDependencyTreeResolution(root)
+    val graph = DependenciesGraphProvider().getDependenciesGraph(resolution)
+
+    val context = createMockPluginVerificationContext(IdeVersion.createIdeVersion("IU-261.1"), root, listOf(root, bundledPluginB))
+    val checker = ModuleVisibilityChecker.build(context)
+
+    val registrar = SimpleCompatibilityProblemRegistrar()
+    checker.checkEdges(graph, registrar)
+
+    val problems = registrar.problems
+    val visibilityProblems = problems.filterIsInstance<ModuleVisibilityProblem>()
+    assertEquals(
+      "Exactly one visibility problem should be reported for root.m -> plugin.b. Graph edges: ${graph.edges}",
+      1,
+      visibilityProblems.size
+    )
+    assertEquals("plugin.b", visibilityProblems.single().targetModuleName)
+  }
+
   /**
    * Creates a [MockIdePlugin] that exposes a single PRIVATE content module, making
    * [ModuleVisibilityChecker.resolveModuleInfoTo] return a non-null result.
    */
   private fun pluginWithPrivateModule(pluginId: String, namespace: String): MockIdePlugin {
-    val modulePlugin = MockIdePlugin(pluginId = pluginId) // moduleVisibility defaults to PRIVATE in MockIdePlugin
-    val descriptor = ModuleDescriptor.of(
+    val modulePlugin = MockIdePlugin(pluginId = pluginId, moduleVisibility = ModuleVisibility.PRIVATE)
+    val moduleDefinition = Module.FileBasedModule(pluginId, namespace, namespace, ModuleLoadingRule.REQUIRED, "$pluginId.xml")
+    val moduleDescriptor = ModuleDescriptor.of(
       module = modulePlugin,
-      moduleDefinition = Module.FileBasedModule(pluginId, namespace, namespace, ModuleLoadingRule.REQUIRED, "$pluginId.xml")
+      moduleDefinition = moduleDefinition
     )
-    return MockIdePlugin(pluginId = pluginId, pluginVersion = "1.0", modulesDescriptors = listOf(descriptor))
+    return MockIdePlugin(pluginId = pluginId, pluginVersion = "1.0", modulesDescriptors = listOf(moduleDescriptor), contentModules = listOf(moduleDefinition))
   }
 
   // --- Helper methods ---
