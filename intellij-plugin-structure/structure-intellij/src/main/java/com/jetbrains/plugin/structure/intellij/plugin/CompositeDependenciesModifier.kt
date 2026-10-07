@@ -7,19 +7,18 @@ package com.jetbrains.plugin.structure.intellij.plugin
 /**
  * Composes multiple [DependenciesModifier]s into a single modifier.
  *
- * Each modifier is applied in sequence, with each modifier receiving the output
- * of the previous modifier. This allows for chaining multiple dependency
- * contribution rules.
+ * Modifiers are applied in order. Each modifier receives the previous stage's result through the plugin view:
+ * its dependency modifications (including reasons and contributions) and the corresponding effective dependencies.
  *
- * Within each modifier's output, duplicate dependency IDs keep their first-occurrence order. The first
- * mandatory effective dependency is selected, or the first dependency if all are optional. Reasons are
- * merged independently using the highest priority, and only the output's contributions are combined,
- * deduplicated by source, dependency ID and optionality. Each contribution retains its own dependency.
+ * Each modifier returns the complete resulting list, which replaces the previous stage's result entirely.
+ * Omitted dependency IDs and contributions are removed. The last modifier wins: its output is the result,
+ * including any optionality change in either direction (optional to mandatory or mandatory to optional).
  *
- * Between modifiers, the returned IDs and contribution lists replace the preceding stage's result,
- * including explicitly empty contribution lists. For retained IDs, the highest-priority reason is preserved.
- * The returned effective dependency is preferred unless it would replace a mandatory dependency with an
- * optional one. Equal-optionality replacements are accepted regardless of reason priority.
+ * Each modifier's output is deduplicated by dependency ID before being passed on: the last entry for an ID wins
+ * and keeps its position, while earlier entries with the same ID are dropped. No merging takes place between
+ * stages or between duplicates; dependency, reason and contributions are taken from the winning entry only.
+ *
+ * [DependencyModification.reason] is carried through as returned by each modifier and serves debugging purposes only.
  *
  * To preserve sources, carry existing [DependencyModification]s forward, optionally using [DependencyModification.copy].
  * Reconstructing modifications from raw dependencies replaces sources with the default main-only contributions.
@@ -39,69 +38,16 @@ class CompositeDependenciesModifier(
 
   constructor(vararg modifiers: DependenciesModifier) : this(modifiers.toList())
 
-  override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<DependencyModification> {
-    var currentDependencyModifications = getInitialDependencyModifications(plugin)
-    for (modifier in modifiers) {
-      val pluginView = DependencyModifiedPluginView(plugin, currentDependencyModifications)
-      currentDependencyModifications = mergeDependencyModifications(
-        currentDependencyModifications,
-        modifier.apply(pluginView, pluginProvider)
-      )
+  override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<DependencyModification> =
+    modifiers.fold(plugin.getDependencyModifications()) { current, modifier ->
+      modifier.apply(DependencyModifiedPluginView(plugin, current), pluginProvider).lastWinsByDependencyId()
     }
-
-    return currentDependencyModifications
-  }
-
-  private fun getInitialDependencyModifications(plugin: IdePlugin): List<DependencyModification> =
-    plugin.getDependencyModifications()
-
-  private fun mergeDependencyModifications(
-    current: List<DependencyModification>,
-    modified: List<DependencyModification>
-  ): List<DependencyModification> {
-    val currentByDependencyId = current.withHighestPriorityReasons().associateBy { it.dependency.id }
-    return modified
-      .withHighestPriorityReasons()
-      .map { dependencyModification ->
-        currentByDependencyId[dependencyModification.dependency.id]
-          ?.withHighestPriorityReason(dependencyModification)
-          ?: dependencyModification
-      }
-  }
 
   /**
-   * Normalizes duplicate dependency IDs within one list, preserving their first-occurrence order.
-   *
-   * Selects the first mandatory effective dependency, or the first dependency if all are optional,
-   * independently of the highest-priority reason. Combines only this list's contributions, deduplicated
-   * by source, dependency ID and optionality, while preserving each contribution's own dependency.
-   * Does not reconcile contributions with a preceding stage's result.
+   * Keeps only the last [DependencyModification] for each dependency ID, at the position of that last occurrence.
    */
-  private fun List<DependencyModification>.withHighestPriorityReasons(): List<DependencyModification> {
-    return groupBy { it.dependency.id }.map { (_, duplicates) ->
-      val preferred = duplicates.firstOrNull { !it.dependency.isOptional } ?: duplicates.first()
-      preferred.copy(
-        reason = duplicates.maxOf { it.reason },
-        contributions = duplicates.flatMap { it.contributions }.distinctContributions()
-      )
-    }
-  }
-
-  private fun DependencyModification.withHighestPriorityReason(other: DependencyModification): DependencyModification {
-    return other.copy(
-      dependency = if (!dependency.isOptional && other.dependency.isOptional) dependency else other.dependency,
-      reason = maxOf(reason, other.reason)
-    )
-  }
-
-  private fun List<DependencyContribution>.distinctContributions(): List<DependencyContribution> =
-    distinctBy {
-      val contributingContentModule = when (it) {
-        is ContentModuleDependencyContribution -> it.contributingContentModule
-        is PluginMainModuleDependencyContribution -> null
-      }
-      Triple(contributingContentModule, it.dependency.id, it.dependency.isOptional)
-    }
+  private fun List<DependencyModification>.lastWinsByDependencyId(): List<DependencyModification> =
+    asReversed().distinctBy { it.dependency.id }.asReversed()
 
   /**
    * A lightweight wrapper that presents a plugin with modified dependencies

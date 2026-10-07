@@ -22,8 +22,9 @@ enum class DependencyModificationReason {
  * Despite the name, this is not an add/remove command: [DependenciesModifier.apply] returns the complete
  * resulting dependency list, including unchanged dependencies. Creating this value does not mutate the plugin.
  *
- * [dependency] is the effective dependency exposed to downstream modifiers. [reason] explains why it is
- * present, rather than what operation was performed or which module declared it. For example, contributors
+ * [dependency] is the effective dependency exposed to downstream modifiers. [reason] is debugging information
+ * explaining why it is present, rather than what operation was performed or which module declared it.
+ * It does not influence how modifications are combined. For example, contributors
  * use [DependencyModificationReason.PLUGIN] for plugin dependencies, [DependencyModificationReason.CONTENT_MODULE]
  * for module dependencies, and [DependencyModificationReason.IDE] for implicit IDE dependencies.
  *
@@ -33,7 +34,6 @@ enum class DependencyModificationReason {
  * Reconstructing a modification from a raw dependency supplies a new main-only list, not the previous sources.
  * Carry an existing modification forward, optionally using [copy], to preserve its sources. An explicitly empty
  * list remains empty in a [CompositeDependenciesModifier]; omitted sources are not restored by later stages.
- * Mandatory-wins selection applies to effective dependencies, not to the optionality of individual contributions.
  *
  * Example: a mandatory main-plugin dependency is also declared optionally by a content module:
  * ```
@@ -50,7 +50,7 @@ enum class DependencyModificationReason {
  * ```
  *
  * @property dependency effective dependency retained in the modifier's result.
- * @property reason category explaining why the dependency is present.
+ * @property reason category explaining why the dependency is present, for debugging purposes.
  * @property contributions provenance of the dependency, retaining each source's dependency details.
  */
 data class DependencyModification(
@@ -63,11 +63,10 @@ data class DependencyModification(
  * Produces a complete resulting dependency list, including unchanged dependencies, without mutating the plugin.
  *
  * In a [CompositeDependenciesModifier], each invocation receives the preceding stage's modifications through
- * the plugin view. Returned IDs and contributions are authoritative: omitted IDs and sources are removed.
- * Duplicate IDs within one output aggregate only that output's contributions, selecting the first mandatory
- * effective dependency (or the first if all are optional) and the highest-priority reason independently.
- * Across stages, a returned effective dependency replaces the previous one unless it weakens a mandatory
- * dependency to optional. The highest-priority reason is preserved for retained IDs.
+ * the plugin view. The returned list is the complete, authoritative result passed to the next stage as is:
+ * omitted IDs and sources are removed, and returned dependencies (including their optionality, reasons and
+ * contributions) replace the previous ones. If the returned list contains duplicate IDs, the composite keeps
+ * only the last entry for each ID; duplicates are never merged.
  */
 fun interface DependenciesModifier {
   fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<DependencyModification>

@@ -305,7 +305,7 @@ class DependenciesModifierTest {
   }
 
   @Test
-  fun `duplicate ids keep the highest-priority reason and merge distinct contribution sources`() {
+  fun `duplicate ids keep only the last entry without merging reasons or contribution sources`() {
     val plugin = idePlugin("com.example.editor")
     val dependency = ModuleV2Dependency("example.platform.api")
     val optionalDependency = dependency.asOptional()
@@ -323,13 +323,7 @@ class DependenciesModifierTest {
     )
 
     assertEquals(
-      listOf(
-        DependencyModification(
-          dependency,
-          CONTENT_MODULE,
-          contributions = listOf(ideContribution, requiredContribution, optionalContribution)
-        )
-      ),
+      listOf(DependencyModification(optionalDependency, OTHER, listOf(optionalContribution))),
       modifier.apply(plugin, ide)
     )
   }
