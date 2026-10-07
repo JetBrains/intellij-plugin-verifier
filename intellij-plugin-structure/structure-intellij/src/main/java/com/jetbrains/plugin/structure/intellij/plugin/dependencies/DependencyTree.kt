@@ -240,7 +240,7 @@ class DependencyTree(
       !ideModulePredicate.matches(it.id, it.plugin)
     // A content module covers only itself, not its owning plugin or sibling content modules.
     if (contentModule) {
-      (it as Module).id == dependency.id && resolvedDependency !is Plugin
+      it.id == dependency.id && resolvedDependency !is Plugin
     } else {
       it.matches(dependency.id)
     }
