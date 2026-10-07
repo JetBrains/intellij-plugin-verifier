@@ -131,8 +131,8 @@ class CompositeDependenciesModifierTest {
     val plugin = MockIdePlugin(pluginId = "com.example.plugin")
     val mandatoryDependency = PluginV1Dependency.Mandatory("com.example.shared")
     val optionalDependency = mandatoryDependency.asOptional()
-    for (mandatoryReason in DependencyModificationReason.values()) {
-      for (optionalReason in DependencyModificationReason.values()) {
+    for (mandatoryReason in DependencyModificationReason.entries) {
+      for (optionalReason in DependencyModificationReason.entries) {
         val mandatory = DependencyModification(mandatoryDependency, mandatoryReason)
         val optional = DependencyModification(optionalDependency, optionalReason)
         // optional -> mandatory and mandatory -> optional
@@ -350,7 +350,7 @@ class CompositeDependenciesModifierTest {
     for (isOptional in listOf(false, true)) {
       val previousDependency = PluginV2Dependency("com.example.shared", isOptional)
       val incomingDependency = ModuleV2Dependency("com.example.shared", isOptional)
-      for (incomingReason in DependencyModificationReason.values()) {
+      for (incomingReason in DependencyModificationReason.entries) {
         val incoming = DependencyModification(incomingDependency, incomingReason)
         val modifiedDependencies = CompositeDependenciesModifier(
           FixedDependenciesModifier(DependencyModification(previousDependency, DependencyModificationReason.CONTENT_MODULE)),
