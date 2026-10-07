@@ -95,7 +95,7 @@ class DependencyTree(
       graph = graph,
       visitedNodes = LinkedHashSet(),
       resolutionDepth = 0, dependencyIndex = -1, parentDependencyIndex = -1,
-      missingDependencies = missingDependencies, context = context, classpathExpandedPlugins = mutableSetOf(),
+      missingDependencies = missingDependencies, context = context, classpathExpandedNodes = mutableSetOf(),
     )
     return graph
   }
@@ -124,18 +124,22 @@ class DependencyTree(
     parentDependencyIndex: Int,
     missingDependencies: MissingDependencies,
     context: ResolutionContext,
-    classpathExpandedPlugins: MutableSet<IdePlugin>,
+    classpathExpandedNodes: MutableSet<NodeId>,
     classpathExpansionActive: Boolean = true,
   ): Unit =
     with(plugin) {
       val expandGraph = visitedNodes.add(nodeId)
-      val expandClasspath = classpathExpansionActive && classpathExpandedPlugins.add(plugin)
+      val expandClasspath = classpathExpansionActive && classpathExpandedNodes.add(nodeId)
       if (!expandGraph && !expandClasspath) return@with
       val pluginId = pluginId ?: return@with
       // Index content-module descriptors by name for source and sibling dependency lookups below.
       val contentModules = modulesDescriptors.associateBy { it.name }
+      // A content module node resolves only its own dependencies. Other nodes act as the plugin main node.
+      val currentContentModule = nodeId.moduleId?.takeIf { it in contentModules }
 
-      addContentModuleOwnershipEdges(plugin, nodeId, contentModules.values, graph)
+      if (currentContentModule == null) {
+        addContentModuleOwnershipEdges(plugin, nodeId, contentModules.values, graph)
+      }
 
       val modifications = context.dependenciesModifier.apply(this, pluginProvider)
       val classpathTargets = mutableListOf<Dependency>()
@@ -145,12 +149,21 @@ class DependencyTree(
       val nestedIndent = getNestedDependencyIndent(indent, number)
       modifications.forEachIndexed { i, modification ->
         for (contribution in modification.contributions) {
+          if (!contribution.isContributedBy(currentContentModule)) continue
           val dep = contribution.dependency
           val source = contribution.getSourceNodeId(pluginId, nodeId, contentModules.keys)
           val sibling = contentModules[dep.id]?.takeIf { dep.isModule }
           if (!dependencyFilter(dep)) continue
           if (sibling != null) {
-            graph.addEdge(source, Module(plugin, sibling.name).intern())
+            val siblingDependency = Module(plugin, sibling.name).intern()
+            graph.addEdge(source, siblingDependency)
+            if (currentContentModule != null) {
+              getDependencyGraph(
+                plugin, siblingDependency.nodeId!!, graph, visitedNodes,
+                resolutionDepth + 1, i, dependencyIndex, missingDependencies, context, classpathExpandedNodes,
+                classpathExpansionActive = expandClasspath
+              )
+            }
             continue
           }
           if (ignore(plugin, dep) || dep in missingDependencies) continue
@@ -166,7 +179,7 @@ class DependencyTree(
                        dep.id, source, includeInClasspath)
               getDependencyGraph(
                 dependencyPlugin.plugin, dependencyPlugin.nodeId!!, graph, visitedNodes,
-                resolutionDepth + 1, i, dependencyIndex, missingDependencies, context, classpathExpandedPlugins,
+                resolutionDepth + 1, i, dependencyIndex, missingDependencies, context, classpathExpandedNodes,
                 classpathExpansionActive = includeInClasspath
               )
             }
@@ -196,6 +209,16 @@ class DependencyTree(
     }
   }
 
+  /**
+   * The main node ([contentModule] is `null`) resolves contributions of the main module and all content modules.
+   * A content module node resolves only the contributions of that content module.
+   */
+  private fun DependencyContribution.isContributedBy(contentModule: String?): Boolean = when {
+    contentModule == null -> true
+    this is ContentModuleDependencyContribution -> contributingContentModule == contentModule
+    else -> false
+  }
+
   private fun DependencyContribution.getSourceNodeId(
     pluginId: PluginId,
     nodeId: NodeId,
@@ -215,7 +238,12 @@ class DependencyTree(
     val contentModule = it is Module &&
       it.plugin.modulesDescriptors.any { descriptor -> descriptor.name == it.id } &&
       !ideModulePredicate.matches(it.id, it.plugin)
-    it.matches(dependency.id) && !(contentModule && resolvedDependency is Plugin)
+    // A content module covers only itself, not its owning plugin or sibling content modules.
+    if (contentModule) {
+      (it as Module).id == dependency.id && resolvedDependency !is Plugin
+    } else {
+      it.matches(dependency.id)
+    }
   }
 
   private fun logResolvingDependencies(

@@ -775,9 +775,9 @@ class DependencyTreeTest {
       val sharedNode = NodeId.ofPlugin(sharedDependency)
       val edges = resolution.graphEdges()
       assertEquals(setOf(providerNode, coreNode, extrasNode), edges[rootNode])
-      assertTrue(edges[providerNode]!!.containsAll(setOf(coreNode, extrasNode, sharedNode)))
-      assertTrue(edges[coreNode]!!.containsAll(setOf(sharedNode, NodeId.ofPlugin(coreDependency))))
-      assertTrue(edges[extrasNode]!!.containsAll(setOf(sharedNode, NodeId.ofPlugin(extrasDependency))))
+      assertEquals(setOf(coreNode, extrasNode, sharedNode), edges[providerNode])
+      assertEquals(setOf(sharedNode, NodeId.ofPlugin(coreDependency)), edges[coreNode])
+      assertEquals(setOf(sharedNode, NodeId.ofPlugin(extrasDependency)), edges[extrasNode])
     }
   }
 
