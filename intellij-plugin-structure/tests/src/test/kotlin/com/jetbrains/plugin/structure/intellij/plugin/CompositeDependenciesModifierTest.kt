@@ -109,28 +109,16 @@ class CompositeDependenciesModifierTest {
       PluginV1Dependency.Mandatory(sharedDependencyId), DependencyModificationReason.OTHER
     )
     val compositeModifier = CompositeDependenciesModifier(
-      { _, _ ->
-        listOf(
-          DependencyModification(
-            PluginV1Dependency.Mandatory(sharedDependencyId), DependencyModificationReason.IDE
-          )
-        )
-      },
-      { _, _ ->
-        listOf(
-          DependencyModification(
-            ModuleV2Dependency(sharedDependencyId), DependencyModificationReason.CONTENT_MODULE
-          )
-        )
-      },
-      { _, _ ->
-        listOf(
-          DependencyModification(
-            PluginV1Dependency.Mandatory(sharedDependencyId), DependencyModificationReason.PLUGIN
-          )
-        )
-      },
-      { _, _ -> listOf(lastStage) }
+      FixedDependenciesModifier(
+        DependencyModification(PluginV1Dependency.Mandatory(sharedDependencyId), DependencyModificationReason.IDE)
+      ),
+      FixedDependenciesModifier(
+        DependencyModification(ModuleV2Dependency(sharedDependencyId), DependencyModificationReason.CONTENT_MODULE)
+      ),
+      FixedDependenciesModifier(
+        DependencyModification(PluginV1Dependency.Mandatory(sharedDependencyId), DependencyModificationReason.PLUGIN)
+      ),
+      FixedDependenciesModifier(lastStage)
     )
 
     val modifiedDependencies = compositeModifier.apply(plugin, ide)
@@ -150,8 +138,8 @@ class CompositeDependenciesModifierTest {
         // optional -> mandatory and mandatory -> optional
         for (stages in listOf(listOf(optional, mandatory), listOf(mandatory, optional))) {
           val modifiedDependencies = CompositeDependenciesModifier(
-            { _, _ -> listOf(stages.first()) },
-            { _, _ -> listOf(stages.last()) },
+            FixedDependenciesModifier(stages.first()),
+            FixedDependenciesModifier(stages.last()),
             PassThruDependenciesModifier
           ).apply(plugin, ide)
 
@@ -204,7 +192,7 @@ class CompositeDependenciesModifierTest {
       )
 
       val modifiedDependencies = CompositeDependenciesModifier(
-        { _, _ -> output },
+        FixedDependenciesModifier(output),
         PassThruDependenciesModifier,
         CompositeDependenciesModifier(PassThruDependenciesModifier)
       ).apply(plugin, ide)
@@ -224,7 +212,7 @@ class CompositeDependenciesModifierTest {
     }
 
     val modifiedDependencies = CompositeDependenciesModifier(
-      { _, _ -> listOf(mandatory, optional) },
+      FixedDependenciesModifier(mandatory, optional),
       observingStage
     ).apply(plugin, ide)
 
@@ -365,8 +353,8 @@ class CompositeDependenciesModifierTest {
       for (incomingReason in DependencyModificationReason.values()) {
         val incoming = DependencyModification(incomingDependency, incomingReason)
         val modifiedDependencies = CompositeDependenciesModifier(
-          { _, _ -> listOf(DependencyModification(previousDependency, DependencyModificationReason.CONTENT_MODULE)) },
-          { _, _ -> listOf(incoming) },
+          FixedDependenciesModifier(DependencyModification(previousDependency, DependencyModificationReason.CONTENT_MODULE)),
+          FixedDependenciesModifier(incoming),
           PassThruDependenciesModifier
         ).apply(plugin, ide)
 
@@ -615,4 +603,13 @@ class CompositeDependenciesModifierTest {
     InlineDeclaredModuleV2Dependency.Plugin(id, true, "com.example.plugin", "example.optional")
 
   private fun List<DependencyModification>.reasonOf(id: String) = first { it.dependency.id == id }.reason
+
+  /**
+   * A test stage that ignores the plugin view and always returns the given [modifications].
+   */
+  private class FixedDependenciesModifier(private val modifications: List<DependencyModification>) : DependenciesModifier {
+    constructor(vararg modifications: DependencyModification) : this(modifications.toList())
+
+    override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider) = modifications
+  }
 }
