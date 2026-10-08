@@ -165,6 +165,8 @@ class DependencyTree(
       val nestedIndent = getNestedDependencyIndent(indent, number)
       // The main node resolves contributions of the main module and all content modules.
       // A content module node resolves only the contributions of that content module.
+      // An embedded content module shares the classloader of the main module, so it resolves
+      // the contributions of the main module as well.
       val contributions = if (currentContentModule == null) {
         pluginDependencyContext.allContributions
       } else {
@@ -640,8 +642,15 @@ class DependencyTree(
     val allContributions: List<IndexedValue<DependencyContribution>>,
     private val contentModuleContributions: Map<String, List<IndexedValue<DependencyContribution>>>
   ) {
-    fun getContentModuleContributions(contentModule: String): List<IndexedValue<DependencyContribution>> =
-      contentModuleContributions[contentModule].orEmpty()
+    fun getContentModuleContributions(contentModule: String): List<IndexedValue<DependencyContribution>> {
+      val ownContributions = contentModuleContributions[contentModule].orEmpty()
+      val isEmbedded = contentModules[contentModule]?.moduleDefinition?.loadingRule == ModuleLoadingRule.EMBEDDED
+      if (!isEmbedded) return ownContributions
+      return allContributions.filter { (_, contribution) ->
+        contribution is PluginMainModuleDependencyContribution ||
+          (contribution is ContentModuleDependencyContribution && contribution.contributingContentModule == contentModule)
+      }
+    }
   }
 
   private fun ResolutionContext.getDependencyContext(plugin: IdePlugin): PluginDependencyContext = pluginDependencyContexts.getOrPut(plugin) {

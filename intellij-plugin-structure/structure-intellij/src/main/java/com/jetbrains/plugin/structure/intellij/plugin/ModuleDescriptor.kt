@@ -25,7 +25,7 @@ sealed class ModuleDescriptor {
    * - They are filtered for duplicates in occurring in the main plugin module (the `plugin.xml`).
    * - They might have specific subtypes, such as [InlineDeclaredModuleV2Dependency] or similar.
    * - The optionality is resolved according to the specific declaration in the `plugin.xml`.
-   *   For example, the following content module is loaded as optional (implicit `loading="required"`)
+   *   For example, the following content module is loaded as optional (implicit `loading="optional"`)
    *   ```
    *   <content>
    *         <module name="intellij.v2.module"/>
