@@ -9,9 +9,12 @@ import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_ID
 import com.jetbrains.plugin.structure.base.telemetry.PLUGIN_VERSION
 import com.jetbrains.plugin.structure.base.telemetry.PluginTelemetry
 import com.jetbrains.plugin.structure.base.utils.closeLogged
+import com.jetbrains.plugin.structure.base.utils.create
 import com.jetbrains.plugin.structure.base.utils.replaceInvalidFileNameCharacters
+import com.jetbrains.plugin.structure.base.utils.rethrowIfInterrupted
 import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.PluginVerificationTarget
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.presentation.ResolvedDependenciesGraphPrettyPrinter
 import com.jetbrains.pluginverifier.reporting.common.FileReporter
 import com.jetbrains.pluginverifier.reporting.common.LogReporter
@@ -21,11 +24,16 @@ import com.jetbrains.pluginverifier.reporting.telemetry.toPlainString
 import com.jetbrains.pluginverifier.repository.PluginInfo
 import com.jetbrains.pluginverifier.repository.repositories.marketplace.UpdateInfo
 import com.jetbrains.pluginverifier.usages.internal.kotlin.KtInternalModifierUsage
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+
+
+private val LOG: Logger = LoggerFactory.getLogger(DirectoryBasedPluginVerificationReportage::class.java)
 
 /**
  * Creates the following files layout for saving the verification reports:
@@ -161,7 +169,7 @@ class DirectoryBasedPluginVerificationReportage(
           is PluginVerificationResult.Verified -> {
             reportVerificationDetails(directory, "compatibility-warnings.txt", compatibilityWarnings)
             reportVerificationDetails(directory, "compatibility-problems.txt", compatibilityProblems)
-            reportVerificationDetails(directory, "dependencies.txt", listOf(dependenciesGraph)) { ResolvedDependenciesGraphPrettyPrinter(it).prettyPresentation() }
+            reportDependencies(directory, "dependencies.txt", dependenciesGraph)
             reportVerificationDetails(directory, "deprecated-usages.txt", deprecatedUsages)
             reportVerificationDetails(directory, "experimental-api-usages.txt", experimentalApiUsages)
             reportVerificationDetails(directory, "internal-api-usages.txt", internalApiUsages)
@@ -199,6 +207,23 @@ class DirectoryBasedPluginVerificationReportage(
     lineProvider: (T) -> String = { it.toString() }
   ) {
     FileReporter(directory.resolve(fileName), lineProvider).useReporter(content)
+  }
+
+  /**
+   * Streams the dependencies graph directly into the [file]
+   * instead of materializing a (potentially multi-megabyte) [String] first.
+   */
+  private fun reportDependencies(directory: Path, fileName: String, dependenciesGraph: ResolvedDependenciesGraph) {
+    try {
+      val dependenciesTxtPath = directory.resolve(fileName)
+      Files.newBufferedWriter(dependenciesTxtPath.create()).use { writer ->
+        ResolvedDependenciesGraphPrettyPrinter(dependenciesGraph).prettyPresentation(writer)
+        writer.append('\n')
+      }
+    } catch (e: Exception) {
+      e.rethrowIfInterrupted()
+      LOG.error("Failed to report dependencies into $$directory (file '$fileName')", e)
+    }
   }
 
   private val PluginVerificationResult.Verified.kotlinInternalApiUsages

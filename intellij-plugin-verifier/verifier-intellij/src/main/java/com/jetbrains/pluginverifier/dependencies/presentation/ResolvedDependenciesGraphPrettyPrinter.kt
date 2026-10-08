@@ -30,14 +30,22 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
 
   fun prettyPresentation(): String {
     val result = StringBuilder()
-    visitedNodes.add(graph.verifiedPlugin)
-    // First occurrence carries the aliases; repeated occurrences are printed as plain "id:version (*)".
-    result.append(graph.verifiedPlugin.toStringWithAliases())
-    appendChildren(graph.verifiedPlugin, result, "")
+    prettyPresentation(result)
     return result.toString()
   }
 
-  private fun appendChildren(currentNode: ResolvedDependencyNode, result: StringBuilder, childrenPrefix: String) {
+  /**
+   * Writes the presentation directly into [out], avoiding materializing the whole graph as a single [String].
+   */
+  fun prettyPresentation(out: Appendable) {
+    visitedNodes.clear()
+    visitedNodes.add(graph.verifiedPlugin)
+    // First occurrence carries the aliases; repeated occurrences are printed as plain "id:version (*)".
+    out.append(graph.verifiedPlugin.toStringWithAliases())
+    appendChildren(graph.verifiedPlugin, out, "")
+  }
+
+  private fun appendChildren(currentNode: ResolvedDependencyNode, result: Appendable, childrenPrefix: String) {
     val missingDependencies = graph.missingDependencies
       .getOrDefault(currentNode, emptySet())
       .sortedBy { it.dependency.id }
@@ -62,7 +70,10 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
     for (missingDependency in missingDependencies) {
       val isLastChild = ++childIndex == childrenCount
       result.append('\n').append(childrenPrefix).append(if (isLastChild) "\\--- " else "+--- ")
-      result.append("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}")
+      result.append("(failed) ")
+        .append(missingDependency.dependency.toString())
+        .append(": ")
+        .append(missingDependency.missingReason)
     }
 
     for (edge in dependencies) {
@@ -70,7 +81,7 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
     }
   }
 
-  private fun appendEdge(edge: ResolvedDependencyEdge, result: StringBuilder, childrenPrefix: String, isLastChild: Boolean) {
+  private fun appendEdge(edge: ResolvedDependencyEdge, result: Appendable, childrenPrefix: String, isLastChild: Boolean) {
     val connector = when {
       edge.to.isContentModuleDeclaration -> "◆--- "
       isLastChild -> "\\--- "
@@ -83,7 +94,7 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
     val to = edge.to
     val alreadyVisited = to in visitedNodes
     if (alreadyVisited) {
-      result.append("$to (*)")
+      result.append(to.toString()).append(" (*)")
     } else {
       visitedNodes.add(to)
       result.append(to.toStringWithAliases())
@@ -95,9 +106,9 @@ class ResolvedDependenciesGraphPrettyPrinter(private val graph: ResolvedDependen
     } else if(edge.dependency.isContentModule) {
       val owner = edge.to.moduleOwnerId ?: "unknown owner"
       val version = to.version
-      result.append(" [content module declared in $owner:$version]")
+      result.append(" [content module declared in ").append(owner).append(':').append(version).append(']')
     } else if (edge.dependency.isModule) {
-      result.append(" [declaring module ${edge.dependency.id}]")
+      result.append(" [declaring module ").append(edge.dependency.id).append(']')
     }
     if (!alreadyVisited) {
       appendChildren(to, result, childrenPrefix + if (isLastChild) "     " else "|    ")
