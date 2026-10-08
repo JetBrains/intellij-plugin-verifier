@@ -4,18 +4,13 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
-import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
-import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
-import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
 
 private const val PROVIDER_ID = "com.example.Provider"
 private const val PROVIDER_CORE = "com.example.Provider.core"
@@ -29,44 +24,26 @@ private const val SOME_PLUGIN_ID = "com.example.Consumer"
  * A plugin depends on a single content module (`core`) of a foreign plugin that declares
  * two content modules (`core` and `extras`).
  */
-class DependencyTreeForeignContentModuleTest {
-  @Rule
-  @JvmField
-  val temporaryFolder = TemporaryFolder()
-
+class DependencyTreeForeignContentModuleTest : DependenciesTestBase() {
   private lateinit var provider: IdePlugin
   private lateinit var somePlugin: IdePlugin
   private lateinit var ide: MockIde
 
   @Before
   fun setUp() {
-    val mainDependency = buildPlugin(MAIN_DEPENDENCY_ID)
-    val coreDependency = buildPlugin(CORE_DEPENDENCY_ID)
-    val extrasDependency = buildPlugin(EXTRAS_DEPENDENCY_ID)
-    provider = buildPlugin(
-      PROVIDER_ID,
-      body = """
-        <depends>$MAIN_DEPENDENCY_ID</depends>
-        <content>
-          <module name="$PROVIDER_CORE" loading="required"/>
-          <module name="$PROVIDER_EXTRAS" loading="required"/>
-        </content>
-      """
-    ) {
-      zip("core.jar") {
-        file("$PROVIDER_CORE.xml", moduleDescriptor(CORE_DEPENDENCY_ID))
-      }
-      zip("extras.jar") {
-        file("$PROVIDER_EXTRAS.xml", moduleDescriptor(EXTRAS_DEPENDENCY_ID))
-      }
-    }
+    val mainDependency = buildPlugin(pluginDescriptor(MAIN_DEPENDENCY_ID))
+    val coreDependency = buildPlugin(pluginDescriptor(CORE_DEPENDENCY_ID))
+    val extrasDependency = buildPlugin(pluginDescriptor(EXTRAS_DEPENDENCY_ID))
+    provider = buildProvider()
     somePlugin = buildPlugin(
-      SOME_PLUGIN_ID,
-      body = """
-        <dependencies>
-          <module name="$PROVIDER_CORE"/>
-        </dependencies>
-      """
+      pluginDescriptor(
+        SOME_PLUGIN_ID,
+        body = """
+          <dependencies>
+            <module name="$PROVIDER_CORE"/>
+          </dependencies>
+        """
+      )
     )
     ide = MockIde(
       IdeVersion.createIdeVersion("IU-251.6125"),
@@ -154,7 +131,7 @@ class DependencyTreeForeignContentModuleTest {
       listOf(mainEntry, coreEntry, extrasEntry),
       listOf(coreEntry, extrasEntry, mainEntry)
     )) {
-      somePlugin = buildPlugin(SOME_PLUGIN_ID, "<dependencies>${entries.joinToString("")}</dependencies>")
+      somePlugin = buildPlugin(pluginDescriptor(SOME_PLUGIN_ID, "<dependencies>${entries.joinToString("")}</dependencies>"))
       val expected = externalDependencies + Dependency.Plugin(provider) +
         (if (coreEntry in entries) setOf(Dependency.Module(provider, PROVIDER_CORE), Dependency.Module(provider, PROVIDER_EXTRAS)) else emptySet())
       assertDependencies(expected)
@@ -175,12 +152,12 @@ class DependencyTreeForeignContentModuleTest {
 
   @Test
   fun `core and extras entries without main do not resolve main dependencies`() {
-    somePlugin = buildPlugin(SOME_PLUGIN_ID, """
+    somePlugin = buildPlugin(pluginDescriptor(SOME_PLUGIN_ID, """
       <dependencies>
         <module name="$PROVIDER_CORE"/>
         <module name="$PROVIDER_EXTRAS"/>
       </dependencies>
-    """)
+    """))
     assertDependencies(setOf(
       Dependency.Module(provider, PROVIDER_CORE),
       Dependency.Module(provider, PROVIDER_EXTRAS),
@@ -199,7 +176,7 @@ class DependencyTreeForeignContentModuleTest {
       "<module name=\"$PROVIDER_CORE\"/><plugin id=\"$CORE_DEPENDENCY_ID\"/>",
       "<plugin id=\"$CORE_DEPENDENCY_ID\"/><module name=\"$PROVIDER_CORE\"/>"
     )) {
-      somePlugin = buildPlugin(SOME_PLUGIN_ID, "<dependencies>$entries</dependencies>")
+      somePlugin = buildPlugin(pluginDescriptor(SOME_PLUGIN_ID, "<dependencies>$entries</dependencies>"))
       assertDependencies(setOf(Dependency.Module(provider, PROVIDER_CORE), Dependency.Plugin(externalPlugin(CORE_DEPENDENCY_ID))))
     }
   }
@@ -262,16 +239,18 @@ class DependencyTreeForeignContentModuleTest {
     mainDependencies: String = "<depends>$MAIN_DEPENDENCY_ID</depends>",
     coreDependencies: String = "",
     extrasDependencies: String = ""
-  ) = buildPlugin(PROVIDER_ID, """
+  ) = buildPlugin(pluginDescriptor(PROVIDER_ID, """
     $mainDependencies
     <content>
       <module name="$PROVIDER_CORE" loading="required"/>
       <module name="$PROVIDER_EXTRAS" loading="required"/>
     </content>
-  """) {
-    zip("core.jar") { file("$PROVIDER_CORE.xml", moduleDescriptor(CORE_DEPENDENCY_ID, coreDependencies)) }
-    zip("extras.jar") { file("$PROVIDER_EXTRAS.xml", moduleDescriptor(EXTRAS_DEPENDENCY_ID, extrasDependencies)) }
-  }
+  """), moduleSources(coreDependencies, extrasDependencies))
+
+  private fun moduleSources(coreDependencies: String = "", extrasDependencies: String = "") = listOf(
+    ModuleDescriptorSource("core.jar", PROVIDER_CORE, moduleDescriptor(CORE_DEPENDENCY_ID, coreDependencies)),
+    ModuleDescriptorSource("extras.jar", PROVIDER_EXTRAS, moduleDescriptor(EXTRAS_DEPENDENCY_ID, extrasDependencies))
+  )
 
   private fun moduleDescriptor(pluginDependencyId: String, additionalDependencies: String = "") = """
     <idea-plugin>
@@ -282,37 +261,16 @@ class DependencyTreeForeignContentModuleTest {
     </idea-plugin>
   """.trimIndent()
 
-  private fun buildPlugin(id: String, body: String = "", additionalContent: ContentBuilder.() -> Unit = {}): IdePlugin {
-    val pluginFile = buildZipFile(temporaryFolder.newFolder().toPath().resolve("$id.zip")) {
-      dir(id) {
-        dir("lib") {
-          zip("$id.jar") {
-            dir("META-INF") {
-              file(
-                "plugin.xml",
-                """
-                  <idea-plugin>
-                    <id>$id</id>
-                    <name>$id</name>
-                    <version>1.0</version>
-                    <vendor>JetBrains</vendor>
-                    <description>Plugin used to verify dependency tree resolution of foreign content modules.</description>
-                    <change-notes>Plugin used to verify dependency tree resolution of foreign content modules.</change-notes>
-                    <idea-version since-build="241.0"/>
-                    $body
-                  </idea-plugin>
-                """.trimIndent()
-              )
-            }
-          }
-          additionalContent()
-        }
-      }
-    }
-    val creationResult = IdePluginManager.createManager().createPlugin(pluginFile, validateDescriptor = true)
-    if (creationResult !is PluginCreationSuccess) {
-      fail("Expected successful creation of '$id', but got $creationResult")
-    }
-    return (creationResult as PluginCreationSuccess).plugin
-  }
+  private fun pluginDescriptor(id: String, body: String = "") = """
+    <idea-plugin>
+      <id>$id</id>
+      <name>$id</name>
+      <version>1.0</version>
+      <vendor>JetBrains</vendor>
+      <description>Plugin used to verify dependency tree resolution of foreign content modules.</description>
+      <change-notes>Plugin used to verify dependency tree resolution of foreign content modules.</change-notes>
+      <idea-version since-build="241.0"/>
+      $body
+    </idea-plugin>
+  """.trimIndent()
 }
