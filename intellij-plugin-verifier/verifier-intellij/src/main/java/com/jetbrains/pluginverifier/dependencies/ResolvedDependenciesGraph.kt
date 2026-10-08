@@ -127,6 +127,8 @@ fun DependenciesGraph.toResolved(batchContext: PluginVerifierBatchContext? = nul
     ).dedup()
   }
 
+  // The edge set itself is not deduplicated: edge sets of distinct plugins almost never match as a whole,
+  // and keeping them in the batch-wide deduplication map would retain them until the batch finishes.
   val resolvedEdges = java.util.Set.copyOf(edges.map { edge ->
     val isContentModule = edge.to is DependencyNode.ModuleDependency
     val dependency = ResolvedPluginDependency(
@@ -138,7 +140,7 @@ fun DependenciesGraph.toResolved(batchContext: PluginVerifierBatchContext? = nul
       nodeMap.getValue(edge.to),
       dependency
     ).dedup()
-  }).dedup()
+  })
 
   val resolvedMissingDeps = missingDependencies.entries.associate { (node, missing) ->
     nodeMap.getValue(node) to missing.mapTo(hashSetOf()) { md ->

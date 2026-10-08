@@ -11,6 +11,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTre
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.pluginverifier.PluginVerifierBatchContext
 import com.jetbrains.pluginverifier.dependencies.*
 import com.jetbrains.pluginverifier.tests.mocks.MockIde
 import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
@@ -34,6 +35,19 @@ class DependenciesGraphProviderTest {
     assertEquals(listOf(ownershipEdge), graph.getEdgesFrom(root))
     assertTrue(graph.getEdgesFrom(core).isEmpty())
     assertTrue(graph.missingDependencies.isEmpty())
+  }
+
+  @Test
+  fun `resolved edge set is not retained by the batch deduplication map while its edges are deduplicated`() {
+    val graph = simpleModularDependenciesFixture().graph
+    val batchContext = PluginVerifierBatchContext()
+
+    val resolved = graph.toResolved(batchContext)
+
+    assertEquals(1, resolved.edges.size)
+    assertFalse(batchContext.deduplicationMap.containsKey(resolved.edges))
+    assertTrue(resolved.edges.all { batchContext.deduplicationMap[it] === it })
+    assertEquals(graph.toResolved(), resolved)
   }
 
   @Test

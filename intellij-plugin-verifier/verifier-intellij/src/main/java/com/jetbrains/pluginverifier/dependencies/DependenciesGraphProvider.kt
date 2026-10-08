@@ -52,9 +52,14 @@ class DependenciesGraphProvider {
       dependency.pluginDependency?.let { pluginDependency ->
         require(from is Dependency.Resolved && dependency is Dependency.Resolved) // Invariant by the pluginDependency getter returning non-null
 
+        val fromNode = newDependencyNode(from)
+        val toNode = newDependencyNode(dependency)
+        // An alias (e.g. 'com.intellij.modules.platform') is presented as its plugin.
+        // Its redirect edge to the plugin main node would be a self-edge, carrying no information.
+        if (fromNode == toNode) return@let
         edges += DependencyEdge(
-          newDependencyNode(from),
-          newDependencyNode(dependency),
+          fromNode,
+          toNode,
           dependenciesCache.computeIfAbsent(pluginDependency, Function.identity())
         )
       }

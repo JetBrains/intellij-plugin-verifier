@@ -88,20 +88,37 @@ internal fun IdePlugin.getDependencyModifications(): List<DependencyModification
   return if (this is DependencyModificationsAware) {
     dependencyModifications
   } else {
+    val contributionIndex = getDependencyContributionIndex()
     dependencies.withInferredModificationReasons().map { modification ->
-      modification.copy(contributions = getDependencyContributions(modification.dependency))
+      modification.copy(contributions = contributionIndex.getContributions(modification.dependency))
     }
   }
 }
 
-internal fun IdePlugin.getDependencyContributions(dependency: PluginDependency): List<DependencyContribution> {
-  if (modulesDescriptors.isEmpty()) return listOf(PluginMainModuleDependencyContribution(dependency))
-  val declarations = reconstructDependencies().filter { it.id == dependency.id }
-    .map { PluginMainModuleDependencyContribution(it) } + modulesDescriptors.flatMap { descriptor ->
-    descriptor.declaredDependencies.filter { it.id == dependency.id }
-      .map { ContentModuleDependencyContribution(descriptor.name, it) }
+internal fun IdePlugin.getDependencyContributions(dependency: PluginDependency): List<DependencyContribution> =
+  getDependencyContributionIndex().getContributions(dependency)
+
+/**
+ * Indexes dependency declarations of the plugin main module and of all content modules by dependency ID.
+ * Built in a single pass over the declarations, so that looking up contributions of each dependency is cheap.
+ */
+private fun IdePlugin.getDependencyContributionIndex(): DependencyContributionIndex {
+  if (modulesDescriptors.isEmpty()) return DependencyContributionIndex(emptyMap())
+  val contributions = HashMap<String, MutableList<DependencyContribution>>()
+  for (dependency in reconstructDependencies()) {
+    contributions.getOrPut(dependency.id) { mutableListOf() } += PluginMainModuleDependencyContribution(dependency)
   }
-  return declarations.ifEmpty { listOf(PluginMainModuleDependencyContribution(dependency)) }
+  for (descriptor in modulesDescriptors) {
+    for (dependency in descriptor.declaredDependencies) {
+      contributions.getOrPut(dependency.id) { mutableListOf() } += ContentModuleDependencyContribution(descriptor.name, dependency)
+    }
+  }
+  return DependencyContributionIndex(contributions)
+}
+
+private class DependencyContributionIndex(private val contributionsById: Map<String, List<DependencyContribution>>) {
+  fun getContributions(dependency: PluginDependency): List<DependencyContribution> =
+    contributionsById[dependency.id] ?: listOf(PluginMainModuleDependencyContribution(dependency))
 }
 
 internal fun List<PluginDependency>.withInferredModificationReasons(): List<DependencyModification> = map {

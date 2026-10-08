@@ -13,8 +13,50 @@ import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency.*
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.Dependency.Module
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
+import kotlin.collections.ArrayDeque
+import kotlin.collections.ArrayList
+import kotlin.collections.Collection
+import kotlin.collections.IndexedValue
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.LinkedHashSet
+import kotlin.collections.List
+import kotlin.collections.Map
+import kotlin.collections.MutableList
+import kotlin.collections.MutableSet
+import kotlin.collections.Set
+import kotlin.collections.any
+import kotlin.collections.asList
+import kotlin.collections.associateBy
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.contains
+import kotlin.collections.emptyList
+import kotlin.collections.forEach
+import kotlin.collections.forEachIndexed
+import kotlin.collections.getOrPut
+import kotlin.collections.hashMapOf
+import kotlin.collections.indices
+import kotlin.collections.isNotEmpty
+import kotlin.collections.joinToString
+import kotlin.collections.linkedMapOf
+import kotlin.collections.linkedSetOf
+import kotlin.collections.map
+import kotlin.collections.mapNotNull
+import kotlin.collections.mutableListOf
+import kotlin.collections.mutableMapOf
+import kotlin.collections.mutableSetOf
+import kotlin.collections.none
+import kotlin.collections.orEmpty
+import kotlin.collections.plus
+import kotlin.collections.plusAssign
+import kotlin.collections.set
+import kotlin.collections.setOf
+import kotlin.collections.sortedBy
+import kotlin.collections.toSet
+import kotlin.collections.toTypedArray
 import kotlin.math.max
 
 private val LOG: Logger = LoggerFactory.getLogger(DependencyTree::class.java)
@@ -48,7 +90,7 @@ class DependencyTree(
     val transitiveDependencies = dependencyGraph.collectDependencies(NodeId.ofPlugin(plugin))
       .resolveDuplicateDependencies(dependencyResolutionContext)
 
-    return DefaultDependencyTreeResolution(plugin, transitiveDependencies, missingDependencies, dependencyGraph)
+    return DefaultDependencyTreeResolution(plugin, transitiveDependencies, missingDependencies, dependencyGraph.compact())
   }
 
   @Throws(IllegalArgumentException::class)
@@ -132,67 +174,94 @@ class DependencyTree(
       val expandClasspath = classpathExpansionActive && classpathExpandedNodes.add(nodeId)
       if (!expandGraph && !expandClasspath) return@with
       val pluginId = pluginId ?: return@with
-      // Index content-module descriptors by name for source and sibling dependency lookups below.
-      val contentModules = modulesDescriptors.associateBy { it.name }
-      // A content module node resolves only its own dependencies. Other nodes act as the plugin main node.
+      // Modifications and content modules are computed once per plugin and resolution.
+      val pluginDependencyContext = context.getDependencyContext(plugin)
+      val contentModules = pluginDependencyContext.contentModules
+      // A content module node resolves only its own dependencies.
       val currentContentModule = nodeId.moduleId?.takeIf { it in contentModules }
+
+      if (isAliasNode(nodeId, pluginId, currentContentModule)) {
+        // An alias (e.g. 'com.intellij.modules.platform') is provided by the plugin main node.
+        // Redirect to the main node, so that the plugin is expanded only once, regardless of the number of aliases.
+        val mainDependency = Plugin(plugin).intern()
+        graph.addEdge(nodeId, mainDependency, includeInClasspath = expandClasspath)
+        getDependencyGraph(
+          plugin, mainDependency.nodeId!!, graph, visitedNodes,
+          resolutionDepth, dependencyIndex, parentDependencyIndex, missingDependencies, context, classpathExpandedNodes,
+          classpathExpansionActive = expandClasspath
+        )
+        return@with
+      }
 
       if (currentContentModule == null) {
         addContentModuleOwnershipEdges(plugin, nodeId, contentModules.values, graph)
       }
 
-      val modifications = context.dependenciesModifier.apply(this, pluginProvider)
+      val modifications = pluginDependencyContext.modifications
       val classpathTargets = mutableListOf<Dependency>()
       val indent = getIndent(resolutionDepth, parentDependencyIndex)
       val number = if (dependencyIndex < 0) "" else "${dependencyIndex + 1}) "
       logResolvingDependencies(nodeId, modifications, indent, number)
       val nestedIndent = getNestedDependencyIndent(indent, number)
-      modifications.forEachIndexed { i, modification ->
-        for (contribution in modification.contributions) {
-          if (!contribution.isContributedBy(currentContentModule)) continue
-          val dep = contribution.dependency
-          val source = contribution.getSourceNodeId(pluginId, nodeId, contentModules.keys)
-          val sibling = contentModules[dep.id]?.takeIf { dep.isModule }
-          if (!dependencyFilter(dep)) continue
-          if (sibling != null) {
-            val siblingDependency = Module(plugin, sibling.name).intern()
-            graph.addEdge(source, siblingDependency)
-            if (currentContentModule != null) {
-              getDependencyGraph(
-                plugin, siblingDependency.nodeId!!, graph, visitedNodes,
-                resolutionDepth + 1, i, dependencyIndex, missingDependencies, context, classpathExpandedNodes,
-                classpathExpansionActive = expandClasspath
-              )
-            }
-            continue
+      // The main node resolves contributions of the main module and all content modules.
+      // A content module node resolves only the contributions of that content module.
+      val contributions = if (currentContentModule == null) {
+        pluginDependencyContext.allContributions
+      } else {
+        pluginDependencyContext.getContentModuleContributions(currentContentModule)
+      }
+      for ((i, contribution) in contributions) {
+        val dep = contribution.dependency
+        val source = contribution.getSourceNodeId(pluginId, nodeId, contentModules.keys)
+        val sibling = contentModules[dep.id]?.takeIf { dep.isModule }
+        if (!dependencyFilter(dep)) continue
+        if (sibling != null) {
+          val siblingDependency = Module(plugin, sibling.name).intern()
+          graph.addEdge(source, siblingDependency)
+          if (currentContentModule != null) {
+            getDependencyGraph(
+              plugin, siblingDependency.nodeId!!, graph, visitedNodes,
+              resolutionDepth + 1, i, dependencyIndex, missingDependencies, context, classpathExpandedNodes,
+              classpathExpansionActive = expandClasspath
+            )
           }
-          if (ignore(plugin, dep) || dep in missingDependencies) continue
-          when (val dependencyPlugin = resolve(dep)) {
-            is Plugin, is Module, is ContentModuleDeclaration -> {
-              dependencyPlugin as PluginAware
-              if (dependencyPlugin.plugin.pluginId == pluginId) continue
-              val includeInClasspath = expandClasspath &&
-                shouldIncludeInClasspath(dep, dependencyPlugin, classpathTargets)
-              if (includeInClasspath) classpathTargets += dependencyPlugin
-              graph.addEdge(source, dependencyPlugin, includeInClasspath)
-              debugLog(nestedIndent, i + 1, "Resolved '{}' from '{}' (classpath: {})",
-                       dep.id, source, includeInClasspath)
-              getDependencyGraph(
-                dependencyPlugin.plugin, dependencyPlugin.nodeId!!, graph, visitedNodes,
-                resolutionDepth + 1, i, dependencyIndex, missingDependencies, context, classpathExpandedNodes,
-                classpathExpansionActive = includeInClasspath
-              )
-            }
+          continue
+        }
+        if (ignore(plugin, dep) || dep in missingDependencies) continue
+        when (val dependencyPlugin = resolve(dep)) {
+          is Plugin, is Module, is ContentModuleDeclaration -> {
+            dependencyPlugin as PluginAware
+            if (dependencyPlugin.plugin.pluginId == pluginId) continue
+            val includeInClasspath = expandClasspath &&
+              shouldIncludeInClasspath(dep, dependencyPlugin, classpathTargets)
+            if (includeInClasspath) classpathTargets += dependencyPlugin
+            graph.addEdge(source, dependencyPlugin, includeInClasspath)
+            debugLog(nestedIndent, i + 1, "Resolved '{}' from '{}' (classpath: {})",
+                     dep.id, source, includeInClasspath)
+            getDependencyGraph(
+              dependencyPlugin.plugin, dependencyPlugin.nodeId!!, graph, visitedNodes,
+              resolutionDepth + 1, i, dependencyIndex, missingDependencies, context, classpathExpandedNodes,
+              classpathExpansionActive = includeInClasspath
+            )
+          }
 
-            is None -> {
-              context.notifyMissingDependency(plugin, dep)
-              missingDependencies += dep
-              debugLog(nestedIndent, i + 1, "Skipping dependency '{}' as it is not available", dep.id)
-            }
+          is None -> {
+            context.notifyMissingDependency(plugin, dep)
+            missingDependencies += dep
+            debugLog(nestedIndent, i + 1, "Skipping dependency '{}' as it is not available", dep.id)
           }
         }
       }
     }
+
+  /**
+   * A module node that is neither a content module of its plugin nor the plugin itself
+   * (as is the case for IDE modules whose module ID equals the plugin ID) represents an alias of the plugin.
+   */
+  private fun isAliasNode(nodeId: NodeId, pluginId: PluginId, currentContentModule: String?): Boolean {
+    val moduleId = nodeId.moduleId ?: return false
+    return currentContentModule == null && moduleId != pluginId
+  }
 
   private fun addContentModuleOwnershipEdges(
     plugin: IdePlugin,
@@ -209,15 +278,6 @@ class DependencyTree(
     }
   }
 
-  /**
-   * The main node ([contentModule] is `null`) resolves contributions of the main module and all content modules.
-   * A content module node resolves only the contributions of that content module.
-   */
-  private fun DependencyContribution.isContributedBy(contentModule: String?): Boolean = when {
-    contentModule == null -> true
-    this is ContentModuleDependencyContribution -> contributingContentModule == contentModule
-    else -> false
-  }
 
   private fun DependencyContribution.getSourceNodeId(
     pluginId: PluginId,
@@ -442,50 +502,101 @@ class DependencyTree(
    */
   internal class DependencyGraph {
     private val nodeIndex = hashMapOf<NodeId, Dependency>()
-    private val adjacency = linkedMapOf<NodeId, MutableList<Dependency>>()
-    private val ownershipEdges = mutableSetOf<Pair<NodeId, NodeId>>()
-    private val classpathEdges = mutableSetOf<Pair<NodeId, NodeId>>()
+
+    /**
+     * Outgoing edges per source node, keyed by target node identity. Each edge is stored exactly once,
+     * with its classpath and ownership flags. Insertion order of targets is preserved.
+     */
+    private val adjacency = linkedMapOf<NodeId, LinkedHashMap<NodeId?, Edge>>()
 
     constructor(rootPlugin: Dependency) {
       val nodeId = requireNotNull(rootPlugin.nodeId) { "Root plugin must be a Plugin or Module" }
       nodeIndex[nodeId] = rootPlugin
     }
 
-    operator fun get(from: NodeId): List<Dependency> = adjacency[from] ?: emptyList()
+    operator fun get(from: NodeId): List<Dependency> = adjacency[from]?.values?.map { it.target } ?: emptyList()
 
-    fun getClasspathDependencies(from: NodeId): List<Dependency> = this[from].filter {
-      from to it.nodeId in classpathEdges
+    fun getClasspathDependencies(from: NodeId): List<Dependency> {
+      val edges = adjacency[from] ?: return emptyList()
+      return edges.values.mapNotNull { edge -> edge.target.takeIf { edge.classpath } }
     }
 
+    /**
+     * Adds an ownership edge. An ownership edge is always a classpath edge.
+     */
     fun addOwnershipEdge(from: NodeId, to: Dependency) {
-      ownershipEdges += from to requireNotNull(to.nodeId)
-      addEdge(from, to)
+      requireNotNull(to.nodeId)
+      addEdge(from, to, includeInClasspath = true, ownership = true)
     }
 
-    fun isOwnershipEdge(from: NodeId, to: NodeId): Boolean = from to to in ownershipEdges
+    fun isOwnershipEdge(from: NodeId, to: NodeId): Boolean = adjacency[from]?.get(to)?.ownership ?: false
 
+    /**
+     * Adds an edge from [from] to [to]. Adding an already existing edge keeps the originally added target
+     * and merges the classpath and ownership flags.
+     */
     fun addEdge(from: NodeId, to: Dependency, includeInClasspath: Boolean = true) {
+      addEdge(from, to, includeInClasspath, ownership = false)
+    }
+
+    private fun addEdge(from: NodeId, to: Dependency, includeInClasspath: Boolean, ownership: Boolean) {
       val toNodeId = to.nodeId
       if (toNodeId != null) {
         nodeIndex.putIfAbsent(toNodeId, to)
-        if (includeInClasspath) classpathEdges += from to toNodeId
       }
-      val targets = adjacency.getOrPut(from) { mutableListOf() }
-      if (targets.none { it.nodeId == toNodeId }) targets += to
+      val edges = adjacency.getOrPut(from) { LinkedHashMap() }
+      val edge = edges[toNodeId]
+      if (edge == null) {
+        edges[toNodeId] = Edge(to, classpath = includeInClasspath && toNodeId != null, ownership = ownership)
+      } else {
+        if (includeInClasspath && toNodeId != null) edge.classpath = true
+        if (ownership) edge.ownership = true
+      }
     }
 
     fun contains(from: NodeId, toIdPredicate: (Dependency) -> Boolean): Boolean {
-      return adjacency[from]?.any(toIdPredicate) ?: false
+      return adjacency[from]?.values?.any { toIdPredicate(it.target) } ?: false
     }
 
     internal fun forEachAdjacency(action: (Dependency, List<Dependency>) -> Unit) {
-      adjacency.forEach { (from, to) ->
+      adjacency.forEach { (from, edges) ->
         val fromNode = nodeIndex[from]
         if (fromNode == null) {
           LOG.warn("Node not found for $from")
           return@forEach
         }
-        action(fromNode, to)
+        action(fromNode, edges.values.map { it.target })
+      }
+    }
+
+    /**
+     * Creates a compact, read-only copy of the adjacency of this graph.
+     * It does not retain the node index and edge flags that are needed only while the graph is being built.
+     */
+    internal fun compact(): CompactDependencyGraph {
+      val sources = ArrayList<Dependency>(adjacency.size)
+      val targets = ArrayList<Array<Dependency>>(adjacency.size)
+      forEachAdjacency { from, dependencies ->
+        sources += from
+        targets += dependencies.toTypedArray()
+      }
+      return CompactDependencyGraph(sources.toTypedArray(), targets.toTypedArray())
+    }
+
+    private class Edge(val target: Dependency, var classpath: Boolean, var ownership: Boolean)
+  }
+
+  /**
+   * A read-only adjacency of a [DependencyGraph], retained by [DefaultDependencyTreeResolution].
+   * The adjacency of the source at index `i` in [sources] is stored in [targets] at the same index.
+   */
+  internal class CompactDependencyGraph(
+    private val sources: Array<Dependency>,
+    private val targets: Array<Array<Dependency>>
+  ) {
+    fun forEachAdjacency(action: (Dependency, List<Dependency>) -> Unit) {
+      for (i in sources.indices) {
+        action(sources[i], targets[i].asList())
       }
     }
   }
@@ -514,8 +625,49 @@ class DependencyTree(
     val dependenciesModifier: DependenciesModifier = PassThruDependenciesModifier,
     val isMergingDuplicateDependencies: Boolean = true
   ) {
+    /**
+     * Per-resolution memo of plugin dependency contexts. Keyed by identity, as [IdePlugin] equality is not reliable.
+     */
+    val pluginDependencyContexts = IdentityHashMap<IdePlugin, PluginDependencyContext>()
+
     fun notifyMissingDependency(plugin: IdePlugin, dependency: PluginDependency) {
       missingDependencyListener(plugin, dependency)
     }
+  }
+
+  /**
+   * Dependency modifications and content modules of a single plugin, computed once per resolution
+   * and shared by the plugin main node and all its content module nodes.
+   *
+   * @param modifications the result of the [DependenciesModifier] applied to the plugin.
+   * @param contentModules content-module descriptors indexed by name.
+   * @param allContributions all contributions, each paired with the index of its modification.
+   * @param contentModuleContributions contributions declared by each content module, paired with the index of
+   * their modification.
+   */
+  private class PluginDependencyContext(
+    val modifications: List<DependencyModification>,
+    val contentModules: Map<String, ModuleDescriptor>,
+    val allContributions: List<IndexedValue<DependencyContribution>>,
+    private val contentModuleContributions: Map<String, List<IndexedValue<DependencyContribution>>>
+  ) {
+    fun getContentModuleContributions(contentModule: String): List<IndexedValue<DependencyContribution>> =
+      contentModuleContributions[contentModule].orEmpty()
+  }
+
+  private fun ResolutionContext.getDependencyContext(plugin: IdePlugin): PluginDependencyContext = pluginDependencyContexts.getOrPut(plugin) {
+    val modifications = dependenciesModifier.apply(plugin, pluginProvider)
+    val allContributions = mutableListOf<IndexedValue<DependencyContribution>>()
+    val contentModuleContributions = hashMapOf<String, MutableList<IndexedValue<DependencyContribution>>>()
+    modifications.forEachIndexed { i, modification ->
+      for (contribution in modification.contributions) {
+        val indexedContribution = IndexedValue(i, contribution)
+        allContributions += indexedContribution
+        if (contribution is ContentModuleDependencyContribution) {
+          contentModuleContributions.getOrPut(contribution.contributingContentModule) { mutableListOf() } += indexedContribution
+        }
+      }
+    }
+    PluginDependencyContext(modifications, plugin.modulesDescriptors.associateBy { it.name }, allContributions, contentModuleContributions)
   }
 }

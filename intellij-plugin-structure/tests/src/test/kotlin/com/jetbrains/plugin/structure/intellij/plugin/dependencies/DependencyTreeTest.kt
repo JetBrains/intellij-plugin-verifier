@@ -364,6 +364,7 @@ class DependencyTreeTest {
     val expectedEdges = mapOf(
       rootNode to setOf(coreNode, extrasNode, platformNode, bundledNode),
       coreNode to setOf(platformNode),
+      platformNode to setOf(NodeId.ofPlugin(platformPlugin)),
       extrasNode to setOf(coreNode, bundledNode),
       bundledNode to setOf(ijNode),
       ijNode to tenIjDependencies.map { NodeId.ofPlugin(it) }.toSet()
@@ -374,6 +375,7 @@ class DependencyTreeTest {
     val expectedDependencyTreeString = """
       * Content module 'com.example.Modular.core' declared by plugin 'com.example.Modular'
         * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij'
+          * Plugin dependency: 'com.intellij'
       * Content module 'com.example.Modular.extras' declared by plugin 'com.example.Modular'
         * Module 'com.example.Modular.core' provided by plugin 'com.example.Modular' (already visited)
         * Plugin dependency: 'plugin1'
@@ -436,6 +438,7 @@ class DependencyTreeTest {
       * Content module 'com.example.thirdPartyModularPlugin.core' declared by plugin 'com.example.thirdPartyModularPlugin'
         * Module '$CORE_CONTENT_MODULE_IN_A_BUNDLED_PLUGIN' provided by plugin 'com.intellij.bundledModularPlugin'
           * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij'
+            * Plugin dependency: 'com.intellij'
         * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij' (already visited)
 
     """.trimIndent()
@@ -556,6 +559,7 @@ class DependencyTreeTest {
     val expectedEdges = mapOf(
       rootNode to setOf(coreNode, extrasNode),
       coreNode to setOf(platformNode),
+      platformNode to setOf(NodeId.ofPlugin(platformPlugin)),
       extrasNode to setOf(coreNode, bundledNode),
       bundledNode to setOf(ijNode),
       ijNode to tenIjDependencies.map { NodeId.ofPlugin(it) }.toSet()
@@ -639,6 +643,7 @@ class DependencyTreeTest {
     assertEquals(mapOf(
       rootNode to setOf(coreNode, extrasNode),
       coreNode to setOf(extrasNode, platformNode),
+      platformNode to setOf(NodeId.ofPlugin(platformPlugin)),
       extrasNode to setOf(coreNode)
     ), resolution.graphEdges())
 
@@ -647,6 +652,7 @@ class DependencyTreeTest {
         * Module '$extrasModuleId' provided by plugin 'com.example.Cyclic'
           * Module '$coreModuleId' provided by plugin 'com.example.Cyclic' (already visited)
         * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij'
+          * Plugin dependency: 'com.intellij'
       * Content module '$extrasModuleId' declared by plugin 'com.example.Cyclic' (already visited)
 
     """.trimIndent()
@@ -684,7 +690,8 @@ class DependencyTreeTest {
     val platformNode = Dependency.Module(platformPlugin, "com.intellij.modules.platform").nodeId
     assertEquals(mapOf(
       rootNode to setOf(coreNode, extrasNode),
-      coreNode to setOf(platformNode)
+      coreNode to setOf(platformNode),
+      platformNode to setOf(NodeId.ofPlugin(platformPlugin))
     ), resolution.graphEdges())
   }
 
@@ -723,6 +730,7 @@ class DependencyTreeTest {
     assertEquals(mapOf(
       rootNode to setOf(coreNode, extrasNode),
       coreNode to setOf(platformNode),
+      platformNode to setOf(NodeId.ofPlugin(platformPlugin)),
       extrasNode to setOf(coreNode)
     ), resolution.graphEdges())
   }
@@ -779,6 +787,94 @@ class DependencyTreeTest {
       assertEquals(setOf(sharedNode, NodeId.ofPlugin(coreDependency)), edges[coreNode])
       assertEquals(setOf(sharedNode, NodeId.ofPlugin(extrasDependency)), edges[extrasNode])
     }
+  }
+
+  @Test
+  fun `platform aliases redirect to the platform main node which is expanded only once`() {
+    val sharedDependency = idePlugin("com.example.SharedDependency")
+    val contentModuleCount = 20
+    val platformContentModules = (1..contentModuleCount).map { i ->
+      contentModule("intellij.platform.module$i") {
+        depends(sharedDependency)
+      }
+    }
+    val aliases = listOf("com.intellij.modules.platform", "com.intellij.modules.lang", "com.intellij.modules.vcs")
+    val platform = modularPlugin("com.intellij", *platformContentModules.toTypedArray())
+      .copy(pluginAliases = aliases.toSet())
+      .assertValid()
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, listOf(platform, sharedDependency))
+    val plugin = idePlugin("com.example.AliasConsumer") {
+      aliases.forEach { depends(it) }
+    }
+
+    val applyCounts = mutableMapOf<String, Int>()
+    val countingModifier = DependenciesModifier { pluginView, pluginProvider ->
+      applyCounts.merge(pluginView.pluginId!!, 1, Int::plus)
+      PassThruDependenciesModifier.apply(pluginView, pluginProvider)
+    }
+    val dependencyTree = DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
+    val resolution = dependencyTree.getDependencyTreeResolution(plugin, countingModifier)
+
+    // Subsequent aliases of the same plugin are already covered by the first one on the classpath.
+    val expectedDependencies = setOf(
+      Dependency.Module(platform, aliases.first(), isTransitive = false),
+      Dependency.Plugin(sharedDependency, isTransitive = true)
+    )
+    assertSetsEqual(expectedDependencies, resolution.transitiveDependencies.toSet())
+    assertSetsEqual(expectedDependencies, dependencyTree.getTransitiveDependencies(plugin))
+    assertTrue(resolution.missingDependencies.isEmpty())
+
+    assertEquals("Platform main node must be expanded once", 1, applyCounts[platform.pluginId])
+
+    val platformNode = NodeId.ofPlugin(platform)
+    val edges = resolution.graphEdges()
+    for (alias in aliases) {
+      assertEquals("Alias '$alias' must only redirect to the platform main node",
+        setOf(platformNode), edges[NodeId(platform.pluginId!!, alias)])
+    }
+    val ownershipEdges = mutableListOf<Pair<Dependency, Dependency>>()
+    resolution.forEach { from, to -> if (to is Dependency.ContentModuleDeclaration) ownershipEdges += from to to }
+    assertEquals(contentModuleCount, ownershipEdges.size)
+    assertTrue("Only the platform main node owns content modules",
+      ownershipEdges.all { (from, _) -> from.nodeId == platformNode })
+  }
+
+  @Test
+  fun `dependencies modifier is applied once per plugin in a resolution`() {
+    val sharedDependency = idePlugin("com.example.SharedDependency")
+    val coreModule = contentModule("com.example.Provider.core") {
+      depends(sharedDependency)
+    }
+    val extrasModule = contentModule("com.example.Provider.extras") {
+      moduleDependency("com.example.Provider.core", "com.example")
+      depends(sharedDependency)
+    }
+    val provider = modularPlugin("com.example.Provider", coreModule, extrasModule)
+    val ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, listOf(provider, sharedDependency))
+    val plugin = idePlugin("com.example.Consumer") {
+      pluginDependency(provider.pluginId!!)
+      moduleDependency(coreModule.pluginId!!, "com.example")
+      moduleDependency(extrasModule.pluginId!!, "com.example")
+    }
+
+    val applyCounts = mutableMapOf<String, Int>()
+    val countingModifier = DependenciesModifier { pluginView, pluginProvider ->
+      applyCounts.merge(pluginView.pluginId!!, 1, Int::plus)
+      PassThruDependenciesModifier.apply(pluginView, pluginProvider)
+    }
+    val resolution = DependencyTree(ide).getDependencyTreeResolution(plugin, countingModifier)
+
+    assertSetsEqual(setOf(
+      Dependency.Plugin(provider, isTransitive = false),
+      Dependency.Module(provider, coreModule.pluginId!!, isTransitive = false),
+      Dependency.Module(provider, extrasModule.pluginId!!, isTransitive = false),
+      Dependency.Plugin(sharedDependency, isTransitive = true)
+    ), resolution.transitiveDependencies.toSet())
+    assertEquals(mapOf(
+      plugin.pluginId!! to 1,
+      provider.pluginId!! to 1,
+      sharedDependency.pluginId!! to 1
+    ), applyCounts)
   }
 
   private fun modularPlugin(pluginId: String, vararg modules: MockIdePlugin): MockIdePlugin {

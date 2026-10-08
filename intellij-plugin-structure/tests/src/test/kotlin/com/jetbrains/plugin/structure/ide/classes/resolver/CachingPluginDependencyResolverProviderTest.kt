@@ -608,6 +608,7 @@ class CachingPluginDependencyResolverProviderTest {
         assertEquals("Local graph nodes and their declaration sources must survive flattening", mapOf(
           rootNode to rootDependencies,
           coreNode to setOf(platformNode),
+          platformNode to setOf(NodeId.ofPlugin(ideaCorePlugin)),
           extraNode to setOf(coreNode, bundledNode),
           bundledNode to setOf(transitiveNode)
         ), edges)

@@ -79,7 +79,7 @@ class DependencyTreeDependencyGraphTest {
     assertTrue(graph.contains(root.nodeId) { it.matches("main") })
 
     val edges = mutableListOf<Pair<Dependency, Dependency>>()
-    val resolution = DefaultDependencyTreeResolution(plugin, emptySet(), emptyMap(), graph)
+    val resolution = DefaultDependencyTreeResolution(plugin, emptySet(), emptyMap(), graph.compact())
     resolution.forEach { from, to -> edges += from to to }
     assertEquals(listOf(root to main, root to extra, extra to mainReference, main to external), edges)
   }
@@ -129,12 +129,88 @@ class DependencyTreeDependencyGraphTest {
     assertTrue(graph.contains(core.nodeId) { it.nodeId == extras.nodeId })
     assertFalse(graph.contains(core.nodeId) { it.nodeId == owner.nodeId })
 
-    val resolution = DefaultDependencyTreeResolution(rootPlugin, emptySet(), emptyMap(), graph)
+    val resolution = DefaultDependencyTreeResolution(rootPlugin, emptySet(), emptyMap(), graph.compact())
     val iteratedEdges = mutableListOf<Pair<Dependency, Dependency>>()
     resolution.forEach { from, to -> iteratedEdges += from to to }
     assertEquals(adjacency.flatMap { (from, dependencies) -> dependencies.map { from to it } }, iteratedEdges)
     assertEquals(setOf(root.nodeId, owner.nodeId, core.nodeId, extras.nodeId), iteratedEdges.map { it.first.nodeId }.toSet())
     assertEquals(setOf(owner.nodeId, core.nodeId, extras.nodeId, external.nodeId), iteratedEdges.map { it.second.nodeId }.toSet())
+  }
+
+  @Test
+  fun `duplicate edges are stored once and flags are merged`() {
+    val rootPlugin = mockk<IdePlugin>()
+    every { rootPlugin.pluginId } returns "com.example.Root"
+    val alphaPlugin = mockk<IdePlugin>()
+    every { alphaPlugin.pluginId } returns "com.example.Alpha"
+    val betaPlugin = mockk<IdePlugin>()
+    every { betaPlugin.pluginId } returns "com.example.Beta"
+
+    val root = Dependency.Plugin(rootPlugin)
+    val alpha = Dependency.Plugin(alphaPlugin)
+    val beta = Dependency.Plugin(betaPlugin)
+    val graph = DependencyTree.DependencyGraph(root)
+
+    graph.addEdge(root.nodeId, alpha, includeInClasspath = false)
+    graph.addEdge(root.nodeId, beta)
+    graph.addEdge(root.nodeId, alpha.copy(isTransitive = true))
+    assertEquals(listOf(alpha, beta), graph[root.nodeId])
+    assertSame(alpha, graph[root.nodeId].first())
+    assertEquals(listOf(alpha, beta), graph.getClasspathDependencies(root.nodeId))
+
+    graph.addEdge(root.nodeId, beta, includeInClasspath = false)
+    assertEquals(listOf(alpha, beta), graph.getClasspathDependencies(root.nodeId))
+  }
+
+  @Test
+  fun `non-classpath edge is not a classpath dependency`() {
+    val rootPlugin = mockk<IdePlugin>()
+    every { rootPlugin.pluginId } returns "com.example.Root"
+    val alphaPlugin = mockk<IdePlugin>()
+    every { alphaPlugin.pluginId } returns "com.example.Alpha"
+
+    val root = Dependency.Plugin(rootPlugin)
+    val alpha = Dependency.Plugin(alphaPlugin)
+    val graph = DependencyTree.DependencyGraph(root)
+
+    graph.addEdge(root.nodeId, alpha, includeInClasspath = false)
+    assertEquals(listOf(alpha), graph[root.nodeId])
+    assertTrue(graph.getClasspathDependencies(root.nodeId).isEmpty())
+  }
+
+  @Test
+  fun `ownership edge implies classpath edge`() {
+    val plugin = mockk<IdePlugin>()
+    every { plugin.pluginId } returns "owner"
+    val root = Dependency.Plugin(plugin)
+    val module = Dependency.ContentModuleDeclaration(plugin, "owner.module")
+    val graph = DependencyTree.DependencyGraph(root)
+
+    graph.addEdge(root.nodeId, Dependency.Module(plugin, "owner.module"), includeInClasspath = false)
+    assertFalse(graph.isOwnershipEdge(root.nodeId, module.nodeId))
+    assertTrue(graph.getClasspathDependencies(root.nodeId).isEmpty())
+
+    graph.addOwnershipEdge(root.nodeId, module)
+    assertTrue(graph.isOwnershipEdge(root.nodeId, module.nodeId))
+    assertEquals(1, graph[root.nodeId].size)
+    assertEquals(1, graph.getClasspathDependencies(root.nodeId).size)
+    assertFalse(graph.isOwnershipEdge(module.nodeId, root.nodeId))
+  }
+
+  @Test
+  fun `node identity is computed once and does not affect equality`() {
+    val plugin = mockk<IdePlugin>()
+    every { plugin.pluginId } returns "owner"
+    val pluginDependency = Dependency.Plugin(plugin)
+    val moduleDependency = Dependency.Module(plugin, "owner.module")
+    val declaration = Dependency.ContentModuleDeclaration(plugin, "owner.module")
+
+    assertSame(pluginDependency.nodeId, pluginDependency.nodeId)
+    assertSame(moduleDependency.nodeId, moduleDependency.nodeId)
+    assertSame(declaration.nodeId, declaration.nodeId)
+    assertEquals(moduleDependency.nodeId, declaration.nodeId)
+    assertEquals(Dependency.Plugin(plugin), pluginDependency)
+    assertEquals(Dependency.Plugin(plugin).hashCode(), pluginDependency.hashCode())
   }
 
   // FIXME Duplicate from com.jetbrains.plugin.structure.ide.classes.resolver.CachingPluginDependencyResolverProvider.getPluginId
