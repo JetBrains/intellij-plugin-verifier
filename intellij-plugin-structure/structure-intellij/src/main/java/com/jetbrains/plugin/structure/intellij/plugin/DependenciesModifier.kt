@@ -67,6 +67,11 @@ data class DependencyModification(
  * omitted IDs and sources are removed, and returned dependencies (including their optionality, reasons and
  * contributions) replace the previous ones. If the returned list contains duplicate IDs, the composite keeps
  * only the last entry for each ID; duplicates are never merged.
+ *
+ * Modifiers currently do not support content modules. They operate only on
+ * the plugin-level dependency list. Dependencies declared by content modules (see [IdePlugin.modulesDescriptors])
+ * are neither modified nor applied per module. They show up only as [DependencyContribution] provenance
+ * of the plugin-level [DependencyModification]s.
  */
 fun interface DependenciesModifier {
   fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<DependencyModification>
