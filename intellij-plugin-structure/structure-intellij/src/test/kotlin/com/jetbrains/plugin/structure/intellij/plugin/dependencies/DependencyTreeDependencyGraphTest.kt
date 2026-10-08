@@ -198,6 +198,61 @@ class DependencyTreeDependencyGraphTest {
   }
 
   @Test
+  fun `alias edge is used for resolution only and hidden from all views`() {
+    val rootPlugin = mockk<IdePlugin>()
+    every { rootPlugin.pluginId } returns "com.example.Root"
+    val platformPlugin = mockk<IdePlugin>()
+    every { platformPlugin.pluginId } returns "com.intellij"
+    val externalPlugin = mockk<IdePlugin>()
+    every { externalPlugin.pluginId } returns "com.example.External"
+
+    val root = Dependency.Plugin(rootPlugin)
+    val alias = Dependency.Module(platformPlugin, "com.intellij.modules.platform")
+    val main = Dependency.Plugin(platformPlugin)
+    val external = Dependency.Plugin(externalPlugin)
+    val graph = DependencyTree.DependencyGraph(root)
+    graph.addEdge(root.nodeId, alias)
+    graph.addAliasEdge(alias.nodeId, main, includeInClasspath = true)
+    graph.addEdge(main.nodeId, external)
+
+    assertTrue(graph[alias.nodeId].isEmpty())
+    assertFalse(graph.contains(alias.nodeId) { it.nodeId == main.nodeId })
+    assertEquals(listOf(main), graph.getClasspathDependencies(alias.nodeId))
+    assertEquals(main.nodeId, graph.getAliasTarget(alias.nodeId))
+    assertNull(graph.getAliasTarget(root.nodeId))
+
+    val adjacency = linkedMapOf<Dependency, List<Dependency>>()
+    graph.forEachAdjacency { from, dependencies -> adjacency[from] = dependencies }
+    assertEquals(mapOf(root to listOf(alias), main to listOf(external)), adjacency)
+
+    val edges = mutableListOf<Pair<Dependency, Dependency>>()
+    DefaultDependencyTreeResolution(rootPlugin, emptySet(), emptyMap(), graph.compact())
+      .forEach { from, to -> edges += from to to }
+    assertEquals(listOf(root to alias, main to external), edges)
+  }
+
+  @Test
+  fun `regular edge to an alias target makes the edge visible`() {
+    val plugin = mockk<IdePlugin>()
+    every { plugin.pluginId } returns "com.intellij"
+    val alias = Dependency.Module(plugin, "com.intellij.modules.platform")
+    val main = Dependency.Plugin(plugin)
+    val graph = DependencyTree.DependencyGraph(alias)
+
+    graph.addAliasEdge(alias.nodeId, main, includeInClasspath = false)
+    assertTrue(graph[alias.nodeId].isEmpty())
+    assertTrue(graph.getClasspathDependencies(alias.nodeId).isEmpty())
+
+    graph.addEdge(alias.nodeId, main)
+    assertEquals(listOf(main), graph[alias.nodeId])
+    assertEquals(listOf(main), graph.getClasspathDependencies(alias.nodeId))
+    assertNull(graph.getAliasTarget(alias.nodeId))
+
+    graph.addAliasEdge(alias.nodeId, main, includeInClasspath = true)
+    assertEquals(listOf(main), graph[alias.nodeId])
+  }
+
+  @Test
   fun `node identity is computed once and does not affect equality`() {
     val plugin = mockk<IdePlugin>()
     every { plugin.pluginId } returns "owner"

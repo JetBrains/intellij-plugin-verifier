@@ -17,46 +17,6 @@ import java.util.IdentityHashMap
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import kotlin.collections.ArrayDeque
-import kotlin.collections.ArrayList
-import kotlin.collections.Collection
-import kotlin.collections.IndexedValue
-import kotlin.collections.LinkedHashMap
-import kotlin.collections.LinkedHashSet
-import kotlin.collections.List
-import kotlin.collections.Map
-import kotlin.collections.MutableList
-import kotlin.collections.MutableSet
-import kotlin.collections.Set
-import kotlin.collections.any
-import kotlin.collections.asList
-import kotlin.collections.associateBy
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.contains
-import kotlin.collections.emptyList
-import kotlin.collections.forEach
-import kotlin.collections.forEachIndexed
-import kotlin.collections.getOrPut
-import kotlin.collections.hashMapOf
-import kotlin.collections.indices
-import kotlin.collections.isNotEmpty
-import kotlin.collections.joinToString
-import kotlin.collections.linkedMapOf
-import kotlin.collections.linkedSetOf
-import kotlin.collections.map
-import kotlin.collections.mapNotNull
-import kotlin.collections.mutableListOf
-import kotlin.collections.mutableMapOf
-import kotlin.collections.mutableSetOf
-import kotlin.collections.none
-import kotlin.collections.orEmpty
-import kotlin.collections.plus
-import kotlin.collections.plusAssign
-import kotlin.collections.set
-import kotlin.collections.setOf
-import kotlin.collections.sortedBy
-import kotlin.collections.toSet
-import kotlin.collections.toTypedArray
 import kotlin.math.max
 
 private val LOG: Logger = LoggerFactory.getLogger(DependencyTree::class.java)
@@ -184,7 +144,7 @@ class DependencyTree(
         // An alias (e.g. 'com.intellij.modules.platform') is provided by the plugin main node.
         // Redirect to the main node, so that the plugin is expanded only once, regardless of the number of aliases.
         val mainDependency = Plugin(plugin).intern()
-        graph.addEdge(nodeId, mainDependency, includeInClasspath = expandClasspath)
+        graph.addAliasEdge(nodeId, mainDependency, includeInClasspath = expandClasspath)
         getDependencyGraph(
           plugin, mainDependency.nodeId!!, graph, visitedNodes,
           resolutionDepth, dependencyIndex, parentDependencyIndex, missingDependencies, context, classpathExpandedNodes,
@@ -454,7 +414,10 @@ class DependencyTree(
     printer: StringBuilder
   ) {
     val indent = "  ".repeat(indentSize)
-    this[nodeId]
+    // An alias node shows the dependencies of its plugin main node directly, without the internal alias edge.
+    val aliasTarget = getAliasTarget(nodeId)
+    val dependencies = if (aliasTarget != null) this[nodeId] + this[aliasTarget] else this[nodeId]
+    dependencies
       .sortedBy { it.artifactId }
       .forEach { dep ->
         val depNodeId = dep.nodeId
@@ -514,8 +477,14 @@ class DependencyTree(
       nodeIndex[nodeId] = rootPlugin
     }
 
-    operator fun get(from: NodeId): List<Dependency> = adjacency[from]?.values?.map { it.target } ?: emptyList()
+    /**
+     * Returns the targets of the visible edges of [from]. Internal alias edges are not included.
+     */
+    operator fun get(from: NodeId): List<Dependency> = adjacency[from]?.values?.visibleTargets() ?: emptyList()
 
+    /**
+     * Returns the classpath targets of [from], including the targets of internal alias edges.
+     */
     fun getClasspathDependencies(from: NodeId): List<Dependency> {
       val edges = adjacency[from] ?: return emptyList()
       return edges.values.mapNotNull { edge -> edge.target.takeIf { edge.classpath } }
@@ -539,7 +508,20 @@ class DependencyTree(
       addEdge(from, to, includeInClasspath, ownership = false)
     }
 
-    private fun addEdge(from: NodeId, to: Dependency, includeInClasspath: Boolean, ownership: Boolean) {
+    /**
+     * Adds an internal link from an alias node to its plugin main node.
+     * The link is used for resolution only and is hidden from all views of this graph.
+     */
+    fun addAliasEdge(from: NodeId, to: Dependency, includeInClasspath: Boolean) {
+      addEdge(from, to, includeInClasspath, ownership = false, alias = true)
+    }
+
+    /**
+     * Returns the target of the internal alias edge of [from], if any.
+     */
+    fun getAliasTarget(from: NodeId): NodeId? = adjacency[from]?.values?.firstOrNull { it.alias }?.target?.nodeId
+
+    private fun addEdge(from: NodeId, to: Dependency, includeInClasspath: Boolean, ownership: Boolean, alias: Boolean = false) {
       val toNodeId = to.nodeId
       if (toNodeId != null) {
         nodeIndex.putIfAbsent(toNodeId, to)
@@ -547,15 +529,17 @@ class DependencyTree(
       val edges = adjacency.getOrPut(from) { LinkedHashMap() }
       val edge = edges[toNodeId]
       if (edge == null) {
-        edges[toNodeId] = Edge(to, classpath = includeInClasspath && toNodeId != null, ownership = ownership)
+        edges[toNodeId] = Edge(to, classpath = includeInClasspath && toNodeId != null, ownership = ownership, alias = alias)
       } else {
         if (includeInClasspath && toNodeId != null) edge.classpath = true
         if (ownership) edge.ownership = true
+        // A regular edge to the same target makes the edge visible.
+        if (!alias) edge.alias = false
       }
     }
 
     fun contains(from: NodeId, toIdPredicate: (Dependency) -> Boolean): Boolean {
-      return adjacency[from]?.values?.any { toIdPredicate(it.target) } ?: false
+      return adjacency[from]?.values?.any { !it.alias && toIdPredicate(it.target) } ?: false
     }
 
     internal fun forEachAdjacency(action: (Dependency, List<Dependency>) -> Unit) {
@@ -565,9 +549,14 @@ class DependencyTree(
           LOG.warn("Node not found for $from")
           return@forEach
         }
-        action(fromNode, edges.values.map { it.target })
+        val targets = edges.values.visibleTargets()
+        if (targets.isNotEmpty()) {
+          action(fromNode, targets)
+        }
       }
     }
+
+    private fun Collection<Edge>.visibleTargets(): List<Dependency> = mapNotNull { edge -> edge.target.takeUnless { edge.alias } }
 
     /**
      * Creates a compact, read-only copy of the adjacency of this graph.
@@ -583,7 +572,7 @@ class DependencyTree(
       return CompactDependencyGraph(sources.toTypedArray(), targets.toTypedArray())
     }
 
-    private class Edge(val target: Dependency, var classpath: Boolean, var ownership: Boolean)
+    private class Edge(val target: Dependency, var classpath: Boolean, var ownership: Boolean, var alias: Boolean)
   }
 
   /**

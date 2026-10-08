@@ -307,7 +307,6 @@ class DependencyTreeTest {
     val treeString = dependencyTree.toString(somePlugin).toString()
     val expectedTreeString = """
       * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij'
-        * Plugin dependency: 'com.intellij'
 
     """.trimIndent()
     assertEquals(expectedTreeString, treeString)
@@ -382,7 +381,6 @@ class DependencyTreeTest {
     val expectedEdges = mapOf(
       rootNode to setOf(coreNode, extrasNode, platformNode, bundledNode),
       coreNode to setOf(platformNode),
-      platformNode to setOf(NodeId.ofPlugin(platformPlugin)),
       extrasNode to setOf(coreNode, bundledNode),
       bundledNode to setOf(ijNode),
       ijNode to tenIjDependencies.map { NodeId.ofPlugin(it) }.toSet()
@@ -393,7 +391,6 @@ class DependencyTreeTest {
     val expectedDependencyTreeString = """
       * Content module 'com.example.Modular.core' declared by plugin 'com.example.Modular'
         * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij'
-          * Plugin dependency: 'com.intellij'
       * Content module 'com.example.Modular.extras' declared by plugin 'com.example.Modular'
         * Module 'com.example.Modular.core' provided by plugin 'com.example.Modular' (already visited)
         * Plugin dependency: 'plugin1'
@@ -456,7 +453,6 @@ class DependencyTreeTest {
       * Content module 'com.example.thirdPartyModularPlugin.core' declared by plugin 'com.example.thirdPartyModularPlugin'
         * Module '$CORE_CONTENT_MODULE_IN_A_BUNDLED_PLUGIN' provided by plugin 'com.intellij.bundledModularPlugin'
           * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij'
-            * Plugin dependency: 'com.intellij'
         * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij' (already visited)
 
     """.trimIndent()
@@ -577,7 +573,6 @@ class DependencyTreeTest {
     val expectedEdges = mapOf(
       rootNode to setOf(coreNode, extrasNode),
       coreNode to setOf(platformNode),
-      platformNode to setOf(NodeId.ofPlugin(platformPlugin)),
       extrasNode to setOf(coreNode, bundledNode),
       bundledNode to setOf(ijNode),
       ijNode to tenIjDependencies.map { NodeId.ofPlugin(it) }.toSet()
@@ -661,7 +656,6 @@ class DependencyTreeTest {
     assertEquals(mapOf(
       rootNode to setOf(coreNode, extrasNode),
       coreNode to setOf(extrasNode, platformNode),
-      platformNode to setOf(NodeId.ofPlugin(platformPlugin)),
       extrasNode to setOf(coreNode)
     ), resolution.graphEdges())
 
@@ -670,7 +664,6 @@ class DependencyTreeTest {
         * Module '$extrasModuleId' provided by plugin 'com.example.Cyclic'
           * Module '$coreModuleId' provided by plugin 'com.example.Cyclic' (already visited)
         * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij'
-          * Plugin dependency: 'com.intellij'
       * Content module '$extrasModuleId' declared by plugin 'com.example.Cyclic' (already visited)
 
     """.trimIndent()
@@ -708,8 +701,7 @@ class DependencyTreeTest {
     val platformNode = Dependency.Module(platformPlugin, "com.intellij.modules.platform").nodeId
     assertEquals(mapOf(
       rootNode to setOf(coreNode, extrasNode),
-      coreNode to setOf(platformNode),
-      platformNode to setOf(NodeId.ofPlugin(platformPlugin))
+      coreNode to setOf(platformNode)
     ), resolution.graphEdges())
   }
 
@@ -748,7 +740,6 @@ class DependencyTreeTest {
     assertEquals(mapOf(
       rootNode to setOf(coreNode, extrasNode),
       coreNode to setOf(platformNode),
-      platformNode to setOf(NodeId.ofPlugin(platformPlugin)),
       extrasNode to setOf(coreNode)
     ), resolution.graphEdges())
   }
@@ -847,9 +838,15 @@ class DependencyTreeTest {
     val platformNode = NodeId.ofPlugin(platform)
     val edges = resolution.graphEdges()
     for (alias in aliases) {
-      assertEquals("Alias '$alias' must only redirect to the platform main node",
-        setOf(platformNode), edges[NodeId(platform.pluginId!!, alias)])
+      assertNull("Alias '$alias' must not expose the internal redirect to the platform main node",
+        edges[NodeId(platform.pluginId!!, alias)])
     }
+    assertEquals(
+      platformContentModules.map { NodeId(platform.pluginId!!, it.pluginId!!) }.toSet(),
+      edges[platformNode]
+    )
+    assertFalse("The internal alias redirect must not be printed",
+      dependencyTree.toString(plugin).contains("Plugin dependency: 'com.intellij'"))
     val ownershipEdges = mutableListOf<Pair<Dependency, Dependency>>()
     resolution.forEach { from, to -> if (to is Dependency.ContentModuleDeclaration) ownershipEdges += from to to }
     assertEquals(contentModuleCount, ownershipEdges.size)
