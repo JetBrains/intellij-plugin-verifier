@@ -67,7 +67,7 @@ sealed class Dependency {
     override fun matches(id: PluginId) = plugin.pluginId == id
 
     override val nodeId: NodeId by lazy(LazyThreadSafetyMode.PUBLICATION) {
-      NodeId(plugin.pluginId!!, id)
+      NodeId.ofPlugin(plugin)
     }
 
     override fun toString() = "${if (isTransitive) "Transitive " else ""}Plugin dependency: '${plugin.pluginId}'"

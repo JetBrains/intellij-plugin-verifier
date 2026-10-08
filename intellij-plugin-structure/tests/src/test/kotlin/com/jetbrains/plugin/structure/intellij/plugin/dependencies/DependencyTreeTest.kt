@@ -296,6 +296,24 @@ class DependencyTreeTest {
   }
 
   @Test
+  fun `plugin depends on the platform module with toString-ed graph not including plugin aliases`() {
+    ide = MockIde(IdeVersion.createIdeVersion("IU-251.6125"), ideRoot, listOf(platformPlugin))
+
+    val somePlugin = idePlugin("com.example.somePlugin") {
+      depends(MandatoryV1Dependency("com.intellij.modules.platform"))
+    }
+
+    val dependencyTree = DependencyTree(ide, ideModulePredicate = HAS_COM_INTELLIJ_MODULE_PREFIX)
+    val treeString = dependencyTree.toString(somePlugin).toString()
+    val expectedTreeString = """
+      * Module 'com.intellij.modules.platform' provided by plugin 'com.intellij'
+        * Plugin dependency: 'com.intellij'
+
+    """.trimIndent()
+    assertEquals(expectedTreeString, treeString)
+  }
+
+  @Test
   fun `plugin with content modules includes transitive dependencies of direct plugin dependencies`() {
     val someBundledIdePlugin = dozenOfPlugins.first()
 
