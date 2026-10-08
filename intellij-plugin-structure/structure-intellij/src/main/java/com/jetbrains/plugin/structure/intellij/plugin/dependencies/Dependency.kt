@@ -45,12 +45,9 @@ sealed class Dependency {
 
     override val isTransitive = false
 
-    // Cached on first access: graph construction reads `nodeId` very frequently. Not part of equals/hashCode.
-    @Volatile
-    private var cachedNodeId: NodeId? = null
-
-    override val nodeId: NodeId
-      get() = cachedNodeId ?: NodeId(plugin.pluginId!!, id).also { cachedNodeId = it }
+    override val nodeId: NodeId by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      NodeId(plugin.pluginId!!, id)
+    }
 
     override fun toString() = "Content module '$id' declared by plugin '${plugin.pluginId}'"
   }
@@ -58,12 +55,9 @@ sealed class Dependency {
   data class Module(override val plugin: IdePlugin, val id: PluginId, override val isTransitive: Boolean = false) : Resolved() {
     override fun matches(id: PluginId) = plugin.pluginId == id || plugin.hasDefinedModuleWithId(id)
 
-    // Cached on first access: graph construction reads `nodeId` very frequently. Not part of equals/hashCode.
-    @Volatile
-    private var cachedNodeId: NodeId? = null
-
-    override val nodeId: NodeId
-      get() = cachedNodeId ?: NodeId(plugin.pluginId!!, id).also { cachedNodeId = it }
+    override val nodeId: NodeId by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      NodeId(plugin.pluginId!!, id)
+    }
 
     override fun toString() =
       "${if (isTransitive) "Transitive " else ""}Module '$id' provided by plugin '${plugin.pluginId}'"
@@ -72,12 +66,9 @@ sealed class Dependency {
   data class Plugin(override val plugin: IdePlugin, override val isTransitive: Boolean = false) : Resolved() {
     override fun matches(id: PluginId) = plugin.pluginId == id
 
-    // Cached on first access: graph construction reads `nodeId` very frequently. Not part of equals/hashCode.
-    @Volatile
-    private var cachedNodeId: NodeId? = null
-
-    override val nodeId: NodeId
-      get() = cachedNodeId ?: NodeId(plugin.pluginId!!, null).also { cachedNodeId = it }
+    override val nodeId: NodeId by lazy(LazyThreadSafetyMode.PUBLICATION) {
+      NodeId(plugin.pluginId!!, id)
+    }
 
     override fun toString() = "${if (isTransitive) "Transitive " else ""}Plugin dependency: '${plugin.pluginId}'"
   }
