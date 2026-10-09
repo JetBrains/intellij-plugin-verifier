@@ -11,7 +11,18 @@ import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
 import java.time.Duration
 import kotlin.system.measureTimeMillis
 
-fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<PluginVerifier>): List<PluginVerificationResult> {
+/**
+ * Runs the [verifiers] concurrently and reports each result to the [reportage] as soon as it is available.
+ *
+ * All results are kept in memory until every verification finishes. The [retain] function is applied to each result
+ * right after it has been reported, and its outcome is what is kept and returned. Use it to drop data
+ * that is no longer needed once reported, such as the full dependencies graph, see [retainDirectDependencies].
+ */
+fun runSeveralVerifiers(
+  reportage: PluginVerificationReportage,
+  verifiers: List<PluginVerifier>,
+  retain: (PluginVerificationResult) -> PluginVerificationResult = { it }
+): List<PluginVerificationResult> {
   if (verifiers.isEmpty()) {
     return emptyList()
   }
@@ -37,7 +48,7 @@ fun runSeveralVerifiers(reportage: PluginVerificationReportage, verifiers: List<
           reportage.reportTelemetry(verificationResult.plugin, verificationResult.telemetry)
         }
         reportage.reportVerificationResult(verificationResult)
-        verificationResult
+        retain(verificationResult)
       }
     }
   }

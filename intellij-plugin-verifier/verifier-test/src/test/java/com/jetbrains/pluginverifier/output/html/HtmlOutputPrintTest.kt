@@ -4,16 +4,91 @@
 
 package com.jetbrains.pluginverifier.output.html
 
+import com.jetbrains.plugin.structure.base.utils.create
 import com.jetbrains.pluginverifier.PluginVerificationResult
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependenciesGraph
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependencyEdge
+import com.jetbrains.pluginverifier.dependencies.ResolvedDependencyNode
+import com.jetbrains.pluginverifier.dependencies.ResolvedPluginDependency
 import com.jetbrains.pluginverifier.output.BaseOutputPrintTest
+import com.jetbrains.pluginverifier.output.PLUGIN_ID
+import com.jetbrains.pluginverifier.output.PLUGIN_VERSION
+import com.jetbrains.pluginverifier.reporting.DirectoryBasedPluginVerificationReportage
+import com.jetbrains.pluginverifier.retainDirectDependencies
+import org.junit.Assert.*
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
+import java.io.StringWriter
+import java.nio.file.Files
 
 class HtmlOutputPrintTest : BaseOutputPrintTest<HtmlResultPrinter>() {
+  @get:Rule
+  val temporaryFolder = TemporaryFolder()
+
   @Before
   override fun setUp() {
     super.setUp()
     resultPrinter = HtmlResultPrinter(verificationTarget, out)
+  }
+
+  @Test
+  fun `report of a result with retained direct dependencies equals the report of the full result`() {
+    val pluginInfo = mockPluginInfo()
+    val plugin = ResolvedDependencyNode(PLUGIN_ID, PLUGIN_VERSION)
+    val java = ResolvedDependencyNode("com.intellij.java", "261.1")
+    val platform = ResolvedDependencyNode("com.intellij", "261.1", setOf("com.intellij.modules.<platform>"))
+    val fullGraph = ResolvedDependenciesGraph(
+      plugin,
+      setOf(plugin, java, platform),
+      setOf(
+        ResolvedDependencyEdge(plugin, java, ResolvedPluginDependency("com.intellij.java", isOptional = false, isModule = false)),
+        ResolvedDependencyEdge(java, platform, ResolvedPluginDependency("com.intellij.modules.<platform>", isOptional = false, isModule = true))
+      ),
+      emptyMap()
+    )
+    val fullResult = PluginVerificationResult.Verified(pluginInfo, verificationTarget, fullGraph)
+    val retainedResult = fullResult.retainDirectDependencies()
+    assertNotEquals(fullGraph, (retainedResult as PluginVerificationResult.Verified).dependenciesGraph)
+
+    // The reportage writes the full graph before the result is retained.
+    val targetReportDirectory = temporaryFolder.newFolder().toPath()
+    DirectoryBasedPluginVerificationReportage { targetReportDirectory }.use { it.reportVerificationResult(fullResult) }
+
+    HtmlResultPrinter(verificationTarget, out).printResults(listOf(fullResult))
+    val fullReport = output()
+    out = StringWriter()
+    HtmlResultPrinter(verificationTarget, out, targetReportDirectory).printResults(listOf(retainedResult))
+
+    assertTrue(fullReport, fullReport.contains("     \\--- com.intellij:261.1 (aliased com.intellij.modules.&lt;platform&gt;)"))
+    assertOutput(fullReport)
+  }
+
+  @Test
+  fun `dependencies are taken from the reported dependencies file`() {
+    val targetReportDirectory = temporaryFolder.newFolder().toPath()
+    val pluginInfo = mockPluginInfo()
+    val dependenciesFile = DirectoryBasedPluginVerificationReportage
+      .getPluginVerificationDirectory(targetReportDirectory, pluginInfo)
+      .resolve(DirectoryBasedPluginVerificationReportage.DEPENDENCIES_FILE_NAME)
+    Files.write(dependenciesFile.create(), "reported:2.0 <&>\n".toByteArray())
+
+    HtmlResultPrinter(verificationTarget, out, targetReportDirectory)
+      .printResults(listOf(PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)))
+
+    assertTrue(output(), output().contains("<pre>\nreported:2.0 &lt;&amp;&gt;</pre>"))
+  }
+
+  @Test
+  fun `dependencies graph of the result is printed when the dependencies file is not reported`() {
+    val targetReportDirectory = temporaryFolder.newFolder().toPath()
+
+    HtmlResultPrinter(verificationTarget, out, targetReportDirectory)
+      .printResults(listOf(PluginVerificationResult.Verified(mockPluginInfo(), verificationTarget, dependenciesGraph)))
+
+    assertTrue(output(), output().contains("<pre>\npluginId:1.0</pre>"))
+    assertFalse(Files.exists(targetReportDirectory.resolve("plugins")))
   }
 
   @Test

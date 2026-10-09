@@ -131,6 +131,40 @@ data class ResolvedDependenciesGraph(
   @Deprecated("Build an index from 'edges' when repeated lookups are needed")
   fun getEdgesFrom(node: ResolvedDependencyNode): List<ResolvedDependencyEdge> =
     edges.filter { it.from == node }
+
+  /**
+   * Returns a slim copy of this graph that keeps only what is needed once the full graph has been reported:
+   * - the [verifiedPlugin];
+   * - the direct edges of the [verifiedPlugin];
+   * - the edges whose dependency matches a direct (resolved or missing) dependency of the [verifiedPlugin],
+   *   so that looking up how a direct dependency was resolved keeps working;
+   * - the direct missing dependencies, see [getDirectMissingDependencies].
+   *
+   * The transitive dependencies graph of the verified plugin spans the whole IDE module graph
+   * and is the largest part of a retained verification result.
+   */
+  fun retainDirectDependencies(): ResolvedDependenciesGraph {
+    val directMissingDependencies = missingDependencies[verifiedPlugin]
+    val directEdges = edges.filter { it.from == verifiedPlugin }
+    val directDependencies = HashSet<ResolvedPluginDependency>().apply {
+      directEdges.mapTo(this) { it.dependency }
+      directMissingDependencies?.mapTo(this) { it.dependency }
+    }
+    // Direct edges come first, so a lookup of a direct dependency prefers the edge of the verified plugin.
+    val retainedEdges = LinkedHashSet<ResolvedDependencyEdge>(directEdges).apply {
+      edges.filterTo(this) { it.dependency in directDependencies }
+    }
+    val retainedVertices = LinkedHashSet<ResolvedDependencyNode>().apply {
+      add(verifiedPlugin)
+      retainedEdges.forEach { add(it.from); add(it.to) }
+    }
+    return ResolvedDependenciesGraph(
+      verifiedPlugin,
+      retainedVertices,
+      retainedEdges,
+      directMissingDependencies?.let { mapOf(verifiedPlugin to it) } ?: emptyMap()
+    )
+  }
 }
 
 /**

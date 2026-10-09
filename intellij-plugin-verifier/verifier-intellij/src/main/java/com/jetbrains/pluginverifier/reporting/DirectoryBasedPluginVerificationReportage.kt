@@ -117,28 +117,6 @@ class DirectoryBasedPluginVerificationReportage(
     telemetryAggregator.reportTelemetry(pluginInfo, telemetry)
   }
 
-  /**
-   * Creates a directory for reports of the plugin in the verified IDE:
-   * ```
-   * com.plugin.id/  <- if the plugin is specified by its plugin-id and version
-   *     1.0.0/
-   *          ....
-   *     2.0.0/
-   * plugin.zip/     <- if the plugin is specified by the local file path
-   *     ....
-   * ```
-   */
-  private fun createPluginVerificationDirectory(pluginInfo: PluginInfo): Path {
-    val pluginId = pluginInfo.pluginId.replaceInvalidFileNameCharacters()
-    return when (pluginInfo) {
-      is UpdateInfo -> {
-        val version = "${pluginInfo.version} (#${pluginInfo.updateId})".replaceInvalidFileNameCharacters()
-        Paths.get(pluginId, version)
-      }
-      else -> Paths.get(pluginId, pluginInfo.version.replaceInvalidFileNameCharacters())
-    }
-  }
-
   private fun <T> Reporter<T>.useReporter(ts: Iterable<T>) = use { ts.forEach { t -> report(t) } }
 
   /**
@@ -153,9 +131,7 @@ class DirectoryBasedPluginVerificationReportage(
   override fun reportVerificationResult(pluginVerificationResult: PluginVerificationResult) {
     with(pluginVerificationResult) {
       val verificationTargetDirectory = targetDirectoryProvider(verificationTarget)
-      val directory = verificationTargetDirectory
-        .resolve("plugins")
-        .resolve(createPluginVerificationDirectory(plugin))
+      val directory = getPluginVerificationDirectory(verificationTargetDirectory, plugin)
 
       val problemIgnoredEvents = when (this) {
         is PluginVerificationResult.Verified -> ignoredProblems.map { ProblemIgnoredEvent(plugin, verificationTarget, it.key, it.value) }
@@ -169,7 +145,7 @@ class DirectoryBasedPluginVerificationReportage(
           is PluginVerificationResult.Verified -> {
             reportVerificationDetails(directory, "compatibility-warnings.txt", compatibilityWarnings)
             reportVerificationDetails(directory, "compatibility-problems.txt", compatibilityProblems)
-            reportDependencies(directory, "dependencies.txt", dependenciesGraph)
+            reportDependencies(directory, DEPENDENCIES_FILE_NAME, dependenciesGraph)
             reportVerificationDetails(directory, "deprecated-usages.txt", deprecatedUsages)
             reportVerificationDetails(directory, "experimental-api-usages.txt", experimentalApiUsages)
             reportVerificationDetails(directory, "internal-api-usages.txt", internalApiUsages)
@@ -228,6 +204,42 @@ class DirectoryBasedPluginVerificationReportage(
 
   private val PluginVerificationResult.Verified.kotlinInternalApiUsages
     get() = internalApiUsages.filterIsInstance<KtInternalModifierUsage>()
+
+  companion object {
+    /**
+     * Name of the file with the dependencies graph of the verified plugin, see [getPluginVerificationDirectory].
+     */
+    const val DEPENDENCIES_FILE_NAME = "dependencies.txt"
+
+    /**
+     * Resolves the directory with reports of the [pluginInfo] verified against the target
+     * whose reports are stored in the [verificationTargetDirectory]:
+     * ```
+     * <verification-target-directory>/plugins/
+     *     com.plugin.id/  <- if the plugin is specified by its plugin-id and version
+     *         1.0.0/
+     *              ....
+     *         2.0.0/
+     *     plugin.zip/     <- if the plugin is specified by the local file path
+     *         ....
+     * ```
+     */
+    fun getPluginVerificationDirectory(verificationTargetDirectory: Path, pluginInfo: PluginInfo): Path =
+      verificationTargetDirectory
+        .resolve("plugins")
+        .resolve(createPluginVerificationDirectory(pluginInfo))
+
+    private fun createPluginVerificationDirectory(pluginInfo: PluginInfo): Path {
+      val pluginId = pluginInfo.pluginId.replaceInvalidFileNameCharacters()
+      return when (pluginInfo) {
+        is UpdateInfo -> {
+          val version = "${pluginInfo.version} (#${pluginInfo.updateId})".replaceInvalidFileNameCharacters()
+          Paths.get(pluginId, version)
+        }
+        else -> Paths.get(pluginId, pluginInfo.version.replaceInvalidFileNameCharacters())
+      }
+    }
+  }
 }
 
 private fun PluginTelemetry?.withPluginIdAndVersion(verifiedResult: PluginVerificationResult.Verified): PluginTelemetry? {

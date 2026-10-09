@@ -12,23 +12,41 @@ import com.jetbrains.pluginverifier.dependencies.presentation.ResolvedDependenci
 import com.jetbrains.pluginverifier.misc.HtmlBuilder
 import com.jetbrains.pluginverifier.output.OutputOptions
 import com.jetbrains.pluginverifier.output.ResultPrinter
+import com.jetbrains.pluginverifier.reporting.DirectoryBasedPluginVerificationReportage
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
+import java.io.IOException
 import java.io.StringWriter
 import java.io.Writer
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 
+private val LOG: Logger = LoggerFactory.getLogger(HtmlResultPrinter::class.java)
+
+/**
+ * Prints the verification results into an HTML report.
+ *
+ * If the [targetReportDirectory] is set, the dependencies graph of a verified plugin is taken from the `dependencies.txt` file
+ * written into this directory by the [DirectoryBasedPluginVerificationReportage]. This keeps the full graph in the report
+ * even if the verification result retains only the direct dependencies,
+ * see [com.jetbrains.pluginverifier.retainDirectDependencies]. If the file is not available,
+ * the dependencies graph of the verification result is printed.
+ */
 class HtmlResultPrinter(
   private val verificationTarget: PluginVerificationTarget,
-  private val out: Writer
+  private val out: Writer,
+  private val targetReportDirectory: Path? = null
 ) : ResultPrinter, AutoCloseable {
 
   companion object {
     fun create(verificationTarget: PluginVerificationTarget, outputOptions: OutputOptions): HtmlResultPrinter {
-      val reportHtmlFile = outputOptions.getTargetReportDirectory(verificationTarget).resolve("report.html")
+      val targetReportDirectory = outputOptions.getTargetReportDirectory(verificationTarget)
+      val reportHtmlFile = targetReportDirectory.resolve("report.html")
       val writer = Files.newBufferedWriter(reportHtmlFile.create())
-      return HtmlResultPrinter(verificationTarget, writer)
+      return HtmlResultPrinter(verificationTarget, writer, targetReportDirectory)
     }
   }
 
@@ -196,13 +214,33 @@ class HtmlResultPrinter(
             }
           }
           printShortAndFullDescription("Dependencies used on verification") {
-            val graphPresentation = ResolvedDependenciesGraphPrettyPrinter(dependenciesGraph).prettyPresentation()
+            val graphPresentation = readDependenciesReport() ?: ResolvedDependenciesGraphPrettyPrinter(dependenciesGraph).prettyPresentation()
             pre {
               +graphPresentation
             }
           }
         }
       }
+    }
+  }
+
+  /**
+   * Reads the dependencies graph presentation reported into the `dependencies.txt` file of the plugin verification directory.
+   * The file holds the same presentation as [ResolvedDependenciesGraphPrettyPrinter.prettyPresentation], followed by a line break.
+   */
+  private fun PluginVerificationResult.Verified.readDependenciesReport(): String? {
+    val targetReportDirectory = targetReportDirectory ?: return null
+    val dependenciesFile = DirectoryBasedPluginVerificationReportage
+      .getPluginVerificationDirectory(targetReportDirectory, plugin)
+      .resolve(DirectoryBasedPluginVerificationReportage.DEPENDENCIES_FILE_NAME)
+    if (!Files.isRegularFile(dependenciesFile)) {
+      return null
+    }
+    return try {
+      Files.readString(dependenciesFile, Charsets.UTF_8).removeSuffix("\n")
+    } catch (e: IOException) {
+      LOG.warn("Failed to read dependencies of $plugin from '$dependenciesFile'", e)
+      null
     }
   }
 
