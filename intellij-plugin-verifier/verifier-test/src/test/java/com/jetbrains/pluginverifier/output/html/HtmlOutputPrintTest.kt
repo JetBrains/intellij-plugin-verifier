@@ -93,9 +93,9 @@ class HtmlOutputPrintTest : BaseOutputPrintTest<HtmlResultPrinter>() {
       .printResults(listOf(PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)))
 
     val output = output()
-    assertTrue(output, output.contains("<pre>\nreported:2.0\n+--- dependency:1.0 &lt;&amp;&gt;\n"))
-    // The line break at the end of the file is not printed, the closing tag is indented on the next line
-    assertTrue(output, Regex("""dependency:1\.0 &lt;&amp;&gt;\n +</pre>""").containsMatchIn(output))
+    // The line break at the end of the file is not printed. The indentation of the closing tag follows the last line directly,
+    // the same as when the dependencies are printed from a String (see HtmlBuilder.unaryPlus)
+    assertTrue(output, Regex("""<pre>\nreported:2\.0\n\+--- dependency:1\.0 &lt;&amp;&gt; +</pre>""").containsMatchIn(output))
   }
 
   @Test
