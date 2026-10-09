@@ -24,6 +24,11 @@ data class ResolvedPluginDependency(val id: String,
  * A node in [ResolvedDependenciesGraph]. Holds only string identifiers and carries no references
  * to [com.jetbrains.plugin.structure.intellij.plugin.IdePlugin], allowing resolved plugin objects
  * to be garbage-collected after verification completes.
+ *
+ * Only [id], [version], [moduleOwnerId], [isProductModule] and [isContentModuleDeclaration]
+ * take part in [equals] and [hashCode], [aliases] are metadata only.
+ * Platform nodes carry hundreds of aliases and nodes are hashed in every graph-building and reporting step,
+ * so the hash code is computed once and cached.
  */
 data class ResolvedDependencyNode(
   val id: String,
@@ -33,6 +38,29 @@ data class ResolvedDependencyNode(
   val moduleOwnerId: String? = null,
   val isContentModuleDeclaration: Boolean = false
 ) {
+
+  private val hash: Int = run {
+    var result = id.hashCode()
+    result = 31 * result + version.hashCode()
+    result = 31 * result + isProductModule.hashCode()
+    result = 31 * result + moduleOwnerId.hashCode()
+    result = 31 * result + isContentModuleDeclaration.hashCode()
+    result
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ResolvedDependencyNode) return false
+    return hash == other.hash
+      && id == other.id
+      && version == other.version
+      && isProductModule == other.isProductModule
+      && moduleOwnerId == other.moduleOwnerId
+      && isContentModuleDeclaration == other.isContentModuleDeclaration
+  }
+
+  override fun hashCode(): Int = hash
+
   // Deliberately omits [aliases]: platform nodes carry hundreds of module aliases and this string
   // is emitted once per referencing edge in dependency reports, multiplying report size by orders of magnitude.
   // Use [toStringWithAliases] where the full presentation is wanted (e.g. a node's first occurrence in a report).
@@ -53,12 +81,27 @@ data class ResolvedDependencyNode(
 
 /**
  * An edge in [ResolvedDependenciesGraph].
+ *
+ * The hash code is computed once and cached, as edges are hashed repeatedly while building and reporting graphs.
  */
 data class ResolvedDependencyEdge(
   val from: ResolvedDependencyNode,
   val to: ResolvedDependencyNode,
   val dependency: ResolvedPluginDependency
 ) {
+  private val hash: Int = 31 * (31 * from.hashCode() + to.hashCode()) + dependency.hashCode()
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ResolvedDependencyEdge) return false
+    return hash == other.hash
+      && from == other.from
+      && to == other.to
+      && dependency == other.dependency
+  }
+
+  override fun hashCode(): Int = hash
+
   override fun toString() = if (dependency.isOptional) "$from ---optional---> $to" else "$from ---> $to"
 }
 
@@ -121,10 +164,13 @@ fun DependenciesGraph.toResolved(batchContext: PluginVerifierBatchContext? = nul
       is DependencyNode.ContentModuleDeclaration -> node.owner.id.dedup()
       else -> null
     }
-    ResolvedDependencyNode(
+    val resolvedNode = ResolvedDependencyNode(
       node.id.dedup(), node.version.dedup(), aliases, isProductModule, moduleOwnerId,
       isContentModuleDeclaration = node is DependencyNode.ContentModuleDeclaration
-    ).dedup()
+    )
+    // Aliases do not take part in node equality. Reuse the shared node only if it carries the same aliases,
+    // so that this graph keeps presenting its own aliases.
+    resolvedNode.dedup().takeIf { it.aliases == aliases } ?: resolvedNode
   }
 
   // The edge set itself is not deduplicated: edge sets of distinct plugins almost never match as a whole,
@@ -135,11 +181,13 @@ fun DependenciesGraph.toResolved(batchContext: PluginVerifierBatchContext? = nul
       edge.dependency.id.dedup(),
       edge.dependency.isOptional,
       edge.dependency.isModule, isContentModule).dedup()
-    ResolvedDependencyEdge(
+    val resolvedEdge = ResolvedDependencyEdge(
       nodeMap.getValue(edge.from),
       nodeMap.getValue(edge.to),
       dependency
-    ).dedup()
+    )
+    // Same as for nodes: the shared edge must point to nodes carrying the aliases of this graph.
+    resolvedEdge.dedup().takeIf { it.from.aliases == resolvedEdge.from.aliases && it.to.aliases == resolvedEdge.to.aliases } ?: resolvedEdge
   })
 
   val resolvedMissingDeps = missingDependencies.entries.associate { (node, missing) ->
