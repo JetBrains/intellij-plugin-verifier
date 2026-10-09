@@ -222,7 +222,7 @@ class DirectoryBasedPluginVerificationReportage(
       }
     } catch (e: Exception) {
       e.rethrowIfInterrupted()
-      LOG.error("Failed to report dependencies into $$directory (file '$fileName')", e)
+      LOG.error("Failed to report dependencies into $directory (file '$fileName')", e)
     }
   }
 
