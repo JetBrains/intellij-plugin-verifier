@@ -81,6 +81,24 @@ class HtmlOutputPrintTest : BaseOutputPrintTest<HtmlResultPrinter>() {
   }
 
   @Test
+  fun `multi-line dependencies are taken from the reported dependencies file`() {
+    val targetReportDirectory = temporaryFolder.newFolder().toPath()
+    val pluginInfo = mockPluginInfo()
+    val dependenciesFile = DirectoryBasedPluginVerificationReportage
+      .getPluginVerificationDirectory(targetReportDirectory, pluginInfo)
+      .resolve(DirectoryBasedPluginVerificationReportage.DEPENDENCIES_FILE_NAME)
+    Files.write(dependenciesFile.create(), "reported:2.0\n+--- dependency:1.0 <&>\n".toByteArray())
+
+    HtmlResultPrinter(verificationTarget, out, targetReportDirectory)
+      .printResults(listOf(PluginVerificationResult.Verified(pluginInfo, verificationTarget, dependenciesGraph)))
+
+    val output = output()
+    assertTrue(output, output.contains("<pre>\nreported:2.0\n+--- dependency:1.0 &lt;&amp;&gt;\n"))
+    // The line break at the end of the file is not printed, the closing tag is indented on the next line
+    assertTrue(output, Regex("""dependency:1\.0 &lt;&amp;&gt;\n +</pre>""").containsMatchIn(output))
+  }
+
+  @Test
   fun `dependencies graph of the result is printed when the dependencies file is not reported`() {
     val targetReportDirectory = temporaryFolder.newFolder().toPath()
 

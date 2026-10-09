@@ -4,7 +4,11 @@
 
 package com.jetbrains.pluginverifier.misc
 
+import java.io.Reader
 import java.io.Writer
+import java.nio.CharBuffer
+
+private const val TEXT_BUFFER_SIZE = 8192
 
 @Suppress("unused")
 class HtmlBuilder(val output: Writer, initialIndent: Int = 0) {
@@ -229,6 +233,44 @@ class HtmlBuilder(val output: Writer, initialIndent: Int = 0) {
   operator fun String.unaryPlus() {
     this.escapeHtml4To(output)
     noNextIndentNeeded = !this.contains('\n')
+  }
+
+  /**
+   * Writes the HTML-escaped text read from the [reader] in chunks, without holding the whole text in memory.
+   * The output is the same as of [unaryPlus] invoked with the whole text.
+   *
+   * @param trimTrailingNewline if `true`, a single line break at the very end of the text is not written,
+   * like with [String.removeSuffix]
+   */
+  fun text(reader: Reader, trimTrailingNewline: Boolean = false) {
+    val buffer = CharArray(TEXT_BUFFER_SIZE)
+    var containsNewline = false
+    var heldBackNewline = false
+    try {
+      while (true) {
+        val read = reader.read(buffer)
+        if (read < 0) break
+        if (read == 0) continue
+        if (heldBackNewline) {
+          // The held back line break is not at the end of the text, so it is written
+          output.write('\n'.code)
+          containsNewline = true
+          heldBackNewline = false
+        }
+        var length = read
+        if (trimTrailingNewline && buffer[length - 1] == '\n') {
+          heldBackNewline = true
+          length--
+        }
+        val chunk = CharBuffer.wrap(buffer, 0, length)
+        chunk.escapeHtml4ChunkTo(output)
+        if (!containsNewline) {
+          containsNewline = chunk.contains('\n')
+        }
+      }
+    } finally {
+      noNextIndentNeeded = !containsNewline
+    }
   }
 
 }

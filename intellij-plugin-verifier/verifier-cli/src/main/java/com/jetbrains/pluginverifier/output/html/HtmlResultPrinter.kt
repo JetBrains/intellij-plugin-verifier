@@ -214,9 +214,10 @@ class HtmlResultPrinter(
             }
           }
           printShortAndFullDescription("Dependencies used on verification") {
-            val graphPresentation = readDependenciesReport() ?: ResolvedDependenciesGraphPrettyPrinter(dependenciesGraph).prettyPresentation()
             pre {
-              +graphPresentation
+              if (!printDependenciesReport(this)) {
+                +ResolvedDependenciesGraphPrettyPrinter(dependenciesGraph).prettyPresentation()
+              }
             }
           }
         }
@@ -225,23 +226,37 @@ class HtmlResultPrinter(
   }
 
   /**
-   * Reads the dependencies graph presentation reported into the `dependencies.txt` file of the plugin verification directory.
-   * The file holds the same presentation as [ResolvedDependenciesGraphPrettyPrinter.prettyPresentation], followed by a line break.
+   * Prints the dependencies graph presentation reported into the `dependencies.txt` file of the plugin verification directory.
+   * The file holds the same presentation as [ResolvedDependenciesGraphPrettyPrinter.prettyPresentation], followed by a line break,
+   * which is not printed. The file is streamed into the [htmlBuilder] without being read into memory as a whole.
+   *
+   * @return `false` if the file is not available or cannot be opened, so nothing has been printed
    */
-  private fun PluginVerificationResult.Verified.readDependenciesReport(): String? {
+  private fun PluginVerificationResult.Verified.printDependenciesReport(htmlBuilder: HtmlBuilder): Boolean {
+    val dependenciesFile = findDependenciesReport() ?: return false
+    val reader = try {
+      Files.newBufferedReader(dependenciesFile, Charsets.UTF_8)
+    } catch (e: IOException) {
+      LOG.warn("Failed to read dependencies of $plugin from '$dependenciesFile'", e)
+      return false
+    }
+    reader.use {
+      try {
+        htmlBuilder.text(it, trimTrailingNewline = true)
+      } catch (e: IOException) {
+        // Part of the file has already been printed, so the dependencies graph of the result is not printed as a fallback.
+        LOG.warn("Failed to read dependencies of $plugin from '$dependenciesFile'. Printed dependencies are incomplete", e)
+      }
+    }
+    return true
+  }
+
+  private fun PluginVerificationResult.Verified.findDependenciesReport(): Path? {
     val targetReportDirectory = targetReportDirectory ?: return null
     val dependenciesFile = DirectoryBasedPluginVerificationReportage
       .getPluginVerificationDirectory(targetReportDirectory, plugin)
       .resolve(DirectoryBasedPluginVerificationReportage.DEPENDENCIES_FILE_NAME)
-    if (!Files.isRegularFile(dependenciesFile)) {
-      return null
-    }
-    return try {
-      Files.readString(dependenciesFile, Charsets.UTF_8).removeSuffix("\n")
-    } catch (e: IOException) {
-      LOG.warn("Failed to read dependencies of $plugin from '$dependenciesFile'", e)
-      null
-    }
+    return dependenciesFile.takeIf { Files.isRegularFile(it) }
   }
 
   private fun loadReportScript() = HtmlResultPrinter::class.java.getResource("/reportScript.js").readText()
