@@ -4,11 +4,8 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies.legacy
 
-import com.jetbrains.plugin.structure.intellij.plugin.DependenciesModifier
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
-import com.jetbrains.plugin.structure.intellij.plugin.PluginProvider
+import com.jetbrains.plugin.structure.intellij.plugin.*
+import com.jetbrains.plugin.structure.intellij.plugin.DependencyModificationReason.IDE
 import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier
 import com.jetbrains.plugin.structure.intellij.verifiers.LegacyIntelliJIdeaPluginVerifier.VerificationResult.NotLegacyPlugin
 
@@ -27,21 +24,23 @@ private val JAVA_MODULE_DEPENDENCY = PluginDependencyImpl(JAVA_MODULE_ID, false,
   * other plugins but not modules, it is assumed to be a legacy plugin and is loaded only in IntelliJ IDEA.
  */
 class LegacyPluginDependencyContributor(private val ide: PluginProvider, private val legacyPluginVerifier: LegacyIntelliJIdeaPluginVerifier): DependenciesModifier {
-  override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<PluginDependency> {
+  override fun apply(plugin: IdePlugin, pluginProvider: PluginProvider): List<DependencyModification> {
+    val dependencies = plugin.getDependencyModifications()
+
     if (plugin.pluginId == CORE_IDE_PLUGIN_ID) {
-      return plugin.dependencies
+      return dependencies
     }
     if (ide.findPluginByModule(ALL_MODULES_ID) == null) {
-      return plugin.dependencies
+      return dependencies
     }
     val isNonBundledPlugin = plugin.isNonBundled(ide)
     if (isNonBundledPlugin && plugin.isLegacy()) {
       val javaModule = ide.findPluginByModule(JAVA_MODULE_ID)
       if (javaModule != null) {
-        return plugin.dependencies + JAVA_MODULE_DEPENDENCY
+        return dependencies + DependencyModification(JAVA_MODULE_DEPENDENCY, IDE)
       }
     }
-    return plugin.dependencies
+    return dependencies
   }
 
   private fun IdePlugin.isLegacy() =

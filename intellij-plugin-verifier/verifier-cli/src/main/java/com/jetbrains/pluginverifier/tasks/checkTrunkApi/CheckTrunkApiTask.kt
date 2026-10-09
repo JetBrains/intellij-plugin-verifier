@@ -7,6 +7,7 @@ package com.jetbrains.pluginverifier.tasks.checkTrunkApi
 import com.jetbrains.pluginverifier.PluginVerifier
 import com.jetbrains.pluginverifier.plugin.PluginDetailsCache
 import com.jetbrains.pluginverifier.reporting.PluginVerificationReportage
+import com.jetbrains.pluginverifier.retainDirectDependencies
 import com.jetbrains.pluginverifier.runSeveralVerifiers
 import com.jetbrains.pluginverifier.tasks.Task
 import com.jetbrains.pluginverifier.tasks.sortWithBigPluginsInFront
@@ -47,7 +48,9 @@ class CheckTrunkApiTask(private val parameters: CheckTrunkApiParams) : Task {
       }
 
       val sortedVerifiers = verifiers.sortWithBigPluginsInFront()
-      val results = runSeveralVerifiers(reportage, sortedVerifiers)
+      // Results of all verifications are kept until the run finishes. Their full dependencies graphs are already
+      // reported into 'dependencies.txt' files and are not needed by the results printing, so only direct dependencies are retained.
+      val results = runSeveralVerifiers(reportage, sortedVerifiers) { it.retainDirectDependencies() }
 
       return TwoTargetsVerificationResults(
         releaseVerificationTarget,

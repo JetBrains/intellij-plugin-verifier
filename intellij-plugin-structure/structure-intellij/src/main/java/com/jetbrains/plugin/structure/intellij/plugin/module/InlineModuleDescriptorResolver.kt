@@ -30,7 +30,8 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
     return ModuleDescriptor.of(
       module,
       moduleReference,
-      resolvedDependencies
+      resolvedDependencies,
+      getDeclaredDependencies(contentModulesOwner.plugin, module, moduleReference)
     )
   }
 
@@ -79,11 +80,16 @@ internal class InlineModuleDescriptorResolver(private val moduleLoader: ModuleFr
     contentModule: IdePlugin,
     contentModuleReference: InlineModule
   ): List<PluginDependency> {
-    return contentModule.mapDependency { it }
-      .filter { moduleDep ->
-        contentModulesOwner.dependencies.none { pluginDep -> pluginDep.id == moduleDep.id }
-      }
-      .map {
+    return getDeclaredDependencies(contentModulesOwner, contentModule, contentModuleReference)
+      .filter { moduleDep -> contentModulesOwner.dependencies.none { it.id == moduleDep.id } }
+  }
+
+  private fun getDeclaredDependencies(
+    contentModulesOwner: IdePlugin,
+    contentModule: IdePlugin,
+    contentModuleReference: InlineModule
+  ): List<PluginDependency> {
+    return contentModule.mapDependency { it }.map {
         when (it) {
           is Dependency.PluginV1Dependency -> it.dependency.asPluginDependency()
           is Dependency.PluginV2Dependency ->

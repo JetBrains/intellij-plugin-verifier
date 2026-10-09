@@ -41,12 +41,12 @@ data class MockIdePlugin(
   override val isV2: Boolean = false,
   override val hasPackagePrefix: Boolean = false,
   override val kotlinPluginMode: KotlinPluginMode = KotlinPluginMode.Implicit,
+  override val moduleVisibility: ModuleVisibility = ModuleVisibility.PRIVATE,
   ) : IdePlugin {
 
   override val classpath: Classpath = Classpath.EMPTY
   override val useIdeClassLoader = false
   override val isImplementationDetail = false
-  override val moduleVisibility: ModuleVisibility = ModuleVisibility.PRIVATE
   override val hasDotNetPart: Boolean = false
   @Deprecated("use either pluginAliases or contentModules")
   override val definedModules: Set<String> = pluginAliases
@@ -57,5 +57,5 @@ data class MockIdePlugin(
 
   @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
   override val dependencies: List<PluginDependency>
-    get() = reconstructDependencies()
+    get() = reconstructAllDependencies()
 }

@@ -31,7 +31,8 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOr
     return ModuleDescriptor.of(
       module,
       moduleReference,
-      resolvedDependencies
+      resolvedDependencies,
+      getDeclaredDependencies(module, moduleReference)
     )
   }
 
@@ -63,10 +64,10 @@ internal class FileBasedModuleDescriptorResolver(private val pluginLoader: JarOr
     module: IdePlugin,
     moduleReference: FileBasedModule
   ): List<PluginDependency> {
-    return mutableListOf<PluginDependency>().also { dependencies ->
-      module.forEachDependencyNotIn(contentModulesOwner.plugin) {
-        dependencies += if (moduleReference.loadingRule.required) it else it.asOptional()
-      }
-    }
+    return getDeclaredDependencies(module, moduleReference)
+      .filter { dependency -> contentModulesOwner.plugin.dependencies.none { it.id == dependency.id } }
   }
+
+  private fun getDeclaredDependencies(module: IdePlugin, moduleReference: FileBasedModule): List<PluginDependency> =
+    module.dependencies.map { if (moduleReference.loadingRule.required) it else it.asOptional() }
 }

@@ -5,6 +5,7 @@
 package com.jetbrains.pluginverifier.dependencies.presentation
 
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
+import com.jetbrains.plugin.structure.intellij.plugin.dependencies.id
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyEdge
@@ -39,17 +40,21 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
     }
     visitedNodes.add(currentNode)
 
-    val childrenLines = arrayListOf<List<String>>()
+    data class ChildPresentation(val lines: List<String>, val isContentModule: Boolean = false)
+
+    val childrenLines = arrayListOf<ChildPresentation>()
 
     dependenciesGraph.missingDependencies
       .getOrDefault(currentNode, emptySet())
       .sortedBy { it.dependency.id }.mapTo(childrenLines) { missingDependency ->
-        listOf("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}")
+        ChildPresentation(
+          listOf("(failed) ${missingDependency.dependency}: ${missingDependency.missingReason}"))
       }
 
     val directEdges = dependenciesGraph.getEdgesFrom(currentNode)
       .sortedWith(
-        compareBy<DependencyEdge> { if (it.dependency.isOptional) 1 else -1 }
+        compareBy<DependencyEdge> { it.to !is DependencyNode.ContentModuleDeclaration }
+          .thenBy { if (it.dependency.isOptional) 1 else -1 }
           .thenBy { if (it.dependency.isModule) 1 else -1 }
           .thenBy { it.dependency.id }
           .thenBy { it.to.id }
@@ -65,13 +70,23 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
         append(childLines.first())
         if (edge.to is PluginAware && edge.to.plugin is IdeModule) {
           append(" [product module]")
+        } else if (edge.to is DependencyNode.ContentModuleDeclaration) {
+          append(" [declared as a content module]")
+        } else if (edge.to is DependencyNode.ModuleDependency) {
+          val moduleOwner = edge.to.plugin
+          val version = edge.to.version
+          append(" [content module declared in ${moduleOwner.id}:${version}]")
         } else if (edge.dependency.isModule) {
           append(" [declaring module ${edge.dependency.id}]")
         }
       }
       val tailLines = childLines.drop(1)
-      childrenLines.add(listOf(headerLine) + tailLines)
+      childrenLines.add(ChildPresentation(
+        lines = listOf(headerLine) + tailLines,
+        isContentModule = edge.to is DependencyNode.ContentModuleDeclaration
+      ))
     }
+    childrenLines.sortBy { !it.isContentModule }
 
     val result = arrayListOf<String>()
     // First occurrence carries the aliases; repeated occurrences are printed as plain "id:version (*)".
@@ -83,15 +98,17 @@ class DependenciesGraphPrettyPrinter(private val dependenciesGraph: Dependencies
 
       if (headingChildren.isNotEmpty()) {
         for (headingChild in headingChildren) {
-          val firstLine = headingChild.first().let { "+--- $it" }
-          val tailLines = headingChild.drop(1).map { "|    $it" }
+          val connector = if (headingChild.isContentModule) "◆---" else "+---"
+          val firstLine = headingChild.lines.first().let { "$connector $it" }
+          val tailLines = headingChild.lines.drop(1).map { "|    $it" }
           result += firstLine
           result += tailLines
         }
       }
 
-      result += lastChild.first().let { "\\--- $it" }
-      result += lastChild.drop(1).map { "     $it" }
+      val connector = if (lastChild.isContentModule) "◆---" else "\\---"
+      result += lastChild.lines.first().let { "$connector $it" }
+      result += lastChild.lines.drop(1).map { "     $it" }
     }
 
     return result

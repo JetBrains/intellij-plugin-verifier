@@ -47,7 +47,7 @@ class DependencyResolutionTest {
     data class Edge(val from: PluginId, val to: PluginId, val dependency: PluginDependency)
 
     val edges = mutableListOf<Edge>()
-    val dependencyTreeResolution = DefaultDependencyTreeResolution(somePlugin, transitiveDependencies, missingDependencies = emptyMap(), dependencyGraph)
+    val dependencyTreeResolution = DefaultDependencyTreeResolution(somePlugin, transitiveDependencies, missingDependencies = emptyMap(), dependencyGraph.compact())
     dependencyTreeResolution.forEach { from, dependency ->
       edges += Edge(from.id, dependency.id, dependency.pluginDependency!!)
     }

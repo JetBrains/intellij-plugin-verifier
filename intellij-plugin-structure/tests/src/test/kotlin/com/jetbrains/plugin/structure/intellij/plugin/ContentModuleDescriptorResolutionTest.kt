@@ -79,6 +79,93 @@ class ContentModuleDescriptorResolutionTest {
   }
 
   @Test
+  fun `file based modules retain repeated declarations before main dependency filtering`() {
+    val loadingRules = listOf("required" to "required", "optional" to "optional", "default" to null)
+    val moduleReferences = loadingRules.joinToString("\n") { (name, loading) ->
+      val loadingAttribute = loading?.let { " loading=\"$it\"" }.orEmpty()
+      "<module name=\"example.$name\"$loadingAttribute/>"
+    }
+    val moduleXml = """
+      <idea-plugin>
+        <depends optional="true">shared.legacy</depends>
+        <dependencies>
+          <plugin id="shared.plugin"/>
+          <module name="shared.module"/>
+          <plugin id="module.only.plugin"/>
+          <module name="module.only.module"/>
+        </dependencies>
+      </idea-plugin>
+    """.trimIndent()
+    val pluginPath = buildDirectory(temporaryFolder.newFolder("repeated-declarations").toPath()) {
+      dir("lib") {
+        zip("main.jar") {
+          dir("META-INF") {
+            file("plugin.xml", """
+              <idea-plugin>
+                <id>com.example.plugin</id>
+                <name>Example</name>
+                <version>1.0</version>
+                <vendor>JetBrains</vendor>
+                <description>A plugin with repeated content module dependencies.</description>
+                <idea-version since-build="241.0"/>
+                <depends>shared.legacy</depends>
+                <dependencies>
+                  <plugin id="shared.plugin"/>
+                  <module name="shared.module"/>
+                </dependencies>
+                <content>
+                  $moduleReferences
+                </content>
+              </idea-plugin>
+            """.trimIndent())
+          }
+        }
+        zip("modules.jar") {
+          loadingRules.forEach { (name, _) ->
+            file("example.$name.xml", moduleXml)
+          }
+        }
+      }
+    }
+
+    val plugin = createPlugin(pluginPath)
+
+    assertEquals(3, plugin.modulesDescriptors.size)
+    loadingRules.forEach { (name, loading) ->
+      val descriptor = plugin.modulesDescriptors.single { it.name == "example.$name" }
+      val isOptional = loading != "required"
+      assertTrue(descriptor is FileBasedModuleDescriptor)
+      assertEquals(
+        setOf(PluginV2Dependency("module.only.plugin", isOptional), ModuleV2Dependency("module.only.module", isOptional)),
+        descriptor.resolvedDependencies.toSet()
+      )
+      assertEquals(2, descriptor.resolvedDependencies.size)
+      assertEquals(
+        setOf(
+          PluginV1Dependency.Optional("shared.legacy"),
+          PluginV2Dependency("shared.plugin", isOptional),
+          ModuleV2Dependency("shared.module", isOptional),
+          PluginV2Dependency("module.only.plugin", isOptional),
+          ModuleV2Dependency("module.only.module", isOptional)
+        ),
+        descriptor.declaredDependencies.toSet()
+      )
+      assertEquals(5, descriptor.declaredDependencies.size)
+    }
+    assertEquals(
+      setOf(
+        PluginV1Dependency.Mandatory("shared.legacy"),
+        PluginV2Dependency("shared.plugin"),
+        ModuleV2Dependency("shared.module"),
+        PluginV2Dependency("module.only.plugin"),
+        ModuleV2Dependency("module.only.module")
+      ),
+      plugin.dependencies.toSet()
+    )
+    assertEquals(5, plugin.dependencies.size)
+  }
+
+  @Test
   fun `content module descriptor available in both a JAR and a ZIP is reported as ambiguous and is not resolved`() {
     val pluginPath = buildPlugin(
       "mixed-archive-providers",

@@ -151,8 +151,9 @@ class CachingPluginDependencyResolverProvider(
   private val Dependency.id: String
     get() {
       return when (this) {
-        is Dependency.Module -> pluginId
         is Dependency.Plugin -> pluginId
+        is Dependency.Module -> pluginId
+        is Dependency.ContentModuleDeclaration -> pluginId
         Dependency.None -> null
       } ?: UNKNOWN_DEPENDENCY_ID
     }
@@ -233,15 +234,17 @@ class CachingPluginDependencyResolverProvider(
 
   private val Dependency.plugin: IdePlugin?
     get() = when (this) {
-      is Dependency.Module -> plugin
       is Dependency.Plugin -> plugin
+      is Dependency.Module -> plugin
+      is Dependency.ContentModuleDeclaration -> plugin
       else -> null
     }
 
   private val Dependency.pluginId: String?
     get() = when (this) {
-      is Dependency.Module -> plugin.id
       is Dependency.Plugin -> plugin.id
+      is Dependency.Module -> plugin.id
+      is Dependency.ContentModuleDeclaration -> plugin.id
       else -> null
     }
 

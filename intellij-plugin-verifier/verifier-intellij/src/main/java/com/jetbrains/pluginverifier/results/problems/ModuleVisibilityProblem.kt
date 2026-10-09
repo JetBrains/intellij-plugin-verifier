@@ -30,10 +30,22 @@ data class ModuleVisibilityProblem(
       dependingInfo: ModuleVisibilityChecker.ResolvedModuleInfoFrom,
       targetPlugin: IdePlugin,
       targetInfo: ModuleVisibilityChecker.ResolvedModuleInfoTo
+    ): ModuleVisibilityProblem = create(
+      dependingPlugin.pluginId ?: UNKNOWN_ID,
+      dependingInfo,
+      targetPlugin.pluginId ?: UNKNOWN_ID,
+      targetInfo
+    )
+
+    fun create(
+      dependingModuleName: String,
+      dependingInfo: ModuleVisibilityChecker.ResolvedModuleInfoFrom,
+      targetModuleName: String,
+      targetInfo: ModuleVisibilityChecker.ResolvedModuleInfoTo
     ): ModuleVisibilityProblem = ModuleVisibilityProblem(
-      dependingModuleName = dependingPlugin.pluginId ?: UNKNOWN_ID,
+      dependingModuleName = dependingModuleName,
       dependingPluginId = dependingInfo.parent.pluginId ?: UNKNOWN_ID,
-      targetModuleName = targetPlugin.pluginId ?: UNKNOWN_ID,
+      targetModuleName = targetModuleName,
       targetPluginId = targetInfo.parent.pluginId ?: UNKNOWN_ID,
       targetVisibility = targetInfo.visibility,
       dependingNamespace = dependingInfo.namespace,

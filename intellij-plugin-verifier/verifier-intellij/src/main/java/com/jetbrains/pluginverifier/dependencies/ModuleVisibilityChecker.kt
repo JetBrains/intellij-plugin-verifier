@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.dependencies
 
 import com.jetbrains.plugin.structure.ide.Ide
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
+import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
 import com.jetbrains.plugin.structure.intellij.plugin.ModuleVisibility
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.PluginAware
 import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
@@ -37,6 +38,24 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
   data class ResolvedModuleInfoTo(val parent: IdePlugin, val namespace: String, val visibility: ModuleVisibility)
 
   /**
+   * Finds the bundled plugin that declares the content module descriptor [moduleName].
+   *
+   * [Ide.findPluginByModule] returns the first bundled plugin claiming [moduleName], which may be
+   * the standalone [IdeModule] itself if it precedes its owner in the bundled plugins.
+   * Standalone [IdeModule]s are never owners.
+   */
+  private fun findContentModuleOwner(moduleName: String): IdePlugin? {
+    val plugin = ide.findPluginByModule(moduleName)
+    if (plugin != null && plugin.declaresContentModule(moduleName)) {
+      return plugin
+    }
+    return ide.bundledPlugins.firstOrNull { it.declaresContentModule(moduleName) }
+  }
+
+  private fun IdePlugin.declaresContentModule(moduleName: String): Boolean =
+    this !is IdeModule && findContentModuleDescriptor(moduleName) != null
+
+  /**
    * Checks if [dependingModule] can access [targetModule].
    *
    * @param dependingModule the module that declares the dependency (from plugin A)
@@ -65,7 +84,8 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
   /**
    * Resolves module info for the source of a dependency edge (the module declaring the dependency).
    *
-   * For [IdeModule] instances, finds the parent plugin and extracts the namespace.
+   * For [IdeModule] instances, finds the owning plugin, i.e. the bundled plugin that declares
+   * the content module descriptor (regardless of the bundled-plugin order), and extracts the namespace.
    * For regular plugins, uses the namespace from its first module descriptor, or a placeholder
    * if this is the main plugin being verified.
    *
@@ -73,65 +93,111 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
    */
   fun resolveModuleInfoFrom(plugin: IdePlugin): ResolvedModuleInfoFrom? {
     if (plugin is IdeModule) {
-      val parentPlugin = ide.findPluginByModule(plugin.pluginId) ?: return null
-      val moduleDescriptor = parentPlugin.modulesDescriptors.firstOrNull { it.name == plugin.pluginId } ?: return null
+      val parentPlugin = findContentModuleOwner(plugin.pluginId) ?: return null
+      val moduleDescriptor = parentPlugin.findContentModuleDescriptor(plugin.pluginId) ?: return null
 
       return ResolvedModuleInfoFrom(parentPlugin, moduleDescriptor.moduleDefinition.actualNamespace)
     } else {
-      // We assume that all modules in a plugin share the same namespace, including the main module.
-      // If there are no modules at all, we give the magic string `MODULE_PLACEHOLDER_STRING`, so that relevant visibility checks
-      // can still be computed.
-      // See {@link PluginModuleResolver::resolvePluginModules}
-      val namespace = plugin.modulesDescriptors.firstOrNull()?.moduleDefinition?.namespace
-        ?: if (mainPlugin == plugin) { MODULE_PLACEHOLDER_STRING } else { return null }
-
-      return ResolvedModuleInfoFrom(plugin, namespace)
+      return resolveModuleInfoFromProperPlugin(plugin)
     }
   }
 
   /**
+   * Resolve module info from a proper plugin.
+   * We assume that all modules in a plugin share the same namespace, including the main module.
+   * If there are no modules at all, we give the magic string `MODULE_PLACEHOLDER_STRING`,
+   * so that relevant visibility checks can still be computed.
+   * @see [com.jetbrains.plugin.structure.intellij.plugin.PluginModuleResolver.resolvePluginModules]
+  */
+  private fun resolveModuleInfoFromProperPlugin(plugin: IdePlugin): ResolvedModuleInfoFrom? {
+    val namespace = plugin.modulesDescriptors
+      .firstOrNull()
+      ?.moduleDefinition
+      ?.actualNamespace
+      ?: MODULE_PLACEHOLDER_STRING.takeIf { plugin == mainPlugin }
+      ?: return null
+
+    return ResolvedModuleInfoFrom(plugin, namespace)
+  }
+
+  /** Resolves the declaring module by its graph identity, retaining its owning plugin. */
+  fun resolveModuleInfoFrom(node: DependencyNode): ResolvedModuleInfoFrom? = when (node) {
+    is DependencyNode.PluginDependency -> resolveModuleInfoFrom(node.plugin)
+    is DependencyNode.ModuleDependency -> resolveModuleInfoFrom(node.plugin, node.moduleName)
+    is DependencyNode.ContentModuleDeclaration -> resolveModuleInfoFrom(node.owner, node.name)
+    is DependencyNode.IdAndVersionDependency -> null
+  }
+
+  private fun resolveModuleInfoFrom(plugin: IdePlugin, contentModuleName: String): ResolvedModuleInfoFrom? {
+    val descriptor = plugin.findContentModuleDescriptor(contentModuleName) ?: return null
+    return ResolvedModuleInfoFrom(plugin, descriptor.moduleDefinition.actualNamespace)
+  }
+
+  /**
+   * Finds a content module descriptor within the current plugin based on the given content module name.
+   *
+   * @param contentModuleName the name of the module to find. If `null`, the method will return `null`.
+   * @return the matching module descriptor if found, or `null` otherwise.
+   */
+  private fun IdePlugin.findContentModuleDescriptor(contentModuleName: String?): ModuleDescriptor? =
+    modulesDescriptors.firstOrNull { it.name == contentModuleName }
+
+  /**
    * Resolves module info for the target of a dependency edge (the module being depended upon).
    *
-   * For [IdeModule] instances, finds the parent plugin and extracts namespace and visibility.
+   * For [IdeModule] instances, finds the owning plugin, i.e. the bundled plugin that declares
+   * the content module descriptor (regardless of the bundled-plugin order), and extracts namespace and visibility.
    * For regular plugins referenced via `<plugin>` in dependencies, looks up the main module.
    *
    * @return resolved module info including visibility, or `null` if the plugin cannot be resolved
    */
   fun resolveModuleInfoTo(plugin: IdePlugin): ResolvedModuleInfoTo? {
     if (plugin is IdeModule) {
-      val parentPlugin = ide.findPluginByModule(plugin.pluginId) ?: return null
-      val moduleDescriptor = parentPlugin.modulesDescriptors.firstOrNull { it.name == plugin.pluginId } ?: return null
+      val parentPlugin = findContentModuleOwner(plugin.pluginId) ?: return null
+      val moduleDescriptor = parentPlugin.findContentModuleDescriptor(plugin.pluginId) ?: return null
 
       return ResolvedModuleInfoTo(parentPlugin, moduleDescriptor.moduleDefinition.actualNamespace, moduleDescriptor.module.moduleVisibility)
     } else {
       // In case of a <plugin> within <dependencies>, we consider the main module if it exists
-      val moduleDescriptor = plugin.modulesDescriptors.firstOrNull { it.name == plugin.pluginId } ?: return null
+      val moduleDescriptor = plugin.findContentModuleDescriptor(plugin.pluginId) ?: return null
 
       return ResolvedModuleInfoTo(plugin, moduleDescriptor.moduleDefinition.actualNamespace, moduleDescriptor.module.moduleVisibility)
     }
   }
 
+  /** Ownership declarations are not dependency targets and have no visibility to check. */
+  fun resolveModuleInfoTo(node: DependencyNode): ResolvedModuleInfoTo? = when (node) {
+    is DependencyNode.PluginDependency -> resolveModuleInfoTo(node.plugin)
+    is DependencyNode.ModuleDependency -> {
+      val descriptor = node.plugin.findContentModuleDescriptor(node.moduleName)
+      descriptor?.let {
+        ResolvedModuleInfoTo(node.plugin, it.moduleDefinition.actualNamespace, it.module.moduleVisibility)
+      }
+    }
+    is DependencyNode.ContentModuleDeclaration, is DependencyNode.IdAndVersionDependency -> null
+  }
+
   /**
    * Iterates over [dependenciesGraph] edges and registers a [ModuleVisibilityProblem] for every
-   * **direct** dependency of the [verified plugin][DependenciesGraph.verifiedPlugin] that violates
-   * module-visibility rules.
+   * dependency declared by the [verified plugin][DependenciesGraph.verifiedPlugin], including
+   * its content modules, that violates module-visibility rules.
    *
-   * Edges that do **not** originate from the verified plugin (i.e. transitive dependency edges
-   * such as B → C in a chain A → B → C) are intentionally skipped: visibility rules are
-   * only enforced for dependencies declared directly by the plugin under verification.
+   * Ownership edges and declarations owned by other plugins (i.e. transitive dependency edges
+   * such as B → C in a chain A → B → C) are intentionally skipped.
    */
   fun checkEdges(dependenciesGraph: DependenciesGraph, problemRegistrar: ProblemRegistrar) {
+    val verifiedPlugin = (dependenciesGraph.verifiedPlugin as? PluginAware)?.plugin ?: return
     for ((a, b) in dependenciesGraph.edges) {
-      if (a != dependenciesGraph.verifiedPlugin || a !is PluginAware || b !is PluginAware) {
+      if (a !is PluginAware || b !is PluginAware || a.plugin != verifiedPlugin || b is DependencyNode.ContentModuleDeclaration) {
         continue
       }
       // The dependency graph can contain legacy plugins as well as content modules.
       // Visibility checks only apply between content modules, so failure on resolution will simply skip the edge with no warnings
-      val from = resolveModuleInfoFrom(a.plugin) ?: continue
-      val to = resolveModuleInfoTo(b.plugin) ?: continue
+      val from = resolveModuleInfoFrom(a) ?: continue
+      val to = resolveModuleInfoTo(b) ?: continue
 
       if (!isAccessAllowed(from, to)) {
-        problemRegistrar.registerProblem(ModuleVisibilityProblem.create(a.plugin, from, b.plugin, to))
+        problemRegistrar.registerProblem(ModuleVisibilityProblem.create(a.id, from, b.id, to))
       }
     }
   }
