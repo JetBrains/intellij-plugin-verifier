@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.classes.resolvers.EMPTY_RESOLVER
 import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTree
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
+import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.pluginverifier.PluginVerificationDescriptor
 import com.jetbrains.pluginverifier.dependencies.*
@@ -15,6 +16,7 @@ import com.jetbrains.pluginverifier.dependencies.DependencyNode.Companion.depend
 import com.jetbrains.pluginverifier.dependencies.ModuleVisibilityChecker.ResolvedModuleInfoFrom
 import com.jetbrains.pluginverifier.dependencies.ModuleVisibilityChecker.ResolvedModuleInfoTo
 import com.jetbrains.pluginverifier.dependencies.resolution.DependencyFinder
+import com.jetbrains.pluginverifier.dependencies.resolution.IdeThenDelegatePluginProvider
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.jdk.JdkDescriptor
 import com.jetbrains.pluginverifier.jdk.JdkVersion
@@ -412,6 +414,111 @@ class ModuleVisibilityCheckerTest {
     checker.checkEdges(graph, registrar)
 
     assertTrue(registrar.problems.isEmpty())
+  }
+
+  @Test
+  fun `checkEdges reports a private bundled IDE module when its owner precedes it in the bundled plugins`() {
+    val (root, owner, ideModule) = privateBundledIdeModuleFixture()
+
+    val problem = checkBundledIdeModuleEdges(root, listOf(root, owner, ideModule)).single()
+    assertEquals("root.m", problem.dependingModuleName)
+    assertEquals("target.private", problem.targetModuleName)
+    assertEquals("target.plugin", problem.targetPluginId)
+  }
+
+  @Test
+  fun `checkEdges reports a private bundled IDE module when it precedes its owner in the bundled plugins`() {
+    val (root, owner, ideModule) = privateBundledIdeModuleFixture()
+
+    val problem = checkBundledIdeModuleEdges(root, listOf(root, ideModule, owner)).single()
+    assertEquals("root.m", problem.dependingModuleName)
+    assertEquals("target.private", problem.targetModuleName)
+    assertEquals("target.plugin", problem.targetPluginId)
+    assertEquals("target.namespace", problem.targetNamespace)
+    assertEquals(ModuleVisibility.PRIVATE, problem.targetVisibility)
+  }
+
+  @Test
+  fun `checkEdges reports an internal bundled IDE module from another namespace when it precedes its owner in the bundled plugins`() {
+    val (root, owner, ideModule) = bundledIdeModuleFixture("target.internal", ModuleVisibility.INTERNAL)
+
+    val problem = checkBundledIdeModuleEdges(root, listOf(root, ideModule, owner)).single()
+    assertEquals("root.m", problem.dependingModuleName)
+    assertEquals("target.internal", problem.targetModuleName)
+    assertEquals("target.plugin", problem.targetPluginId)
+    assertEquals("source.namespace", problem.dependingNamespace)
+    assertEquals("target.namespace", problem.targetNamespace)
+    assertEquals(ModuleVisibility.INTERNAL, problem.targetVisibility)
+  }
+
+  @Test
+  fun `resolveModuleInfoFrom resolves the owner of an IdeModule that precedes its owner`() {
+    val (root, owner, ideModule) = privateBundledIdeModuleFixture()
+    val checker = ModuleVisibilityChecker.build(
+      createMockPluginVerificationContext(IdeVersion.createIdeVersion("IU-261.1"), root, listOf(root, ideModule, owner))
+    )
+
+    assertEquals(ResolvedModuleInfoFrom(owner, "target.namespace"), checker.resolveModuleInfoFrom(ideModule))
+    assertEquals(ResolvedModuleInfoTo(owner, "target.namespace", ModuleVisibility.PRIVATE), checker.resolveModuleInfoTo(ideModule))
+  }
+
+  @Test
+  fun `resolveModuleInfoTo skips an IdeModule without a declaring owner`() {
+    val (root, _, ideModule) = privateBundledIdeModuleFixture()
+    val checker = ModuleVisibilityChecker.build(
+      createMockPluginVerificationContext(IdeVersion.createIdeVersion("IU-261.1"), root, listOf(root, ideModule))
+    )
+
+    assertNull(checker.resolveModuleInfoTo(ideModule))
+    assertNull(checker.resolveModuleInfoFrom(ideModule))
+  }
+
+  @Test
+  fun `checkEdges skips a bundled IDE module without a declaring owner`() {
+    val (root, _, ideModule) = privateBundledIdeModuleFixture()
+
+    assertTrue(checkBundledIdeModuleEdges(root, listOf(root, ideModule)).isEmpty())
+  }
+
+  /**
+   * A product-info layout based IDE lists the content module `target.private` of `target.plugin`
+   * both inside its owning plugin and as a standalone [IdeModule].
+   */
+  private fun privateBundledIdeModuleFixture(): Triple<IdePlugin, IdePlugin, IdeModule> =
+    bundledIdeModuleFixture("target.private", ModuleVisibility.PRIVATE)
+
+  private fun bundledIdeModuleFixture(moduleName: String, visibility: ModuleVisibility): Triple<IdePlugin, IdePlugin, IdeModule> {
+    val root = pluginWithModules("root", moduleDescriptor("root.m", "source.namespace", dependencies = listOf(ModuleV2Dependency(moduleName))))
+    val ownerPlugin = pluginWithModules("target.plugin", moduleDescriptor(moduleName, "target.namespace", visibility))
+    // Like IdePluginImpl, a real owner defines the names of its content modules, which indexes it in Ide.findPluginByModule.
+    val owner = object : IdePlugin by ownerPlugin {
+      @Deprecated("use either pluginAliases or contentModules")
+      override val definedModules: Set<String> = ownerPlugin.modulesDescriptors.mapTo(mutableSetOf()) { it.name }
+    }
+    val ideModule = IdeModule(moduleName, "1.0", hasPackagePrefix = false).apply {
+      moduleVisibility = visibility
+    }
+    return Triple(root, owner, ideModule)
+  }
+
+  private fun checkBundledIdeModuleEdges(root: IdePlugin, bundledPlugins: List<IdePlugin>): List<ModuleVisibilityProblem> {
+    val ideVersion = IdeVersion.createIdeVersion("IU-261.1")
+    val ide = MockIde(ideVersion, bundledPlugins = bundledPlugins)
+    // Resolve dependencies through the same provider as the production class resolver provider.
+    val pluginProvider = IdeThenDelegatePluginProvider(ide, CompositePluginProvider(emptyList()))
+    val resolution = DependencyTree(pluginProvider, HAS_COM_INTELLIJ_MODULE_PREFIX).getDependencyTreeResolution(root)
+    val graph = DependenciesGraphProvider().getDependenciesGraph(resolution)
+    val checker = ModuleVisibilityChecker.build(createMockPluginVerificationContext(ideVersion, root, bundledPlugins))
+    val registrar = SimpleCompatibilityProblemRegistrar()
+
+    assertTrue("All fixture dependencies should resolve", graph.missingDependencies.values.all { it.isEmpty() })
+    assertTrue(
+      "The dependency must resolve to the standalone IDE module. Graph edges: ${graph.edges}",
+      graph.edges.any { (it.to as? DependencyNode.PluginDependency)?.plugin is IdeModule }
+    )
+    checker.checkEdges(graph, registrar)
+
+    return registrar.problems.filterIsInstance<ModuleVisibilityProblem>()
   }
 
   private fun moduleDescriptor(

@@ -38,6 +38,24 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
   data class ResolvedModuleInfoTo(val parent: IdePlugin, val namespace: String, val visibility: ModuleVisibility)
 
   /**
+   * Finds the bundled plugin that declares the content module descriptor [moduleName].
+   *
+   * [Ide.findPluginByModule] returns the first bundled plugin claiming [moduleName], which may be
+   * the standalone [IdeModule] itself if it precedes its owner in the bundled plugins.
+   * Standalone [IdeModule]s are never owners.
+   */
+  private fun findContentModuleOwner(moduleName: String): IdePlugin? {
+    val plugin = ide.findPluginByModule(moduleName)
+    if (plugin != null && plugin.declaresContentModule(moduleName)) {
+      return plugin
+    }
+    return ide.bundledPlugins.firstOrNull { it.declaresContentModule(moduleName) }
+  }
+
+  private fun IdePlugin.declaresContentModule(moduleName: String): Boolean =
+    this !is IdeModule && findContentModuleDescriptor(moduleName) != null
+
+  /**
    * Checks if [dependingModule] can access [targetModule].
    *
    * @param dependingModule the module that declares the dependency (from plugin A)
@@ -66,7 +84,8 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
   /**
    * Resolves module info for the source of a dependency edge (the module declaring the dependency).
    *
-   * For [IdeModule] instances, finds the parent plugin and extracts the namespace.
+   * For [IdeModule] instances, finds the owning plugin, i.e. the bundled plugin that declares
+   * the content module descriptor (regardless of the bundled-plugin order), and extracts the namespace.
    * For regular plugins, uses the namespace from its first module descriptor, or a placeholder
    * if this is the main plugin being verified.
    *
@@ -74,7 +93,7 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
    */
   fun resolveModuleInfoFrom(plugin: IdePlugin): ResolvedModuleInfoFrom? {
     if (plugin is IdeModule) {
-      val parentPlugin = ide.findPluginByModule(plugin.pluginId) ?: return null
+      val parentPlugin = findContentModuleOwner(plugin.pluginId) ?: return null
       val moduleDescriptor = parentPlugin.findContentModuleDescriptor(plugin.pluginId) ?: return null
 
       return ResolvedModuleInfoFrom(parentPlugin, moduleDescriptor.moduleDefinition.actualNamespace)
@@ -126,14 +145,15 @@ class ModuleVisibilityChecker private constructor(private val ide: Ide, private 
   /**
    * Resolves module info for the target of a dependency edge (the module being depended upon).
    *
-   * For [IdeModule] instances, finds the parent plugin and extracts namespace and visibility.
+   * For [IdeModule] instances, finds the owning plugin, i.e. the bundled plugin that declares
+   * the content module descriptor (regardless of the bundled-plugin order), and extracts namespace and visibility.
    * For regular plugins referenced via `<plugin>` in dependencies, looks up the main module.
    *
    * @return resolved module info including visibility, or `null` if the plugin cannot be resolved
    */
   fun resolveModuleInfoTo(plugin: IdePlugin): ResolvedModuleInfoTo? {
     if (plugin is IdeModule) {
-      val parentPlugin = ide.findPluginByModule(plugin.pluginId) ?: return null
+      val parentPlugin = findContentModuleOwner(plugin.pluginId) ?: return null
       val moduleDescriptor = parentPlugin.findContentModuleDescriptor(plugin.pluginId) ?: return null
 
       return ResolvedModuleInfoTo(parentPlugin, moduleDescriptor.moduleDefinition.actualNamespace, moduleDescriptor.module.moduleVisibility)
