@@ -4,9 +4,7 @@ on:
   push:
     branches: [master]
     paths: [ 'intellij-plugin-structure/**', '.github/workflows/intellij-plugin-structure.yml' ]
-  # Trigger the workflow on any pull request
-  pull_request:
-    paths: [ 'intellij-plugin-structure/**', '.github/workflows/intellij-plugin-structure.yml' ]
+  # Pull requests are covered by pull-request-tests.yml.
 
 jobs:
 

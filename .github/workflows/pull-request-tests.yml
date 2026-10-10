@@ -1,0 +1,120 @@
+name: Pull Request Tests
+
+on:
+  pull_request:
+  merge_group:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pull-request-tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gradleValidation:
+    name: Gradle Wrappers
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Sources
+        uses: actions/checkout@v7.0.1
+
+      - name: Gradle Wrapper Validation
+        uses: gradle/actions/wrapper-validation@v6.3.0
+
+  test:
+    name: ${{ matrix.name }}
+    needs: gradleValidation
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: IntelliJ Plugin Structure Tests
+            java: 17
+            directory: intellij-plugin-structure
+            artifact: intellij-plugin-structure
+            publish: ''
+
+          - name: IntelliJ Plugin Verifier Tests
+            java: 17
+            directory: intellij-plugin-verifier
+            artifact: intellij-plugin-verifier
+            publish: |
+              cd plugins-verifier-service
+              ./gradlew :intellij-plugin-structure:publishToMavenLocal
+
+          - name: IntelliJ Feature Extractor Tests
+            java: 17
+            directory: intellij-feature-extractor
+            artifact: intellij-feature-extractor
+            publish: |
+              cd plugins-verifier-service
+              ./gradlew :intellij-plugin-structure:publishToMavenLocal
+              ./gradlew :intellij-plugin-verifier:publishToMavenLocal
+
+          - name: IDE Diff Builder Tests
+            java: 17
+            directory: ide-diff-builder
+            artifact: ide-diff-builder
+            publish: |
+              cd plugins-verifier-service
+              ./gradlew :intellij-plugin-structure:publishToMavenLocal
+              ./gradlew :intellij-plugin-verifier:publishToMavenLocal
+
+          - name: Plugins Verifier Service Tests
+            java: 11
+            directory: plugins-verifier-service
+            artifact: plugins-verifier-service
+            publish: ''
+
+    steps:
+      - name: Setup Java
+        uses: actions/setup-java@v5.7.0
+        with:
+          distribution: zulu
+          java-version: ${{ matrix.java }}
+
+      - name: Fetch Sources
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup Gradle Dependencies Cache
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-caches-${{ hashFiles('**/*.gradle', '**/*.gradle.kts', 'gradle.properties') }}
+
+      - name: Setup Gradle Wrapper Cache
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+
+      - name: Publish Dev Version
+        if: ${{ matrix.publish != '' }}
+        run: ${{ matrix.publish }}
+
+      - name: Run Tests
+        working-directory: ${{ matrix.directory }}
+        run: ./gradlew test
+
+      - name: Collect Test Results
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results-${{ matrix.artifact }}
+          path: |
+            ${{ github.workspace }}/**/build/reports/tests/**
+            ${{ github.workspace }}/**/build/test-results/**
+            ${{ github.workspace }}/**/build/reports/problems/**
+
+  required:
+    name: Required PR Tests
+    if: ${{ always() }}
+    needs: [gradleValidation, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test results
+        run: |
+          test "${{ needs.gradleValidation.result }}" = "success"
+          test "${{ needs.test.result }}" = "success"

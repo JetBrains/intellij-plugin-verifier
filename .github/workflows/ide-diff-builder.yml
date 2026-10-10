@@ -4,9 +4,7 @@ on:
   push:
     branches: [master]
     paths: [ 'ide-diff-builder/**', '.github/workflows/ide-diff-builder.yml' ]
-  # Trigger the workflow on any pull request
-  pull_request:
-    paths: [ 'ide-diff-builder/**', '.github/workflows/ide-diff-builder.yml' ]
+  # Pull requests are covered by pull-request-tests.yml.
 
 jobs:
 
