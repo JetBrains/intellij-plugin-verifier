@@ -159,15 +159,9 @@ data class FleetPluginDescriptor(
       }
 
       else -> {
-        validatePropertyLength(
+        validatePluginName(
           descriptor = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
           propertyName = metaSpec.relativeFieldPath(metaSpec.NAME_FIELD_NAME),
-          propertyValue = readableName,
-          maxLength = MAX_NAME_LENGTH,
-          problems = problems
-        )
-        validatePluginNameIsCorrect(
-          descriptor = FleetDescriptorSpec.DESCRIPTOR_FILE_NAME,
           name = readableName,
           problems = problems
         )
