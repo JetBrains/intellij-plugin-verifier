@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.ide
 
+import com.jetbrains.plugin.structure.ide.layout.MissingLayoutFileMode
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
@@ -13,7 +14,7 @@ class DispatchingIdeManager(configuration: IdeManagerConfiguration = IdeManagerC
   private val standardIdeManager = IdeManagerImpl()
 
   private val productInfoBasedIdeManager = ProductInfoBasedIdeManager(
-    missingLayoutFileMode = configuration.missingLayoutFileMode,
+    missingLayoutFileMode = MissingLayoutFileMode.SKIP_CLASSPATH, // TODO: This should only be changed when inflatable IDE is used
     additionalProductInfoPluginReader = UndeclaredInLayoutPluginReader(supportedProductCodes = setOf("AI", "CL")),
   )
 
