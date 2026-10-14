@@ -157,9 +157,10 @@ internal class PluginCreator private constructor(
         // An inline content module has no filesystem path of its own, and - unlike a file-based
         // descriptor - IntelliJ's own loader does not give it XInclude support either: embedded module
         // content is parsed with a null XIncludeLoader (PluginDescriptorLoader.loadPluginSubDescriptors).
-        // ResourceRootSource.ContainingDescriptor exists only to keep the PARSER CHOICE inherited from
-        // the parent (see shouldUsePlatformParser); it must not also grant a resource root, or an
-        // <xi:include> the IDE would reject gets silently resolved here instead.
+        // ResourceRootSource.ContainingDescriptor therefore withholds the resource root, so the platform
+        // parser gets no XIncludeLoader and an <xi:include> the IDE would reject is not silently resolved
+        // here. The PARSER CHOICE is unaffected: it is inherited via parentPlugin regardless
+        // (see shouldUsePlatformParser).
         resourceRootSource = ResourceRootSource.ContainingDescriptor
       )
       return pluginCreator

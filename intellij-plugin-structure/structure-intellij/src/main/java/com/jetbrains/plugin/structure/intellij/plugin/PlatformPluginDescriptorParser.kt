@@ -93,11 +93,12 @@ internal class PlatformPluginDescriptorParser {
    *   by the library itself via [ResourceResolverXIncludeLoader], not by
    *   [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder] (see class doc, point 1).
    * @param resourceRoot the root a classloader would resolve this plugin's resources against, as
-   *   derived by [PluginCreator.resourceRoot]. `null` only for a descriptor that has neither a
-   *   filesystem path of its own nor a parent to inherit one from, in which case `<xi:include>` is
-   *   unsupported for this descriptor: the library treats a null loader as "no `<xi:include>`
-   *   support" and fails cleanly if one is actually encountered, rather than resolving against a
-   *   guessed-wrong root.
+   *   derived by [PluginCreator.resourceRoot]. `null` for an inline content module - matching
+   *   IntelliJ's own loader, which gives embedded module content no XInclude support - and for a
+   *   descriptor that has neither a filesystem path of its own nor a parent to inherit one from.
+   *   `<xi:include>` is then unsupported for this descriptor: the library treats a null loader as
+   *   "no `<xi:include>` support" and fails cleanly if one is actually encountered, rather than
+   *   resolving against a guessed-wrong root.
    * @param resourceResolver the same composite resolver chain the JAXB path drives
    *   [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder] with.
    * @return the parsed descriptor plus its [PlatformDescriptorView] for validation, or `null` if parsing
