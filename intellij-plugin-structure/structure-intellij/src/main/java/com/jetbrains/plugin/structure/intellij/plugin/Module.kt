@@ -13,19 +13,25 @@ package com.jetbrains.plugin.structure.intellij.plugin
  *        private modules from other modules of the same plugin, because if all modules are private, we don't require
  *        specifying the namespace explicitly.
  * @property loadingRule specifies how the module should be loaded by IntelliJ Platform
+ * @property requiredIfAvailable raw value of the `required-if-available` attribute of the `<module>` tag, or `null` if it's
+ *        not specified. It references a module (e.g. `intellij.platform.backend`) whose availability in the current
+ *        product mode makes this module required, unless [loadingRule] is already required.
+ *        The value is not interpreted: [loadingRule] reflects only the `loading` attribute.
  */
 sealed class Module {
   abstract val name: String
   abstract val namespace: String?
   abstract val actualNamespace: String
   abstract val loadingRule: ModuleLoadingRule
+  abstract val requiredIfAvailable: String?
 
   data class InlineModule(
     override val name: String,
     override val namespace: String?,
     override val actualNamespace: String,
     override val loadingRule: ModuleLoadingRule,
-    val textContent: String
+    val textContent: String,
+    override val requiredIfAvailable: String? = null
   ) : Module() {
     override fun toString(): String = "$name (CDATA module, ${textContent.length} characters)"
   }
@@ -35,7 +41,8 @@ sealed class Module {
     override val namespace: String?,
     override val actualNamespace: String,
     override val loadingRule: ModuleLoadingRule,
-    val configFile: String
+    val configFile: String,
+    override val requiredIfAvailable: String? = null
   ) : Module() {
     override fun toString(): String = "$name (file module, $configFile)"
   }

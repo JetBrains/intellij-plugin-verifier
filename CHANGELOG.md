@@ -6,6 +6,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+- Expose the raw `required-if-available` attribute of content modules as `Module.requiredIfAvailable`. The attribute is not interpreted, and `Module.loadingRule` still reflects only the `loading` attribute. `Module.InlineModule` and `Module.FileBasedModule` get a new trailing constructor parameter that defaults to `null`, which changes their JVM constructor and `copy` signatures.
+
 ### Changed
 
 ### Fixed
