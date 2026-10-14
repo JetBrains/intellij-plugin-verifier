@@ -763,11 +763,10 @@ class DependenciesTest {
         DependencyEntry(id = "intellij.platform.vcs.impl", ownerId = "com.intellij", transitive = true),
         DependencyEntry(id = "com.intellij.properties", transitive = true),
         DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij"),
-        // FIXME resolved via com.intellij#intellij.platform.vcs.impl|com.intellij.modules.vcs
-        // DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl"),
-        // FIXME resolved via com.intellij#intellij.platform.vcs.impl|com.intellij.modules.vcs
-        // Duplicate, but transitive
-        // DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl", transitive = true),
+        // content module in 'com.intellij'
+        DependencyEntry(id = "intellij.platform.vcs.log.impl", ownerId = "com.intellij", transitive = true),
+        // module alias of 'intellij.platform.vcs.impl'
+        DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "com.intellij"),
         DependencyEntry(id = "org.jetbrains.plugins.terminal"),
       )
 
@@ -800,8 +799,7 @@ class DependenciesTest {
         DependencyEntry(id = "com.intellij.modules.java", ownerId = "com.intellij.java", transitive = true),
         DependencyEntry(id = "com.intellij.modules.json", ownerId = null, transitive = true),
         DependencyEntry(id = "com.intellij.modules.lang", ownerId = "com.intellij", transitive = true),
-        // FIXME resolved via com.intellij#intellij.platform.vcs.impl|com.intellij.modules.vcs
-        // DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "intellij.platform.vcs.impl", transitive = true),
+        DependencyEntry(id = "com.intellij.modules.vcs", ownerId = "com.intellij", transitive = true),
         DependencyEntry(id = "com.intellij.modules.xml", ownerId = "com.intellij", transitive = true),
         DependencyEntry(id = "com.intellij.platform.images", transitive = true),
         DependencyEntry(id = "com.intellij.properties", transitive = true),
@@ -813,10 +811,13 @@ class DependenciesTest {
         DependencyEntry(id = "intellij.java.featuresTrainer", ownerId = "intellij.java.featuresTrainer", transitive = true),
         DependencyEntry(id = "intellij.performanceTesting.vcs", ownerId = "com.jetbrains.performancePlugin", transitive = true),
         DependencyEntry(id = "intellij.platform.collaborationTools", ownerId = "com.intellij", transitive = true),
+        DependencyEntry(id = "intellij.libraries.microba", ownerId = "com.intellij", transitive = true),
         DependencyEntry(id = "intellij.platform.coverage", ownerId = "com.intellij", transitive = false),
+        DependencyEntry(id = "intellij.platform.lvcs.impl", ownerId = "com.intellij", transitive = true),
         DependencyEntry(id = "intellij.platform.navbar.frontend", ownerId = "com.intellij", transitive = true),
         DependencyEntry(id = "intellij.platform.tips", ownerId = "com.intellij", transitive = true),
         DependencyEntry(id = "intellij.platform.vcs.impl", ownerId = "com.intellij", transitive = true),
+        DependencyEntry(id = "intellij.platform.vcs.log.impl", ownerId = "com.intellij", transitive = true),
         DependencyEntry(id = "kotlin.features-trainer", ownerId = "kotlin.features-trainer", transitive = true),
         DependencyEntry(id = "org.intellij.intelliLang", transitive = true),
         DependencyEntry(id = "org.intellij.plugins.markdown", transitive = true),
@@ -1395,6 +1396,7 @@ class DependenciesTest {
       when (it) {
         is Dependency.Plugin -> DependencyEntry(it.plugin.id, transitive = it.isTransitive)
         is Dependency.Module -> DependencyEntry(it.id, it.plugin.id, transitive = it.isTransitive)
+        is Dependency.ContentModuleDeclaration -> DependencyEntry(it.id, it.plugin.id)
         Dependency.None -> null
       }
     }.toSet()

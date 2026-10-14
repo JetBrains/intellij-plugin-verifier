@@ -2,21 +2,7 @@ package com.intellij.featureExtractor
 
 import com.jetbrains.plugin.structure.base.plugin.PluginIcon
 import com.jetbrains.plugin.structure.base.plugin.ThirdPartyDependency
-import com.jetbrains.plugin.structure.intellij.plugin.Classpath
-import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
-import com.jetbrains.plugin.structure.intellij.plugin.IdePluginContentDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.IdeTheme
-import com.jetbrains.plugin.structure.intellij.plugin.KotlinPluginMode
-import com.jetbrains.plugin.structure.intellij.plugin.Module
-import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleVisibility
-import com.jetbrains.plugin.structure.intellij.plugin.MutableIdePluginContentDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.OptionalPluginDescriptor
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginMainModuleDependency
-import com.jetbrains.plugin.structure.intellij.plugin.ProductDescriptor
+import com.jetbrains.plugin.structure.intellij.plugin.*
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.jdom2.Document
 import org.jdom2.Element
@@ -42,7 +28,6 @@ data class MockIdePlugin(
   override val changeNotes: String? = null
   override val icons: List<PluginIcon> = emptyList()
   override val productDescriptor: ProductDescriptor? = null
-  override val dependencies: List<PluginDependency> = emptyList()
   override val incompatibleWith: List<String> = emptyList()
   override val pluginAliases: Set<String> = emptySet()
   override val underlyingDocument: Document = Document(Element("idea-plugin"))
@@ -66,4 +51,8 @@ data class MockIdePlugin(
   override val declaredThemes = emptyList<IdeTheme>()
   override val thirdPartyDependencies: List<ThirdPartyDependency> = emptyList()
   override fun isCompatibleWithIde(ideVersion: IdeVersion) = false
+
+  @Deprecated("contains mixed dependencies, including ones that belong to content modules; see dependsList, pluginMainModuleDependencies, contentModuleDependencies")
+  override val dependencies: List<PluginDependency>
+    get() = reconstructDependencies()
 }

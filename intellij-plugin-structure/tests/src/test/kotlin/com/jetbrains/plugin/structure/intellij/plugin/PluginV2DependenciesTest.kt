@@ -105,7 +105,7 @@ class PluginV2DependenciesTest {
   private fun isOptional(ide: Ide, moduleDescriptor: ModuleDescriptor) = !ide.containsAllDependencies(moduleDescriptor)
 
   private fun Ide.containsAllDependencies(moduleDescriptor: ModuleDescriptor): Boolean {
-    return moduleDescriptor.dependencies
+    return moduleDescriptor.resolvedDependencies
       .all { dependency ->
         findPluginByIdOrModuleId(dependency.id) != null
       }

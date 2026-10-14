@@ -5,8 +5,25 @@
 package com.jetbrains.plugin.structure.mocks
 
 import com.jetbrains.plugin.structure.intellij.plugin.DependsPluginDependency
+import com.jetbrains.plugin.structure.intellij.plugin.INTELLIJ_LEGACY_MODULES_PREFIX
 
 @Suppress("TestFunctionName")
 fun MandatoryV1Dependency(pluginId: String): DependsPluginDependency {
   return DependsPluginDependency(pluginId, false)
+}
+
+@Suppress("TestFunctionName")
+fun MandatoryLegacyModuleDependency(pluginId: String): DependsPluginDependency {
+  require(pluginId.startsWith(INTELLIJ_LEGACY_MODULES_PREFIX)) {
+    "Legacy module dependency should start with '$INTELLIJ_LEGACY_MODULES_PREFIX'"
+  }
+  return DependsPluginDependency(pluginId, false)
+}
+
+@Suppress("TestFunctionName")
+fun OptionalLegacyModuleDependency(pluginId: String, configFile: String? = null): DependsPluginDependency {
+  require(pluginId.startsWith(INTELLIJ_LEGACY_MODULES_PREFIX)) {
+    "Legacy module dependency should start with '$INTELLIJ_LEGACY_MODULES_PREFIX'"
+  }
+  return DependsPluginDependency(pluginId, true, configFile)
 }

@@ -109,7 +109,7 @@ class LegacyIntelliJIdeaPluginVerifierTest : BaseExtensionPointTest<LegacyIntell
   fun `plugin without any dependencies, but with a content module is not legacy`() {
     val contentModuleMetadata = InlineModule("someContentModule", "someNamespace", "someNamespace", ModuleLoadingRule.REQUIRED, "<idea-plugin />")
     val contentModule = MockIdePlugin()
-    val contentModuleDescriptor = ModuleDescriptor(contentModule, contentModuleMetadata)
+    val contentModuleDescriptor = ModuleDescriptor.of(contentModule, contentModuleMetadata)
     val plugin = MockIdePlugin(
       pluginId = "somePlugin",
       contentModules = listOf(contentModuleMetadata),

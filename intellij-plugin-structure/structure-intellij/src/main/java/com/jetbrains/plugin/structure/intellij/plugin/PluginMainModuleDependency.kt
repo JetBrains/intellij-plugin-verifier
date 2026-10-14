@@ -9,4 +9,6 @@ package com.jetbrains.plugin.structure.intellij.plugin
  */
 class PluginMainModuleDependency(val pluginId: String) {
   override fun toString(): String = "PluginMainModuleDependency(pluginId='$pluginId')"
+
+  fun asPluginDependency(): PluginDependency = PluginV2Dependency(pluginId)
 }

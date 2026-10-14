@@ -63,6 +63,27 @@ sealed class PluginVerificationResult(
     val directMissingMandatoryDependencies: List<ResolvedMissingDependency>
       get() = dependenciesGraph.getDirectMissingDependencies().filterNot { it.dependency.isOptional }
 
+    /**
+     * Creates a copy of this result with the [dependenciesGraph] replaced. All other properties are shared.
+     */
+    fun withDependenciesGraph(dependenciesGraph: ResolvedDependenciesGraph) = Verified(
+      plugin,
+      verificationTarget,
+      dependenciesGraph,
+      compatibilityProblems,
+      ignoredProblems,
+      compatibilityWarnings,
+      deprecatedUsages,
+      experimentalApiUsages,
+      internalApiUsages,
+      ignoredInternalApiUsages,
+      nonExtendableApiUsages,
+      overrideOnlyMethodUsages,
+      pluginStructureWarnings,
+      dynamicPluginStatus,
+      telemetry
+    )
+
     override val verificationVerdict
       get() = buildString {
         if (directMissingMandatoryDependencies.isEmpty() && compatibilityProblems.isEmpty() && compatibilityWarnings.isEmpty()) {
@@ -161,4 +182,16 @@ sealed class PluginVerificationResult(
       get() = "Failed to download plugin: $failedToDownloadReason"
   }
 
+}
+
+/**
+ * Returns a copy of a [PluginVerificationResult.Verified] result that retains only the direct dependencies
+ * of the verified plugin, see [ResolvedDependenciesGraph.retainDirectDependencies]. Other results are returned as is.
+ *
+ * Use it for results that are kept until all verifications finish, once their full dependencies graph has been reported.
+ * The [PluginVerificationResult.verificationVerdict] is not affected.
+ */
+fun PluginVerificationResult.retainDirectDependencies(): PluginVerificationResult = when (this) {
+  is PluginVerificationResult.Verified -> withDependenciesGraph(dependenciesGraph.retainDirectDependencies())
+  else -> this
 }

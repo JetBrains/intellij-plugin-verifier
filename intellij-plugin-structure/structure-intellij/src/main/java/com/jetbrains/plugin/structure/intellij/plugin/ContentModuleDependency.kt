@@ -15,4 +15,6 @@ class ContentModuleDependency(
   val namespace: String,
 ) {
   override fun toString(): String = "ModuleDependency(name='$moduleName')"
+
+  fun asPluginDependency() = ModuleV2Dependency(moduleName)
 }

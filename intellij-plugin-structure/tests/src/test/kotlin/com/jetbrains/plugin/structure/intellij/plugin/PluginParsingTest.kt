@@ -13,15 +13,82 @@ import com.jetbrains.plugin.structure.base.zip.createZip
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.IdePluginManagerTest
+import com.jetbrains.plugin.structure.mocks.MandatoryLegacyModuleDependency
+import com.jetbrains.plugin.structure.mocks.MandatoryV1Dependency
+import com.jetbrains.plugin.structure.mocks.OptionalLegacyModuleDependency
 import com.jetbrains.plugin.structure.rules.FileSystemType
 import org.junit.After
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.*
 import org.junit.Test
 import java.nio.file.Path
-import java.util.UUID
+import java.util.*
 
 class PluginParsingTest(fileSystemType: FileSystemType) : IdePluginManagerTest(fileSystemType) {
+
+  @Test
+  fun `legacy v1 module dependencies retain their module identity`() {
+    val plugin = createPlugin {
+      dir("plugin") {
+        dir("lib") {
+          zip("plugin.jar") {
+            dir("META-INF") {
+              file("plugin.xml") {
+                """
+                  <idea-plugin>
+                    <id>someId</id>
+                    <depends>com.intellij.modules.lang</depends>
+                    <depends optional="true" config-file="legacy-module.xml">com.intellij.modules.vcs</depends>
+                    <depends>ordinary.plugin</depends>
+                  </idea-plugin>
+                """.trimIndent()
+              }
+              file("legacy-module.xml") {
+                """
+                  <idea-plugin/>
+                """.trimIndent()
+              }
+            }
+          }
+        }
+      }
+    }
+
+    assertEquals(3, plugin.dependsList.size)
+
+    val expectedLangModule = MandatoryLegacyModuleDependency("com.intellij.modules.lang")
+    val actualLangModule = plugin.dependsList.firstOrNull { it == expectedLangModule }
+    assertNotNull("Expected mandatory module ${expectedLangModule.pluginId} is not a dependency",
+                  actualLangModule
+    )
+    actualLangModule!!
+    assertTrue("Dependency ${actualLangModule.pluginId} is not a legacy v1 module", actualLangModule.isLegacyModule())
+
+    val expectedVcsModule = OptionalLegacyModuleDependency("com.intellij.modules.vcs", "legacy-module.xml")
+    val actualVcsModule = plugin.dependsList.firstOrNull { it == expectedVcsModule }
+    assertNotNull("Expected optional module ${expectedVcsModule.pluginId} is not a dependency",
+                  actualVcsModule
+    )
+    actualVcsModule!!
+    assertTrue("Dependency ${actualVcsModule.pluginId} is not a legacy v1 module", actualVcsModule.isLegacyModule())
+
+    val expectedOrdinaryPlugin = MandatoryV1Dependency("ordinary.plugin")
+    assertNotNull("Expected mandatory module ${expectedOrdinaryPlugin.pluginId} is not a dependency",
+                  plugin.dependsList.firstOrNull { it == expectedOrdinaryPlugin })
+
+    val expectedDependencies = listOf(
+      PluginV1Dependency.Mandatory("com.intellij.modules.lang"),
+      PluginV1Dependency.Optional("com.intellij.modules.vcs"),
+      PluginV1Dependency.Mandatory("ordinary.plugin"),
+    )
+    assertEquals(expectedDependencies, plugin.reconstructDependencies())
+    assertEquals(expectedDependencies, plugin.reconstructAllDependencies())
+
+    assertEquals(
+      PluginV1Dependency.Optional("com.intellij.modules.vcs"),
+      plugin.optionalDescriptors.single().dependency,
+    )
+    assertEquals("legacy-module.xml", plugin.optionalDescriptors.single().configurationFilePath)
+  }
 
   @Test
   fun `IdePlugin is correctly built from file`() {

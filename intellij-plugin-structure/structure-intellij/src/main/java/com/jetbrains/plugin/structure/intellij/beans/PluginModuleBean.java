@@ -10,5 +10,6 @@ import jakarta.xml.bind.annotation.XmlValue;
 public class PluginModuleBean {
   @XmlAttribute(name = "name") public String moduleName;
   @XmlAttribute(name = "loading") public String loadingRule;
+  @XmlAttribute(name = "required-if-available") public String requiredIfAvailable;
   @XmlValue public String value;
 }

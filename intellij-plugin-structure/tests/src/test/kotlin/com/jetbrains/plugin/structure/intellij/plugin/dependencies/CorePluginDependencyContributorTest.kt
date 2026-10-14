@@ -1,5 +1,6 @@
 package com.jetbrains.plugin.structure.intellij.plugin.dependencies
 
+import com.jetbrains.plugin.structure.intellij.plugin.DependencyModificationReason.IDE
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.mocks.MockIde
@@ -47,11 +48,15 @@ class CorePluginDependencyContributorTest {
     assertEquals(2, modifiedDependencies.size)
     assertTrue(
       "Should contain original dependency",
-      modifiedDependencies.any { it.id == "com.intellij.modules.platform" }
+      modifiedDependencies.any { it.dependency.id == "com.intellij.modules.platform" }
     )
     assertTrue(
       "Should contain core plugin dependency",
-      modifiedDependencies.any { it.id == CORE_PLUGIN_ID }
+      modifiedDependencies.any { it.dependency.id == CORE_PLUGIN_ID }
+    )
+    assertEquals(
+      IDE,
+      modifiedDependencies.first { it.dependency.id == CORE_PLUGIN_ID }.reason
     )
   }
 
@@ -65,7 +70,7 @@ class CorePluginDependencyContributorTest {
     val modifiedDependencies = contributor.apply(pluginWithCoreDependency, ide)
 
     assertEquals(1, modifiedDependencies.size)
-    assertEquals(CORE_PLUGIN_ID, modifiedDependencies.first().id)
+    assertEquals(CORE_PLUGIN_ID, modifiedDependencies.first().dependency.id)
   }
 
   @Test
@@ -75,7 +80,7 @@ class CorePluginDependencyContributorTest {
 
     assertTrue(
       "Core plugin should not have dependency on itself",
-      modifiedDependencies.none { it.id == CORE_PLUGIN_ID }
+      modifiedDependencies.none { it.dependency.id == CORE_PLUGIN_ID }
     )
   }
 
@@ -87,7 +92,8 @@ class CorePluginDependencyContributorTest {
     val modifiedDependencies = contributor.apply(pluginWithNoDeps, ide)
 
     assertEquals(1, modifiedDependencies.size)
-    assertEquals(CORE_PLUGIN_ID, modifiedDependencies.first().id)
+    assertEquals(CORE_PLUGIN_ID, modifiedDependencies.first().dependency.id)
+    assertEquals(IDE, modifiedDependencies.first().reason)
   }
 
   @Test

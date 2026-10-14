@@ -103,6 +103,18 @@ class HtmlEscaper {
             }
         }
     }
+
+    /**
+     * Escapes the [input] that is a chunk of a longer text, such as a part read from a [java.io.Reader].
+     *
+     * Consecutive chunks can be escaped independently, since each translated sequence is a single character.
+     * Surrogates are never translated, so a surrogate pair split between two chunks is written unchanged.
+     */
+    @Throws(IOException::class)
+    fun escapeChunk(input: CharSequence, writer: Writer) {
+        check(longest == 1) { "Chunked escaping requires translated sequences of a single character" }
+        escape(input, writer)
+    }
 }
 
 private val escapeLookup: Map<CharSequence, CharSequence> = mapOf(
@@ -375,4 +387,11 @@ private val htmlEscaper = HtmlEscaper()
 
 fun String.escapeHtml4To(writer: Writer) {
     htmlEscaper.escape(this, writer)
+}
+
+/**
+ * Escapes a chunk of a longer text, see [HtmlEscaper.escapeChunk].
+ */
+fun CharSequence.escapeHtml4ChunkTo(writer: Writer) {
+    htmlEscaper.escapeChunk(this, writer)
 }

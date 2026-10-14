@@ -9,19 +9,10 @@ import com.jetbrains.plugin.structure.classes.resolvers.Resolver
 import com.jetbrains.plugin.structure.classes.utils.AsmUtil
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.PluginXmlUtil
-import com.jetbrains.plugin.structure.intellij.plugin.dependencies
 import com.jetbrains.pluginverifier.analysis.Location.Annotation
 import com.jetbrains.pluginverifier.analysis.Location.Field
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
-import org.objectweb.asm.AnnotationVisitor
-import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.ConstantDynamic
-import org.objectweb.asm.FieldVisitor
-import org.objectweb.asm.Handle
-import org.objectweb.asm.Label
-import org.objectweb.asm.MethodVisitor
-import org.objectweb.asm.Type
-import org.objectweb.asm.TypePath
+import org.objectweb.asm.*
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -91,7 +82,11 @@ class ReachabilityGraph(private val graph: TypeGraph) {
   }
 }
 
-
+/**
+ * Builds a graph that identifies classes reachable from the main plugin and missing optional plugins.
+ *
+ *
+ */
 fun buildClassReachabilityGraph(
   idePlugin: IdePlugin,
   pluginResolver: Resolver,
@@ -109,7 +104,11 @@ fun buildClassReachabilityGraph(
   for (missingOptionalDependency in missingOptionalDependencies) {
     val optionalPlugin = idePlugin.optionalDescriptors.find { it.dependency == missingOptionalDependency.dependency }?.optionalPlugin
     val modules = idePlugin.modulesDescriptors
-      .filter { it.dependencies.map { it.id }.contains(missingOptionalDependency.dependency.id) }
+      .filter { moduleDescriptor ->
+        // Declared dependencies must be used instead of resolved dependencies because the latter omit dependencies
+        // already declared by the main plugin descriptor
+        moduleDescriptor.module.dependencies.any { it.id == missingOptionalDependency.dependency.id }
+      }
       .map { it.module }
     (if (optionalPlugin != null) modules + optionalPlugin else modules).forEach {
       val optionalClasses = PluginXmlUtil.getAllClassesReferencedFromXml(it)

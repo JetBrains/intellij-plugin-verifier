@@ -8,10 +8,9 @@ import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.classes.resolvers.CompositeResolver
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverCreator
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfoParser
-import com.jetbrains.plugin.structure.intellij.plugin.ModuleV2Dependency
+import com.jetbrains.plugin.structure.intellij.plugin.ContentModuleDependency
 import com.jetbrains.plugin.structure.intellij.plugin.PluginArchiveManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependency
-import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
 import com.jetbrains.pluginverifier.ide.IdeDescriptor
 import com.jetbrains.pluginverifier.jdk.DefaultJdkDescriptorProvider
 import com.jetbrains.pluginverifier.jdk.JdkDescriptorProvider
@@ -19,15 +18,10 @@ import com.jetbrains.pluginverifier.resolution.DefaultClassResolverProvider
 import com.jetbrains.pluginverifier.resolution.DefaultPluginDetailsBasedResolverProvider
 import com.jetbrains.pluginverifier.resolution.PluginDetailsBasedResolverProvider
 import com.jetbrains.pluginverifier.tests.BaseBytecodeTest
-import com.jetbrains.pluginverifier.tests.mocks.MockDependencyFinder
-import com.jetbrains.pluginverifier.tests.mocks.MockIdePlugin
-import com.jetbrains.pluginverifier.tests.mocks.MockPackageFilter
-import com.jetbrains.pluginverifier.tests.mocks.MockProductInfoAwareIde
-import com.jetbrains.pluginverifier.tests.mocks.RuleBasedDependencyFinder
+import com.jetbrains.pluginverifier.tests.dependencies.MandatoryLegacyModuleV1Dependency
+import com.jetbrains.pluginverifier.tests.mocks.*
 import com.jetbrains.pluginverifier.tests.mocks.RuleBasedDependencyFinder.Rule
 import com.jetbrains.pluginverifier.tests.mocks.asm.publicClass
-import com.jetbrains.pluginverifier.tests.mocks.createPluginArchiveManager
-import com.jetbrains.pluginverifier.tests.mocks.getDetails
 import org.intellij.lang.annotations.Language
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -49,8 +43,8 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
     pluginVersion = "1.0"
   )
 
-  private val pythonModuleDependency = PluginDependencyImpl("com.intellij.modules.python", false, true)
-  private val platformModuleDependency = PluginDependencyImpl("com.intellij.modules.platform", false, true)
+  private val pythonModuleDependency = MandatoryLegacyModuleV1Dependency("com.intellij.modules.python")
+  private val platformModuleDependency = MandatoryLegacyModuleV1Dependency("com.intellij.modules.platform")
 
   private lateinit var archiveManager: PluginArchiveManager
 
@@ -114,16 +108,15 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       ignoreOsArch = true
     )
     val platformConstraints = listOf(
-      PluginDependencyImpl("com.intellij.modules.os.windows", false, true),
-      PluginDependencyImpl("com.intellij.modules.arch.arm64", false, true)
+      MandatoryLegacyModuleV1Dependency("com.intellij.modules.os.windows",),
+      MandatoryLegacyModuleV1Dependency("com.intellij.modules.arch.arm64")
     )
-    val constrainedPlugin = plugin.copy(dependencies = platformConstraints)
+    val constrainedPlugin = plugin.copy(dependsList = platformConstraints)
 
     val classResolver = resolverProvider.provide(constrainedPlugin.getDetails())
 
     assertTrue(classResolver.dependenciesGraph.missingDependencies.isEmpty())
   }
-
   @Test
   fun `platform constraints are reported as missing by default`() {
     val ide = buildIdeWithBundledPlugins(
@@ -139,10 +132,10 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       archiveManager = archiveManager
     )
     val platformConstraints = listOf(
-      PluginDependencyImpl("com.intellij.modules.os.windows", false, true),
-      PluginDependencyImpl("com.intellij.modules.arch.arm64", false, true)
+      MandatoryLegacyModuleV1Dependency("com.intellij.modules.os.windows"),
+      MandatoryLegacyModuleV1Dependency("com.intellij.modules.arch.arm64")
     )
-    val constrainedPlugin = plugin.copy(dependencies = platformConstraints)
+    val constrainedPlugin = plugin.copy(dependsList = platformConstraints)
 
     val classResolver = resolverProvider.provide(constrainedPlugin.getDetails())
 
@@ -192,7 +185,7 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       archiveManager = archiveManager
     )
 
-    val plugin = this.plugin.copy(dependencies = listOf(pythonModuleDependency))
+    val plugin = this.plugin.copy(dependsList = listOf(pythonModuleDependency))
 
     val classResolver = resolverProvider.provide(plugin.getDetails())
     // class from app.jar from mock IDE
@@ -225,7 +218,7 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       archiveManager = archiveManager
     )
 
-    val plugin = this.plugin.copy(dependencies = listOf(pythonModuleDependency))
+    val plugin = this.plugin.copy(dependsList = listOf(pythonModuleDependency))
 
     val classResolver = resolverProvider.provide(plugin.getDetails())
     // class from app.jar from mock IDE
@@ -258,7 +251,7 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       archiveManager = archiveManager
     )
 
-    val plugin = this.plugin.copy(dependencies = listOf(pythonModuleDependency))
+    val plugin = this.plugin.copy(dependsList = listOf(pythonModuleDependency))
 
     val classResolver = resolverProvider.provide(plugin.getDetails())
     // class from app.jar from mock IDE
@@ -284,7 +277,7 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
       dependencyFinder, ideDescriptor, packageFilter, archiveManager = archiveManager
     )
 
-    val plugin = plugin.copy(dependencies = listOf(pythonModuleDependency))
+    val plugin = plugin.copy(dependsList = listOf(pythonModuleDependency))
 
     val classResolver = resolverProvider.provide(plugin.getDetails())
     // class from app.jar from mock IDE
@@ -321,7 +314,7 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
 
     val mockPluginWithIdFromThePlatform = MockIdePlugin(
       "com.intellij", pluginVersion = ideVersionString,
-      dependencies = listOf(ModuleV2Dependency("com.example.SomeModuleV2Dependency", isOptional = true))
+      contentModuleDependencies = listOf(ContentModuleDependency("com.example.SomeModuleV2Dependency", "com.example")),
     )
 
     val emptyDependencyFinder = RuleBasedDependencyFinder.create(ide)
@@ -358,7 +351,7 @@ class DefaultClassResolverProviderTest : BaseBytecodeTest() {
   private val mockPythonPlugin = MockIdePlugin(
     pluginId = "Pythonid",
     pluginVersion = "243.21565.193",
-    dependencies = listOf(platformModuleDependency),
+    dependsList = listOf(platformModuleDependency),
     pluginAliases = setOf("com.intellij.modules.python")
   )
 

@@ -19,12 +19,13 @@ internal class PluginModuleResolver {
         .mapNotNull {
           val name = it.moduleName ?: return@mapNotNull null
           val loadingRule = ModuleLoadingRule.create(it.loadingRule)
+          val requiredIfAvailable = it.requiredIfAvailable
           if (it.value.isNullOrBlank()) {
             val configFile = "../${name.replace("/", ".")}.xml"
-            Module.FileBasedModule(name, namespace, actualNamespace, loadingRule, configFile)
+            Module.FileBasedModule(name, namespace, actualNamespace, loadingRule, configFile, requiredIfAvailable)
           } else {
             val cDataContent = it.value!!
-            Module.InlineModule(name, namespace, actualNamespace, loadingRule, cDataContent)
+            Module.InlineModule(name, namespace, actualNamespace, loadingRule, cDataContent, requiredIfAvailable)
           }
         }
     }

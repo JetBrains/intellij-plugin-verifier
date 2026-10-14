@@ -11,7 +11,7 @@ class DefaultDependencyTreeResolution internal constructor(
   override val dependencyRoot: IdePlugin,
   override val transitiveDependencies: Collection<Dependency>,
   override val missingDependencies: Map<IdePlugin, Set<PluginDependency>>,
-  private val graph: DependencyTree.DependencyGraph
+  private val graph: DependencyTree.CompactDependencyGraph
 ) : DependencyTreeResolution {
 
   override fun forEach(action: (Dependency, Dependency) -> Unit) {
