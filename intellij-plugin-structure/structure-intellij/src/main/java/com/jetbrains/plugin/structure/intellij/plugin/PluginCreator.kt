@@ -476,8 +476,7 @@ internal class PluginCreator private constructor(
    * addressed by a path that is *relative* within the ZIP filesystem (`META-INF/plugin.xml`), so its
    * `parent.parent` is `null`. Absolutised, it becomes `/META-INF/plugin.xml`.
    *
-   * The root is then `parent.parent` if the descriptor's parent directory is named `META-INF`, and
-   * `parent` otherwise:
+   * The root is then the parent of the nearest `META-INF` ancestor, and `parent` if there is none:
    *
    *  - The main `plugin.xml`, and V1 `<depends optional="true" config-file="...">` descriptors with a
    *    plain file name, live directly under `<root>/META-INF/` (`JarPluginLoader` and
@@ -488,8 +487,8 @@ internal class PluginCreator private constructor(
    *    prefixes with `../`), land at the root of whichever JAR or directory holds them: the main
    *    artifact, `lib/modules/<name>.jar`, or any JAR in `lib` searched by `LibDirectoryPluginLoader`.
    *    Here `parent` is the root.
-   *  - A config-file in a subdirectory (`META-INF/sub/x.xml`) fits neither shape and gets its own
-   *    subdirectory as root.
+   *  - A config-file in a subdirectory (`META-INF/sub/x.xml`) still gets the plugin's root, as in
+   *    IntelliJ, which resolves its includes against the plugin classloader.
    *
    * [ResourceRootSource.ContainingDescriptor] covers an inline content module
    * (`<module name="...">CDATA</module>`), which has no filesystem path: `DescriptorResource`
@@ -505,7 +504,8 @@ internal class PluginCreator private constructor(
       return null
     }
     val parent = documentPath.toAbsolutePath().parent ?: return parentPlugin?.resourceRoot
-    return if (parent.fileName?.toString() == IdePluginManager.META_INF) parent.parent else parent
+    val metaInf = generateSequence(parent) { it.parent }.firstOrNull { it.fileName?.toString() == IdePluginManager.META_INF }
+    return metaInf?.parent ?: parent
   }
 
   /**

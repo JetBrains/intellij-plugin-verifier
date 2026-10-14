@@ -142,6 +142,39 @@ class PlatformParserXIncludeTest {
   }
 
   @Test
+  fun `an absolute include in a config-file descriptor in a META-INF subdirectory is resolved from the plugin root`() {
+    assertConfigFileInSubdirectoryIncludes("config-file-absolute-href", "/META-INF/y.xml")
+  }
+
+  @Test
+  fun `a relative include in a config-file descriptor in a META-INF subdirectory is resolved from the plugin root`() {
+    // As in IntelliJ, the href is taken relative to META-INF of the plugin root, not to META-INF/sub.
+    assertConfigFileInSubdirectoryIncludes("config-file-relative-href", "y.xml")
+  }
+
+  private fun assertConfigFileInSubdirectoryIncludes(name: String, href: String) {
+    val plugin = buildPluginSuccessfully(name) {
+      dir("lib") {
+        zip("main.jar") {
+          dir("META-INF") {
+            file(
+              "plugin.xml",
+              pluginXml("""<depends optional="true" config-file="sub/x.xml">com.example.optional</depends>""")
+            )
+            dir("sub") {
+              file("x.xml", ideaPlugin(include(href)))
+            }
+            file("y.xml", aliasXml("alias.from.config.file.include"))
+          }
+        }
+      }
+    }
+    val optionalDescriptor = plugin.optionalDescriptors.single()
+    assertEquals("sub/x.xml", optionalDescriptor.configurationFilePath)
+    assertEquals(setOf("alias.from.config.file.include"), optionalDescriptor.optionalPlugin.pluginAliases)
+  }
+
+  @Test
   fun `an unresolvable required include fails the plugin rather than leaving a hole in it`() {
     val result = buildPlugin("missing-required") {
       dir("lib") {
