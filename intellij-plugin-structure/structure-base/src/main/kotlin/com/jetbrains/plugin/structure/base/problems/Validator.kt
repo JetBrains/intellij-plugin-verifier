@@ -25,18 +25,24 @@ fun validatePropertyLength(
   }
 }
 
-fun validatePluginNameIsCorrect(descriptor: String, name: String, problems: MutableList<PluginProblem>) {
-  validatePluginNameIsCorrect(descriptor, name)?.let {
-    problems.add(it)
-  }
+/**
+ * Validates the common plugin name restrictions: the maximum length and the allowed symbols.
+ */
+fun validatePluginName(
+  descriptor: String,
+  propertyName: String,
+  name: String,
+  problems: MutableList<PluginProblem>
+) {
+  validatePropertyLength(descriptor, propertyName, name, MAX_NAME_LENGTH, problems)
+  validatePluginNameIsCorrect(descriptor, name, problems)
 }
 
-fun validatePluginNameIsCorrect(descriptor: String, name: String): PluginProblem? =
+fun validatePluginNameIsCorrect(descriptor: String, name: String, problems: MutableList<PluginProblem>) {
   if (!name.matches(ALLOWED_NAME_SYMBOLS)) {
-    InvalidPluginName(descriptor, name)
-  } else {
-    null
+    problems.add(InvalidPluginName(descriptor, name))
   }
+}
 
 fun validateDescriptionIsCorrect(propertyName: String, descriptorPath: String?, htmlDescription: String?, problems: MutableList<PluginProblem>) {
   problems.addAll(validateDescriptionIsCorrect(propertyName, descriptorPath, htmlDescription))

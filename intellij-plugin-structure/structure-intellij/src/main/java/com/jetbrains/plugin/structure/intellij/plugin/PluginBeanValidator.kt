@@ -61,22 +61,7 @@ class PluginBeanValidator {
   }
 
   private fun ValidationContext.validateName(name: String?) {
-    when {
-      name.isNullOrBlank() -> registerProblem(PropertyNotSpecified("name", descriptorPath))
-      DEFAULT_TEMPLATE_NAMES.any { it.equals(name, true) } -> {
-        registerProblem(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.NAME, name))
-      }
-      else -> {
-        val templateWord = PLUGIN_NAME_RESTRICTED_WORDS.find { name.contains(it, true) }
-        if (templateWord != null) {
-          registerProblem(TemplateWordInPluginName(descriptorPath, name, templateWord))
-        }
-        validatePropertyLength("name", name, MAX_NAME_LENGTH)
-        validatePluginNameIsCorrect(descriptorPath, name.trim())?.let {
-          registerProblem(it)
-        }
-      }
-    }
+    validateIntelliJPluginName(descriptorPath, name).forEach(::registerProblem)
   }
 
   private fun ValidationContext.validateBeanUrl(beanUrl: String?) {
@@ -206,6 +191,22 @@ class PluginBeanValidator {
   private fun ValidationContext.validateModules(bean: PluginBean) {
     if (bean.pluginAliases?.any { it.isEmpty() } == true) {
       registerProblem(InvalidModuleBean(descriptorPath)) // TODO rename
+    }
+  }
+}
+
+fun validateIntelliJPluginName(descriptorPath: String, name: String?): List<PluginProblem> = buildList {
+  when {
+    name.isNullOrBlank() -> add(PropertyNotSpecified("name", descriptorPath))
+    DEFAULT_TEMPLATE_NAMES.any { it.equals(name, true) } -> {
+      add(PropertyWithDefaultValue(descriptorPath, PropertyWithDefaultValue.DefaultProperty.NAME, name))
+    }
+    else -> {
+      val templateWord = PLUGIN_NAME_RESTRICTED_WORDS.find { name.contains(it, true) }
+      if (templateWord != null) {
+        add(TemplateWordInPluginName(descriptorPath, name, templateWord))
+      }
+      validatePluginName(descriptorPath, "name", name.trim(), this)
     }
   }
 }

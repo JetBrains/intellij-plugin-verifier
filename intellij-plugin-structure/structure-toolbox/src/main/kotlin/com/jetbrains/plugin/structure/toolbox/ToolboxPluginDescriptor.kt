@@ -80,15 +80,9 @@ data class ToolboxPluginDescriptor(
       }
 
       else -> {
-        validatePropertyLength(
+        validatePluginName(
           descriptor = ToolboxPluginManager.DESCRIPTOR_NAME,
           propertyName = "meta.name",
-          propertyValue = readableName,
-          maxLength = MAX_NAME_LENGTH,
-          problems = problems
-        )
-        validatePluginNameIsCorrect(
-          descriptor = ToolboxPluginManager.DESCRIPTOR_NAME,
           name = readableName,
           problems = problems
         )

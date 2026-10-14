@@ -46,14 +46,7 @@ internal fun validateHubPluginBean(manifest: HubPluginManifest): List<PluginProb
   if (pluginName.isNullOrBlank()) {
     problems.add(PropertyNotSpecified("name"))
   } else {
-    validatePropertyLength(
-      descriptor = DESCRIPTOR_NAME,
-      propertyName = "name",
-      propertyValue = pluginName,
-      maxLength = MAX_NAME_LENGTH,
-      problems = problems
-    )
-    validatePluginNameIsCorrect(descriptor = DESCRIPTOR_NAME, name = pluginName, problems = problems)
+    validatePluginName(descriptor = DESCRIPTOR_NAME, propertyName = "name", name = pluginName, problems = problems)
   }
 
   if (manifest.author == null) {
