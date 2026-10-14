@@ -6,13 +6,13 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 /**
  * Represents a content module metadata of IntelliJ plugin defined by a `<module>` tag in a `<content>` tag.
- * @param name name of the module as specified in 'name' attribute of the `<module>` tag
- * @param namespace namespace of the module as specified in 'namespace' attribute of the `<module>` tag
- * @param actualNamespace equals to `namespace` if it's specified; if not, defaults to a synthetic implicit namespace
+ * @property name name of the module as specified in 'name' attribute of the `<module>` tag
+ * @property namespace namespace of the module as specified in 'namespace' attribute of the `<module>` tag
+ * @property actualNamespace equals to `namespace` if it's specified; if not, defaults to a synthetic implicit namespace
  *        for the plugin where the module is declared. Such implicit namespaces are used only inside dependencies on
  *        private modules from other modules of the same plugin, because if all modules are private, we don't require
  *        specifying the namespace explicitly.
- * @param loadingRule specifies how the module should be loaded by IntelliJ Platform
+ * @property loadingRule specifies how the module should be loaded by IntelliJ Platform
  */
 sealed class Module {
   abstract val name: String
