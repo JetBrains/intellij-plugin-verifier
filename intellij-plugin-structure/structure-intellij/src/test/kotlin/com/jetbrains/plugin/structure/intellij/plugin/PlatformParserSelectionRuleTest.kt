@@ -4,14 +4,17 @@
 
 package com.jetbrains.plugin.structure.intellij.plugin
 
+import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.intellij.plugin.descriptors.DescriptorResource
 import com.jetbrains.plugin.structure.intellij.problems.AnyProblemToWarningPluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.net.URI
 import java.nio.file.Path
@@ -23,8 +26,25 @@ import java.nio.file.Path
  * `<idea-version>` shape (or containing IDE version) it pins down.
  */
 class PlatformParserSelectionRuleTest {
+  @Before
+  fun enablePlatformParser() {
+    Settings.PLATFORM_PARSER_ENABLED.set(true.toString())
+  }
+
+  @After
+  fun disablePlatformParser() {
+    Settings.PLATFORM_PARSER_ENABLED.set(false.toString())
+  }
+
 
   // --- bundled descriptors: the containing IDE is authoritative -------------------------------
+
+  @Test
+  fun `nothing selects the platform parser while it is disabled`() {
+    Settings.PLATFORM_PARSER_ENABLED.set(false.toString())
+    assertRejected(sinceBuild = "241.0", untilBuild = "263.*")
+    assertFalse(bundledSelectsPlatformParser("263.100", sinceBuild = "241.0", untilBuild = "263.*"))
+  }
 
   @Test
   fun `a bundled descriptor in 263 uses the platform parser despite an until build of 262`() {

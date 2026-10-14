@@ -414,6 +414,9 @@ internal class PluginCreator private constructor(
   /**
    * Whether this descriptor should be parsed by the platform parser rather than the JAXB pipeline.
    *
+   * The platform parser is opt-in: unless [Settings.PLATFORM_PARSER_ENABLED] is set, every descriptor
+   * goes through the JAXB pipeline and the rules below are not consulted.
+   *
    * Nested descriptors inherit their enclosing plugin's choice. A top-level descriptor loaded through
    * a bundled API is parsed according to the containing IDE version, matching the parser that the real
    * IDE ships, regardless of the descriptor's own compatibility declaration. Only standalone plugins
@@ -452,6 +455,7 @@ internal class PluginCreator private constructor(
    *   See [usedPlatformParser].
    */
   internal fun shouldUsePlatformParser(document: Document): Boolean {
+    if (!Settings.PLATFORM_PARSER_ENABLED.getAsBoolean()) return false
     parentPlugin?.let { return it.usedPlatformParser }
     containingIdeVersion?.let {
       return it.baselineVersion >= CONDITIONAL_INCLUDE_REMOVAL_BASELINE

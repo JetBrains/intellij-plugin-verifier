@@ -7,6 +7,7 @@ package com.jetbrains.plugin.structure.xinclude
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationFail
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
@@ -14,8 +15,10 @@ import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.ConditionalIncludeNotSupported
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -36,6 +39,16 @@ import org.junit.rules.TemporaryFolder
  * appears in [IdePlugin.pluginAliases] if and only if the included document was really read and merged.
  */
 class PlatformParserXIncludeTest {
+  @Before
+  fun enablePlatformParser() {
+    Settings.PLATFORM_PARSER_ENABLED.set(true.toString())
+  }
+
+  @After
+  fun disablePlatformParser() {
+    Settings.PLATFORM_PARSER_ENABLED.set(false.toString())
+  }
+
   @Rule
   @JvmField
   val temporaryFolder = TemporaryFolder()
