@@ -208,14 +208,14 @@ class XIncludeResolutionErrors(descriptorPath: String, error: String) : InvalidD
  * A `<xi:include>` carries an `includeIf`/`includeUnless` attribute that the IntelliJ Platform's own
  * descriptor parser refuses to honour for this plugin.
  *
- * Conditional includes are being removed from the platform in 2026.3 (IJPL-215563). Until then the
- * platform keeps honouring them for a small, internal allowlist of plugin IDs and rejects them for
- * everyone else, which is the rejection reported here - see
+ * Conditional includes are planned for removal from the platform in 2026.3 (IJPL-215563). The
+ * platform's parser already honours them only for a small, internal allowlist of plugin IDs and
+ * rejects them for everyone else, which is the rejection reported here - see
  * `PlatformPluginDescriptorParser.toConditionalIncludeProblem`.
  *
- * This is an ERROR rather than a warning because the plugin's own declared compatibility is what
- * makes it one: the descriptor claims to run on IDE builds where these attributes no longer exist at
- * all, so an include gated on one of them would silently either always or never be applied there.
+ * Only reported on the platform-parser path, i.e. for a plugin that declares compatibility with, or
+ * is bundled in, IDE builds from the removal baseline on (see `PluginCreator.shouldUsePlatformParser`).
+ * It is an ERROR because the platform's parser fails the whole descriptor on it.
  */
 class ConditionalIncludeNotSupported(
   descriptorPath: String,

@@ -47,13 +47,8 @@ private val LOG = LoggerFactory.getLogger(RawPluginDescriptorToIdePluginConverte
  *  - [ServiceElement.open] has no field on [IdePluginContentDescriptor.ServiceDescriptor] - dropped.
  *  - [ComponentElement.headlessImplementationClass]/`loadForDefaultProject`/`overrides`/`options`
  *    likewise have no home on [IdePluginContentDescriptor.ComponentConfig] - dropped.
- *  - `ExtensionElement.element` never carries the original XML tag's local name: the upstream parser
- *    calls `readXmlAsModel(reader, rootName = null, ...)` for generic extensions (vs. `readActions`,
- *    which passes the real `elementName`), and [ExtensionElement] has no field of its own for it
- *    either. So `element.name` is blank for essentially every generic extension (also `element`
- *    itself can be null for extensions with zero attributes/children, a separate memory
- *    optimization). [toJdomElement] always falls back to a name derived from the EP's last segment
- *    in both cases - see its own doc.
+ *  - [com.intellij.platform.pluginSystem.parser.impl.elements.ExtensionElement] does not keep the
+ *    extension's XML tag name, see [toJdomElement].
  */
 internal class RawPluginDescriptorToIdePluginConverter {
 
@@ -176,15 +171,15 @@ internal class RawPluginDescriptorToIdePluginConverter {
   }
 
   private fun ContentModuleElement.toModule(pluginId: String?): Module {
-    // Mirrors PluginModuleResolver's synthetic-namespace convention for private modules.
+    // IntelliJ's own implicit namespace for private modules: `"${id}_$implicit"` with `id ?: name`
+    // (PluginMainDescriptor.implicitNamespaceForPrivateModules). The JAXB path's PluginModuleResolver
+    // uses the raw `<id>` alone.
     val actualNamespace = namespace ?: "${pluginId}_\$implicit"
     val rule = loadingRule.toDomainLoadingRule()
-    // Blank content means file-based, not "an inline module whose descriptor happens to be empty".
-    // Both `<module name="x"/>` and `<module name="x"></module>` are references to a separate
-    // descriptor file, but the library reports the latter as an EMPTY `embeddedDescriptorContent`
-    // rather than a null one, so a plain null check would classify it as inline and then hand an
-    // empty string to a JDOM parse. This mirrors PluginModuleResolver's `isNullOrBlank()` test,
-    // which is what the JAXB path uses to draw the same line.
+    // Blank content means file-based. The library gives `<module name="x"/>` a null
+    // `embeddedDescriptorContent`, but whitespace-only content a non-null one, which a plain null check
+    // would classify as inline and hand to a JDOM parse. This mirrors the `isNullOrBlank()` test the
+    // JAXB path's PluginModuleResolver uses.
     val embedded = embeddedDescriptorContent?.let { String(it) }
     return if (!embedded.isNullOrBlank()) {
       Module.InlineModule(name, namespace, actualNamespace, rule, embedded)
@@ -327,14 +322,10 @@ internal class RawPluginDescriptorToIdePluginConverter {
    * Converts the library's lightweight [XmlElement] (from `util-xml-dom`) into the JDOM [Element]
    * that the rest of this codebase (and [IdePlugin]'s public surface) is built around.
    *
-   * For GENERIC extensions, `XmlReader.readExtensions` calls `readXmlAsModel(reader, rootName =
-   * null, interner)` - passing `rootName = null` - whereas `readActions` passes the real
-   * `elementName`. [ExtensionElement] has no field of its own for the original XML tag name (unlike
-   * [ActionElement], which doesn't need one because it stores a dedicated `name: ActionElementName`
-   * enum), so the library leaves the wrapper `XmlElement`'s own `name` blank in that case - it's
-   * simply not part of the extension model, only its attributes/children/content are. So
-   * `element.name` is blank for essentially EVERY generic extension, not just an edge case - always
-   * fall back to [fallbackTagName] whenever `name` is blank, not only when `element` itself is null.
+   * For generic extensions, `XmlReader.readExtensions` calls `readXmlAsModel(reader, rootName = null,
+   * ...)`, which gives the top-level `XmlElement` an empty `name` (`readActions` passes the real
+   * element name). The element itself is `null` when the extension has no attributes and no children,
+   * and always for `com.intellij.postStartupActivity`. Both cases fall back to [fallbackTagName].
    */
   private fun XmlElement?.toJdomElement(fallbackTagName: String = "extension"): Element {
     if (this == null) {
@@ -355,11 +346,9 @@ internal class RawPluginDescriptorToIdePluginConverter {
 }
 
 /**
- * [RawPluginDescriptor]-typed counterpart to [newInvalidPlugin] (which is [PluginBean]-typed).
- * Kept in this file, not InvalidPlugin.kt, to keep all `plugin-system-parser-impl`-facing code in
- * one place (see PlatformPluginDescriptorParser's class doc on why that matters for `@ApiStatus.Internal`
- * churn - though for a JetBrains-internal consumer like this project, that's routine maintenance,
- * not a special risk).
+ * [RawPluginDescriptor]-typed counterpart to [newInvalidPlugin] (which is
+ * [com.jetbrains.plugin.structure.intellij.beans.PluginBean]-typed). Kept in this file, not
+ * InvalidPlugin.kt, to keep `plugin-system-parser-impl`-facing code in one place.
  */
 internal fun newInvalidPlugin(raw: RawPluginDescriptor, document: Document): InvalidPlugin {
   return InvalidPlugin(document).apply {

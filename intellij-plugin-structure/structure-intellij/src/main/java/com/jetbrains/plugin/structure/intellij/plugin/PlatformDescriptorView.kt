@@ -20,9 +20,10 @@ import org.jdom2.Element
  * documents the platform parser actually loaded (see
  * [RecordingXIncludeLoader][com.jetbrains.plugin.structure.intellij.xinclude.RecordingXIncludeLoader]).
  *
- * The documents are a set, not the spliced descriptor - their order does not reflect where each include
- * was spliced in - so they are only consulted for the presence and spelling of elements and attributes,
- * and wherever a value survives in [RawPluginDescriptor], that value wins.
+ * The documents are a flat list - the root plus each loaded include, repeats kept - not the spliced
+ * descriptor, and their order does not reflect where each include was spliced in. So they are only
+ * consulted for the presence and spelling of elements and attributes, and wherever a value survives in
+ * [RawPluginDescriptor], that value wins.
  */
 internal class PlatformDescriptorView(
   private val raw: RawPluginDescriptor,

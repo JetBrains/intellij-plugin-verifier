@@ -156,8 +156,7 @@ class DescriptorParserTelemetryTest {
   ): Any? {
     val jar = buildZipFile(temporaryFolder.newFolder().toPath().resolve("bundled.jar")) {
       dir("META-INF") {
-        // No <idea-version> at all - the shape of an IDE-internal plugin such as
-        // intellij.idea.ultimate.customization.
+        // The default descriptor has no <idea-version> at all.
         file("plugin.xml", descriptor)
       }
     }

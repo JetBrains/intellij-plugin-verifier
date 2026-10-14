@@ -9,8 +9,9 @@ import com.jetbrains.plugin.structure.intellij.beans.PluginDependencyBean
 import com.jetbrains.plugin.structure.intellij.plugin.ValidatableDescriptor.*
 
 /**
- * [ValidatableDescriptor] over the JAXB [PluginBean]. A direct mapping: the bean already keeps every
- * value as written, including an explicit `optional="false"` on `<depends>`.
+ * [ValidatableDescriptor] over the JAXB [PluginBean]. A direct mapping: the bean keeps the lexical
+ * values the view needs - `<product-descriptor>` attributes as strings, and `<depends optional>` as a
+ * nullable Boolean that is non-null only when the attribute is written.
  */
 class PluginBeanView(private val bean: PluginBean) : ValidatableDescriptor {
   override val id: String?

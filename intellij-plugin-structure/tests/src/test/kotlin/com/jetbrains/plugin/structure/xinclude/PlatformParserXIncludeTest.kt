@@ -27,13 +27,10 @@ import org.junit.rules.TemporaryFolder
  * `<xi:include>` resolution on the platform-parser path, which resolves includes through the library's
  * own engine driven by
  * [ResourceResolverXIncludeLoader][com.jetbrains.plugin.structure.intellij.xinclude.ResourceResolverXIncludeLoader]
- * rather than through [XIncluder].
+ * rather than through [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder].
  *
- * These fixtures carry the weight of covering that codepath: the selection rule
- * ([com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.shouldUsePlatformParser]) picks a small
- * minority of real plugins, and none of the ones it picks today uses `<xi:include>` at all. Every
- * descriptor below therefore declares `until-build="263.*"` so that it is selected on the rule's own
- * merits, not merely because the parser is currently forced on for everything.
+ * Every descriptor below declares `until-build="263.*"`, which is what puts it on the platform parser
+ * under the selection rule ([com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.shouldUsePlatformParser]).
  *
  * Each include contributes a plugin alias, which is simply the cheapest thing to observe: an alias
  * appears in [IdePlugin.pluginAliases] if and only if the included document was really read and merged.
@@ -71,10 +68,9 @@ class PlatformParserXIncludeTest {
   @Test
   fun `an include is resolved from a sibling jar of the lib directory`() {
     /*
-    The `plugins/Kotlin` shape, and the reason this codepath was rewritten to go through the plugin's
-    existing composite ResourceResolver chain: the included descriptor lives in a DIFFERENT jar of the
-    `lib` directory than the descriptor referencing it. A loader that only ever looked inside the
-    artifact holding plugin.xml could not see it at all.
+    The included descriptor lives in a DIFFERENT jar of the `lib` directory than the descriptor
+    referencing it; a loader that only looked inside the artifact holding plugin.xml could not see it.
+    This is why includes go through the plugin's composite ResourceResolver chain.
     */
     val plugin = buildPluginSuccessfully("sibling-jar") {
       dir("lib") {
@@ -166,13 +162,10 @@ class PlatformParserXIncludeTest {
   @Test
   fun `an unresolvable include marked optional by a fallback does not fail the plugin`() {
     /*
-    The library treats `<xi:fallback>` purely as a marker meaning "this include is optional": on a
-    missing target it consults the marker, and then `skipElement()`s the fallback WITHOUT merging its
-    content (verified in XmlReader.readInclude's bytecode - the fallback branch is a skip, never a
-    consume). So the plugin survives the missing include, but the fallback body contributes nothing.
-
-    This is a real divergence from XIncluder, which does inline the fallback's children, and it matters
-    for the plugins that put substantive content in a fallback rather than an empty <xi:fallback/>.
+    The library treats `<xi:fallback>` purely as a marker meaning "this include is optional": it
+    skips the fallback element without merging its content (XmlReader.readInclude). So the plugin
+    survives the missing include, but the fallback body contributes nothing - as with XIncluder,
+    which also ignores the fallback's children.
     */
     val plugin = buildPluginSuccessfully("optional-fallback") {
       dir("lib") {
@@ -220,8 +213,8 @@ class PlatformParserXIncludeTest {
 
   @Test
   fun `the inert default xpointer is accepted`() {
-    // The only xpointer value observed in the wild - it selects all children of the root element,
-    // which is what an include does anyway, so both parsers treat it as a no-op.
+    // Selects all children of the root element, which is what an include does anyway, so both
+    // parsers treat it as a no-op.
     val plugin = buildPluginSuccessfully("inert-xpointer") {
       dir("lib") {
         zip("main.jar") {
@@ -327,10 +320,7 @@ class PlatformParserXIncludeTest {
 
   private fun ideaPlugin(body: String) = "<idea-plugin>\n  $body\n</idea-plugin>"
 
-  /**
-   * `until-build` is what puts this descriptor on the platform parser under the real selection rule,
-   * so these tests keep covering the include machinery even once the parser stops being forced on.
-   */
+  /** `until-build="263.*"` is what puts this descriptor on the platform parser, see the class doc. */
   private fun pluginXml(additionalContent: String) = """
     <idea-plugin>
       <id>com.example.xinclude</id>

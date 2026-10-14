@@ -16,18 +16,18 @@ private val LOG = LoggerFactory.getLogger("com.jetbrains.plugin.structure.intell
  * ### Why this is needed
  *
  * The library reports several kinds of malformed-but-recoverable descriptor content through
- * `Logger.error(...)` and then *carries on building the element anyway* - an unrecognised
- * `<extensionPoint area="...">` value (only `IDEA_PROJECT` and `IDEA_MODULE` are recognised, so the
- * perfectly ordinary legacy `IDEA_APPLICATION` lands here), an `<action>` with neither `id` nor `class`,
- * a `<listener>` missing attributes, an unknown `client` value on a service, and any `<idea-plugin>`
- * child element this parser build has no support for (`<icon>`, for instance). Inside an IDE, where a
- * real `Logger` implementation is installed, all of those are log entries and the descriptor still
- * loads.
+ * `Logger.error(...)` and then carries on parsing. Most such elements are dropped: an
+ * `<extensionPoint>` with an unrecognised `area` (only `IDEA_PROJECT` and `IDEA_MODULE` are recognised,
+ * so the ordinary legacy `IDEA_APPLICATION` lands here), an `<action>` without `class`, a `<listener>`
+ * missing attributes, and any `<idea-plugin>` child element this parser build has no support for
+ * (`<icon>`, for instance). A service with an unknown `client` or `preload` value is kept. Inside an
+ * IDE, where a real `Logger` implementation is installed, all of those are log entries and the
+ * descriptor still loads.
  *
  * Outside an IDE there is no implementation installed, and `Logger`'s default one throws
- * `AssertionError` from `error(...)`. That turned every one of those cases into a failed plugin - which
- * is not the library's behaviour, just an artefact of hosting it in a plain JVM. Installing a logging
- * implementation for that category restores the intended semantics.
+ * `AssertionError` from `error(...)`, turning each of those cases into a failed plugin - an artefact of
+ * hosting the library in a plain JVM. Installing a logging implementation for that category restores
+ * the intended semantics.
  *
  * ### Why it is guarded
  *

@@ -35,53 +35,52 @@ private val LOG = LoggerFactory.getLogger(PlatformPluginDescriptorParser::class.
  * Design notes (see also RawPluginDescriptorToIdePluginConverter's class doc):
  *
  * 1. XInclude resolution is delegated to the library's own [XIncludeLoader] mechanism, driven by
- *    [ResourceResolverXIncludeLoader] over the very [ResourceResolver] chain this module already
- *    builds for [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder]. The library
- *    diverges from [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder] on the two
+ *    [ResourceResolverXIncludeLoader] over the same [ResourceResolver] the JAXB path hands to
+ *    [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder]. The library diverges
+ *    from [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder] on the two
  *    conditional-include attributes and on `xpointer`:
  *
  *    - `includeIf`/`includeUnless` are honoured only for a small, JetBrains-internal allowlist of
  *      plugin IDs, and rejected with an `IllegalArgumentException` for everything else. They are
- *      scheduled for removal from the platform in 26.3 (IJPL-215563). We surface that rejection as
+ *      planned for removal from the platform in 26.3 (IJPL-215563). We surface that rejection as
  *      [ConditionalIncludeNotSupported], see [toConditionalIncludeProblem].
- *    - `xpointer` throws for any value other than the inert default (an XPointer selecting all
- *      children of the root `idea-plugin` element), which is the only value observed in the wild.
+ *    - `xpointer` throws for any value other than an empty one or the inert default, which selects
+ *      all children of the root `idea-plugin` element (of its `extensionPoints` element, for an include
+ *      inside `<extensionPoints>`).
  *
  * 2. The library throws bare `RuntimeException`/`XMLStreamException` for a fair number of
- *    malformed-input cases that our JAXB path would just leave as null fields or flag as a
- *    recoverable [com.jetbrains.plugin.structure.base.problems.PluginProblem] (bad/oversized
- *    `namespace` on `<content>`, missing `name`/`interface`/`beanClass` on `<extensionPoints>`,
- *    unknown content item types, unresolvable required includes, etc). It also routes any
- *    `idea-plugin` child element it doesn't recognize (e.g. `<icon>`, unsupported by this parser
- *    build at all - see [RawPluginDescriptor], which has no icon field) through the platform's own
- *    `Logger.error(...)`, whose default (non-IDE) implementation throws `AssertionError` - an
- *    `Error`, not an `Exception`. Since plugin-verifier's job is running against arbitrary -
- *    sometimes broken or adversarial - third-party plugins, [parse] contains ordinary parser
- *    exceptions. It deliberately does not catch arbitrary [Throwable] instances: JVM-fatal errors and
- *    linkage failures must escape. The one non-[Exception] fallback handled explicitly is the default
- *    logger's [AssertionError], and only when its stack identifies `DefaultLogger.error`.
+ *    malformed-input cases that our JAXB path would leave as null fields or flag as a recoverable
+ *    [com.jetbrains.plugin.structure.base.problems.PluginProblem] (bad/oversized `namespace` on
+ *    `<content>`, missing `name`/`interface`/`beanClass` on `<extensionPoints>`, unknown content item
+ *    types, unresolvable required includes, etc). [parse] turns ordinary exceptions into a problem,
+ *    since plugin-verifier runs against arbitrary, sometimes broken, third-party plugins. It
+ *    deliberately does not catch arbitrary [Throwable]s: JVM-fatal errors and linkage failures must
+ *    escape. The library also reports some recoverable content through the platform's
+ *    `Logger.error(...)`, whose default implementation throws `AssertionError`; [PlatformParserLogging]
+ *    normally prevents that, and [parse] additionally contains such an [AssertionError], only when its
+ *    stack identifies `DefaultLogger.error`, as a backstop for when the bridge could not be installed.
  *
- * 3. [RawPluginDescriptor] deliberately drops some lexical information (`product-descriptor@eap`,
- *    whether `depends@optional="false"` was explicit, and raw product version/date strings). The
+ * 3. [RawPluginDescriptor] drops some lexical information (`product-descriptor@eap`, whether
+ *    `depends@optional="false"` was explicit, and raw product version/date strings). The
  *    [XIncludeLoader] is wrapped by [RecordingXIncludeLoader], allowing [PlatformDescriptorView]
  *    to recover those values from exactly the root/include documents the platform parser consumed,
- *    without performing a second resource-resolution pass.
+ *    without a second resource-resolution pass.
  *
- * 4. Consequence of point 1: [PluginCreator.plugin]'s `underlyingDocument` is set to the ORIGINAL,
- *    unresolved [Document] on this path (still containing `<xi:include>` elements) - it no longer
- *    reflects fully-inlined content the way the JAXB path's does. `extensions` are unaffected: the
- *    converter builds those from the library's own model, which is fully resolved.
+ * 4. Consequence of point 1: [PluginCreator.plugin]'s `underlyingDocument` is the ORIGINAL,
+ *    unresolved [Document] on this path (still containing `<xi:include>` elements), not the
+ *    fully-inlined one the JAXB path stores. `extensions` are unaffected: the converter builds those
+ *    from the library's own, fully resolved model.
  */
 internal class PlatformPluginDescriptorParser {
 
   /**
    * `interner` mirrors JetBrains' own reference usage in `PluginXmlParserTest.parseBytes`
    * (intellij-community, platform/pluginSystem/parser/impl/testSrc) - `NoOpXmlInterner` is the
-   * library's own ready-made no-op implementation (from `util-xml-dom`, a transitive dependency).
+   * library's ready-made no-op implementation (from `util-xml-dom`, a direct dependency of this module).
    * `isMissingIncludeIgnored = false`: mirrors [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder]'s
-   * strictness - an unresolvable required include (no `<xi:fallback>`) should fail this plugin's
-   * parse, not silently produce a plugin with a hole in it. An unresolvable OPTIONAL include, i.e.
-   * one carrying `<xi:fallback>`, is unaffected: the library reads the fallback and carries on.
+   * strictness - an unresolvable required include (no `<xi:fallback>`) fails this plugin's parse
+   * instead of leaving a hole in it. An unresolvable include carrying `<xi:fallback>` is unaffected:
+   * the library skips it, without using the fallback's content, and carries on.
    */
   private val readerContext = object : PluginDescriptorReaderContext {
     override val interner = NoOpXmlInterner
@@ -92,19 +91,15 @@ internal class PlatformPluginDescriptorParser {
    * @param document the ORIGINAL, unresolved JDOM [Document] - `<xi:include>` elements are resolved
    *   by the library itself via [ResourceResolverXIncludeLoader], not by
    *   [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder] (see class doc, point 1).
-   * @param resourceRoot the root a classloader would resolve this plugin's resources against, as
-   *   derived by [PluginCreator.resourceRoot]. `null` for an inline content module - matching
-   *   IntelliJ's own loader, which gives embedded module content no XInclude support - and for a
-   *   descriptor that has neither a filesystem path of its own nor a parent to inherit one from.
-   *   `<xi:include>` is then unsupported for this descriptor: the library treats a null loader as
-   *   "no `<xi:include>` support" and fails cleanly if one is actually encountered, rather than
-   *   resolving against a guessed-wrong root.
-   * @param resourceResolver the same composite resolver chain the JAXB path drives
-   *   [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder] with.
+   * @param resourceRoot the root a classloader would resolve this plugin's resources against, see
+   *   [PluginCreator.resourceRoot]. `null` for an inline content module, matching IntelliJ's own
+   *   loader, which gives embedded module content no XInclude support: the library then has no
+   *   loader and fails the parse if an `<xi:include>` is actually encountered.
+   * @param resourceResolver the same resolver the JAXB path hands to
+   *   [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder].
    * @return the parsed descriptor plus its [PlatformDescriptorView] for validation, or `null` if parsing
-   *   (including XInclude resolution) failed - in
-   *   which case a problem has already been registered on [validationContext] (mirroring
-   *   [PluginDescriptorParser.ParseResult.InvalidBean]).
+   *   (including XInclude resolution) failed - in which case a problem has already been registered on
+   *   [validationContext] (mirroring [PluginDescriptorParser.ParseResult.InvalidBean]).
    */
   fun parse(
     document: Document,
@@ -179,14 +174,12 @@ private const val CONDITIONAL_INCLUDE_REJECTION_SUFFIX = " of 'include' is not s
  * Recognises the library's rejection of an `includeIf`/`includeUnless` attribute and turns it into a
  * named problem, or returns `null` for any other failure.
  *
- * Matching on the exception's message is deliberate, and the only option available. The library
- * accepts these attributes for a hardcoded, JetBrains-internal allowlist of plugin IDs
+ * Matching on the exception's message is the only option available. The library accepts these
+ * attributes for a hardcoded, JetBrains-internal allowlist of plugin IDs
  * (`XmlReader.K2_ALLOWED_PLUGIN_IDS`) and rejects them with a bare `IllegalArgumentException` for
- * everything else. The allowlist is not exposed as API, is already scheduled for deletion along with
- * the attributes themselves, and can change between library versions - so replicating it here to
- * decide up front, before handing the descriptor over, would be both a layering violation and a
- * guaranteed source of drift. Detecting the library's own verdict after the fact keeps the allowlist
- * exactly where it belongs: inside the library.
+ * everything else. The allowlist is not exposed as API and can change between library versions, so
+ * replicating it here would drift; detecting the library's verdict after the fact keeps it inside the
+ * library.
  *
  * If the message shape ever changes, this degrades to the generic
  * [UnableToReadDescriptor] - still an ERROR, just a less specific one.
@@ -213,8 +206,9 @@ private fun Throwable.conditionalIncludeAttributeName(): String? {
 }
 
 /**
- * The plugin's own `<idea-version>` range, rendered for [ConditionalIncludeNotSupported]'s message:
- * it is the plugin's declared compatibility that justifies failing it, so the message quotes it back.
+ * This descriptor's own `<idea-version>` range, quoted in [ConditionalIncludeNotSupported]'s message.
+ * Only this document is consulted: a nested descriptor has no `<idea-version>`, and a bundled plugin
+ * is selected by its IDE's version rather than by this range (see [PluginCreator.shouldUsePlatformParser]).
  */
 private fun Document.declaredCompatibility(): String {
   val ideaVersion = rootElement.getChild(IDEA_VERSION_ELEMENT)

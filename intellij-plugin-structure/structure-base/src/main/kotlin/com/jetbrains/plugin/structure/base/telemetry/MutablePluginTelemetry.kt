@@ -15,8 +15,8 @@ const val PLUGIN_VERIFIED_CLASSES_COUNT = "plugin.verification.verified.classes.
 
 /**
  * Which of the two descriptor parsers handled this plugin: `platform` for JetBrains'
- * `plugin-system-parser-impl`, `jaxb` for the JDOM+JAXB pipeline. Recorded once per plugin, at its main
- * descriptor - every descriptor nested in it inherits the same choice.
+ * `plugin-system-parser-impl`, `jaxb` for the JDOM+JAXB pipeline. Nested descriptors inherit the main
+ * descriptor's choice, and only the main descriptor's value is reported.
  */
 const val PLUGIN_DESCRIPTOR_PARSER = "plugin.descriptor.parser"
 const val UNKNOWN_SIZE: Bytes = -1

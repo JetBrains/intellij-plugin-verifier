@@ -44,8 +44,8 @@ interface ValidatableDescriptor {
 
   /**
    * `<product-descriptor>` attributes as written: `release-date` must be validated against its written
-   * `yyyyMMdd` form, `release-version` against its leading-zero/single-digit shape, and `eap`/`optional`
-   * against their exact `true`/`false` spelling.
+   * `yyyyMMdd` form, `release-version` against its written form (the platform parser maps a missing or
+   * non-numeric value to `0`), and `eap`/`optional` against their exact `true`/`false` spelling.
    */
   data class ProductDescriptorView(
     val code: String?,

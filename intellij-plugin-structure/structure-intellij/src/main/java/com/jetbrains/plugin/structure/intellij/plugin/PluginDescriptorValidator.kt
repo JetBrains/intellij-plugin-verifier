@@ -95,7 +95,7 @@ class PluginDescriptorValidator {
   private fun ValidationContext.validateChangeNotes(changeNotes: String?) {
     if (changeNotes.isNullOrBlank()) {
       //Too many plugins don't specify the change-notes, so it's too strict to require them.
-      //But if specified, let's check that the change-notes are long enough.
+      //But if specified, let's check that they are not the template text and not too long.
       return
     }
 

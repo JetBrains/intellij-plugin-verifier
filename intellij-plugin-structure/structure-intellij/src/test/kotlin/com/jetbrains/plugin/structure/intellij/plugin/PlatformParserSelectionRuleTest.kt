@@ -94,9 +94,8 @@ class PlatformParserSelectionRuleTest {
 
   @Test
   fun `since build is irrelevant once until build is present`() {
-    // A plugin pinned to 262 is by any normal reading NEWER than one declaring since=260 with no
-    // upper bound, yet it is the pinned one that keeps the old parser: only the upper bound can
-    // overlap [263, infinity).
+    // A plugin pinned to 262.2500 is newer than one declaring since=203, yet it is the pinned one that
+    // keeps the old parser: only the upper bound can overlap [263, infinity).
     assertRejected(sinceBuild = "262.2500", untilBuild = "262.2500")
     assertSelected(sinceBuild = "203.0", untilBuild = "263.0")
     // Even a nonsensical since > until does not change the answer.
@@ -143,8 +142,8 @@ class PlatformParserSelectionRuleTest {
 
   @Test
   fun `a content module inherits its parent's choice rather than being judged on its own`() {
-    // The module descriptor declares no <idea-version> at all, so judged on its own it would always
-    // be rejected. Anything else can only have been inherited.
+    // The module descriptor declares no <idea-version>, so judged on its own it is rejected; the parent
+    // (until-build 263.*) is selected by the rule, so a matching child can only have inherited it.
     val standalone = createPlugin("<idea-plugin/>")
     assertFalse(
       "a descriptor with no <idea-version> must be rejected when judged on its own",
@@ -202,9 +201,9 @@ class PlatformParserSelectionRuleTest {
 
   @Test
   fun `an xi-include inside an inline module is rejected, not silently resolved against the parent's artifact`() {
-    // Behavioral parity with the IDE. Giving the module a live resource root would let this include
-    // resolve here even though IntelliJ's real loader - which parses embedded module content with a null
-    // XIncludeLoader - could never resolve it, a false-negative compatibility result.
+    // Only checks that the module ends up with problems. NOT_FOUND_RESOLVER could not resolve the
+    // include even with a resource root, and the bare module would fail other descriptor checks anyway; that
+    // the root is withheld is pinned by the previous test.
     val parent = createPlugin(pluginXml(sinceBuild = "241.0", untilBuild = "263.*"))
     val inlineModuleXml = """
       <idea-plugin>

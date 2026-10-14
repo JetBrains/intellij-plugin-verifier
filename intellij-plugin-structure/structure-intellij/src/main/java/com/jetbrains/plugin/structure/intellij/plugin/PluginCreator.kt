@@ -27,7 +27,8 @@ import org.jdom2.Document
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
-/** Descriptor element and attribute names read before either full parse has run. */
+// `<idea-version>` names read directly off the raw JDOM document, outside either full parse - by
+// PluginCreator.shouldUsePlatformParser and PlatformPluginDescriptorParser's declaredCompatibility.
 internal const val IDEA_VERSION_ELEMENT = "idea-version"
 internal const val SINCE_BUILD_ATTRIBUTE = "since-build"
 internal const val UNTIL_BUILD_ATTRIBUTE = "until-build"
@@ -61,9 +62,10 @@ internal class PluginCreator private constructor(
     val v2ModulePrefix = Regex("^intellij\\..*")
 
     /**
-     * Baseline at which `includeIf`/`includeUnless` are removed from the platform (IJPL-215563, 26.3).
-     * A plugin declaring compatibility at or past this point cannot rely on them, which is what makes
-     * it safe to hand to a parser that rejects them.
+     * Baseline of the release in which `includeIf`/`includeUnless` are planned for removal from the
+     * platform (IJPL-215563, 26.3). The parser library already rejects them for all but an internal
+     * allowlist of plugin IDs; a plugin declaring compatibility at or past this baseline is expected
+     * not to rely on them, which is what makes it acceptable to hand it to that parser.
      */
     private const val CONDITIONAL_INCLUDE_REMOVAL_BASELINE = 263
 
@@ -157,10 +159,10 @@ internal class PluginCreator private constructor(
         // An inline content module has no filesystem path of its own, and - unlike a file-based
         // descriptor - IntelliJ's own loader does not give it XInclude support either: embedded module
         // content is parsed with a null XIncludeLoader (PluginDescriptorLoader.loadPluginSubDescriptors).
-        // ResourceRootSource.ContainingDescriptor therefore withholds the resource root, so the platform
-        // parser gets no XIncludeLoader and an <xi:include> the IDE would reject is not silently resolved
-        // here. The PARSER CHOICE is unaffected: it is inherited via parentPlugin regardless
-        // (see shouldUsePlatformParser).
+        // ResourceRootSource.ContainingDescriptor therefore withholds the resource root, so on the
+        // platform-parser path an <xi:include> here fails the parse instead of being resolved. The JAXB
+        // path is unaffected and still runs XIncluder. The parser choice itself is inherited via
+        // parentPlugin regardless (see shouldUsePlatformParser).
         resourceRootSource = ResourceRootSource.ContainingDescriptor
       )
       return pluginCreator
@@ -186,15 +188,13 @@ internal class PluginCreator private constructor(
   internal val plugin = IdePluginImpl()
 
   /**
-   * Which of the two parsers actually ran for this descriptor. Read by [shouldUsePlatformParser] of
-   * every descriptor nested in this one, so that the choice is made once per plugin - at its main
-   * descriptor, the only one carrying an `<idea-version>` - and inherited by its content modules, V2
-   * module descriptors and `<depends config-file="...">` descriptors.
+   * Which of the two parsers ran for this descriptor. Nested descriptors read it in
+   * [shouldUsePlatformParser], so the choice is made once per plugin, at its main descriptor, and
+   * inherited by its content modules, V2 module descriptors and `<depends config-file="...">` descriptors.
    *
    * `false` until [resolveDocumentAndValidateBean] has run, which is always before any nested
-   * descriptor is created: content modules and optional dependencies are resolved by
-   * [com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager] only after the enclosing
-   * [createPlugin] has returned.
+   * descriptor is created: [com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager] resolves
+   * content modules and optional dependencies only after the enclosing [createPlugin] has returned.
    */
   internal var usedPlatformParser: Boolean = false
     private set
@@ -204,11 +204,10 @@ internal class PluginCreator private constructor(
    * parser's already-joined `<xi:include>` paths (e.g. `"META-INF/extensions.xml"`) are relative to.
    * See [resolveResourceRoot].
    *
-   * `null` for a descriptor that has neither a usable filesystem path of its own nor a parent to
-   * inherit one from, and also, deliberately, for an inline content module ([ResourceRootSource.ContainingDescriptor]):
+   * `null`, deliberately, for an inline content module ([ResourceRootSource.ContainingDescriptor]):
    * `<xi:include>` is then unsupported for it, matching IntelliJ's own loader, which parses embedded
-   * module content with a null `XIncludeLoader`. Encountering an include with no resource root fails
-   * the parse rather than resolving against a guessed-wrong root or one the real IDE would not honour.
+   * module content with a null `XIncludeLoader`. On the platform-parser path, an include with no
+   * resource root fails the parse rather than resolving against a root the real IDE would not honour.
    */
   internal var resourceRoot: Path? = null
     private set
@@ -361,9 +360,8 @@ internal class PluginCreator private constructor(
     usedPlatformParser = shouldUsePlatformParser(originalDocument)
     recordParserChoice()
 
-    // Branch point: everything downstream of this `if` (theme loading, final structural validation)
-    // is shared and unaware of which parser ran - both branches converge on the same
-    // `plugin: IdePluginImpl` and both return `false` to signal "bail out, don't continue".
+    // Everything after this `if` (theme loading, final structural validation) is shared and unaware of
+    // which parser ran: both branches fill the same `plugin` and return `false` to bail out.
     val proceed = if (usedPlatformParser) {
       resolveDocumentAndValidateBeanViaPlatformParser(
         originalDocument, documentPath, documentName, pathResolver, validateDescriptor, validationContext
@@ -391,16 +389,14 @@ internal class PluginCreator private constructor(
    * Reports which parser this descriptor got, on two channels, because neither alone covers the whole
    * corpus:
    *
-   *  - [telemetry], under [PLUGIN_DESCRIPTOR_PARSER]. Structured and already plumbed to disk by the
-   *    verifier's reportage, but attached to a [PluginCreationSuccess] only - a plugin that fails to
-   *    build carries no telemetry at all, and those are exactly the plugins a parser migration most
-   *    needs to attribute.
-   *  - [PARSER_CHOICE_LOG], at DEBUG. Covers the failures the telemetry channel drops. It is a separate
-   *    logger from this class's own so that a corpus run can turn just this on, without the rest of
-   *    [PluginCreator] at DEBUG.
+   *  - [telemetry], under [PLUGIN_DESCRIPTOR_PARSER]. Structured and written out by the verifier's
+   *    reportage, but attached to a [PluginCreationSuccess] only - a plugin that fails to build carries
+   *    no telemetry, and those are the plugins a parser migration most needs to attribute.
+   *  - [PARSER_CHOICE_LOG], at DEBUG, which covers those failures. It is a separate logger so that a
+   *    corpus run can turn on just this, without the rest of [PluginCreator] at DEBUG.
    *
-   * Only the top-level creator's telemetry is reported, which is the right granularity: the choice is
-   * made once per plugin and inherited, so one record per plugin is one record per decision.
+   * Only the top-level creator's telemetry is reported; since the choice is made once per plugin and
+   * inherited, that is one record per decision.
    */
   private fun recordParserChoice() {
     val parser = if (usedPlatformParser) PLATFORM_PARSER_NAME else JAXB_PARSER_NAME
@@ -419,41 +415,36 @@ internal class PluginCreator private constructor(
    * goes through the JAXB pipeline and the rules below are not consulted.
    *
    * Nested descriptors inherit their enclosing plugin's choice. A top-level descriptor loaded through
-   * a bundled API is parsed according to the containing IDE version, matching the parser that the real
-   * IDE ships, regardless of the descriptor's own compatibility declaration. Only standalone plugins
-   * are selected from their declared compatibility range.
+   * a bundled API is selected by the containing IDE version, regardless of the descriptor's own
+   * compatibility declaration. Only standalone plugins are selected from their declared compatibility
+   * range.
    *
-   * The platform parser rejects `includeIf`/`includeUnless` (see
+   * The platform parser rejects `includeIf`/`includeUnless` for non-allowlisted plugins (see
    * [com.jetbrains.plugin.structure.intellij.problems.ConditionalIncludeNotSupported]), which the JAXB
-   * path still honours. Handing a standalone plugin to it is therefore only safe once the plugin itself
-   * cannot be relying on those attributes - and what settles that is the plugin's declared compatibility
-   * *interval* overlapping the range of IDEs where the attributes no longer exist,
-   * `[CONDITIONAL_INCLUDE_REMOVAL_BASELINE, infinity)`.
+   * path does not. Handing a standalone plugin to it is therefore only safe once the plugin cannot be
+   * relying on those attributes - i.e. once its declared compatibility interval overlaps the IDEs they
+   * are removed from, `[CONDITIONAL_INCLUDE_REMOVAL_BASELINE, infinity)`.
    *
-   * Overlap with a half-open upper interval only ever constrains the upper bound, so the decision is
-   * driven by `until-build` alone; `since-build` survives only as the trust floor for the unbounded
-   * case, where an omitted `until-build` claims compatibility with every future IDE and that claim is
-   * worth something only if the plugin is recent enough for its author to have meant it.
+   * Overlap with a half-open upper interval only constrains the upper bound, so the decision is driven
+   * by `until-build` alone; `since-build` only serves as the trust floor for the unbounded case, where
+   * an omitted `until-build` claims compatibility with every future IDE and that claim is worth
+   * something only if the plugin is recent enough for its author to have meant it.
    *
-   * Both attributes are read directly off the raw, not-yet-fully-parsed [document] - cheap, and it
-   * avoids a chicken-and-egg problem: we don't yet know which of the two "full" parses to run, so we
-   * can't get them from either of their outputs yet. `document.rootElement` is always available here -
-   * it's the same JDOM `Document` [PluginBeanToIdePluginConverter] later reads unconditionally via
-   * `document.rootElement` once one of the two parsers has run.
+   * Both attributes are read directly off the raw [document]: which full parse to run is not known
+   * yet, so neither parse's output is available.
    *
    * Notes on the comparisons:
    *
    * - Comparing baselines is sufficient. `IdeVersionImpl.fromString` reduces `262.*` to baseline 262
    *   with snapshot components, strips a product code (`IU-262.*` -> 262), and treats a bare `262` as a
-   *   baseline rather than a build number. No full-version comparison is needed.
-   * - An unparseable `until-build` falls through to the `since-build` clause deliberately: a malformed
+   *   baseline rather than a build number.
+   * - An unparseable `until-build` deliberately falls through to the `since-build` clause: a malformed
    *   upper bound is not a declaration of compatibility. Selection runs before validation and must not
-   *   depend on it - the descriptor problem for a malformed bound is registered separately, by whichever
-   *   parser then runs.
-   * - A nested descriptor inherits the enclosing plugin's choice. Content modules, V2 module
-   *   descriptors and `<depends config-file="...">` descriptors carry no `<idea-version>` of their own,
-   *   so evaluating the rule against them would silently split a single plugin across both parsers.
-   *   See [usedPlatformParser].
+   *   depend on it - a malformed bound is reported separately, by [PluginDescriptorValidator] (only when
+   *   `validateDescriptor` is set).
+   * - Content modules, V2 module descriptors and `<depends config-file="...">` descriptors carry no
+   *   `<idea-version>` of their own, so evaluating the rule against them would split a single plugin
+   *   across both parsers; they inherit instead. See [usedPlatformParser].
    */
   internal fun shouldUsePlatformParser(document: Document): Boolean {
     if (!Settings.PLATFORM_PARSER_ENABLED.getAsBoolean()) return false
@@ -477,43 +468,37 @@ internal class PluginCreator private constructor(
   }
 
   /**
-   * Derives the resource root a classloader would use for this descriptor - i.e. what the platform
-   * parser's already-joined `<xi:include>` paths (e.g. `"META-INF/extensions.xml"`) are relative to,
-   * see [com.jetbrains.plugin.structure.intellij.xinclude.ResourceResolverXIncludeLoader].
+   * Derives the resource root a classloader would use for this descriptor - what the platform parser's
+   * already-joined `<xi:include>` paths (e.g. `"META-INF/extensions.xml"`) are relative to, see
+   * [com.jetbrains.plugin.structure.intellij.xinclude.ResourceResolverXIncludeLoader].
    *
-   * [documentPath] is absolutised first, and that is load-bearing rather than cosmetic: a descriptor
-   * inside a JAR is addressed by a path obtained from `FileSystem.getPath("META-INF/plugin.xml")`,
-   * which is *relative* within the ZIP filesystem, so its `parent.parent` is `null` and nothing could
-   * be derived at all - for nearly every plugin, since nearly all of them ship as JARs. Absolutised, it
-   * becomes `/META-INF/plugin.xml` and the two shapes below fall out naturally.
+   * [documentPath] is absolutised first, and that is load-bearing: a descriptor inside a JAR is
+   * addressed by a path that is *relative* within the ZIP filesystem (`META-INF/plugin.xml`), so its
+   * `parent.parent` is `null`. Absolutised, it becomes `/META-INF/plugin.xml`.
    *
-   * The shapes are distinguished by whether the descriptor's own parent directory is named `META-INF`:
+   * The root is then `parent.parent` if the descriptor's parent directory is named `META-INF`, and
+   * `parent` otherwise:
    *
-   *  - Main `plugin.xml` and V1 optional-dependency config-file descriptors
-   *    (`<depends optional="true" config-file="...">`) both live directly under `<root>/META-INF/` -
-   *    confirmed against `JarPluginLoader` (`jar.getPluginDescriptor("META-INF/$descriptorPath")`),
-   *    `PluginDirectoryLoader` (`pluginDirectory.resolve(META_INF).resolve(descriptorPath)`) and
-   *    `OptionalDependencyResolver` (loaded the same way, no `../` in that convention). Root is
-   *    `parent.parent`: the ZIP root `/`, or the exploded plugin directory.
-   *  - File-based content modules ([PluginModuleResolver]'s `"../$moduleName.xml"` convention,
-   *    [com.jetbrains.plugin.structure.intellij.plugin.module.FileBasedModuleDescriptorResolver]) always
-   *    land at some JAR's or directory's own root, never under `META-INF`: the forced `META-INF/` prefix
-   *    the two loaders above always add cancels out against the module reference's own leading `../`.
-   *    That root is either the main plugin artifact itself or, when the module ships as its own
-   *    `lib/modules/<name>.jar`, that module's own JAR. Either way `parent` IS the root.
+   *  - The main `plugin.xml`, and V1 `<depends optional="true" config-file="...">` descriptors with a
+   *    plain file name, live directly under `<root>/META-INF/` (`JarPluginLoader` and
+   *    `PluginDirectoryLoader` both prefix the descriptor path with `META-INF/`). Root is the ZIP root
+   *    `/`, or the exploded plugin directory.
+   *  - File-based content modules ([PluginModuleResolver]'s `"../$moduleName.xml"` convention), and
+   *    config-files named `intellij.*` (which [DependsPluginDependency.resolveDescriptorPath] also
+   *    prefixes with `../`), land at the root of whichever JAR or directory holds them: the main
+   *    artifact, `lib/modules/<name>.jar`, or any JAR in `lib` searched by `LibDirectoryPluginLoader`.
+   *    Here `parent` is the root.
+   *  - A config-file in a subdirectory (`META-INF/sub/x.xml`) fits neither shape and gets its own
+   *    subdirectory as root.
    *
-   * [ResourceRootSource.ContainingDescriptor] covers the third shape, an inline content module
-   * (`<module name="...">CDATA</module>`), which has no filesystem path at all: `DescriptorResource`
-   * synthesises [documentPath] from a URI fragment into a bare, parentless single-segment path naming
-   * no real file, so absolutising it would silently root the plugin at the current working directory.
-   *
-   * Such a module gets `null`, not the parent's root, and that is deliberate rather than a gap: in
-   * IntelliJ's own loader, embedded module descriptor content is parsed with a null `XIncludeLoader`
-   * (`PluginDescriptorLoader.loadPluginSubDescriptors`), so `<xi:include>` is unsupported there too. A
-   * resource root inherited from the containing descriptor would let this module resolve an include the
-   * real IDE would reject - a false-negative compatibility result.
-   * (The *parser choice* - JAXB vs. platform - is a separate axis and is still inherited via
-   * [shouldUsePlatformParser]; only resource-root/XInclude capability is withheld here.)
+   * [ResourceRootSource.ContainingDescriptor] covers an inline content module
+   * (`<module name="...">CDATA</module>`), which has no filesystem path: `DescriptorResource`
+   * synthesises [documentPath] as a bare single-segment path, so absolutising it would root the module
+   * at the current working directory. Such a module gets `null`, deliberately, not the parent's root:
+   * IntelliJ's own loader parses embedded module content with a null `XIncludeLoader`
+   * (`PluginDescriptorLoader.loadPluginSubDescriptors`), so an inherited root would let an include
+   * resolve here that the real IDE rejects. The parser choice is still inherited, see
+   * [shouldUsePlatformParser].
    */
   private fun resolveResourceRoot(documentPath: Path, resourceRootSource: ResourceRootSource): Path? {
     if (resourceRootSource == ResourceRootSource.ContainingDescriptor) {
@@ -531,9 +516,9 @@ internal class PluginCreator private constructor(
     OwnDocumentPath,
 
     /**
-     * An inline content module: no resource root at all, by design - it has no path of its own, and
-     * IntelliJ's own loader gives embedded module content no XInclude support either. See
-     * [resolveResourceRoot].
+     * An inline content module, whose content is embedded in the containing descriptor. Despite the
+     * name, nothing is taken from that descriptor: the result is no resource root at all, since IntelliJ's
+     * own loader gives embedded module content no XInclude support either. See [resolveResourceRoot].
      */
     ContainingDescriptor
   }
@@ -588,27 +573,22 @@ internal class PluginCreator private constructor(
   /**
    * The platform-parser pipeline: JetBrains' own plugin-system-parser-impl via
    * [PlatformPluginDescriptorParser]/[RawPluginDescriptorToIdePluginConverter]. XIncludes are NOT
-   * pre-resolved with [XIncluder] here - [PlatformPluginDescriptorParser] hands the ORIGINAL,
-   * unresolved document straight to the library, which resolves `<xi:include>` itself. It does so
-   * through [com.jetbrains.plugin.structure.intellij.xinclude.ResourceResolverXIncludeLoader], driven
-   * by this very [pathResolver] anchored at [resourceRoot], so both parsers see the same resources -
-   * including includes whose target lives in a sibling JAR of the plugin's `lib` directory. What
-   * differs is only the two features the library has dropped: `includeIf`/`includeUnless`
+   * pre-resolved with [XIncluder] here: the library resolves `<xi:include>` in the ORIGINAL document
+   * itself, through [com.jetbrains.plugin.structure.intellij.xinclude.ResourceResolverXIncludeLoader]
+   * over this [pathResolver] anchored at [resourceRoot] - including includes whose target lives in a
+   * sibling JAR of the plugin's `lib` directory. Beyond [XIncluder]'s own fallback lookups, the library
+   * differs in two features it has dropped: `includeIf`/`includeUnless`
    * (see [com.jetbrains.plugin.structure.intellij.problems.ConditionalIncludeNotSupported]) and
-   * non-default `xpointer` values. `documentName` is consequently unused on this path - it was only
-   * needed to name the document in [XIncluder]'s own error messages - kept as a parameter for symmetry
-   * with [resolveDocumentAndValidateBeanViaJaxb] and because [resolveDocumentAndValidateBean] calls
-   * both branches uniformly.
+   * non-default `xpointer` values. `documentPath` and `documentName` are therefore unused here; they
+   * are kept so that [resolveDocumentAndValidateBean] can call both branches uniformly.
    *
    * The [RawPluginDescriptorToIdePluginConverter.convert] call is wrapped in try/catch, unlike the
-   * JAXB path's equivalent call: content modules are resolved via this same [createPlugin] entry
-   * point (from [com.jetbrains.plugin.structure.intellij.plugin.loaders.ModuleFromDescriptorLoader]),
-   * so an uncaught exception here can escape all the way out of a content module's resolution and
-   * kill the whole verifier worker process, not just fail one plugin. The JAXB converter can't throw
-   * here because JDOM elements built by walking an already-parsed [Document] always have valid tag
-   * names by construction; the new converter bridges the library's own lightweight element model into
-   * JDOM by hand ([RawPluginDescriptorToIdePluginConverter.toJdomElement]), which is exactly the kind
-   * of new, unproven code path this try/catch exists to contain.
+   * JAXB path's converter call, so that a conversion failure (e.g. a malformed `since-build` that
+   * validation did not reject, or a bad element name in the hand-written
+   * [RawPluginDescriptorToIdePluginConverter.toJdomElement] bridge) becomes an [UnableToReadDescriptor]
+   * for this descriptor. Inline content modules reach this method via
+   * [com.jetbrains.plugin.structure.intellij.plugin.loaders.ModuleFromDescriptorLoader], which does
+   * not catch it.
    */
   @Suppress("UNUSED_PARAMETER")
   private fun resolveDocumentAndValidateBeanViaPlatformParser(
@@ -642,8 +622,7 @@ internal class PluginCreator private constructor(
       validationResult.warnings.forEach { registerProblem(it) }
     }
 
-    // Still the UNRESOLVED document on this path - see PlatformPluginDescriptorParser's class doc,
-    // point 4, on why that's a known, currently-cosmetic gap.
+    // Still the UNRESOLVED document on this path - see PlatformPluginDescriptorParser's class doc, point 4.
     plugin.underlyingDocument = originalDocument
     try {
       rawDescriptorToPluginConverter.convert(raw, parseResult.view, originalDocument, parentPlugin, ::registerProblem, plugin)

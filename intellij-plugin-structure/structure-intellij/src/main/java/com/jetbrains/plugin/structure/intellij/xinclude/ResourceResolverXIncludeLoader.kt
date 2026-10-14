@@ -14,8 +14,9 @@ private val LOG = LoggerFactory.getLogger(ResourceResolverXIncludeLoader::class.
 
 /**
  * Bridges the platform parser library's [XIncludeLoader] contract onto the [ResourceResolver] chain
- * this module already builds, so that `<xi:include>` resolution on the platform-parser path reaches
- * exactly the same resources as [XIncluder] does on the JAXB path.
+ * this module already builds, so that `<xi:include>` resolution on the platform-parser path searches
+ * the same resources as [XIncluder] does on the JAXB path (minus [XIncluder]'s own fallback lookups,
+ * see below).
  *
  * ### Why the two contracts line up
  *
@@ -31,16 +32,14 @@ private val LOG = LoggerFactory.getLogger(ResourceResolverXIncludeLoader::class.
  * [resourceRoot] makes the two agree exactly, because
  * `resourceRoot.resolve(ANCHOR).resolveSibling(path) == resourceRoot/path`.
  *
- * That equivalence is what lets this class reuse the chain rather than re-implement lookup, and it
- * brings [com.jetbrains.plugin.structure.intellij.resources.JarsResourceResolver]'s sibling-JAR search
- * along for free: an include whose target lives in a *different* JAR of the plugin's `lib` directory -
- * the shape JetBrains' own largest bundled plugins use - resolves without any extra work here.
+ * That equivalence lets this class reuse the chain rather than re-implement lookup. For a plugin
+ * loaded from a `lib` directory, the chain is
+ * `CompositeResourceResolver(JarsResourceResolver(lib jars) + caller's resolver)`, so an include whose
+ * target lives in a *different* JAR of `lib` resolves too.
  *
- * Note that the wrappers [XIncluder] adds around the caller's resolver
- * ([MetaInfResourceResolver], [InParentPathResourceResolver]) are internal to [XIncluder] and are NOT
- * part of the chain handed to `PluginCreator`, so there is no `META-INF/` segment being re-appended
- * behind this class's back. The chain is a plain
- * `CompositeResourceResolver(JarsResourceResolver(lib jars) + caller's resolver)`.
+ * The fallback wrappers [XIncluder] adds around the resolver ([MetaInfResourceResolver],
+ * [InParentPathResourceResolver]) are internal to [XIncluder] and NOT part of the chain handed to
+ * `PluginCreator`, so no `META-INF/` segment is re-appended behind this class's back.
  */
 internal class ResourceResolverXIncludeLoader(
   private val resourceResolver: ResourceResolver,
@@ -66,9 +65,8 @@ internal class ResourceResolverXIncludeLoader(
 
   private companion object {
     /**
-     * A file name that cannot collide with a real entry, standing in for "some file directly inside
-     * the resource root". Only its *position* matters - [ResourceResolver] never looks at the anchor
-     * itself, only at its parent, via `resolveSibling`.
+     * Stands in for "some file directly inside the resource root". Only its position matters:
+     * [ResourceResolver] never looks the anchor itself up, only resolves siblings of it.
      */
     const val ANCHOR = "__xinclude_anchor__"
   }
