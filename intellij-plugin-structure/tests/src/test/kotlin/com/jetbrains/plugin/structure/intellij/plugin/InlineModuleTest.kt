@@ -2,6 +2,7 @@ package com.jetbrains.plugin.structure.intellij.plugin
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
+import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.ide.Ide
@@ -17,6 +18,7 @@ import com.jetbrains.plugin.structure.mocks.idePlugin
 import org.intellij.lang.annotations.Language
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Rule
@@ -145,6 +147,73 @@ class InlineModuleTest {
       assertContains("com.intellij.modules.lang")
       // dependency declared in a content module
       assertContains("com.intellij.modules.structuralsearch")
+    }
+  }
+
+  @Test
+  fun `inline module with malformed since-build is kept without since-build`() {
+    assertInlineModuleWithMalformedIdeaVersion("since-build=\"abc\"", expectedSinceBuild = null)
+  }
+
+  @Test
+  fun `inline module with malformed until-build is kept without until-build`() {
+    assertInlineModuleWithMalformedIdeaVersion("since-build=\"241.1\" until-build=\"x.y\"", expectedSinceBuild = "241.1")
+  }
+
+  @Test
+  fun `inline module with malformed since-build is kept without since-build on the platform parser path`() {
+    withPlatformParser {
+      assertInlineModuleWithMalformedIdeaVersion("since-build=\"abc\"", expectedSinceBuild = null, pluginUntilBuild = "263.*")
+    }
+  }
+
+  @Test
+  fun `inline module with malformed until-build is kept without until-build on the platform parser path`() {
+    withPlatformParser {
+      assertInlineModuleWithMalformedIdeaVersion("since-build=\"241.1\" until-build=\"x.y\"", expectedSinceBuild = "241.1", pluginUntilBuild = "263.*")
+    }
+  }
+
+  private fun assertInlineModuleWithMalformedIdeaVersion(
+    inlineIdeaVersionAttributes: String,
+    expectedSinceBuild: String?,
+    pluginUntilBuild: String = "241.*"
+  ) {
+    @Language("XML")
+    val pluginXml = """
+      <idea-plugin>
+        <id>someId</id><name>someName</name><version>1.0</version>
+        <vendor email="vendor.com" url="url">vendor</vendor>
+        <description>this description is looooooooooong enough</description>
+        <idea-version since-build="241.1" until-build="$pluginUntilBuild"/>
+        <depends>com.intellij.modules.platform</depends>
+        <content>
+          <module name="my.inline"><![CDATA[<idea-plugin package="my.inline"><idea-version $inlineIdeaVersionAttributes/></idea-plugin>]]></module>
+        </content>
+      </idea-plugin>
+    """.trimIndent()
+    val pluginFile = buildZipFile(temporaryFolder.newFolder().toPath().resolve("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml", pluginXml)
+      }
+    }
+    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
+    if (pluginCreationResult !is PluginCreationSuccess) {
+      fail("Plugin has not been created: $pluginCreationResult")
+      return
+    }
+    val moduleDescriptor = pluginCreationResult.plugin.modulesDescriptors.single()
+    assertEquals("my.inline", moduleDescriptor.name)
+    assertEquals(expectedSinceBuild, moduleDescriptor.module.sinceBuild?.asString())
+    assertNull(moduleDescriptor.module.untilBuild)
+  }
+
+  private fun withPlatformParser(block: () -> Unit) {
+    Settings.PLATFORM_PARSER_ENABLED.set(true.toString())
+    try {
+      block()
+    } finally {
+      Settings.PLATFORM_PARSER_ENABLED.set(false.toString())
     }
   }
 

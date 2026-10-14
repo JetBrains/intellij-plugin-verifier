@@ -70,7 +70,7 @@ internal class RawPluginDescriptorToIdePluginConverter {
       useIdeClassLoader = raw.isUseIdeaClassLoader
       isImplementationDetail = raw.isImplementationDetail
 
-      sinceBuild = raw.sinceBuild?.let { IdeVersion.createIdeVersion(it) }
+      sinceBuild = raw.sinceBuild?.let { IdeVersion.createIdeVersionIfValid(it) }
       untilBuild = readUntilBuild(raw)
 
       hasPackagePrefix = raw.`package` != null
@@ -108,7 +108,7 @@ internal class RawPluginDescriptorToIdePluginConverter {
     } else {
       untilBuild
     }
-    return IdeVersion.createIdeVersion(resolvedUntilBuild)
+    return IdeVersion.createIdeVersionIfValid(resolvedUntilBuild)
   }
 
   private fun IdePluginImpl.readVendor(raw: RawPluginDescriptor) {

@@ -84,8 +84,10 @@ internal class PluginBeanToIdePluginConverter {
     }
   }
 
+  // Malformed values are reported by validation; they reach this point only for inline content modules,
+  // whose problems are downgraded to warnings, so drop them here rather than throw.
   private fun PluginBean.readSinceBuild(): IdeVersion? = ideaVersion?.sinceBuild?.let {
-    IdeVersion.createIdeVersion(it)
+    IdeVersion.createIdeVersionIfValid(it)
   }
 
   private fun PluginBean.readUntilBuild(): IdeVersion? {
@@ -95,7 +97,7 @@ internal class PluginBeanToIdePluginConverter {
     } else {
       untilBuild
     }
-    return IdeVersion.createIdeVersion(resolvedUntilBuild)
+    return IdeVersion.createIdeVersionIfValid(resolvedUntilBuild)
   }
 
   private fun IdePluginImpl.readVendor(bean: PluginBean) {
