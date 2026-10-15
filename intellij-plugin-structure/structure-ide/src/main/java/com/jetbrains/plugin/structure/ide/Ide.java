@@ -5,6 +5,7 @@
 package com.jetbrains.plugin.structure.ide;
 
 import com.jetbrains.plugin.structure.intellij.plugin.*;
+import com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule;
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,49 +36,50 @@ public abstract class Ide implements PluginProvider {
   public abstract IdeVersion getVersion();
 
   /**
-   * Returns the bundled plugins and IDE modules shipped with this IDE distribution.
+   * Returns the bundled plugins and {@link IdeModule IDE modules} shipped with this IDE distribution.
    * <p>
    * For IDEs based on {@code product-info.json}, the list contains the core plugin ({@code com.intellij})
    * and the layout components of these kinds:
    * <ul>
    *   <li>{@code plugin}, such as {@code intellij.platform.ijent.impl}, loaded as a regular plugin.</li>
    *   <li>{@code productModuleV2} and {@code moduleV2}, such as {@code intellij.platform.diagnostic.freezeAnalyzer},
-   *   loaded as IDE modules ({@link com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule}).
-   *   The plugin ID of an IDE module is its module name.</li>
+   *   loaded as {@link IdeModule IDE modules}.
+   *   The plugin ID of an {@link IdeModule IDE module} is its module name.</li>
    * </ul>
    *
-   * @return the bundled plugins and IDE modules
+   * @return the bundled plugins and {@link IdeModule IDE modules}
    */
   @NotNull
   public abstract List<IdePlugin> getBundledPlugins();
 
   /**
-   * Checks whether this IDE contains a bundled plugin or an IDE module with the given plugin ID.
+   * Checks whether this IDE contains a bundled plugin or an {@link IdeModule IDE module} with the given plugin ID.
    * <p>
    * By default, this is the same as {@code findPluginById(pluginId) != null}.
-   * An IDE module ({@link com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule})
-   * is matched by its module name, such as {@code intellij.platform.diagnostic.freezeAnalyzer}.
+   * An {@link IdeModule IDE module} is matched by its module name,
+   * such as {@code intellij.platform.diagnostic.freezeAnalyzer}.
    * Plugin aliases are not matched; use {@link #findPluginByModule(String)} for them.
    * <p>
    * Subclasses may override this with a cheaper check that does not load the bundled plugins,
    * see {@link ProductInfoBasedIde#hasBundledPlugin(String)}.
    *
-   * @param pluginId plugin ID or IDE module name
-   * @return {@code true} if a bundled plugin or an IDE module with this ID exists, {@code false} otherwise
+   * @param pluginId plugin ID or {@link IdeModule IDE module} name
+   * @return {@code true} if a bundled plugin or an {@link IdeModule IDE module} with this ID exists,
+   * {@code false} otherwise
    */
   public boolean hasBundledPlugin(@NotNull String pluginId) {
     return findPluginById(pluginId) != null;
   }
 
   /**
-   * Finds a bundled plugin or an IDE module by its plugin ID.
+   * Finds a bundled plugin or an {@link IdeModule IDE module} by its plugin ID.
    * <p>
-   * An IDE module ({@link com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule})
-   * is matched by its module name, such as {@code intellij.platform.diagnostic.freezeAnalyzer}.
+   * An {@link IdeModule IDE module} is matched by its module name,
+   * such as {@code intellij.platform.diagnostic.freezeAnalyzer}.
    * Plugin aliases are not matched; use {@link #findPluginByModule(String)} for them.
    *
-   * @param pluginId plugin ID or IDE module name
-   * @return the matching plugin or IDE module, or {@code null} if nothing matches
+   * @param pluginId plugin ID or {@link IdeModule IDE module} name
+   * @return the matching plugin or {@link IdeModule IDE module}, or {@code null} if nothing matches
    */
   @Nullable
   @Override
@@ -86,14 +88,14 @@ public abstract class Ide implements PluginProvider {
   }
 
   /**
-   * Finds a bundled plugin or an IDE module that defines the given module ID.
+   * Finds a bundled plugin or an {@link IdeModule IDE module} that defines the given module ID.
    * <p>
    * The module ID is matched against plugin aliases declared with {@code <module value="..."/>},
-   * such as {@code com.intellij.modules.platform}, and against IDE module names, because an
-   * {@link com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule} defines its own name as a module.
+   * such as {@code com.intellij.modules.platform}, and against {@link IdeModule IDE module} names,
+   * because an {@link IdeModule IDE module} defines its own name as a module.
    *
-   * @param moduleId plugin alias or IDE module name
-   * @return the plugin or IDE module that defines the module, or {@code null} if nothing matches
+   * @param moduleId plugin alias or {@link IdeModule IDE module} name
+   * @return the plugin or {@link IdeModule IDE module} that defines the module, or {@code null} if nothing matches
    */
   @Nullable
   @Override
@@ -102,12 +104,13 @@ public abstract class Ide implements PluginProvider {
   }
 
   /**
-   * Finds a bundled plugin or an IDE module by a plugin ID, an IDE module name, or a plugin alias.
+   * Finds a bundled plugin or an {@link IdeModule IDE module} by a plugin ID,
+   * an {@link IdeModule IDE module} name, or a plugin alias.
    * <p>
    * The lookup searches {@link #getBundledPlugins()} in this order, and the first match wins:
    * <ol>
-   *   <li>By plugin ID, such as {@code intellij.platform.ijent.impl}. An IDE module
-   *   ({@link com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule}) is matched by its module name,
+   *   <li>By plugin ID, such as {@code intellij.platform.ijent.impl}.
+   *   An {@link IdeModule IDE module} is matched by its module name,
    *   such as {@code intellij.platform.diagnostic.freezeAnalyzer}.
    *   The result type is {@link PluginProviderResult.Type#PLUGIN}.</li>
    *   <li>By plugin alias declared with {@code <module value="..."/>},
@@ -115,8 +118,9 @@ public abstract class Ide implements PluginProvider {
    *   The result type is {@link PluginProviderResult.Type#MODULE}.</li>
    * </ol>
    *
-   * @param pluginIdOrModuleId plugin ID, IDE module name, or plugin alias
-   * @return the matching plugin or IDE module with its match type, or {@code null} if nothing matches
+   * @param pluginIdOrModuleId plugin ID, {@link IdeModule IDE module} name, or plugin alias
+   * @return the matching plugin or {@link IdeModule IDE module} with its match type,
+   * or {@code null} if nothing matches
    */
   @Override
   public @Nullable PluginProviderResult findPluginByIdOrModuleId(@NotNull String pluginIdOrModuleId) {
@@ -132,7 +136,7 @@ public abstract class Ide implements PluginProvider {
   }
 
   /**
-   * Finds the first bundled plugin or IDE module that matches any criterion enabled in the query.
+   * Finds the first bundled plugin or {@link IdeModule IDE module} that matches any criterion enabled in the query.
    * <p>
    * The lookup scans {@link #getBundledPlugins()} in list order and returns the first plugin that matches.
    * Each plugin is checked against the enabled criteria in this order, and the first matching criterion
@@ -152,8 +156,8 @@ public abstract class Ide implements PluginProvider {
    * by a later criterion wins over a plugin later in the list that matches by an earlier criterion.
    * This can differ from {@link #findPluginByIdOrModuleId(String)}, which checks all plugin IDs before any alias.
    * <p>
-   * An IDE module ({@link com.jetbrains.plugin.structure.intellij.plugin.module.IdeModule}) is matched by its
-   * module name, such as {@code intellij.platform.diagnostic.freezeAnalyzer}, through
+   * An {@link IdeModule IDE module} is matched by its module name,
+   * such as {@code intellij.platform.diagnostic.freezeAnalyzer}, through
    * {@link PluginQuery.Builder#inId()} and {@link PluginQuery.Builder#inPluginAliases()}.
    * It is never matched through {@link PluginQuery.Builder#inName()}, because it has no plugin name,
    * nor through {@link PluginQuery.Builder#inContentModuleId()}, because it declares no content modules.
@@ -161,8 +165,8 @@ public abstract class Ide implements PluginProvider {
    * Unlike the other lookups, this method does not use cached indexes, so each call scans all bundled plugins.
    *
    * @param query the identifier and the criteria to match it against
-   * @return {@link PluginProvision.Found} with the matching plugin or IDE module and the matched criterion,
-   * or {@link PluginProvision.NotFound} if nothing matches; never {@code null}
+   * @return {@link PluginProvision.Found} with the matching plugin or {@link IdeModule IDE module}
+   * and the matched criterion, or {@link PluginProvision.NotFound} if nothing matches; never {@code null}
    */
   @Override
   public @NotNull PluginProvision query(@NotNull PluginQuery query) {
