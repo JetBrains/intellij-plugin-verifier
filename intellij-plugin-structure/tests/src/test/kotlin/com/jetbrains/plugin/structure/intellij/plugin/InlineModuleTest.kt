@@ -208,6 +208,41 @@ class InlineModuleTest {
     assertNull(moduleDescriptor.module.untilBuild)
   }
 
+  @Test
+  fun `implicit namespace of an id-less plugin falls back to the plugin name`() {
+    assertEquals("someName_\$implicit", idLessPluginContentModuleNamespace())
+    withPlatformParser {
+      assertEquals("someName_\$implicit", idLessPluginContentModuleNamespace())
+    }
+  }
+
+  private fun idLessPluginContentModuleNamespace(): String {
+    @Language("XML")
+    val pluginXml = """
+      <idea-plugin>
+        <name>someName</name><version>1.0</version>
+        <vendor email="vendor.com" url="url">vendor</vendor>
+        <description>this description is looooooooooong enough</description>
+        <idea-version since-build="241.1" until-build="263.*"/>
+        <depends>com.intellij.modules.platform</depends>
+        <content>
+          <module name="my.inline"><![CDATA[<idea-plugin package="my.inline"/>]]></module>
+        </content>
+      </idea-plugin>
+    """.trimIndent()
+    val pluginFile = buildZipFile(temporaryFolder.newFolder().toPath().resolve("plugin.jar")) {
+      dir("META-INF") {
+        file("plugin.xml", pluginXml)
+      }
+    }
+    val pluginCreationResult = IdePluginManager.createManager().createPlugin(pluginFile)
+    if (pluginCreationResult !is PluginCreationSuccess) {
+      fail("Plugin has not been created: $pluginCreationResult")
+    }
+    val plugin = (pluginCreationResult as PluginCreationSuccess).plugin
+    return plugin.contentModules.single().actualNamespace
+  }
+
   private fun withPlatformParser(block: () -> Unit) {
     Settings.PLATFORM_PARSER_ENABLED.set(true.toString())
     try {

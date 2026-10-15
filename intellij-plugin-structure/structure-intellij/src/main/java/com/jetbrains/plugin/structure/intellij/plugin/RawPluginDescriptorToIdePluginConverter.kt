@@ -172,8 +172,7 @@ internal class RawPluginDescriptorToIdePluginConverter {
 
   private fun ContentModuleElement.toModule(pluginId: String?): Module {
     // IntelliJ's own implicit namespace for private modules: `"${id}_$implicit"` with `id ?: name`
-    // (PluginMainDescriptor.implicitNamespaceForPrivateModules). The JAXB path's PluginModuleResolver
-    // uses the raw `<id>` alone.
+    // (PluginMainDescriptor.implicitNamespaceForPrivateModules), as in the JAXB path's PluginModuleResolver.
     val actualNamespace = namespace ?: "${pluginId}_\$implicit"
     val rule = loadingRule.toDomainLoadingRule()
     // Blank content means file-based. The library gives `<module name="x"/>` a null

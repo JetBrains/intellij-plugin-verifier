@@ -56,7 +56,7 @@ internal class PluginBeanToIdePluginConverter {
       readV2Dependencies(bean, parentPlugin)
 
       if (pluginModuleResolver.supports(bean)) {
-        contentModules += pluginModuleResolver.resolvePluginModules(bean)
+        contentModules += pluginModuleResolver.resolvePluginModules(bean, pluginId)
       }
 
       bean.incompatibleWith?.let {
