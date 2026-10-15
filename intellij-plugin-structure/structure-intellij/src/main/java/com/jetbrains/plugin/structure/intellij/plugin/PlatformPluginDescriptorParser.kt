@@ -97,6 +97,8 @@ internal class PlatformPluginDescriptorParser {
    *   loader and fails the parse if an `<xi:include>` is actually encountered.
    * @param resourceResolver the same resolver the JAXB path hands to
    *   [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder].
+   * @param selectionReason why this plugin is on the platform-parser path, quoted in
+   *   [ConditionalIncludeNotSupported]'s message, see [PluginCreator.describePlatformParserSelection].
    * @return the parsed descriptor plus its [PlatformDescriptorView] for validation, or `null` if parsing
    *   (including XInclude resolution) failed - in which case a problem has already been registered on
    *   [validationContext] (mirroring [PluginDescriptorParser.ParseResult.InvalidBean]).
@@ -107,6 +109,7 @@ internal class PlatformPluginDescriptorParser {
     resourceResolver: ResourceResolver,
     descriptorPath: String,
     pluginFileName: String,
+    selectionReason: String,
     validationContext: ValidationContext
   ): PlatformPluginDescriptorParseResult? {
     return try {
@@ -125,7 +128,7 @@ internal class PlatformPluginDescriptorParser {
       }
       PlatformPluginDescriptorParseResult(raw, PlatformDescriptorView(raw, sourceDocuments))
     } catch (e: Exception) {
-      validationContext += e.toConditionalIncludeProblem(document, descriptorPath)
+      validationContext += e.toConditionalIncludeProblem(descriptorPath, selectionReason)
         ?: UnableToReadDescriptor(descriptorPath, e.localizedMessage)
       LOG.info("Unable to read plugin descriptor $descriptorPath of $pluginFileName via platform parser", e)
       null
@@ -185,11 +188,11 @@ private const val CONDITIONAL_INCLUDE_REJECTION_SUFFIX = " of 'include' is not s
  * [UnableToReadDescriptor] - still an ERROR, just a less specific one.
  */
 private fun Throwable.toConditionalIncludeProblem(
-  document: Document,
-  descriptorPath: String
+  descriptorPath: String,
+  selectionReason: String
 ): ConditionalIncludeNotSupported? {
   val attributeName = conditionalIncludeAttributeName() ?: return null
-  return ConditionalIncludeNotSupported(descriptorPath, attributeName, document.declaredCompatibility())
+  return ConditionalIncludeNotSupported(descriptorPath, attributeName, selectionReason)
 }
 
 private fun Throwable.conditionalIncludeAttributeName(): String? {
@@ -203,21 +206,4 @@ private fun Throwable.conditionalIncludeAttributeName(): String? {
     cause = cause.cause
   }
   return null
-}
-
-/**
- * This descriptor's own `<idea-version>` range, quoted in [ConditionalIncludeNotSupported]'s message.
- * Only this document is consulted: a nested descriptor has no `<idea-version>`, and a bundled plugin
- * is selected by its IDE's version rather than by this range (see [PluginCreator.shouldUsePlatformParser]).
- */
-private fun Document.declaredCompatibility(): String {
-  val ideaVersion = rootElement.getChild(IDEA_VERSION_ELEMENT)
-  val since = ideaVersion?.getAttributeValue(SINCE_BUILD_ATTRIBUTE)
-  val until = ideaVersion?.getAttributeValue(UNTIL_BUILD_ATTRIBUTE)
-  return when {
-    since != null && until != null -> "IDEs from $since up to $until"
-    since != null -> "IDEs from $since onwards, with no upper bound"
-    until != null -> "IDEs up to $until"
-    else -> "any IDE version, as it declares no <idea-version> range"
-  }
 }

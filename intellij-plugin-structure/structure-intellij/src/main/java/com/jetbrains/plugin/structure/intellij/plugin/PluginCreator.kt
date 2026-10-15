@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory
 import java.nio.file.Path
 
 // `<idea-version>` names read directly off the raw JDOM document, outside either full parse - by
-// PluginCreator.shouldUsePlatformParser and PlatformPluginDescriptorParser's declaredCompatibility.
+// PluginCreator.shouldUsePlatformParser and PluginCreator.describePlatformParserSelection.
 internal const val IDEA_VERSION_ELEMENT = "idea-version"
 internal const val SINCE_BUILD_ATTRIBUTE = "since-build"
 internal const val UNTIL_BUILD_ATTRIBUTE = "until-build"
@@ -200,6 +200,12 @@ internal class PluginCreator private constructor(
     private set
 
   /**
+   * Why [usedPlatformParser] is set, see [describePlatformParserSelection]. Inherited like the choice
+   * itself, and `null` on the JAXB path.
+   */
+  private var platformParserReason: String? = null
+
+  /**
    * The root a classloader would resolve this descriptor's resources against - what the platform
    * parser's already-joined `<xi:include>` paths (e.g. `"META-INF/extensions.xml"`) are relative to.
    * See [resolveResourceRoot].
@@ -358,6 +364,7 @@ internal class PluginCreator private constructor(
 
     resourceRoot = resolveResourceRoot(documentPath, resourceRootSource)
     usedPlatformParser = shouldUsePlatformParser(originalDocument)
+    platformParserReason = if (usedPlatformParser) describePlatformParserSelection(originalDocument) else null
     recordParserChoice()
 
     // Everything after this `if` (theme loading, final structural validation) is shared and unaware of
@@ -465,6 +472,27 @@ internal class PluginCreator private constructor(
       return sinceBuild.baselineVersion >= UNBOUNDED_UNTIL_SINCE_FLOOR
     }
     return false
+  }
+
+  /**
+   * Why [shouldUsePlatformParser] selected the platform parser, worded to follow "this plugin" in
+   * [com.jetbrains.plugin.structure.intellij.problems.ConditionalIncludeNotSupported]'s message: the
+   * enclosing plugin's reason for a nested descriptor, the containing IDE for a bundled one, and the
+   * declared `<idea-version>` range otherwise.
+   */
+  private fun describePlatformParserSelection(document: Document): String {
+    parentPlugin?.platformParserReason?.let { return it }
+    containingIdeVersion?.let { return "is bundled in IDE $it" }
+
+    val ideaVersion = document.rootElement.getChild(IDEA_VERSION_ELEMENT)
+    val since = ideaVersion?.getAttributeValue(SINCE_BUILD_ATTRIBUTE)
+    val until = ideaVersion?.getAttributeValue(UNTIL_BUILD_ATTRIBUTE)
+    return when {
+      since != null && until != null -> "declares compatibility with IDEs from $since up to $until"
+      since != null -> "declares compatibility with IDEs from $since onwards, with no upper bound"
+      until != null -> "declares compatibility with IDEs up to $until"
+      else -> "declares no <idea-version> range"
+    }
   }
 
   /**
@@ -600,7 +628,8 @@ internal class PluginCreator private constructor(
     validationContext: ValidationContext
   ): Boolean {
     val parseResult = platformDescriptorParser.parse(
-      originalDocument, resourceRoot, pathResolver, descriptorPath, pluginFileName, validationContext
+      originalDocument, resourceRoot, pathResolver, descriptorPath, pluginFileName,
+      checkNotNull(platformParserReason), validationContext
     )
     if (parseResult == null) {
       validationContext.problems.forEach { registerProblem(it) }

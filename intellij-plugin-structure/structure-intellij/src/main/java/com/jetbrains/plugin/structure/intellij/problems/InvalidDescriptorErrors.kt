@@ -220,12 +220,12 @@ class XIncludeResolutionErrors(descriptorPath: String, error: String) : InvalidD
 class ConditionalIncludeNotSupported(
   descriptorPath: String,
   attributeName: String,
-  declaredCompatibility: String
+  /** Completes "this plugin ...", e.g. "is bundled in IDE 263.100", see `PluginCreator.describePlatformParserSelection`. */
+  selectionReason: String
 ) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The '$attributeName' attribute of <xi:include> is not supported. Conditional includes " +
-    "are removed from the IntelliJ Platform in 2026.3 (IJPL-215563), and this plugin declares " +
-    "compatibility with $declaredCompatibility. Inline the included file, or split the plugin so that " +
+    "are removed from the IntelliJ Platform in 2026.3 (IJPL-215563), and this plugin $selectionReason. Inline the included file, or split the plugin so that " +
     "the include is unconditional."
 ) {
   override val level

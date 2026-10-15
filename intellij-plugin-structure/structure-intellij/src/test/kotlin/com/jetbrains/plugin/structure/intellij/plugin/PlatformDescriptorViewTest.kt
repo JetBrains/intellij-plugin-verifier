@@ -159,6 +159,7 @@ class PlatformDescriptorViewTest {
       resolver,
       "META-INF/plugin.xml",
       "plugin.jar",
+      "declares compatibility with IDEs up to 263.*",
       context
     ) ?: throw AssertionError("Expected the platform descriptor to parse")
     PluginDescriptorValidator().validate(result.view, context, validateDescriptor = true)

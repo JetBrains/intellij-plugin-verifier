@@ -197,6 +197,7 @@ class PluginDescriptorValidatorParityTest {
       resolver,
       DESCRIPTOR_PATH,
       "plugin.jar",
+      "declares compatibility with IDEs up to 263.*",
       context
     ) ?: throw AssertionError("Expected the platform descriptor to parse: ${context.problems}")
     return result.view

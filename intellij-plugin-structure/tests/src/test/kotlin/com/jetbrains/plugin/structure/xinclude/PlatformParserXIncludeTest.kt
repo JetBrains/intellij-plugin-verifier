@@ -10,13 +10,16 @@ import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.ContentBuilder
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
+import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.problems.ConditionalIncludeNotSupported
 import com.jetbrains.plugin.structure.intellij.resources.DefaultResourceResolver
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.SingletonCachingJarFileSystemProvider
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -29,8 +32,8 @@ import org.junit.rules.TemporaryFolder
  * [ResourceResolverXIncludeLoader][com.jetbrains.plugin.structure.intellij.xinclude.ResourceResolverXIncludeLoader]
  * rather than through [XIncluder][com.jetbrains.plugin.structure.intellij.xinclude.XIncluder].
  *
- * Every descriptor below declares `until-build="263.*"`, which is what puts it on the platform parser
- * under the selection rule ([com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.shouldUsePlatformParser]).
+ * Every plugin below except the bundled one declares `until-build="263.*"`, which is what puts it on
+ * the platform parser under the selection rule ([com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.shouldUsePlatformParser]).
  *
  * Each include contributes a plugin alias, which is simply the cheapest thing to observe: an alias
  * appears in [IdePlugin.pluginAliases] if and only if the included document was really read and merged.
@@ -317,7 +320,44 @@ class PlatformParserXIncludeTest {
     // The message must name the attribute, the removal, and the compatibility that justifies failing.
     assertTrue(message, message.contains("includeIf"))
     assertTrue(message, message.contains("IJPL-215563"))
-    assertTrue(message, message.contains("263.*"))
+    assertTrue(message, message.contains("this plugin declares compatibility with IDEs from 241.0 up to 263.*"))
+  }
+
+  @Test
+  fun `a conditional include in an optional config-file quotes the main descriptor's range`() {
+    // opt.xml declares no <idea-version>: it is on the platform parser only because plugin.xml is.
+    val result = buildPlugin("conditional-include-config-file") {
+      dir("META-INF") {
+        file("plugin.xml", pluginXml("""<depends optional="true" config-file="opt.xml">com.example.other</depends>"""))
+        file("opt.xml", ideaPlugin(conditionalInclude("extensions.xml")))
+        file("extensions.xml", aliasXml("never.read"))
+      }
+    }
+    assertTrue("expected a successfully created plugin but got $result", result is PluginCreationSuccess)
+    val warnings = (result as PluginCreationSuccess).warnings
+    val message = warnings.map { it.message }.singleOrNull { it.contains("includeIf") }
+    assertTrue("expected the conditional include to be reported, got $warnings", message != null)
+    assertTrue(message, message!!.contains("this plugin declares compatibility with IDEs from 241.0 up to 263.*"))
+    assertFalse(message, message.contains("any IDE version"))
+    assertFalse(message, message.contains("declares no <idea-version>"))
+  }
+
+  @Test
+  fun `a conditional include in a bundled plugin quotes the IDE version rather than its own range`() {
+    // The plugin's own range ends before 263; only the containing IDE puts it on the platform parser.
+    val jar = buildZipFile(temporaryFolder.newFolder("bundled").toPath().resolve("bundled.jar")) {
+      dir("META-INF") {
+        file("plugin.xml", pluginXml(conditionalInclude("extensions.xml")).replace("263.*", "262.*"))
+        file("extensions.xml", aliasXml("never.read"))
+      }
+    }
+    val result = IdePluginManager.createManager(
+      DefaultResourceResolver, temporaryFolder.newFolder().toPath(), SingletonCachingJarFileSystemProvider
+    ).createBundledPlugin(jar, IdeVersion.createIdeVersion("IU-263.100"), "plugin.xml")
+    val problem = assertFailed(result).errorsAndWarnings.singleOrNull { it is ConditionalIncludeNotSupported }
+    assertTrue("expected a ConditionalIncludeNotSupported, got $result", problem != null)
+    assertTrue(problem!!.message, problem.message.contains("this plugin is bundled in IDE IU-263.100"))
+    assertFalse(problem.message, problem.message.contains("262.*"))
   }
 
   @Test
@@ -348,6 +388,9 @@ class PlatformParserXIncludeTest {
 
   private fun include(href: String) =
     """<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="$href"/>"""
+
+  private fun conditionalInclude(href: String) =
+    """<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="$href" includeIf="com.example.someProperty"/>"""
 
   private fun aliasXml(alias: String) = ideaPlugin("""<module value="$alias"/>""")
 
