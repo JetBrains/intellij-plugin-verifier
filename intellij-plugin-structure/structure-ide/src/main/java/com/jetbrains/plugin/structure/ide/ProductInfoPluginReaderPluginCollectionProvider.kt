@@ -10,6 +10,20 @@ import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import java.nio.file.Path
 
+/**
+ * Loads bundled [IdePlugin]s by delegating to a [PluginReader] that works directly with
+ * [ProductInfo] (the raw `product-info.json` data).
+ *
+ * This is the simpler, non-layout-aware counterpart to
+ * [ProductInfoLayoutBasedPluginCollectionProvider]. Instead of decomposing the IDE layout into
+ * core / layout / additional phases, it hands the entire [ProductInfo] to the supplied
+ * [pluginReader] and returns whatever that reader produces.
+ *
+ * This provider only handles [ProductInfoPluginCollectionSource] sources; any other source type
+ * results in an empty collection.
+ *
+ * @param pluginReader reader that turns [ProductInfo] into a collection of [IdePlugin]s.
+ */
 class ProductInfoPluginReaderPluginCollectionProvider(private val pluginReader: PluginReader<ProductInfo>) : PluginCollectionProvider<Path> {
   override fun getPlugins(source: PluginCollectionSource<Path, *>): Collection<IdePlugin> {
     if (source !is ProductInfoPluginCollectionSource) {
