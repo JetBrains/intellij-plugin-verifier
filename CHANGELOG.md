@@ -6,6 +6,14 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
+### Changed
+
+### Fixed
+
+## 1.411 - 2026-10-19
+
+### Added
+
 - Make dependency resolution, dependency tree output, and module visibility checks content-module aware. Content modules from dependent plugins are separate graph nodes, and dependencies declared only by content modules are checked. Add content module nodes, ownership edges, and content-module dependency provenance to dependency graphs and service/Marketplace graph output. Output formats, such as `dependencies.txt` now contain content modules for each plugin.
   ([#1626](https://github.com/JetBrains/intellij-plugin-verifier/pull/1626))
 - Expose the raw `required-if-available` attribute of content modules as `Module.requiredIfAvailable`. The attribute is not interpreted, and `Module.loadingRule` still reflects only the `loading` attribute. `Module.InlineModule` and `Module.FileBasedModule` get a new trailing constructor parameter that defaults to `null`, which changes their JVM constructor and `copy` signatures ([#1628](https://github.com/JetBrains/intellij-plugin-verifier/pull/1628))
