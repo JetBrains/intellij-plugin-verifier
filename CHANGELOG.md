@@ -6,12 +6,29 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Added
 
-- Expose plugin name validation as public API: `validatePluginName` (common length and symbols checks), `validateIntelliJPluginName` and `validateTeamcityPluginDisplayName`.
-- Expose the raw `required-if-available` attribute of content modules as `Module.requiredIfAvailable`. The attribute is not interpreted, and `Module.loadingRule` still reflects only the `loading` attribute. `Module.InlineModule` and `Module.FileBasedModule` get a new trailing constructor parameter that defaults to `null`, which changes their JVM constructor and `copy` signatures.
+- Make dependency resolution, dependency tree output, and module visibility checks content-module aware. Content modules from dependent plugins are separate graph nodes, and dependencies declared only by content modules are checked. Add content module nodes, ownership edges, and content-module dependency provenance to dependency graphs and service/Marketplace graph output. Output formats, such as `dependencies.txt` now contain content modules for each plugin.
+  ([#1626](https://github.com/JetBrains/intellij-plugin-verifier/pull/1626))
+- Expose the raw `required-if-available` attribute of content modules as `Module.requiredIfAvailable`. The attribute is not interpreted, and `Module.loadingRule` still reflects only the `loading` attribute. `Module.InlineModule` and `Module.FileBasedModule` get a new trailing constructor parameter that defaults to `null`, which changes their JVM constructor and `copy` signatures ([#1628](https://github.com/JetBrains/intellij-plugin-verifier/pull/1628))
+- Expose plugin name validation as public API: `validatePluginName` (common length and symbols checks), `validateIntelliJPluginName` and `validateTeamcityPluginDisplayName` ([#1624](https://github.com/JetBrains/intellij-plugin-verifier/pull/1624))
+- Add `IdePlugin.reconstructDependencies`, `IdePlugin.reconstructAllDependencies`, and `ModuleDescriptor.resolvedDependencies` to rebuild descriptor dependencies with duplicate handling and content-module optionality ([#1623](https://github.com/JetBrains/intellij-plugin-verifier/pull/1623))
+- Add APIs to keep only direct dependencies in verification results: `ResolvedDependenciesGraph.retainDirectDependencies()`, `PluginVerificationResult.retainDirectDependencies()` and `Verified.withDependenciesGraph()` ([#1626](https://github.com/JetBrains/intellij-plugin-verifier/pull/1626))
 
 ### Changed
 
+- Make `IdePlugin.dependencies` immutable, reconstruct it from plugin and content module descriptors, and deduplicate dependencies by ID with mandatory declarations replacing optional duplicates ([#1623](https://github.com/JetBrains/intellij-plugin-verifier/pull/1623))
+- Tighten `MockIdePlugin` fixture semantics with validation, a mini DSL, and dependency-specific setters instead of direct `dependencies` assignment ([#1617](https://github.com/JetBrains/intellij-plugin-verifier/pull/1617))
+- Hide alias redirect edges from dependency graph output and drop aliases from `ResolvedDependencyNode`; plugin aliases redirect to the plugin main node ([#1626](https://github.com/JetBrains/intellij-plugin-verifier/pull/1626))
+- Reduce `check-trunk-api` and report memory usage by compacting dependency graphs, retaining only direct dependencies after reporting, and streaming `dependencies.txt` and HTML report output ([#1626](https://github.com/JetBrains/intellij-plugin-verifier/pull/1626))
+- Write reports as UTF-8 and declare the HTML report charset explicitly ([#1626](https://github.com/JetBrains/intellij-plugin-verifier/pull/1626))
+- Update `actions/setup-java` to 6.0.1 ([#1614](https://github.com/JetBrains/intellij-plugin-verifier/pull/1614))
+- Update Bouncy Castle to 1.86 ([#1613](https://github.com/JetBrains/intellij-plugin-verifier/pull/1613))
+- Update `gradle/actions` to 6.4.0 ([#1625](https://github.com/JetBrains/intellij-plugin-verifier/pull/1625))
+- Update Gradle to 9.8.1 ([#1627](https://github.com/JetBrains/intellij-plugin-verifier/pull/1627))
+- Update Byte Buddy to 1.18.15 ([#1630](https://github.com/JetBrains/intellij-plugin-verifier/pull/1630))
+
 ### Fixed
+
+- Escape XML markup in randomly generated invalid plugin names in tests ([#1608](https://github.com/JetBrains/intellij-plugin-verifier/pull/1608))
 
 ## 1.410 - 2026-08-26
 
