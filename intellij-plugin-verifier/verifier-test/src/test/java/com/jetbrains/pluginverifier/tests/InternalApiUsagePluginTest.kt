@@ -119,6 +119,69 @@ class InternalApiUsagePluginTest {
     assertEquals(0, verificationResult.internalApiUsages.size)
   }
 
+  @Test
+  fun `plugin class extends a platform class whose own superclass implements an internal API two levels up`() {
+    val (idePlugin, ide) = preparePlatformHierarchyWithInternalAncestor(IdeaPluginSpec("some.plugin", "Plugin Factory Inc."))
+
+    val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin) as PluginVerificationResult.Verified
+
+    assertEquals(emptySet<CompatibilityProblem>(), verificationResult.compatibilityProblems)
+    // MP-3611: internal API reached via the plugin's own ancestor chain, not referenced directly.
+    assertEquals(emptySet<CompatibilityWarning>(), verificationResult.compatibilityWarnings)
+    assertEquals(0, verificationResult.internalApiUsages.size)
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun preparePlatformHierarchyWithInternalAncestor(pluginSpec: IdeaPluginSpec): Pair<IdePlugin, Ide> {
+    val classLoader = this::class.java.classLoader
+    val byteBuddy = ByteBuddy()
+
+    val internalMarkerClassName = "com.intellij.openapi.PlatformInternalMarker"
+    val internalMarkerUdt = byteBuddy
+      .subclass(Object::class.java)
+      .name(internalMarkerClassName)
+      .annotateType(intelliJInternalApi())
+      .make()
+    val internalMarkerClass = load(internalMarkerUdt, classLoader, internalMarkerClassName)
+
+    // Analogous to EdtDataContext in MP-3611: platform class itself extends the internal API, not the plugin.
+    val platformMiddleClassName = "com.intellij.openapi.PlatformMiddle"
+    val platformMiddleUdt = byteBuddy
+      .subclass(internalMarkerClass)
+      .name(platformMiddleClassName)
+      .make() as DynamicType.Unloaded<Object>
+    val platformMiddleClass = load(platformMiddleUdt, classLoader, platformMiddleClassName)
+
+    val pluginSubclassClassName = "com.example.otherplugin.PluginSubclass"
+    val pluginSubclassUdt = byteBuddy
+      .subclass(platformMiddleClass)
+      .name(pluginSubclassClassName)
+      .make() as DynamicType.Unloaded<Object>
+
+    val idePlugin = buildIdePlugin(pluginSpec) {
+      dirs("com/example/otherplugin") {
+        file("PluginSubclass.class", pluginSubclassUdt.bytes)
+      }
+    }
+
+    // Different classFileOrigins (java vs. groovy) mirror the real MP-3611 shape and avoid tripping
+    // the same-origin check in InternalApiUsageProcessor.isInternal() instead of the guard under test.
+    val ide = buildIdeWithBundledPlugins(javaPluginClassesBuilder = {
+      dirs("com/intellij/openapi") {
+        file("PlatformInternalMarker.class", internalMarkerUdt.bytes)
+        dir("util") {
+          file("IntellijInternalApi.class", IntellijInternalApiDump.dump())
+        }
+      }
+    }, groovyPluginClassesBuilder = {
+      dirs("com/intellij/openapi") {
+        file("PlatformMiddle.class", platformMiddleUdt.bytes)
+      }
+    })
+
+    return idePlugin to ide
+  }
+
   @Suppress("UNCHECKED_CAST")
   private fun prepareServiceAndOverrider(pluginSpec: IdeaPluginSpec): Pair<IdePlugin, Ide> {
     val classLoader = this::class.java.classLoader
