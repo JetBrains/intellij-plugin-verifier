@@ -62,6 +62,12 @@ open class CmdOpts(
   var excludeExternalBuildClassesSelector: Boolean = false,
 
   @set:Argument(
+    "platform-parser",
+    description = "Parse plugin descriptors of plugins compatible with recent IDEs with the IntelliJ Platform's own descriptor parser instead of the JAXB-based one."
+  )
+  var platformParser: Boolean = false,
+
+  @set:Argument(
     "subsystems-to-check",
     alias = "subsystems",
     description = "Specifies which subsystems of IDE should be checked. Available options: all (default), android-only, without-android.\n" +
