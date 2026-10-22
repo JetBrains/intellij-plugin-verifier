@@ -17,6 +17,7 @@ import org.jetbrains.annotations.TestOnly
  * See also cache size in [CacheResolver].
  */
 private const val DEFAULT_CACHE_SIZE = 1024L
+private const val DEPENDENCY_RESOLVER_CACHE_SIZE = 64L
 
 private const val UNKNOWN_DEPENDENCY_ID = "Unknown ID"
 
@@ -43,7 +44,7 @@ class CachingPluginDependencyResolverProvider(
 
   // Dependency resolvers retain substantially more state than plugin resolvers.
   private val dependencyResolverCache = Caffeine.newBuilder()
-    .maximumSize(DEFAULT_CACHE_SIZE / 4)
+    .maximumSize(DEPENDENCY_RESOLVER_CACHE_SIZE)
     .recordStats()
     .build<PluginArtifactKey, Resolver>()
 
