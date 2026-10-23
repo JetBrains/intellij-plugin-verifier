@@ -11,9 +11,12 @@ import com.jetbrains.plugin.structure.base.utils.binaryClassNames
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildDirectory
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
 import com.jetbrains.plugin.structure.base.utils.createEmptyClass
+import com.jetbrains.plugin.structure.base.utils.emptyClass
 import com.jetbrains.plugin.structure.base.utils.newTemporaryFile
+import com.jetbrains.plugin.structure.classes.resolvers.LazyJarResolver
 import com.jetbrains.plugin.structure.classes.resolvers.ResolutionResult
 import com.jetbrains.plugin.structure.classes.resolvers.Resolver
+import com.jetbrains.plugin.structure.ide.classes.IdeFileOrigin
 import com.jetbrains.plugin.structure.ide.classes.IdeResolverConfiguration
 import com.jetbrains.plugin.structure.intellij.platform.LayoutComponent
 import com.jetbrains.plugin.structure.intellij.platform.ProductInfo
@@ -23,6 +26,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.dependencies.DependencyTre
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.IdPrefixIdeModulePredicate.Companion.HAS_COM_INTELLIJ_MODULE_PREFIX
 import com.jetbrains.plugin.structure.intellij.plugin.dependencies.NodeId
 import com.jetbrains.plugin.structure.intellij.version.IdeVersion
+import com.jetbrains.plugin.structure.jar.Jar
 import com.jetbrains.plugin.structure.mocks.*
 import net.bytebuddy.ByteBuddy
 import org.junit.Assert.*
@@ -32,6 +36,10 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 private const val UNKNOWN = ""
 
@@ -701,6 +709,115 @@ class CachingPluginDependencyResolverProviderTest {
         bundledNode to setOf(NodeId.ofPlugin(target))), edges)
     }
   }
+
+  /**
+   * Many checked plugins depend on the same plugin JAR, as in a check-trunk-api run against two IDE targets.
+   * The dependency resolvers of the first wave stay strongly reachable while the plugin resolver cache is
+   * invalidated, which is a deterministic stand-in for an eviction. The test counts distinct resolver,
+   * initialized [Jar] and class index objects, not cache hits.
+   */
+  @Test
+  fun `plugin resolver in use is reused after plugin resolver cache eviction`() {
+    val sharedJarPath = buildZipFile(temporaryFolder.newTemporaryFile("shared/lib/shared-dependency.jar")) {
+      dirs("com/example/common") {
+        file("Shared.class", ByteBuddy().emptyClass("com.example.common.Shared"))
+      }
+    }
+    val sharedPlugin = MockIdePlugin(
+      pluginId = "com.example.shared",
+      pluginVersion = "1.0",
+      originalFile = sharedJarPath,
+      classpath = Classpath.of(listOf(sharedJarPath))
+    )
+    val release = CachingPluginDependencyResolverProvider(
+      MockIde(IdeVersion.createIdeVersion("IU-243.100"), temporaryFolder.newFolder("release-ide").toPath(), listOf(sharedPlugin))
+    )
+    val trunk = CachingPluginDependencyResolverProvider(
+      MockIde(IdeVersion.createIdeVersion("IU-244.100"), temporaryFolder.newFolder("trunk-ide").toPath(), listOf(sharedPlugin))
+    )
+    val checkedPlugins = (1..128).map { idePlugin("com.example.checked.$it") { depends(sharedPlugin) } }
+    val workers = Executors.newFixedThreadPool(16)
+    try {
+      val firstWave = checkedPlugins.take(64)
+      val secondWave = checkedPlugins.drop(64)
+
+      val releaseFirst = resolveConcurrently(workers, release, firstWave, sharedJarPath)
+      val trunkFirst = resolveConcurrently(workers, trunk, firstWave, sharedJarPath)
+      assertEquals(1, jarIdentities(releaseFirst).jars.size)
+      assertEquals(1, jarIdentities(trunkFirst).jars.size)
+
+      // Keep the first wave reachable while forcing the eviction scenario.
+      // Rebuilding the evicted plugin resolver would index exactly the same plugin JAR again.
+      release.invalidatePluginResolverCache()
+      trunk.invalidatePluginResolverCache()
+
+      val releaseAll = jarIdentities(releaseFirst + resolveConcurrently(workers, release, secondWave, sharedJarPath))
+      val trunkAll = jarIdentities(trunkFirst + resolveConcurrently(workers, trunk, secondWave, sharedJarPath))
+
+      assertEquals("release must reuse the evicted plugin resolver that is still in use", 1, releaseAll.resolvers.size)
+      assertEquals("trunk must reuse the evicted plugin resolver that is still in use", 1, trunkAll.resolvers.size)
+      assertEquals("release must keep a single Jar of the plugin JAR", 1, releaseAll.jars.size)
+      assertEquals("release must keep a single class index of the plugin JAR", 1, releaseAll.indexes.size)
+      assertEquals("trunk must keep a single Jar of the plugin JAR", 1, trunkAll.jars.size)
+      assertEquals("trunk must keep a single class index of the plugin JAR", 1, trunkAll.indexes.size)
+      assertNotSame("distinct IDE providers do not share plugin resolvers", releaseAll.jars.single(), trunkAll.jars.single())
+    } finally {
+      workers.shutdownNow()
+      workers.awaitTermination(30, TimeUnit.SECONDS)
+    }
+  }
+
+  private fun resolveConcurrently(
+    workers: ExecutorService,
+    provider: CachingPluginDependencyResolverProvider,
+    checkedPlugins: List<IdePlugin>,
+    sharedJarPath: Path
+  ): List<Resolver> {
+    val futures = checkedPlugins.map { plugin ->
+      workers.submit(Callable<Resolver> {
+        val resolver = provider.getResolver(plugin)
+        assertTrue("Must resolve the shared plugin class", resolver.containsClass("com/example/common/Shared"))
+        val sharedClass = resolver.resolveClass("com/example/common/Shared") as ResolutionResult.Found
+        assertEquals(sharedJarPath, (sharedClass.fileOrigin as IdeFileOrigin.BundledPlugin).pluginFile)
+        val methods = sharedClass.value.methods
+        assertTrue("Plugin dependencies are read in SIGNATURES mode", methods.isNotEmpty() && methods.all { it.instructions.size() == 0 })
+        resolver
+      })
+    }
+    return futures.map { it.get(60, TimeUnit.SECONDS) }
+  }
+
+  private class JarIdentities(val resolvers: Set<LazyJarResolver>, val jars: Set<Jar>, val indexes: Set<Any>)
+
+  private fun jarIdentities(dependencyResolvers: List<Resolver>): JarIdentities {
+    val resolvers = identitySet<LazyJarResolver>()
+    val jars = identitySet<Jar>()
+    val indexes = identitySet<Any>()
+    val indexField = Jar::class.java.getDeclaredField("classesInJar").apply { isAccessible = true }
+    val componentsField = CachingPluginDependencyResolverProvider.DependencyTreeAwareResolver::class.java
+      .getDeclaredField("components").apply { isAccessible = true }
+    for (dependencyResolver in dependencyResolvers) {
+      val components = componentsField.get(dependencyResolver) as Collection<*>
+      for (jarResolver in components.filterIsInstance<LazyJarResolver>()) {
+        val jar = jarResolver.initializedJar()
+        resolvers += jarResolver
+        jars += jar
+        indexes += indexField.get(jar)
+      }
+    }
+    return JarIdentities(resolvers, jars, indexes)
+  }
+
+  /**
+   * Returns the [Jar] that this resolver has already initialized; reading it must not trigger the initialization itself.
+   */
+  private fun LazyJarResolver.initializedJar(): Jar {
+    val jar = LazyJarResolver::class.java.getDeclaredField("jar\$delegate").apply { isAccessible = true }.get(this) as Lazy<*>
+    assertTrue("JAR of resolver '$name' must be initialized", jar.isInitialized())
+    return jar.value as Jar
+  }
+
+  private fun <T> identitySet(): MutableSet<T> = Collections.newSetFromMap(IdentityHashMap())
 
   private fun buildSingleCoreClassPlugin(id: String, moduleId: String, moduleDependency: String,
                                        rootClass: String, coreClass: String): IdePlugin {
