@@ -94,6 +94,18 @@ abstract class BaseBytecodeTest {
     }
   }
 
+  internal fun prepareUsage(
+    pluginSpec: IdeaPluginSpec,
+    packageName: String,
+    classFiles: Map<String, ByteArray>
+  ): IdePlugin {
+    return buildIdePlugin(pluginSpec) {
+      dir(packageName) {
+        classFiles.forEach { (simpleName, bytes) -> file("$simpleName.class", bytes) }
+      }
+    }
+  }
+
   protected fun prepareIdeWithApi(platformApiClassTypeBuilder: () -> DynamicType.Unloaded<*>): Ide {
     return buildIdeWithBundledPlugins {
       dir("com") {

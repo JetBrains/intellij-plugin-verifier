@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.results.location.toReference
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.verifiers.ProblemRegistrar
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.method.KotlinMethods.isKotlinDefaultMethod
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import com.jetbrains.pluginverifier.verifiers.resolution.MethodResolver
@@ -19,6 +20,10 @@ class MethodOverridingVerifier(private val methodOverridingProcessors: List<Meth
 
   override fun verify(method: Method, context: VerificationContext) {
     if (method.isStatic || method.isPrivate || method.name == "<init>" || method.name == "<clinit>") return
+    // Only an override the plugin author declared in source is reported, not the bridge the Kotlin
+    // compiler synthesizes for an inherited interface default method. Such a bridge is skipped even
+    // if it happens to override a method that a superclass gained after the plugin was compiled.
+    if (method.isKotlinDefaultMethod()) return
 
     val overriddenMethod = MethodResolver().resolveMethod(
       ClassFileWithNoMethodsWrapper(method.containingClassFile),
