@@ -10,6 +10,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Fixed
 
+- Reuse plugin dependency resolvers that are still in use after an eviction from the plugin resolver cache, instead of rebuilding them and keeping another copy of the index of every plugin JAR.
+
 ## 1.411 - 2026-10-19
 
 ### Added

@@ -52,6 +52,12 @@ class CachingPluginDependencyResolverProvider(
     .recordStats()
     .build<PluginResolverKey, NamedResolver>()
 
+  // Plugin resolvers still used by dependency resolvers, including ones already evicted from pluginResolverCache.
+  // Reusing them keeps a single resolver tree, and so a single index per JAR, for a plugin while it is in use.
+  private val livePluginResolvers = Caffeine.newBuilder()
+    .weakValues()
+    .build<PluginResolverKey, NamedResolver>()
+
   /**
    * Provide a unified resolver for all transitive dependencies of this plugin.
    * The actual plugin classpath is *not* included in this resolver.
@@ -82,6 +88,9 @@ class CachingPluginDependencyResolverProvider(
   fun pluginResolverCacheContains(resolverName: String): Boolean =
     pluginResolverCache.asMap().keys.any { it.resolverName == resolverName }
 
+  @TestOnly
+  fun invalidatePluginResolverCache() = pluginResolverCache.invalidateAll()
+
   /**
    * This method should be never called. `PluginResolverProvider` should be refactored.
    */
@@ -97,7 +106,7 @@ class CachingPluginDependencyResolverProvider(
     getFromSecondaryCache(plugin)?.let {
       return it
     }
-    return pluginResolverCache.getIfPresent(plugin.resolverCacheKey())
+    return getPluginResolver(plugin.resolverCacheKey())
   }
 
   private fun createResolver(plugin: IdePlugin): Resolver {
@@ -117,7 +126,7 @@ class CachingPluginDependencyResolverProvider(
           return@associate id to EmptyResolver(dep.id)
         }
         val resolverCacheKey = dependencyPlugin.resolverCacheKey()
-        val dependencyResolver = pluginResolverCache.getIfPresent(resolverCacheKey)
+        val dependencyResolver = getPluginResolver(resolverCacheKey)
         if (dependencyResolver != null) {
           return@associate id to dependencyResolver
         }
@@ -125,7 +134,7 @@ class CachingPluginDependencyResolverProvider(
         // Synchronizing to prevent creating different resolvers for the same plugin in `createResolverTree`.
         // Different plugin versions may serialize on the same lock, but they use distinct cache keys.
         synchronized(id) {
-          val resolver = pluginResolverCache.getIfPresent(resolverCacheKey)
+          val resolver = getPluginResolver(resolverCacheKey)
           if (resolver != null) {
             id to resolver
           } else {
@@ -136,13 +145,21 @@ class CachingPluginDependencyResolverProvider(
     return DependencyTreeAwareResolver.of(plugin.id ?: UNNAMED_RESOLVER, resolvers, dependencyTreeResolution)
   }
 
+  private fun getPluginResolver(key: PluginResolverKey): NamedResolver? =
+    pluginResolverCache.getIfPresent(key) ?: livePluginResolvers.getIfPresent(key)
+
+  private fun putPluginResolver(key: PluginResolverKey, resolver: NamedResolver) {
+    pluginResolverCache.put(key, resolver)
+    livePluginResolvers.put(key, resolver)
+  }
+
   private fun Dependency.createResolverTree(): NamedResolver {
     val dependencyPlugin = plugin ?: return EmptyResolver(id)
     return dependencyPlugin.createResolverTree()
       .let { (r, resolversToCache) ->
-        pluginResolverCache.put(dependencyPlugin.resolverCacheKey(), r)
+        putPluginResolver(dependencyPlugin.resolverCacheKey(), r)
         resolversToCache.forEach {
-          pluginResolverCache.put(dependencyPlugin.resolverCacheKey(it.name), it)
+          putPluginResolver(dependencyPlugin.resolverCacheKey(it.name), it)
         }
         r
       }
@@ -186,7 +203,7 @@ class CachingPluginDependencyResolverProvider(
     val cpResolvers = classpath.entries.map { cpEntry ->
       val origin = IdeFileOrigin.BundledPlugin(cpEntry.path, idePlugin = this)
       val cpEntryResolverName = resolverPrefix + cpEntry.path.fileName.toString()
-      val cpEntryResolver = pluginResolverCache.getIfPresent(resolverCacheKey(cpEntryResolverName))
+      val cpEntryResolver = getPluginResolver(resolverCacheKey(cpEntryResolverName))
       if (cpEntryResolver is NamedResolver) {
         return@map cpEntryResolver
       }
