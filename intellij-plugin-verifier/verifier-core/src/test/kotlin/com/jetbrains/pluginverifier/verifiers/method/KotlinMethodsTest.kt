@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.verifiers.method
 
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.verifiers.method.KotlinMethods.isCompilerSynthesizedInterfaceBridge
+import com.jetbrains.pluginverifier.verifiers.method.KotlinMethods.isKotlinDefaultMethod
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFileAsm
 import kotlinx.metadata.KmClass
 import kotlinx.metadata.KmClassifier
@@ -130,6 +131,18 @@ class KotlinMethodsTest {
     val method = classFile.methods.single()
 
     assertFalse(method.isCompilerSynthesizedInterfaceBridge())
+  }
+
+  @Test
+  fun `same-named classes from different origins are classified separately`() {
+    val methodName = "defaultMethod"
+    val bridge = classFileWithMetadata(jvmDefaultBridge(methodName), declaredFunctions = emptyList())
+    val override = classFileWithMetadata(jvmDefaultBridge(methodName), declaredFunctions = listOf(JvmMethodSignature(methodName, "()V")))
+    val bridgeMethod = ClassFileAsm(bridge.asmNode.apply { name = CACHE_TEST_CLASS_NAME }, origin).methods.single()
+    val overrideMethod = ClassFileAsm(override.asmNode.apply { name = CACHE_TEST_CLASS_NAME }, otherOrigin).methods.single()
+
+    assertTrue(bridgeMethod.isKotlinDefaultMethod())
+    assertFalse(overrideMethod.isKotlinDefaultMethod())
   }
 
   /**
@@ -411,5 +424,11 @@ class KotlinMethodsTest {
     val origin = object : FileOrigin {
       override val parent = null
     }
+    val otherOrigin = object : FileOrigin {
+      override val parent = null
+    }
+
+    // Only used through the cached isKotlinDefaultMethod(), so that no other test shares its cache entries.
+    const val CACHE_TEST_CLASS_NAME = "com/jetbrains/pluginverifier/tests/CachedKotlinDefaultMethodOwner"
   }
 }
