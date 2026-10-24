@@ -80,7 +80,7 @@ dependencies {
 
     implementation(sharedLibs.spullara.cliParser)
     implementation("org.apache.commons:commons-text:1.15.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.12.0")
 }
 
 val copyMockIdes by tasks.registering(Copy::class) {
