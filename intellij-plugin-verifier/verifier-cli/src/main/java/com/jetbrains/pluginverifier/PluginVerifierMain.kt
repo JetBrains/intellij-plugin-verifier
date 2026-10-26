@@ -85,6 +85,17 @@ object PluginVerifierMain {
       ?: "https://plugins.jetbrains.com"
   }
 
+  /**
+   * Plugins whose verification time is reported as a separate TeamCity statistic.
+   * Overridable with a comma-separated list of plugin IDs.
+   */
+  private val timeTrackedPluginIds: Set<String> by lazy {
+    (System.getProperty("plugin.verifier.time.tracked.plugins") ?: "io.jmix.studio,ai.zencoder.plugin,com.github.copilot")
+      .split(',')
+      .map { it.trim() }
+      .filterTo(linkedSetOf()) { it.isNotEmpty() }
+  }
+
   private val downloadDirectory: Path = verifierHomeDirectory.resolve("loaded-plugins").createDir()
 
   private fun getPluginsExtractDirectory(): Path {
@@ -131,7 +142,8 @@ object PluginVerifierMain {
       DefaultPluginDetailsProvider(pluginArchiveManager).use { pluginDetailsProvider ->
         val reportageAggregator = LoggingPluginVerificationReportageAggregator()
         SlowestPluginVerificationReportage(
-          DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }
+          DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) },
+          timeTrackedPluginIds
         ).use { reportage ->
           var pluginDetailsCacheStatistics: CacheStatistics? = null
           measurePluginVerification {
@@ -217,12 +229,20 @@ object PluginVerifierMain {
   }
 
   private fun SlowestPluginVerificationReportage.reportSlowestPluginVerification(outputOptions: OutputOptions) {
-    val (plugin, duration) = slowestVerification ?: return
-    logVerificationStage("Longest plugin verification: ${duration.formatDuration()} - $plugin")
-    outputOptions.teamCityLog?.buildStatisticValue(
-      "intellij.plugin.verifier.plugin.verification.time.max.ms",
-      duration.toMillis()
-    )
+    slowestVerification?.let { (plugin, duration) ->
+      logVerificationStage("Longest plugin verification: ${duration.formatDuration()} - $plugin")
+      outputOptions.teamCityLog?.buildStatisticValue(
+        "intellij.plugin.verifier.plugin.verification.time.max.ms",
+        duration.toMillis()
+      )
+    }
+    trackedVerifications.forEach { (pluginId, verification) ->
+      logVerificationStage("Plugin verification: ${verification.duration.formatDuration()} - ${verification.plugin}")
+      outputOptions.teamCityLog?.buildStatisticValue(
+        "intellij.plugin.verifier.plugin.verification.time.$pluginId.ms",
+        verification.duration.toMillis()
+      )
+    }
   }
 
   private fun getDiskSpaceSetting(propertyName: String, defaultAmount: Long): DiskSpaceSetting {
