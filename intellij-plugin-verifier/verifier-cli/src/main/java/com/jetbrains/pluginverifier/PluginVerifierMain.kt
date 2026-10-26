@@ -34,6 +34,7 @@ import com.jetbrains.pluginverifier.tasks.checkPluginApi.CheckPluginApiRunner
 import com.jetbrains.pluginverifier.tasks.checkTrunkApi.CheckTrunkApiRunner
 import com.jetbrains.pluginverifier.tasks.processAllPlugins.ProcessAllPluginsCommand
 import com.jetbrains.pluginverifier.tasks.profiling.MeasuredResult
+import com.jetbrains.pluginverifier.tasks.profiling.SlowestPluginVerificationReportage
 import com.jetbrains.pluginverifier.tasks.profiling.measurePluginVerification
 import com.sampullara.cli.Args
 import org.apache.commons.io.FileUtils
@@ -129,7 +130,9 @@ object PluginVerifierMain {
 
       DefaultPluginDetailsProvider(pluginArchiveManager).use { pluginDetailsProvider ->
         val reportageAggregator = LoggingPluginVerificationReportageAggregator()
-        DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }.use { reportage ->
+        SlowestPluginVerificationReportage(
+          DirectoryBasedPluginVerificationReportage(reportageAggregator) { outputOptions.getTargetReportDirectory(it) }
+        ).use { reportage ->
           var pluginDetailsCacheStatistics: CacheStatistics? = null
           measurePluginVerification {
             val detailsCacheSize = System.getProperty("plugin.verifier.plugin.details.cache.size")?.toIntOrNull() ?: 32
@@ -164,6 +167,7 @@ object PluginVerifierMain {
             pluginDetailsCacheStatistics?.let { reportage.reportCacheStatistics("PluginDetailsCache", it) }
             reportageAggregator.handleAggregatedReportage()
             reportage.reportVerificationDuration(this)
+            reportage.reportSlowestPluginVerification(outputOptions)
           }
         }
       }
@@ -210,6 +214,15 @@ object PluginVerifierMain {
 
   private fun PluginVerificationReportage.reportVerificationDuration(measuredResult: MeasuredResult) {
     logVerificationStage("Total time spent in plugin verification: ${measuredResult.duration.formatDuration()}")
+  }
+
+  private fun SlowestPluginVerificationReportage.reportSlowestPluginVerification(outputOptions: OutputOptions) {
+    val (plugin, duration) = slowestVerification ?: return
+    logVerificationStage("Longest plugin verification: ${duration.formatDuration()} - $plugin")
+    outputOptions.teamCityLog?.buildStatisticValue(
+      "intellij.plugin.verifier.plugin.verification.time.max.ms",
+      duration.toMillis()
+    )
   }
 
   private fun getDiskSpaceSetting(propertyName: String, defaultAmount: Long): DiskSpaceSetting {
