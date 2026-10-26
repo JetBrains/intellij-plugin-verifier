@@ -37,4 +37,22 @@ class SlowestPluginVerificationReportageTest {
     assertNull(reportage.slowestVerification)
     assertEquals(42, delegate[fast]!![PLUGIN_VERIFIED_CLASSES_COUNT])
   }
+
+  @Test
+  fun `keeps the longest verification time of each tracked plugin`() {
+    val untracked = createMockPluginInfo("com.example.untracked", "1.0")
+    val newerSlow = createMockPluginInfo("com.example.slow", "3.0")
+    val reportage = SlowestPluginVerificationReportage(TelemetryVerificationReportage(), setOf(fast.pluginId, slow.pluginId))
+    reportage.reportTelemetry(fast, PluginTelemetry(PLUGIN_VERIFICATION_TIME to Duration.ofSeconds(3)))
+    reportage.reportTelemetry(slow, PluginTelemetry(PLUGIN_VERIFICATION_TIME to Duration.ofSeconds(56)))
+    reportage.reportTelemetry(newerSlow, PluginTelemetry(PLUGIN_VERIFICATION_TIME to Duration.ofSeconds(20)))
+    reportage.reportTelemetry(untracked, PluginTelemetry(PLUGIN_VERIFICATION_TIME to Duration.ofSeconds(115)))
+
+    val tracked = reportage.trackedVerifications
+    assertEquals(setOf(fast.pluginId, slow.pluginId), tracked.keys)
+    assertEquals(Duration.ofSeconds(3), tracked.getValue(fast.pluginId).duration)
+    assertEquals(slow, tracked.getValue(slow.pluginId).plugin)
+    assertEquals(Duration.ofSeconds(56), tracked.getValue(slow.pluginId).duration)
+    assertEquals(untracked, reportage.slowestVerification!!.plugin)
+  }
 }
