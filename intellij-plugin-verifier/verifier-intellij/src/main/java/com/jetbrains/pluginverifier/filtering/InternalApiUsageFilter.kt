@@ -13,11 +13,16 @@ import com.jetbrains.pluginverifier.verifiers.VerificationContext
 class InternalApiUsageFilter : ApiUsageFilter {
   override fun shouldReport(apiUsage: ApiUsage, context: VerificationContext): ApiUsageFilter.Result {
     return when {
-      apiUsage is InternalApiUsage
-        && context is PluginVerificationContext
-        && PluginVendors.isDevelopedByJetBrains(context.idePlugin) ->
+      apiUsage !is InternalApiUsage || context !is PluginVerificationContext ->
+        ApiUsageFilter.Result.Report
+      PluginVendors.isDevelopedByJetBrains(context.idePlugin) ->
         ApiUsageFilter.Result.Ignore("Internal API usage from JetBrains plugins is allowed.")
-      else -> ApiUsageFilter.Result.Report
+      context.idePlugin.pluginId == LARAVEL_IDEA_PLUGIN_ID ->
+        ApiUsageFilter.Result.Ignore("Internal API usage from Laravel Idea is allowed.")
+      else ->
+        ApiUsageFilter.Result.Report
     }
   }
 }
+
+private const val LARAVEL_IDEA_PLUGIN_ID = "com.laravel_idea.plugin"
