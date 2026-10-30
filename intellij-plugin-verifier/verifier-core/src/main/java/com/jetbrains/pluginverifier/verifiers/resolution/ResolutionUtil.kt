@@ -12,6 +12,7 @@ import com.jetbrains.pluginverifier.results.problems.FailedToReadClassFileProble
 import com.jetbrains.pluginverifier.results.problems.IllegalClassAccessProblem
 import com.jetbrains.pluginverifier.results.problems.InvalidClassFileProblem
 import com.jetbrains.pluginverifier.results.reference.ClassReference
+import com.jetbrains.pluginverifier.usages.hasApiUsagesToProcess
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 
 fun Resolver.caching(): Resolver = CacheResolver(this)
@@ -56,7 +57,9 @@ fun Resolver.resolveClassChecked(
         )
       }
       val classReference = ClassReference(className)
-      context.apiUsageProcessors.forEach { it.processClassReference(classReference, classFile, context, referrer, classUsageType) }
+      if (referrer.hasApiUsagesToProcess) {
+        context.apiUsageProcessors.forEach { it.processClassReference(classReference, classFile, context, referrer, classUsageType) }
+      }
       classFile
     }
   }
