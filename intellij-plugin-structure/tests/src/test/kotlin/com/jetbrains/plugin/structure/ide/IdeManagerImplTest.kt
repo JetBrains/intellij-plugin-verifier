@@ -43,6 +43,84 @@ class IdeManagerImplTest {
     )
   }
 
+  @Test
+  fun `empty IDE directory is reported as not extracted`() {
+    val ideRoot = temporaryFolder.newFolder("RD-261.27258.81").toPath()
+
+    val exception = assertThrows(InvalidIdeException::class.java) {
+      IdeManagerImpl().createIde(ideRoot)
+    }
+    assertEquals(
+      "IDE directory content is invalid: the 'lib' directory is missing. " +
+        "The directory is empty: the IDE has not been extracted, or the extraction is still in progress. " +
+        "Directory content: <empty>",
+      exception.reason
+    )
+  }
+
+  @Test
+  fun `IDE nested in a top-level directory is reported as not stripped`() {
+    val ideRoot = temporaryFolder.newFolder("RD-261.27258.81").toPath()
+    buildDirectory(ideRoot) {
+      dir("JetBrains Rider-2026.1.5.2") {
+        file("build.txt", "RD-261.27258.81")
+        dir("lib") {
+          file("app.jar", "")
+        }
+      }
+    }
+
+    val exception = assertThrows(InvalidIdeException::class.java) {
+      IdeManagerImpl().createIde(ideRoot)
+    }
+    assertEquals(
+      "IDE directory content is invalid: the 'lib' directory is missing. " +
+        "The IDE is nested in the 'JetBrains Rider-2026.1.5.2' directory: the archive has likely been extracted " +
+        "without stripping its top-level directory. Directory content: JetBrains Rider-2026.1.5.2/",
+      exception.reason
+    )
+  }
+
+  @Test
+  fun `partially extracted IDE is reported with its directory content`() {
+    val ideRoot = temporaryFolder.newFolder("CL-261.27258.78").toPath()
+    buildDirectory(ideRoot) {
+      dir("plugins") {
+        dir("clion") {}
+      }
+      dir("license") {}
+      file("Install-Linux-tar.txt", "")
+    }
+
+    val exception = assertThrows(InvalidIdeException::class.java) {
+      IdeManagerImpl().createIde(ideRoot)
+    }
+    assertEquals(
+      "IDE directory content is invalid: the 'lib' directory is missing. " +
+        "The IDE has likely been extracted incompletely or into a wrong directory. " +
+        "Directory content: Install-Linux-tar.txt, license/, plugins/",
+      exception.reason
+    )
+  }
+
+  @Test
+  fun `IDE directory with an idea directory is reported as IDE sources`() {
+    val ideRoot = temporaryFolder.newFolder("IU-261").toPath()
+    buildDirectory(ideRoot) {
+      dir(".idea") {}
+      dir("lib") {}
+    }
+
+    val exception = assertThrows(InvalidIdeException::class.java) {
+      IdeManagerImpl().createIde(ideRoot)
+    }
+    assertEquals(
+      "IDE directory content is invalid: it contains the '.idea' directory, which indicates IDE sources " +
+        "rather than an IDE distribution. Directory content: .idea/, lib/",
+      exception.reason
+    )
+  }
+
   // ── sanity: direct declaration works ─────────────────────────────────────────
 
   @Test

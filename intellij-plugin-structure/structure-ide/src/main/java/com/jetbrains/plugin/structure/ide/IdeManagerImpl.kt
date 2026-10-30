@@ -8,6 +8,7 @@ import com.jetbrains.plugin.structure.base.utils.exists
 import com.jetbrains.plugin.structure.base.utils.isDirectory
 import com.jetbrains.plugin.structure.base.utils.listFiles
 import com.jetbrains.plugin.structure.base.utils.listJars
+import com.jetbrains.plugin.structure.base.utils.simpleName
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.resources.JarsResourceResolver
@@ -29,7 +30,7 @@ class IdeManagerImpl : AbstractIdeManager() {
       throw IOException("Specified path does not exist or is not a directory: $idePath")
     }
     if (!isDistributionIde(idePath)) {
-      throw InvalidIdeException(idePath, "IDE directory content is invalid")
+      throw InvalidIdeException(idePath, describeInvalidDistribution(idePath))
     }
 
     val readIdeVersion = version ?: readIdeVersion(idePath)
@@ -198,8 +199,43 @@ class IdeManagerImpl : AbstractIdeManager() {
 
     private const val CORE_IDE_PLUGIN_ID = "com.intellij"
 
+    private const val MAX_LISTED_ENTRIES = 20
+
     fun isDistributionIde(ideaDir: Path) = ideaDir.resolve("lib").isDirectory &&
       !ideaDir.resolve(".idea").isDirectory
+
+    /**
+     * Explains why [isDistributionIde] rejected the [ideaDir]: which check failed, a probable cause
+     * and the actual directory content, so that a broken or incomplete IDE extraction can be diagnosed.
+     */
+    internal fun describeInvalidDistribution(ideaDir: Path): String {
+      val entries = ideaDir.listFiles().sortedBy { it.simpleName }
+      val problem = when {
+        ideaDir.resolve(".idea").isDirectory ->
+          "it contains the '.idea' directory, which indicates IDE sources rather than an IDE distribution."
+        else -> "the 'lib' directory is missing. " + guessMissingLibCause(entries)
+      }
+      return "IDE directory content is invalid: $problem Directory content: ${describeEntries(entries)}"
+    }
+
+    private fun guessMissingLibCause(entries: List<Path>): String {
+      val single = entries.singleOrNull()
+      return when {
+        entries.isEmpty() ->
+          "The directory is empty: the IDE has not been extracted, or the extraction is still in progress."
+        single != null && single.isDirectory && single.resolve("lib").isDirectory ->
+          "The IDE is nested in the '${single.simpleName}' directory: the archive has likely been extracted " +
+            "without stripping its top-level directory."
+        else -> "The IDE has likely been extracted incompletely or into a wrong directory."
+      }
+    }
+
+    private fun describeEntries(entries: List<Path>): String {
+      if (entries.isEmpty()) return "<empty>"
+      val listed = entries.take(MAX_LISTED_ENTRIES).joinToString { if (it.isDirectory) it.simpleName + "/" else it.simpleName }
+      val remaining = entries.size - MAX_LISTED_ENTRIES
+      return if (remaining > 0) "$listed (and $remaining more)" else listed
+    }
 
   }
 
