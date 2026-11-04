@@ -17,6 +17,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.cr
 import com.jetbrains.plugin.structure.intellij.problems.DuplicateEntryInJar
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.jar.JarArchiveCannotBeOpenException
 import com.jetbrains.plugin.structure.jar.JarFileSystemProvider
 import com.jetbrains.plugin.structure.jar.PluginDescriptorResult.Found
@@ -51,7 +52,11 @@ internal class JarModuleLoader(private val fileSystemProvider: JarFileSystemProv
                 parentPlugin = null,
                 validateDescriptor = false,
                 descriptorXml,
-                descriptor.path, resourceResolver, problemResolver
+                descriptor.path, resourceResolver, problemResolver,
+                // A bundled module descriptor declares no <idea-version> and has no parent creator to
+                // inherit a parser choice from, so the IDE it ships with is what decides - see
+                // PluginCreator.shouldUsePlatformParser.
+                containingIdeVersion = ideVersion
               )
             } catch (e: Exception) {
               LOG.warn("Unable to read descriptor [$descriptorPath] from [$jarPath]", e)
@@ -76,6 +81,8 @@ internal class JarModuleLoader(private val fileSystemProvider: JarFileSystemProv
     val descriptorPath: String,
     override val resourceResolver: ResourceResolver,
     override val problemResolver: PluginCreationResultResolver,
+    /** Version of the IDE this module is bundled in, see [PluginCreator.shouldUsePlatformParser]. */
+    val ideVersion: IdeVersion? = null,
   ) : PluginLoadingContext(
     resourceResolver,
     problemResolver,

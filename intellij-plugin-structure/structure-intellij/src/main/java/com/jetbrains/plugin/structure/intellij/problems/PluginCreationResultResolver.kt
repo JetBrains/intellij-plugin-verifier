@@ -71,6 +71,7 @@ class IntelliJPluginCreationResultResolver : PluginCreationResultResolver {
     IdeBuildComponentsOutOfRange::class,
     ProductCodePrefixInBuild::class,
     XIncludeResolutionErrors::class,
+    ConditionalIncludeNotSupported::class,
     TooLongPropertyValue::class,
     ReleaseDateWrongFormat::class,
     ReleaseDateInFuture::class,

@@ -3,16 +3,21 @@ package com.jetbrains.plugin.structure.intellij.verifiers
 import com.jetbrains.plugin.structure.base.problems.NotNumber
 import com.jetbrains.plugin.structure.base.problems.PropertyNotSpecified
 import com.jetbrains.plugin.structure.intellij.beans.PluginBean
+import com.jetbrains.plugin.structure.intellij.plugin.PluginBeanView
+import com.jetbrains.plugin.structure.intellij.plugin.ValidatableDescriptor
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionAndPluginVersionMismatch
 import com.jetbrains.plugin.structure.intellij.problems.ReleaseVersionWrongFormat
 import com.jetbrains.plugin.structure.intellij.verifiers.ProductReleaseVersionVerifier.VerificationResult.Invalid
 import com.jetbrains.plugin.structure.intellij.version.ProductReleaseVersion
 
 class ProductReleaseVersionVerifier {
-  fun verify(plugin: PluginBean, descriptorPath: String, problemRegistrar: ProblemRegistrar): VerificationResult {
-    if (plugin.productDescriptor == null) return VerificationResult.NotApplicable
+  fun verify(plugin: PluginBean, descriptorPath: String, problemRegistrar: ProblemRegistrar): VerificationResult =
+    verify(PluginBeanView(plugin), descriptorPath, problemRegistrar)
 
-    val releaseVersionValue = plugin.productDescriptor?.releaseVersion
+  fun verify(descriptor: ValidatableDescriptor, descriptorPath: String, problemRegistrar: ProblemRegistrar): VerificationResult {
+    val productDescriptor = descriptor.productDescriptor ?: return VerificationResult.NotApplicable
+    val releaseVersionValue = productDescriptor.releaseVersion
+    val pluginVersion = descriptor.version
     if (releaseVersionValue.isNullOrEmpty()) {
       return Invalid("Attribute '$RELEASE_VERSION_ATTRIBUTE_NAME' is missing").also {
         problemRegistrar.registerProblem(PropertyNotSpecified(RELEASE_VERSION_ATTRIBUTE_NAME, descriptorPath))
@@ -27,7 +32,7 @@ class ProductReleaseVersionVerifier {
           }
         } else {
           verifyPluginVersionAndReleaseVersionMatch(
-            plugin,
+            pluginVersion,
             productReleaseVersion = this,
             descriptorPath,
             problemRegistrar
@@ -43,20 +48,20 @@ class ProductReleaseVersionVerifier {
   }
 
   private fun verifyPluginVersionAndReleaseVersionMatch(
-    plugin: PluginBean,
+    pluginVersion: String?,
     productReleaseVersion: ProductReleaseVersion,
     descriptorPath: String,
     problemRegistrar: ProblemRegistrar
   ) {
-    if (plugin.pluginVersion == null) return
+    if (pluginVersion == null) return
 
-    val pluginVersion = MajorMinorVersion.parse(plugin) ?: return
-    if (!pluginVersion.matches(productReleaseVersion)) {
+    val majorMinorVersion = MajorMinorVersion.parse(pluginVersion) ?: return
+    if (!majorMinorVersion.matches(productReleaseVersion)) {
       problemRegistrar.registerProblem(
         ReleaseVersionAndPluginVersionMismatch(
           descriptorPath,
           productReleaseVersion,
-          plugin.pluginVersion
+          pluginVersion
         )
       )
     }
@@ -68,8 +73,8 @@ class ProductReleaseVersionVerifier {
     }
 
     companion object {
-      fun parse(plugin: PluginBean): MajorMinorVersion? {
-        val pluginVersionParts = plugin.pluginVersion.split(".")
+      fun parse(pluginVersion: String): MajorMinorVersion? {
+        val pluginVersionParts = pluginVersion.split(".")
         val major = pluginVersionParts[0].toIntOrNull() ?: return null
         val minor = if (pluginVersionParts.size > 1) {
           pluginVersionParts[1].split("-")[0].toIntOrNull() ?: 0

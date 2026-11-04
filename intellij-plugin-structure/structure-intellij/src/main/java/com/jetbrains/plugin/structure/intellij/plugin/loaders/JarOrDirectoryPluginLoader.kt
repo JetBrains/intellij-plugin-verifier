@@ -12,6 +12,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createInvalidPlugin
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
@@ -35,7 +36,8 @@ internal class JarOrDirectoryPluginLoader(private val pluginLoaderRegistry: Plug
           validateDescriptor,
           resourceResolver,
           parentPlugin,
-          problemResolver))
+          problemResolver,
+          ideVersion = ideVersion))
       }
 
       jarOrDirectory.isJar() -> jarLoader.loadPlugin(
@@ -45,7 +47,8 @@ internal class JarOrDirectoryPluginLoader(private val pluginLoaderRegistry: Plug
           validateDescriptor,
           resourceResolver,
           parentPlugin,
-          problemResolver
+          problemResolver,
+          ideVersion = ideVersion
         )
       )
 
@@ -63,7 +66,9 @@ internal class JarOrDirectoryPluginLoader(private val pluginLoaderRegistry: Plug
     override val resourceResolver: ResourceResolver,
     val parentPlugin: PluginCreator?,
     override val problemResolver: PluginCreationResultResolver,
-    val hasDotNetDirectory: Boolean = false
+    val hasDotNetDirectory: Boolean = false,
+    /** Version of the IDE this descriptor is bundled in, see [PluginCreator.shouldUsePlatformParser]. */
+    val ideVersion: IdeVersion? = null,
   ) : PluginLoadingContext(
     resourceResolver,
     problemResolver,

@@ -10,11 +10,12 @@ import com.jetbrains.plugin.structure.intellij.beans.PluginBean
  * Resolves Plugin V2 Model `<content>/<module>` elements.
  */
 internal class PluginModuleResolver {
-  fun resolvePluginModules(pluginBean: PluginBean): List<Module> {
+  fun resolvePluginModules(pluginBean: PluginBean, pluginId: String?): List<Module> {
     return pluginBean.pluginContent.flatMap { contentBean ->
       val namespace = contentBean.namespace
-      //if the namespace isn't specified explicitly, a synthetic namespace is used in dependencies between private modules of the plugin
-      val actualNamespace = namespace ?: "${pluginBean.id}_\$implicit"
+      //if the namespace isn't specified explicitly, a synthetic namespace is used in dependencies between private modules of the plugin.
+      //`pluginId` is the trimmed `<id>` falling back to `<name>`, as in IntelliJ's PluginMainDescriptor.
+      val actualNamespace = namespace ?: "${pluginId}_\$implicit"
       contentBean.modules
         .mapNotNull {
           val name = it.moduleName ?: return@mapNotNull null
