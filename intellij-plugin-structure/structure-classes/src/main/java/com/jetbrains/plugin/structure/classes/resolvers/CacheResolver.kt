@@ -4,6 +4,7 @@
 
 package com.jetbrains.plugin.structure.classes.resolvers
 
+import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
 import com.jetbrains.plugin.structure.base.BinaryClassName
@@ -24,11 +25,30 @@ class CacheResolver(
    *
    * See https://youtrack.jetbrains.com/issue/MP-7979
    */
-  private val classCache: LoadingCache<String, ResolutionResult<ClassNode>> =
+  private val classCache: LoadingCache<String, ResolutionResult<ClassNode>?> =
     Caffeine.newBuilder()
       .softValues()
       .maximumSize(cacheSize.toLong())
-      .build { key -> delegate.resolveClass(key as BinaryClassName) }
+      .build { key ->
+        // A concurrent lookup may have recorded a miss while this lookup waited for the key.
+        if (missingClassCache.getIfPresent(key) != null) {
+          null
+        } else {
+          when (val result = delegate.resolveClass(key as BinaryClassName)) {
+            ResolutionResult.NotFound -> {
+              missingClassCache.put(key, true)
+              null
+            }
+            else -> result
+          }
+        }
+      }
+
+  // Missing names are cheap to retain, and must not evict parsed class nodes.
+  private val missingClassCache: Cache<String, Boolean> =
+    Caffeine.newBuilder()
+      .maximumSize((cacheSize.toLong() * 8).coerceAtMost(8192))
+      .build()
 
   private val propertyBundleCache: LoadingCache<BundleCacheKey, ResolutionResult<PropertyResourceBundle>> =
     Caffeine.newBuilder()
@@ -60,7 +80,12 @@ class CacheResolver(
   override fun resolveClass(className: String): ResolutionResult<ClassNode> = resolveClass(className as BinaryClassName)
 
   override fun resolveClass(className: BinaryClassName): ResolutionResult<ClassNode> = try {
-    classCache.get(className.toString())
+    val key = className.toString()
+    if (missingClassCache.getIfPresent(key) != null) {
+      ResolutionResult.NotFound
+    } else {
+      classCache.get(key) ?: ResolutionResult.NotFound
+    }
   } catch (e: ExecutionException) {
     throw e.cause ?: e
   }

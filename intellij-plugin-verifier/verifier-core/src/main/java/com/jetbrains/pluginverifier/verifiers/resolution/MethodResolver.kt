@@ -157,7 +157,7 @@ private class MethodResolveImpl(
     2) Otherwise, if C declares a method with the name and descriptor specified by
     the interface method reference, method lookup succeeds.
     */
-    val matching = interfaceFile.methods.firstOrNull { it.name == methodName && it.descriptor == methodDescriptor }
+    val matching = interfaceFile.methodsNamed(methodName).firstOrNull { it.name == methodName && it.descriptor == methodDescriptor }
     if (matching != null) {
       return MethodResolutionResult.Found(matching)
     }
@@ -169,7 +169,7 @@ private class MethodResolveImpl(
     */
     val objectClass = context.classResolver.resolveClassChecked("java/lang/Object", interfaceFile, context)
       ?: return MethodResolutionResult.Abort
-    val objectMethod = objectClass.methods.firstOrNull { it.name == methodName && it.descriptor == methodDescriptor && it.isPublic && !it.isStatic }
+    val objectMethod = objectClass.methodsNamed(methodName).firstOrNull { it.name == methodName && it.descriptor == methodDescriptor && it.isPublic && !it.isStatic }
     if (objectMethod != null) {
       return MethodResolutionResult.Found(objectMethod)
     }
@@ -235,7 +235,7 @@ private class MethodResolveImpl(
     visited.add(start.name)
     while (!queue.isEmpty()) {
       val cur = queue.remove()
-      cur.methods.filterTo(result, predicate)
+      cur.methodsNamed(methodName).filterTo(result, predicate)
 
       cur.interfaces.forEach {
         if (it !in visited) {
@@ -335,7 +335,7 @@ private class MethodResolveImpl(
       The resolved method is the signature polymorphic method declaration. It is not necessary for C to declare
       a method with the descriptor specified by the method reference.
     */
-    val methods = currentClass.methods
+    val methods = currentClass.methodsNamed(methodName)
 
     val matchByName = methods.firstOrNull { it.name == methodName }
     if (matchByName != null && isSignaturePolymorphic(matchByName) && methods.count { it.name == methodName } == 1) {
@@ -408,7 +408,7 @@ private class MethodResolveImpl(
       1) If C contains a declaration for an instance method with the same name and descriptor as the resolved method,
       then it is the method to be invoked .
     */
-    val matching = classRef.methods.find { it.name == resolvedMethod.name && it.descriptor == resolvedMethod.descriptor }
+    val matching = classRef.methodsNamed(resolvedMethod.name).find { it.name == resolvedMethod.name && it.descriptor == resolvedMethod.descriptor }
     if (matching != null) {
       return 1 to matching
     }
@@ -423,7 +423,7 @@ private class MethodResolveImpl(
       var current: ClassFile = context.classResolver.resolveClassChecked(classRef.superName!!, classRef, context)
         ?: return null
       while (true) {
-        val match = current.methods.find { it.name == resolvedMethod.name && it.descriptor == resolvedMethod.descriptor }
+        val match = current.methodsNamed(resolvedMethod.name).find { it.name == resolvedMethod.name && it.descriptor == resolvedMethod.descriptor }
         if (match != null) {
           return 2 to match
         }
@@ -442,7 +442,7 @@ private class MethodResolveImpl(
     if (classRef.isInterface) {
       val objectClass = context.classResolver.resolveClassChecked("java/lang/Object", classRef, context)
         ?: return null
-      val match = objectClass.methods.find { it.name == resolvedMethod.name && it.descriptor == resolvedMethod.descriptor && it.isPublic }
+      val match = objectClass.methodsNamed(resolvedMethod.name).find { it.name == resolvedMethod.name && it.descriptor == resolvedMethod.descriptor && it.isPublic }
       if (match != null) {
         return 3 to match
       }

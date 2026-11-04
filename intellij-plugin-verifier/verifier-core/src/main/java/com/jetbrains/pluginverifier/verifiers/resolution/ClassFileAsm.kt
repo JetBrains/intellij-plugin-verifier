@@ -116,3 +116,10 @@ class ClassFileAsm(val asmNode: ClassNode, override val classFileOrigin: FileOri
   override val nestHostClass: String?
     get() = asmNode.nestHostClass
 }
+
+internal fun ClassFile.methodsNamed(methodName: String): Sequence<Method> =
+  if (this is ClassFileAsm) {
+    asmNode.methods.asSequence().filter { it.name == methodName }.map { MethodAsm(this, it) }
+  } else {
+    methods.filter { it.name == methodName }
+  }

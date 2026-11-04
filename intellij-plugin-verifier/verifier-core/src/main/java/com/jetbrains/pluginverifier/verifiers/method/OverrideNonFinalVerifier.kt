@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.results.problems.OverridingFinalMethodProble
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassParentsVisitor
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
+import com.jetbrains.pluginverifier.verifiers.resolution.methodsNamed
 import com.jetbrains.pluginverifier.verifiers.resolution.resolveClassChecked
 
 class OverrideNonFinalVerifier : MethodVerifier {
@@ -32,7 +33,7 @@ class OverrideNonFinalVerifier : MethodVerifier {
       context.classResolver.resolveClassChecked(superName, subclassFile, context)
     }
     parentsVisitor.visitClass(method.containingClassFile, false, onEnter = { parent ->
-      val sameMethod = parent.methods.find { it.name == method.name && it.descriptor == method.descriptor }
+      val sameMethod = parent.methodsNamed(method.name).find { it.name == method.name && it.descriptor == method.descriptor }
       if (sameMethod != null && sameMethod.isFinal) {
         context.problemRegistrar.registerProblem(OverridingFinalMethodProblem(sameMethod.location, method.containingClassFile.location))
         false
