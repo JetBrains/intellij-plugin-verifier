@@ -8,6 +8,7 @@ import com.jetbrains.pluginverifier.results.reference.ClassReference
 import com.jetbrains.pluginverifier.results.reference.FieldReference
 import com.jetbrains.pluginverifier.results.reference.MethodReference
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
+import com.jetbrains.pluginverifier.verifiers.method.KotlinMethods.isKotlinDefaultMethod
 import com.jetbrains.pluginverifier.verifiers.resolution.*
 import org.objectweb.asm.tree.AbstractInsnNode
 
@@ -36,3 +37,14 @@ interface ApiUsageProcessor {
   ) = Unit
 
 }
+
+/**
+ * Whether the API usages inside this member are passed to the [ApiUsageProcessor]s.
+ *
+ * They are not for the bridges the Kotlin compiler synthesizes for inherited interface default
+ * methods, see [isKotlinDefaultMethod]: the plugin author did not write them, so they must not be
+ * reported as usages of deprecated, experimental, internal or otherwise restricted API. Problems
+ * that the instruction verifiers detect themselves, such as a missing method, are still reported.
+ */
+internal val ClassFileMember.hasApiUsagesToProcess: Boolean
+  get() = this !is Method || !isKotlinDefaultMethod()

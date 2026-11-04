@@ -11,6 +11,7 @@ import com.jetbrains.pluginverifier.results.problems.InvokeInterfaceOnPrivateMet
 import com.jetbrains.pluginverifier.results.problems.InvokeStaticOnInstanceMethodProblem
 import com.jetbrains.pluginverifier.results.problems.MethodNotFoundProblem
 import com.jetbrains.pluginverifier.results.reference.MethodReference
+import com.jetbrains.pluginverifier.usages.hasApiUsagesToProcess
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.hierarchy.ClassHierarchyBuilder
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
@@ -195,7 +196,7 @@ class MethodInvokeInstructionVerifier(
 
   private fun resolveMethod(): Method? {
     val method = MethodResolver().resolveMethod(methodOwnerClass, methodReference, instruction, callerMethod, context)
-    if (method != null) {
+    if (method != null && callerMethod.hasApiUsagesToProcess) {
       context.apiUsageProcessors.forEach { it.processMethodInvocation(methodReference, method, instructionNode, callerMethod, context) }
     }
     return method

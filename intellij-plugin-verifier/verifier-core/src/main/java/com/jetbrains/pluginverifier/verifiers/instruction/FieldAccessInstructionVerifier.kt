@@ -9,6 +9,7 @@ import com.jetbrains.pluginverifier.results.problems.ChangeFinalFieldProblem
 import com.jetbrains.pluginverifier.results.problems.InstanceAccessOfStaticFieldProblem
 import com.jetbrains.pluginverifier.results.problems.StaticAccessOfInstanceFieldProblem
 import com.jetbrains.pluginverifier.results.reference.FieldReference
+import com.jetbrains.pluginverifier.usages.hasApiUsagesToProcess
 import com.jetbrains.pluginverifier.verifiers.VerificationContext
 import com.jetbrains.pluginverifier.verifiers.resolution.ClassFile
 import com.jetbrains.pluginverifier.verifiers.resolution.Field
@@ -95,7 +96,7 @@ class FieldAccessInstructionVerifier(
 
   private fun resolveField(): Field? {
     val field = FieldResolver().resolveField(fieldOwnerClass, fieldReference, context, callerMethod, instruction)
-    if (field != null) {
+    if (field != null && callerMethod.hasApiUsagesToProcess) {
       context.apiUsageProcessors.forEach { it.processFieldAccess(fieldReference, field, context, callerMethod) }
     }
     return field
