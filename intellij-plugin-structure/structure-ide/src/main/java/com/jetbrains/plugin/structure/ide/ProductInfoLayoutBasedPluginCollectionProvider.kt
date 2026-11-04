@@ -38,6 +38,27 @@ import java.nio.file.Path
 
 private val LOG: Logger = LoggerFactory.getLogger(ProductInfoLayoutBasedPluginCollectionProvider::class.java)
 
+/**
+ * Loads the full set of bundled [IdePlugin]s from an IDE installation that is described by a
+ * `product-info.json` layout file.
+ *
+ * Plugin discovery is split into three phases:
+ * 1. **Core plugin** – the special `com.intellij` core plugin, loaded by [CorePluginManager].
+ * 2. **Layout plugins** – every [LayoutComponent] declared in `product-info.json`:
+ *    - [LayoutComponent.ModuleV2] / [LayoutComponent.ProductModuleV2] are loaded as modules via
+ *      [ModuleFactory].
+ *    - [LayoutComponent.Plugin] entries are loaded as ordinary plugins via [PluginFactory].
+ *    - [LayoutComponent.PluginAlias] entries are skipped; they are back-references to plugins
+ *      already loaded by one of the other component types.
+ * 3. **Additional plugins** – any extra plugins provided by [additionalPluginReader] (e.g. plugins
+ *    discovered outside the standard layout).
+ *
+ * This provider only handles [ProductInfoLayoutComponentsPluginCollectionSource] sources; any
+ * other source type results in an empty collection.
+ *
+ * @param additionalPluginReader reader that supplies plugins beyond those listed in the layout.
+ * @param jarFileSystemProvider provider for opening JAR file systems during class-path resolution.
+ */
 class ProductInfoLayoutBasedPluginCollectionProvider(
   private val additionalPluginReader: ProductInfoBasedIdeManager.PluginReader<LayoutComponents>,
   private val jarFileSystemProvider: JarFileSystemProvider,
@@ -48,6 +69,33 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
    */
   private val bundledPluginCreationResultResolver: PluginCreationResultResolver
     get() = JetBrainsPluginCreationResultResolver.fromClassPathJson(IntelliJPluginCreationResultResolver())
+
+  fun getCorePlugins(source: PluginCollectionSource<Path, *>): List<IdePlugin> {
+    if (source !is ProductInfoLayoutComponentsPluginCollectionSource) {
+      return emptyList()
+    }
+
+    return source.readCorePlugin()
+  }
+
+  fun getPlugin(moduleManager: BundledModulesManager, source: PluginCollectionSource<Path, *>, component: LayoutComponent): IdePlugin? {
+    if (source !is ProductInfoLayoutComponentsPluginCollectionSource) {
+      return null
+    }
+
+    val platformResourceResolver = ProductInfoResourceResolver(source.layoutComponents, jarFileSystemProvider)
+
+    val moduleV2Factory = ModuleFactory(::createModule, LayoutComponentsClasspathProvider(source.layoutComponents))
+    val pluginFactory = PluginFactory(::createPlugin)
+
+    val loadPluginFromLayout = source.loadPluginFromLayout(moduleV2Factory, platformResourceResolver, moduleManager, pluginFactory)
+    val result = loadPluginFromLayout(component) ?: return null
+
+    return when (result) {
+      is Failure -> null
+      is Success -> result.plugin
+    }
+  }
 
   @Throws(IOException::class)
   override fun getPlugins(source: PluginCollectionSource<Path, *>): Collection<IdePlugin> {
@@ -68,26 +116,31 @@ class ProductInfoLayoutBasedPluginCollectionProvider(
     val moduleV2Factory = ModuleFactory(::createModule, LayoutComponentsClasspathProvider(layoutComponents))
     val pluginFactory = PluginFactory(::createPlugin)
 
-    val moduleLoadingResults = layoutComponents.content.mapNotNull { layoutComponent ->
-      when (layoutComponent) {
-        is LayoutComponent.ModuleV2,
-        is LayoutComponent.ProductModuleV2 -> {
-          moduleV2Factory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
-        }
-
-        is LayoutComponent.Plugin -> {
-          pluginFactory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
-        }
-
-        is LayoutComponent.PluginAlias -> {
-          // References to plugin IDs that are already loaded in the other types of layout components
-          null
-        }
-      }
-    }.fold(LoadingResults(), LoadingResults::add)
+    val moduleLoadingResults = layoutComponents.content.mapNotNull(loadPluginFromLayout(moduleV2Factory, platformResourceResolver, moduleManager, pluginFactory)).fold(LoadingResults(), LoadingResults::add)
 
     logFailures(LOG, moduleLoadingResults.failures, idePath)
     return moduleLoadingResults.successfulPlugins
+  }
+
+  private fun ProductInfoLayoutComponentsPluginCollectionSource.loadPluginFromLayout(moduleV2Factory: ModuleFactory,
+                                                                                     platformResourceResolver: ProductInfoResourceResolver,
+                                                                                     moduleManager: BundledModulesManager,
+                                                                                     pluginFactory: PluginFactory): (LayoutComponent) -> PluginWithArtifactPathResult? = { layoutComponent ->
+    when (layoutComponent) {
+      is LayoutComponent.ModuleV2,
+      is LayoutComponent.ProductModuleV2 -> {
+        moduleV2Factory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
+      }
+
+      is LayoutComponent.Plugin -> {
+        pluginFactory.read(layoutComponent, idePath, ideVersion, platformResourceResolver, moduleManager)
+      }
+
+      is LayoutComponent.PluginAlias -> {
+        // References to plugin IDs that are already loaded in the other types of layout components
+        null
+      }
+    }
   }
 
   private fun ProductInfoLayoutComponentsPluginCollectionSource.readCorePlugin(): List<IdePlugin> {
