@@ -6,15 +6,19 @@ package com.jetbrains.pluginverifier.analysis
 
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.utils.contentBuilder.buildZipFile
+import com.jetbrains.plugin.structure.classes.resolvers.DelegatingNamedResolver
 import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.plugin.structure.classes.resolvers.FixedClassesResolver
 import com.jetbrains.plugin.structure.intellij.plugin.IdePlugin
 import com.jetbrains.plugin.structure.intellij.plugin.IdePluginManager
 import com.jetbrains.plugin.structure.intellij.plugin.PluginDependencyImpl
+import com.jetbrains.pluginverifier.analysis.ReachabilityGraph.ReachabilityMark.MAIN_PLUGIN
 import com.jetbrains.pluginverifier.analysis.ReachabilityGraph.ReachabilityMark.OPTIONAL_PLUGIN
 import com.jetbrains.pluginverifier.dependencies.DependenciesGraph
 import com.jetbrains.pluginverifier.dependencies.DependencyNode
 import com.jetbrains.pluginverifier.dependencies.MissingDependency
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Rule
@@ -43,6 +47,45 @@ class ClassReachabilityAnalysisTest {
     assertModuleClassesReachableFromOptionalMark(plugin)
   }
 
+  @Test
+  fun `shared type membership is checked once per graph build without changing reachability`() {
+    val plugin = buildPlugin(declareOptionalDependencyInPluginXml = false, includeMainService = true)
+    val pluginNode = DependencyNode.dependencyNode(plugin)
+    val dependenciesGraph = DependenciesGraph(
+      verifiedPlugin = pluginNode,
+      vertices = setOf(pluginNode),
+      edges = emptySet(),
+      missingDependencies = mapOf(
+        pluginNode to setOf(MissingDependency(PluginDependencyImpl(OPTIONAL_PLUGIN_ID, true, false), "not found"))
+      )
+    )
+    val classes = listOf(MODULE_SERVICE_CLASS, MAIN_SERVICE_CLASS).map { serviceClass ->
+      classNode(serviceClass).apply {
+        fields.add(FieldNode(Opcodes.ACC_PRIVATE, "helper", "L$HELPER_CLASS;", null, null))
+        fields.add(FieldNode(Opcodes.ACC_PRIVATE, "external", "L$EXTERNAL_CLASS;", null, null))
+      }
+    } + classNode(HELPER_CLASS)
+    val delegate = FixedClassesResolver.create(classes, object : FileOrigin { override val parent = null })
+    val membershipCalls = hashMapOf<String, Int>()
+    val countingResolver = object : DelegatingNamedResolver("counting", { delegate }) {
+      override fun containsClass(className: String): Boolean {
+        membershipCalls[className] = (membershipCalls[className] ?: 0) + 1
+        return delegate.containsClass(className)
+      }
+    }
+
+    repeat(2) { buildIndex ->
+      val graph = buildClassReachabilityGraph(plugin, countingResolver, dependenciesGraph)
+
+      assertTrue(graph.isClassReachableFromMark(HELPER_CLASS, OPTIONAL_PLUGIN))
+      assertTrue(graph.isClassReachableFromMark(HELPER_CLASS, MAIN_PLUGIN))
+      assertFalse(graph.isClassReachableFromMark(EXTERNAL_CLASS, OPTIONAL_PLUGIN))
+      assertFalse(graph.isClassReachableFromMark(EXTERNAL_CLASS, MAIN_PLUGIN))
+      assertEquals(buildIndex + 1, membershipCalls[HELPER_CLASS])
+      assertEquals(buildIndex + 1, membershipCalls[EXTERNAL_CLASS])
+    }
+  }
+
   private fun assertModuleClassesReachableFromOptionalMark(plugin: IdePlugin) {
     val pluginNode = DependencyNode.dependencyNode(plugin)
     val dependenciesGraph = DependenciesGraph(
@@ -62,9 +105,18 @@ class ClassReachabilityAnalysisTest {
     )
   }
 
-  private fun buildPlugin(declareOptionalDependencyInPluginXml: Boolean): IdePlugin {
+  private fun buildPlugin(declareOptionalDependencyInPluginXml: Boolean, includeMainService: Boolean = false): IdePlugin {
     val optionalDepends = if (declareOptionalDependencyInPluginXml) {
       """<depends optional="true" config-file="optional-x.xml">$OPTIONAL_PLUGIN_ID</depends>"""
+    } else {
+      ""
+    }
+    val mainService = if (includeMainService) {
+      """
+        <extensions defaultExtensionNs="com.intellij">
+          <applicationService serviceImplementation="${MAIN_SERVICE_CLASS.replace('/', '.')}"/>
+        </extensions>
+      """.trimIndent()
     } else {
       ""
     }
@@ -85,6 +137,7 @@ class ClassReachabilityAnalysisTest {
                     <change-notes>Example plugin used to verify class reachability analysis.</change-notes>
                     <idea-version since-build="241.0"/>
                     $optionalDepends
+                    $mainService
                     <content>
                       <module name="$MODULE_NAME"/>
                     </content>
@@ -142,4 +195,6 @@ class ClassReachabilityAnalysisTest {
 private const val OPTIONAL_PLUGIN_ID = "com.example.x"
 private const val MODULE_NAME = "com.example.plugin.module"
 private const val MODULE_SERVICE_CLASS = "com/example/module/ModuleService"
+private const val MAIN_SERVICE_CLASS = "com/example/MainService"
 private const val HELPER_CLASS = "com/example/module/Helper"
+private const val EXTERNAL_CLASS = "external/SharedType"

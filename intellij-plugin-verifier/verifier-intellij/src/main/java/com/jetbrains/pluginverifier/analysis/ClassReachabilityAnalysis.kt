@@ -123,6 +123,7 @@ fun buildClassReachabilityGraph(
 
 private fun buildTypeGraph(pluginResolver: Resolver): TypeGraph {
   val graph = TypeGraph()
+  val classMembership = hashMapOf<String, Boolean>()
 
   pluginResolver.processAllClasses { resolutionResult ->
     if (resolutionResult !is ResolutionResult.Found) {
@@ -134,7 +135,7 @@ private fun buildTypeGraph(pluginResolver: Resolver): TypeGraph {
     classNode.accept(TypeReferencesClassVisitor(references))
     val typeReferences = references.typeReferences
     for (typeReference in typeReferences) {
-      if (pluginResolver.containsClass(typeReference)) {
+      if (classMembership.getOrPut(typeReference) { pluginResolver.containsClass(typeReference) }) {
         graph.addEdge(classNode.name, typeReference)
       }
     }

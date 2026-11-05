@@ -8,6 +8,8 @@ Releases prior to January 2023 are tracked on the project GitHub [Releases Page]
 
 ### Changed
 
+- Cache class presence checks while constructing reachability graphs for optional dependency analysis.
+
 ### Fixed
 
 ## 1.411 - 2026-10-19
