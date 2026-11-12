@@ -26,7 +26,7 @@ slf4j-api = "2.0.18"
 spullara-cliParser = "1.1.6"
 versions = "0.51.0"
 woodstox = "7.1.0"
-xz = "1.9"
+xz = "1.12"
 
 [libraries]
 assertj = { group = "org.assertj", name = "assertj-core", version.ref = "assertj" }
