@@ -3,10 +3,10 @@ on:
   # Trigger the workflow on pushes to only the 'master' branch (this avoids duplicate checks being run e.g. for dependabot pull requests)
   push:
     branches: [master]
-    paths: [ 'ide-diff-builder/**', '.github/workflows/ide-diff-builder.yml' ]
+    paths: [ 'ide-diff-builder/**', '.github/workflows/ide-diff-builder.yml', 'gradle/libs.versions.toml' ]
   # Trigger the workflow on any pull request
   pull_request:
-    paths: [ 'ide-diff-builder/**', '.github/workflows/ide-diff-builder.yml' ]
+    paths: [ 'ide-diff-builder/**', '.github/workflows/ide-diff-builder.yml', 'gradle/libs.versions.toml' ]
 
 jobs:
 
