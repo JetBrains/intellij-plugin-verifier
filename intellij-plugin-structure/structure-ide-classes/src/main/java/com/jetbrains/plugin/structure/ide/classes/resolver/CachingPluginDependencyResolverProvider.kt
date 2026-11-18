@@ -59,12 +59,11 @@ class CachingPluginDependencyResolverProvider(
    * This mechanism functions as a classpath filter.
    * It takes classes and resource bundles from the IDE
    * and includes only those that are declared as dependencies in the plugin.
+   * This holds even when the IDE bundles a plugin with the same ID,
+   * such as another version of the plugin being resolved.
    */
   override fun getResolver(plugin: IdePlugin): Resolver {
     plugin.id ?: return EMPTY_RESOLVER
-    getFromSecondaryCache(plugin)?.let {
-      return it
-    }
     val cacheKey = plugin.artifactKey()
     // Invocation of `getIfPresent` is intentional!
     // Using `get` would lead to a recursive update triggered by `createResolver`.
@@ -140,9 +139,17 @@ class CachingPluginDependencyResolverProvider(
     val dependencyPlugin = plugin ?: return EmptyResolver(id)
     return dependencyPlugin.createResolverTree()
       .let { (r, resolversToCache) ->
-        pluginResolverCache.put(dependencyPlugin.resolverCacheKey(), r)
+        val pluginCacheKey = dependencyPlugin.resolverCacheKey()
+        pluginResolverCache.put(pluginCacheKey, r)
         resolversToCache.forEach {
-          pluginResolverCache.put(dependencyPlugin.resolverCacheKey(it.name), it)
+          val moduleCacheKey = dependencyPlugin.resolverCacheKey(it.name)
+          // A module resolver must never replace the plugin resolver in the cache:
+          // unlike the plugin resolver, it doesn't cover the plugin's content modules.
+          // Their names collide when a module has no own layout component in the 'product-info.json'
+          // and thus falls back to the resolver of the plugin that declares it.
+          if (moduleCacheKey != pluginCacheKey) {
+            pluginResolverCache.put(moduleCacheKey, it)
+          }
         }
         r
       }
@@ -168,7 +175,10 @@ class CachingPluginDependencyResolverProvider(
   private fun IdePlugin.createResolverTree(): Pair<NamedResolver, List<NamedResolver>> {
     getFromSecondaryCache(this)?.let { pluginResolver ->
       val definedModuleResolvers = definedModules.map { moduleId ->
-        getFromSecondaryCache(moduleId) ?: pluginResolver //FIXME document fallback pluginResolver when wrong product-info.json
+        // A module has no own resolver when it is not a layout component of the 'product-info.json',
+        // or when its layout component was skipped due to a missing classpath file.
+        // Such a module is served by the resolver of the plugin that declares it.
+        getFromSecondaryCache(moduleId) ?: pluginResolver
       }.unique()
 
       val resultResolver = if (definedModuleResolvers.isNotEmpty()) {
