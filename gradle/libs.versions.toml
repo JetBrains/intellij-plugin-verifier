@@ -24,7 +24,7 @@ retrofit-gson = "3.0.0"
 shadow = "8.3.0"
 slf4j-api = "2.0.20"
 spullara-cliParser = "1.1.6"
-versions = "0.51.0"
+versions = "0.67.0"
 woodstox = "7.1.0"
 xz = "1.12"
 
