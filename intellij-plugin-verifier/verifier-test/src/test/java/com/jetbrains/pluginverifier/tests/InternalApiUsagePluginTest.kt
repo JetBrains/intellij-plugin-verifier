@@ -16,8 +16,15 @@ import com.jetbrains.pluginverifier.PluginVerificationResult
 import com.jetbrains.pluginverifier.filtering.InternalApiUsageFilter
 import com.jetbrains.pluginverifier.results.problems.CompatibilityProblem
 import com.jetbrains.pluginverifier.tests.mocks.IdeaPluginSpec
+import com.jetbrains.pluginverifier.usages.deprecated.DeprecatedApiUsage
+import com.jetbrains.pluginverifier.usages.experimental.ExperimentalApiUsage
+import com.jetbrains.pluginverifier.usages.internal.InternalApiUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalClassUsage
 import com.jetbrains.pluginverifier.usages.internal.InternalMethodUsage
+import com.jetbrains.pluginverifier.verifiers.resolution.classDump.KotlinAnnotatedDefaultMethodInterfaceDump
+import com.jetbrains.pluginverifier.verifiers.resolution.classDump.KotlinAnnotatedDefaultMethodStubDump
+import com.jetbrains.pluginverifier.verifiers.resolution.classDump.KotlinDefaultMethodInterfaceDump
+import com.jetbrains.pluginverifier.verifiers.resolution.classDump.KotlinDefaultMethodStubDump
 import com.jetbrains.pluginverifier.warnings.CompatibilityWarning
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.description.annotation.AnnotationDescription
@@ -117,6 +124,61 @@ class InternalApiUsagePluginTest {
       apiUsageFilters = listOf(apiUsageFilter)) as PluginVerificationResult.Verified
 
     assertEquals(0, verificationResult.internalApiUsages.size)
+  }
+
+  @Test
+  fun `Kotlin ENABLE-mode compiler-generated default-method stub override is not reported as an internal API usage`() {
+    val (idePlugin, ide) = prepareInterfaceAndKotlinStubImplementor(
+      IdeaPluginSpec("com.example.kotlinStubPlugin", "Some Vendor"),
+      interfaceClassName = "TestInterface",
+      interfaceClassBytes = KotlinDefaultMethodInterfaceDump.dump(),
+      implClassName = "TestImpl",
+      implClassBytes = KotlinDefaultMethodStubDump.dump()
+    )
+
+    val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin) as PluginVerificationResult.Verified
+
+    assertEquals(emptySet<CompatibilityProblem>(), verificationResult.compatibilityProblems)
+    assertEquals(emptySet<InternalApiUsage>(), verificationResult.internalApiUsages)
+  }
+
+  @Test
+  fun `Kotlin ENABLE-mode compiler-generated default-method stub is not reported as a deprecated or experimental API usage`() {
+    val (idePlugin, ide) = prepareInterfaceAndKotlinStubImplementor(
+      IdeaPluginSpec("com.example.kotlinAnnotatedStubPlugin", "Some Vendor"),
+      interfaceClassName = "AnnotatedDefaultMethodInterface",
+      interfaceClassBytes = KotlinAnnotatedDefaultMethodInterfaceDump.dump(),
+      implClassName = "AnnotatedDefaultMethodImpl",
+      implClassBytes = KotlinAnnotatedDefaultMethodStubDump.dump()
+    )
+
+    val verificationResult = VerificationRunner().runPluginVerification(ide, idePlugin) as PluginVerificationResult.Verified
+
+    assertEquals(emptySet<CompatibilityProblem>(), verificationResult.compatibilityProblems)
+    assertEquals(emptySet<ExperimentalApiUsage>(), verificationResult.experimentalApiUsages)
+    assertEquals(emptySet<DeprecatedApiUsage>(), verificationResult.deprecatedUsages)
+  }
+
+  private fun prepareInterfaceAndKotlinStubImplementor(
+    pluginSpec: IdeaPluginSpec,
+    interfaceClassName: String,
+    interfaceClassBytes: ByteArray,
+    implClassName: String,
+    implClassBytes: ByteArray
+  ): Pair<IdePlugin, Ide> {
+    val idePlugin = buildIdePlugin(pluginSpec) {
+      dirs("com/jetbrains/test") {
+        file("$implClassName.class", implClassBytes)
+      }
+    }
+
+    val ide = buildIdeWithBundledPlugins(javaPluginClassesBuilder = {
+      dirs("com/jetbrains/test") {
+        file("$interfaceClassName.class", interfaceClassBytes)
+      }
+    }, groovyPluginClassesBuilder = {})
+
+    return idePlugin to ide
   }
 
   @Suppress("UNCHECKED_CAST")

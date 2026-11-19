@@ -2,12 +2,14 @@ package com.jetbrains.pluginverifier.tests.mocks
 
 import com.google.common.jimfs.Configuration.unix
 import com.google.common.jimfs.Jimfs
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import uk.org.webcompere.systemstubs.environment.EnvironmentVariables
 import uk.org.webcompere.systemstubs.properties.SystemProperties
 import uk.org.webcompere.systemstubs.resource.Resources
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -23,6 +25,11 @@ class JdkDescriptorProviderTest {
     Files.createDirectories(fs.getPath("/opt/java8"))
     Files.createDirectories(fs.getPath("/opt/java11"))
     Files.createDirectories(fs.getPath("$MOCK_PV_USER_HOME/.sdkman/candidates/java/current"))
+  }
+
+  @After
+  fun tearDown() {
+    TestJdkDescriptorProvider.filesystem = FileSystems.getDefault()
   }
 
   @Test

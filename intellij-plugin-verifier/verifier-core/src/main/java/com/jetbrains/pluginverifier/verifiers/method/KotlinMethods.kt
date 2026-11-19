@@ -6,6 +6,7 @@ package com.jetbrains.pluginverifier.verifiers.method
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.jetbrains.plugin.structure.classes.resolvers.FileOrigin
 import com.jetbrains.pluginverifier.results.location.MethodLocation
 import com.jetbrains.pluginverifier.verifiers.resolution.Method
 import kotlinx.metadata.KmClass
@@ -21,14 +22,19 @@ import org.objectweb.asm.tree.MethodInsnNode
 object KotlinMethods {
   /**
    * Sized to survive concurrent verification: [isKotlinDefaultMethod] is asked about every method
-   * by three verifiers, on as many threads as `intellij.plugin.verifier.concurrency.level` allows,
-   * so a cache of a hundred booleans evicts an entry before its second reader arrives.
+   * by four verifiers, and again for every API usage inside it, on as many threads as
+   * `intellij.plugin.verifier.concurrency.level` allows, so a cache of a hundred booleans evicts an
+   * entry before its second reader arrives.
    */
   private const val CAPACITY = 16_384L
 
   private const val DEFAULT_IMPLS_SUFFIX = "\$DefaultImpls"
 
-  private val cache: Cache<MethodLocation, Boolean> = Caffeine.newBuilder()
+  /**
+   * Keyed by origin as well: [MethodLocation] equality ignores it, and same-named classes from
+   * different plugins or libraries may be verified in the same process.
+   */
+  private val cache: Cache<Pair<MethodLocation, FileOrigin>, Boolean> = Caffeine.newBuilder()
     .maximumSize(CAPACITY)
     .build()
 
@@ -64,11 +70,21 @@ object KotlinMethods {
    * rather than [KmClass.functions], and synthetic `name$default` overloads are not listed at all.
    * Classifying any of those as a bridge would silently disable the argument-type, return-type and
    * local-variable checks that [MethodArgumentTypesVerifier], [MethodReturnTypeVerifier] and
-   * [MethodLocalVarsVerifier] skip for default methods.
+   * [MethodLocalVarsVerifier] skip for default methods, and hide the API usages in them.
+   *
+   * The metadata is trusted as is: a tool that rewrites the bytecode but leaves the metadata stale,
+   * such as an obfuscator renaming types, can make a declared override look like a bridge.
+   *
+   * Only bridges in classes are recognized. A Kotlin interface inheriting a default method gets
+   * forwarders too, `$DefaultImpls` methods or synthetic accessors depending on how it and its
+   * superinterface were compiled, but these can only be told apart from declared default methods
+   * by their names or bytecode shape, which are compiler implementation details.
    */
   fun Method.isKotlinDefaultMethod(): Boolean {
     val method: Method = this
-    return cache.get(method.location) { method.isCompilerSynthesizedInterfaceBridge() }
+    return cache.get(method.location to method.containingClassFile.classFileOrigin) {
+      method.isCompilerSynthesizedInterfaceBridge()
+    }
   }
 
   internal fun Method.isCompilerSynthesizedInterfaceBridge(): Boolean {
@@ -85,7 +101,7 @@ object KotlinMethods {
     // Evaluate the bytecode signal first: it is a single instruction scan, and it is false for
     // almost every method, whereas reading `@kotlin.Metadata` below deserializes the *whole*
     // class's metadata. That deserialization costs ~16 us per call, and every method of every
-    // Kotlin class reaches this code (three verifiers ask about each method), so ordering the
+    // Kotlin class reaches this code (several verifiers ask about each method), so ordering the
     // cheap test first keeps metadata parsing to the handful of genuine bridge candidates.
     if (!forwardsToInterfaceDefaultImplementation()) {
       return false
