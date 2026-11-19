@@ -35,6 +35,18 @@ class ProductInfoBasedIde private constructor(
 
   override fun getBundledPlugins(): List<IdePlugin> = plugins
 
+  /**
+   * Checks whether the `layout` in `product-info.json` declares a component with the given name.
+   *
+   * Unlike [Ide.hasBundledPlugin], this check does not load the bundled plugins.
+   *
+   * It matches components of every kind: `plugin`, `productModuleV2`, `moduleV2`, and also `pluginAlias`,
+   *   such as `com.intellij.modules.all`.
+   * It returns `false` for a bundled plugin that is not declared in the `layout`.
+   *
+   * @param pluginId the layout component name: a plugin ID, an IDE module name, or a plugin alias
+   * @return `true` if the `layout` declares a component with this name, `false` otherwise
+   */
   override fun hasBundledPlugin(pluginId: String): Boolean {
     return productInfo.layout.any { it.name == pluginId }
   }
