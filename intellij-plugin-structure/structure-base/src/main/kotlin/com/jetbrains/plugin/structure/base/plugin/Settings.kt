@@ -21,7 +21,8 @@ enum class Settings(private val key: String, private val defaultValue: () -> Str
   HUB_PLUGIN_MAX_FILES_NUMBER("intellij.structure.hub.plugin.max.files.number", { 1000.toString() }),
   EDU_PLUGIN_SIZE_LIMIT("intellij.structure.edu.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
   YOUTRACK_PLUGIN_SIZE_LIMIT("intellij.structure.youtrack.plugin.size.limit", { (100 * FileUtils.ONE_MB).toString() }),
-  KTOR_FEATURE_SIZE_LIMIT("intellij.structure.edu.plugin.size.limit", { FileUtils.ONE_GB.toString() });
+  KTOR_FEATURE_SIZE_LIMIT("intellij.structure.edu.plugin.size.limit", { FileUtils.ONE_GB.toString() }),
+  PLATFORM_PARSER_ENABLED("intellij.structure.platform.parser.enabled", { false.toString() });
 
   fun get(): String = System.getProperty(key) ?: defaultValue()
 
@@ -30,6 +31,8 @@ enum class Settings(private val key: String, private val defaultValue: () -> Str
   fun getAsLong(): Long = get().toLong()
 
   fun getAsInt(): Int = get().toInt()
+
+  fun getAsBoolean(): Boolean = get().toBoolean()
 
   fun set(value: String) {
     System.setProperty(key, value)

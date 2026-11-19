@@ -204,6 +204,34 @@ class XIncludeResolutionErrors(descriptorPath: String, error: String) : InvalidD
     get() = Level.ERROR
 }
 
+/**
+ * A `<xi:include>` carries an `includeIf`/`includeUnless` attribute that the IntelliJ Platform's own
+ * descriptor parser refuses to honour for this plugin.
+ *
+ * Conditional includes are planned for removal from the platform in 2026.3 (IJPL-215563). The
+ * platform's parser already honours them only for a small, internal allowlist of plugin IDs and
+ * rejects them for everyone else, which is the rejection reported here - see
+ * `PlatformPluginDescriptorParser.toConditionalIncludeProblem`.
+ *
+ * Only reported on the platform-parser path, i.e. for a plugin that declares compatibility with, or
+ * is bundled in, IDE builds from the removal baseline on (see `PluginCreator.shouldUsePlatformParser`).
+ * It is an ERROR because the platform's parser fails the whole descriptor on it.
+ */
+class ConditionalIncludeNotSupported(
+  descriptorPath: String,
+  attributeName: String,
+  /** Completes "this plugin ...", e.g. "is bundled in IDE 263.100", see `PluginCreator.describePlatformParserSelection`. */
+  selectionReason: String
+) : InvalidDescriptorProblem(
+  descriptorPath = descriptorPath,
+  detailedMessage = "The '$attributeName' attribute of <xi:include> is not supported. Conditional includes " +
+    "are removed from the IntelliJ Platform in 2026.3 (IJPL-215563), and this plugin $selectionReason. Inline the included file, or split the plugin so that " +
+    "the include is unconditional."
+) {
+  override val level
+    get() = Level.ERROR
+}
+
 class ReleaseDateWrongFormat(descriptorPath: String) : InvalidDescriptorProblem(
   descriptorPath = descriptorPath,
   detailedMessage = "The <release-date> parameter must be of YYYYMMDD format (type: integer)."

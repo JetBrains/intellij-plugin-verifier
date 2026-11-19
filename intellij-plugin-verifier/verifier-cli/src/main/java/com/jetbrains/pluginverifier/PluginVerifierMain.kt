@@ -4,6 +4,7 @@
 
 package com.jetbrains.pluginverifier
 
+import com.jetbrains.plugin.structure.base.plugin.Settings
 import com.jetbrains.plugin.structure.base.utils.createDir
 import com.jetbrains.plugin.structure.base.utils.forceDeleteIfExists
 import com.jetbrains.plugin.structure.base.utils.formatDuration
@@ -119,6 +120,10 @@ object PluginVerifierMain {
       Args.usage(System.err, CmdOpts())
 
       exitProcess(1)
+    }
+
+    if (opts.platformParser) {
+      Settings.PLATFORM_PARSER_ENABLED.set(true.toString())
     }
 
     val command = freeArgs[0]

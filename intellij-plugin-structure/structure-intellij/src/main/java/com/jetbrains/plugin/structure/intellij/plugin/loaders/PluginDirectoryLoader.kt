@@ -15,6 +15,7 @@ import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.cr
 import com.jetbrains.plugin.structure.intellij.plugin.PluginCreator.Companion.createPlugin
 import com.jetbrains.plugin.structure.intellij.problems.PluginCreationResultResolver
 import com.jetbrains.plugin.structure.intellij.resources.ResourceResolver
+import com.jetbrains.plugin.structure.intellij.version.IdeVersion
 import com.jetbrains.plugin.structure.intellij.utils.JDOMUtil
 import org.jdom2.input.JDOMParseException
 import org.slf4j.Logger
@@ -43,7 +44,8 @@ internal class PluginDirectoryLoader(private val pluginLoaderRegistry: PluginLoa
             validateDescriptor,
             resourceResolver,
             parentPlugin,
-            problemResolver
+            problemResolver,
+            ideVersion = ideVersion
           )
         )
     } else try {
@@ -53,7 +55,7 @@ internal class PluginDirectoryLoader(private val pluginLoaderRegistry: PluginLoa
       createPlugin(
         pluginDirectory.simpleName, descriptorPath, parentPlugin,
         validateDescriptor, document, descriptorFile,
-        resourceResolver, problemResolver
+        resourceResolver, problemResolver, ideVersion
       ).apply {
         setIcons(icons)
         setThirdPartyDependencies(dependencies)
@@ -75,7 +77,9 @@ internal class PluginDirectoryLoader(private val pluginLoaderRegistry: PluginLoa
     override val resourceResolver: ResourceResolver,
     val parentPlugin: PluginCreator?,
     override val problemResolver: PluginCreationResultResolver,
-    val hasDotNetDirectory: Boolean = false
+    val hasDotNetDirectory: Boolean = false,
+    /** Version of the IDE this descriptor is bundled in, see [PluginCreator.shouldUsePlatformParser]. */
+    val ideVersion: IdeVersion? = null,
   ) : PluginLoadingContext(
     resourceResolver,
     problemResolver,

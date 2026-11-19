@@ -113,6 +113,7 @@ class IdePluginManager private constructor(
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
     problemResolver: PluginCreationResultResolver,
+    ideVersion: IdeVersion? = null,
   ): PluginCreator {
     return when (val archive = pluginArchiveManager.extractArchive(pluginFile)) {
       is Extracted -> {
@@ -121,7 +122,8 @@ class IdePluginManager private constructor(
           descriptorPath,
           validateDescriptor,
           resourceResolver,
-          problemResolver
+          problemResolver,
+          ideVersion
         ).apply {
           resources += PluginArchiveResource.of(pluginFile, archive.extractedPath, plugin)
         }
@@ -161,7 +163,7 @@ class IdePluginManager private constructor(
     fallbackPluginId: String? = null,
   ): PluginCreationResult<IdePlugin> {
     val pluginCreator = getPluginCreatorWithResult(
-      pluginFile, false, descriptorPath, problemResolver,
+      pluginFile, false, descriptorPath, problemResolver, ideVersion,
     )
     pluginCreator.setPluginVersion(ideVersion.asStringWithoutProductCode())
     fallbackPluginId?.let { pluginCreator.setPluginIdIfNull(it) }
@@ -175,7 +177,7 @@ class IdePluginManager private constructor(
     problemResolver: PluginCreationResultResolver = IntelliJPluginCreationResultResolver()
   ): PluginCreationResult<IdePlugin> {
     return jarModuleLoader
-      .loadPlugin(JarModuleLoader.Context(pluginFile, descriptorPath, myResourceResolver, problemResolver))
+      .loadPlugin(JarModuleLoader.Context(pluginFile, descriptorPath, myResourceResolver, problemResolver, ideVersion))
       .apply {
         setPluginVersion(ideVersion.asStringWithoutProductCode())
         setOriginalFile(pluginFile)
@@ -187,15 +189,17 @@ class IdePluginManager private constructor(
     pluginFile: Path,
     validateDescriptor: Boolean,
     descriptorPath: String,
-    problemResolver: PluginCreationResultResolver
+    problemResolver: PluginCreationResultResolver,
+    /** Non-null only when loading an IDE's own bundled plugin, see [PluginCreator.shouldUsePlatformParser]. */
+    ideVersion: IdeVersion? = null
   ): PluginCreator {
     if (!pluginFile.exists()) { throw PluginFileNotFoundException(pluginFile) }
     val pluginCreator: PluginCreator
     measureTimeMillis {
       if (pluginFile.isZip()) {
-        pluginCreator = extractPluginCreator(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, problemResolver)
+        pluginCreator = extractPluginCreator(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, problemResolver, ideVersion)
       } else if (pluginFile.isJar() || pluginFile.isDirectory) {
-        pluginCreator = getPluginCreator(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, problemResolver)
+        pluginCreator = getPluginCreator(pluginFile, descriptorPath, validateDescriptor, myResourceResolver, problemResolver, ideVersion)
       } else {
         pluginCreator = getInvalidPluginFileCreator(pluginFile.simpleName, descriptorPath)
       }
@@ -209,10 +213,11 @@ class IdePluginManager private constructor(
     descriptorPath: String,
     validateDescriptor: Boolean,
     resourceResolver: ResourceResolver,
-    problemResolver: PluginCreationResultResolver
+    problemResolver: PluginCreationResultResolver,
+    ideVersion: IdeVersion? = null
   ): PluginCreator {
     try {
-      val pluginCreator = jarOrDirLoader.loadPlugin(JarOrDirectoryPluginLoader.Context(pluginFile, descriptorPath, validateDescriptor, resourceResolver, null, problemResolver))
+      val pluginCreator = jarOrDirLoader.loadPlugin(JarOrDirectoryPluginLoader.Context(pluginFile, descriptorPath, validateDescriptor, resourceResolver, null, problemResolver, ideVersion = ideVersion))
       resolveOptionalDependencies(pluginFile, pluginCreator, myResourceResolver, problemResolver)
       resolveContentModules(pluginFile, pluginCreator, myResourceResolver, problemResolver)
 
