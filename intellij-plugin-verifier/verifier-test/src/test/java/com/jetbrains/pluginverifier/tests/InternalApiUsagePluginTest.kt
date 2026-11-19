@@ -107,6 +107,38 @@ class InternalApiUsagePluginTest {
   }
 
   @Test
+  fun `Laravel Idea plugin class uses an internal API`() {
+    val (idePlugin, ide) = prepareIde(IdeaPluginSpec("com.laravel_idea.plugin", "Laravel Idea"))
+
+    val verificationResult = VerificationRunner().runPluginVerification(
+      ide,
+      idePlugin,
+      apiUsageFilters = listOf(InternalApiUsageFilter())
+    ) as PluginVerificationResult.Verified
+
+    assertEquals(0, verificationResult.internalApiUsages.size)
+    assertEquals(3, verificationResult.ignoredInternalApiUsages.size)
+    assertEquals(
+      setOf("Internal API usage from Laravel Idea is allowed."),
+      verificationResult.ignoredInternalApiUsages.values.toSet()
+    )
+  }
+
+  @Test
+  fun `another plugin from the Laravel Idea vendor cannot use an internal API`() {
+    val (idePlugin, ide) = prepareIde(IdeaPluginSpec("com.example.plugin", "Laravel Idea"))
+
+    val verificationResult = VerificationRunner().runPluginVerification(
+      ide,
+      idePlugin,
+      apiUsageFilters = listOf(InternalApiUsageFilter())
+    ) as PluginVerificationResult.Verified
+
+    assertEquals(3, verificationResult.internalApiUsages.size)
+    assertEquals(0, verificationResult.ignoredInternalApiUsages.size)
+  }
+
+  @Test
   fun `in the same plugin, a class overrides an internal API method of another class`() {
     val (idePlugin, ide) = prepareServiceAndOverrider(IdeaPluginSpec("com.example.somePlugin", "Some Vendor"))
 
